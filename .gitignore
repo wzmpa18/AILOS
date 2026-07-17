@@ -1,0 +1,94 @@
+﻿# ============================================
+# AILOS Project .gitignore
+# 软件架构蓝图 v2.0.0 强制执行
+# ============================================
+
+# === 依赖 ===
+node_modules/
+.pnp/
+.pnp.js
+
+# === 构建产物 ===
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# === 环境变量（严禁提交密钥） ===
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+*.env
+
+# === 密钥与凭证文件 ===
+*.pem
+*.key
+*.crt
+credentials/
+secrets/
+
+# === 日志 ===
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === 操作系统 ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# === 测试 ===
+coverage/
+.nyc_output/
+
+# === 缓存 ===
+.cache/
+.turbo/
+
+# === 备份文件 ===
+backups/daily/*
+!backups/daily/.gitkeep
+backups/pre-upgrade/*
+!backups/pre-upgrade/.gitkeep
+
+# === 临时文件 ===
+tmp/
+temp/
+*.tmp
+
+# === Prisma ===
+prisma/*.db
+prisma/*.db-journal
+
+# === Expo ===
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# === Docker ===
+docker-compose.override.yml
+
+# 本地备份与压缩包
+*.zip
+*_Backup/
+
+_legacy_assets/
+
+.expo-shared
