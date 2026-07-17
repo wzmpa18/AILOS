@@ -1,37 +1,9 @@
-﻿#!/bin/bash
-# ============================================
-# AILOS Repository Baseline v1.0.0
-# commit-msg Hook — 提交信息格式校验
-# ============================================
-
-COMMIT_MSG=$(cat "$1")
-
-VALID_TYPES="feat|fix|docs|style|refactor|perf|test|chore|ci|revert"
-VALID_SCOPES="gateway|auth|learning|companion|user|admin|infra|config|plugin|deps|release|repo|compliance"
-
-if echo "$COMMIT_MSG" | grep -qE '^Merge|^See merge request'; then
-    exit 0
-fi
-
-if echo "$COMMIT_MSG" | grep -qE '^Revert'; then
-    exit 0
-fi
-
-if ! echo "$COMMIT_MSG" | grep -qE "^($VALID_TYPES)\(($VALID_SCOPES)\): .+"; then
-    echo ""
-    echo "============================================"
-    echo "  COMMIT INTERCEPTED: Invalid commit message format"
-    echo "============================================"
-    echo ""
-    echo "  Correct format: <type>(<scope>): <description>"
-    echo ""
-    echo "  Valid types:  $VALID_TYPES"
-    echo "  Valid scopes: $VALID_SCOPES"
-    echo ""
-    echo "  Example: feat(infra): establish repository baseline v1.0"
-    echo "           fix(gateway): correct response statusCode reference"
-    echo ""
-    exit 1
-fi
-
+# AILOS commit-msg Hook (Windows PowerShell)
+#
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ps1Path = Join-Path $scriptDir 'commit-msg.ps1'
+if (Test-Path $ps1Path) {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ps1Path @args
+    exit $LASTEXITCODE
+}
 exit 0

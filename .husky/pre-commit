@@ -1,61 +1,9 @@
-﻿#!/bin/bash
-# ============================================
-# AILOS Repository Baseline v1.0.0
-# pre-commit Hook — 架构合规 + 密钥泄露扫描
-# ============================================
-
-echo "============================================"
-echo "  AILOS Compliance Check — Pre-commit Hook"
-echo "============================================"
-
-SENSITIVE_FILES=$(git diff --cached --name-only | grep -E '\.env\.local$|\.env\.production$|\.env\.test$|\.pem$|\.key$|\.pfx$|\.p12$|id_rsa|private_key')
-
-if [ -n "$SENSITIVE_FILES" ]; then
-    echo ""
-    echo "!!! COMMIT BLOCKED: Sensitive files detected !!!"
-    echo "$SENSITIVE_FILES"
-    echo ""
-    exit 1
-fi
-
-CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-
-if [ -n "$CHANGED_FILES" ]; then
-    KEY_LEAK=$(git diff --cached | grep -E '(sk-[a-zA-Z0-9]{20,}|api_key\s*[:=]\s*["'"'"'][a-zA-Z0-9_-]{20,}["'"'"']|apiKey\s*[:=]\s*["'"'"'][a-zA-Z0-9_-]{20,}["'"'"']|secret_key\s*[:=]\s*["'"'"'][a-zA-Z0-9_-]{20,}["'"'"']|secretKey\s*[:=]\s*["'"'"'][a-zA-Z0-9_-]{20,}["'"'"'])')
-
-    if [ -n "$KEY_LEAK" ]; then
-        echo ""
-        echo "!!! COMMIT BLOCKED: Hardcoded API key detected !!!"
-        echo ""
-        exit 1
-    fi
-
-    DIRECT_API=$(git diff --cached | grep -E '(https?://api\.(openai|anthropic|deepseek|hunyuan)|https?://[a-zA-Z0-9.-]+/(v1/chat|v1/completions|v1/embeddings))')
-
-    if [ -n "$DIRECT_API" ]; then
-        echo ""
-        echo "!!! COMMIT BLOCKED: Direct model API call detected !!!"
-        echo "All AI calls must go through AI Gateway"
-        echo ""
-        exit 1
-    fi
-fi
-
-if command -v python3 &> /dev/null || command -v python &> /dev/null; then
-    PYTHON_CMD=$(command -v python3 || command -v python)
-    if [ -f "compliance/scripts/compliance_check.py" ]; then
-        echo ""
-        echo "Running full compliance check..."
-        $PYTHON_CMD compliance/scripts/compliance_check.py --path . --level 1 2>&1
-        if [ $? -ne 0 ]; then
-            echo ""
-            echo "!!! COMMIT BLOCKED: Level 1 violations detected !!!"
-            exit 1
-        fi
-    fi
-fi
-
-echo ""
-echo "Compliance check passed"
-echo ""
+# AILOS pre-commit Hook (Windows PowerShell)
+#
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ps1Path = Join-Path $scriptDir 'pre-commit.ps1'
+if (Test-Path $ps1Path) {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ps1Path
+    exit $LASTEXITCODE
+}
 exit 0
