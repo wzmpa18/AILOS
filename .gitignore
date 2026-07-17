@@ -92,3 +92,15 @@ docker-compose.override.yml
 _legacy_assets/
 
 .expo-shared
+# === Stage A: Repository Baseline 增强 (2026-07-17) ===
+.nyc_output/
+coverage/
+*.tfstate
+*.tfstate.backup
+.terraform/
+venv/
+.venv/
+__pycache__/
+*.pyc
+storybook-static/
+*~

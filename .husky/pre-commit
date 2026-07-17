@@ -1,0 +1,9 @@
+# AILOS pre-commit Hook (Windows PowerShell)
+#
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ps1Path = Join-Path $scriptDir 'pre-commit.ps1'
+if (Test-Path $ps1Path) {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ps1Path
+    exit $LASTEXITCODE
+}
+exit 0
