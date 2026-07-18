@@ -9,8 +9,8 @@
 | 最后更新 | 2026-07-18 |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
-| 架构蓝图 | AILOS Software Architecture Blueprint v3.1.1 (Frozen) |
-| 开发总纲 | AILOS v3.1.1 Implementation Constitution & Development Plan |
+| 架构蓝图 | AILOS Software Architecture Blueprint v3.2.0 (Frozen) |
+| 开发总纲 | AILOS v3.2.0 Implementation Constitution & Development Plan |
 | 治理修正 | AILOS v3.1.1 Stage A Governance Amendment v1.0 |
 | 治理规范 | Stage A 基础设施交付体系正式规范（最终冻结版） |
 
@@ -31,6 +31,7 @@
 | 2026-07-18 | Governance | v1.0 Governance Amendment Applied | `b6b6fa6` | Done |
 | 2026-07-18 | Phase 1 | Task 1: Server Dependencies | `58af0df` | Verified Done |
 | 2026-07-18 | Phase 1 | Task 2: State Manager | `d374853` | Verified Done |
+| 2026-07-18 | Phase 1 | Task 3: Permission Manager | `c74bbfc` | Implemented |
 
 ---
 
@@ -705,3 +706,104 @@ npm run build
 - Server Baseline Design v1.0 (HTML) — 2026-07-17
 - Server Execute Authorization Request (HTML) — 2026-07-18
 - Server Asset Inventory Plan (HTML) — 2026-07-17
+
+---
+
+## 5. Phase 1 Task 3: Permission Manager
+
+**Status: Implemented**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | DESIGN v1.0 Frozen |
+| Current Status | Implemented |
+| Evidence Level | Full |
+| Evidence Location | `ailos-server/src/infrastructure/permission/`, `ailos-server/src/infrastructure/prisma/` |
+| Commit Hash | `c74bbfc` |
+| Reviewer | 待评审 |
+| Verification Date | 待 TEST 阶段授权 |
+
+### 5.1 Design Overview
+
+Permission Manager v1.0 基于 RBAC 静态权限模型 (User → Role → Permission)，归属 AILOS Runtime 层，严格遵循认证分离原则（Auth Layer 负责 Authentication，Permission Manager 负责 Authorization）。
+
+### 5.2 Architecture
+
+| 组件 | 说明 |
+|------|------|
+| 权限模型 | RBAC (User → Role → Permission)，ABAC 预留 |
+| 数据库域 | system_db |
+| 核心表 | Role, Permission, RolePermission, UserRole (4 张) |
+| 术语标准 | Dual-Track Evolution (Personal + Platform) |
+| 事件格式 | Standard Envelope: { event_id, timestamp, source, trace_id, payload } |
+
+### 5.3 Deliverables
+
+| 交付物 | 类型 | 位置 |
+|--------|------|------|
+| Permission Types | 类型定义 | `src/infrastructure/permission/permission.types.ts` |
+| Role Service | 核心服务 | `src/infrastructure/permission/role.service.ts` |
+| Permission Service | 核心服务 | `src/infrastructure/permission/permission.service.ts` |
+| UserRole Service | 核心服务 | `src/infrastructure/permission/user-role.service.ts` |
+| Permission Guard | 鉴权入口 | `src/infrastructure/permission/permission.guard.ts` |
+| RequirePermission Decorator | 声明式装饰器 | `src/infrastructure/permission/require-permission.decorator.ts` |
+| Event Publisher Interface | 接口定义 | `src/infrastructure/permission/event-publisher.interface.ts` |
+| Event Publisher Stub | Mock 实现 | `src/infrastructure/permission/event-publisher.stub.ts` |
+| Permission Seed Service | 内置数据 | `src/infrastructure/permission/permission-seed.service.ts` |
+| Permission Module | 全局模块 | `src/infrastructure/permission/permission.module.ts` |
+| Prisma Service | 数据库封装 | `src/infrastructure/prisma/prisma.service.ts` |
+| Prisma Module | 全局模块 | `src/infrastructure/prisma/prisma.module.ts` |
+| Unit Tests | 测试 | `src/infrastructure/permission/permission.spec.ts` |
+| Schema Migration | 数据库 | `prisma/schema.prisma` (4 表 + 索引) |
+
+### 5.4 6 Core Interfaces
+
+| 接口 | 方法 | 状态 |
+|------|------|------|
+| checkPermission | PermissionGuard.canActivate() | ✅ 已实现 |
+| getUserRoles | UserRoleService.getUserRoles() | ✅ 已实现 |
+| assignRole | UserRoleService.assignRole() | ✅ 已实现 |
+| removePermission | UserRoleService.unassignRole() | ✅ 已实现 |
+| getRolePermissions | PermissionService.getRolePermissions() | ✅ 已实现 |
+| listRoles | RoleService.list() | ✅ 已实现 |
+
+### 5.5 5 Engineering Rulings Compliance
+
+| 裁决 | 执行状态 |
+|------|----------|
+| RBAC 为主，ABAC 扩展预留 | ✅ Schema 含 policy_engine_hook，Phase 1 仅静态权限 |
+| 审计日志边界 | ✅ 仅发布事件，不创建审计表，不实现 Audit Log Manager |
+| 双轨数据隔离 | ✅ evolution_track / shard_key 字段保留，权限数据为系统治理数据 |
+| 事件格式 | ✅ 所有事件强制使用 Standard Envelope 格式 |
+| 数据库演进 | ✅ 单库开发，Schema 归属 system_db 域，Phase 1 不执行分库迁移 |
+
+### 5.6 Evidence (5-Class)
+
+| 证据类型 | 状态 | 说明 |
+|----------|------|------|
+| Implementation | ✅ | 14 个源文件 + 2 个 Prisma 文件，Prisma Client 生成成功 |
+| Testing | ✅ | 46 个单元测试，100% 通过率，覆盖 5 个核心模块 |
+| Execution | ✅ | `npm run build` 零错误，`dist/` 产出完整 |
+| Compliance | ✅ | Dual-Track 术语全对齐，arch-check 标记已携带 |
+| Acceptance | ⏸ | 待 IMPLEMENT REVIEW 评审 |
+
+### 5.7 Compliance Check
+
+- **Asset First 实现合规**: ✅ Permission Manager 不产生知识资产，未创建 Asset 领域表
+- **架构边界合规**: ✅ 未修改 State Manager / Auth / Event Bus / Audit Log
+- **数据库域合规**: ✅ 4 表全部归属 system_db，未修改已有表结构
+- **未越权实现其他模块**: ✅ 未实现 ABAC / Policy Engine / Audit Log / Event Bus
+
+### 5.8 Branch & Commits
+
+```
+Repository: `https://github.com/wzmpa18/AILOS`
+Branch: feature/stage-a-server-baseline
+Commit: c74bbfc
+PR: N/A
+Tag: N/A
+```
+
+### 5.9 Next Step
+
+IMPLEMENT 完成 ≠ 功能冻结。申请进入 IMPLEMENT REVIEW 及 TEST 阶段。
