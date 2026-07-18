@@ -14,6 +14,7 @@ import { CacheModule } from './infrastructure/cache/cache.module';
 import { EventBusModule } from './infrastructure/event-bus/event-bus.module';
 import { AuthModule } from './infrastructure/auth/auth.module';
 import { LoggingModule } from './infrastructure/logging/logging.module';
+import { StateManagerModule } from './infrastructure/state-manager/state-manager.module';
 import { ConfigModule } from './config/config.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { ConfigModule } from './config/config.module';
     EventBusModule,
     AuthModule,
     LoggingModule,
+    StateManagerModule,
     AiGatewayModule,
     AssetCenterModule,
     LearningEngineModule,

@@ -511,6 +511,33 @@ model CostRecord {
   @@map("cost_records")
 }
 
+// ============================================
+// Runtime State — 统一状态管理表
+// Phase 1 Task 2: State Manager
+// 设计基线: State Manager Design Confirmation v1.1 (Frozen)
+// 字段白名单 12 个，禁止新增业务字段
+// ============================================
+model RuntimeState {
+  stateId      String    @id @map("state_id") @db.VarChar(64)
+  namespace    String    @db.VarChar(128)
+  stateKey     String    @unique @map("state_key") @db.VarChar(512)
+  stateValue   Json      @map("state_value")
+  providerName String    @map("provider_name") @db.VarChar(128)
+  ownerType    String    @map("owner_type") @db.VarChar(32)
+  ownerId      String    @map("owner_id") @db.VarChar(128)
+  version      Int       @default(1)
+  ttl          BigInt?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@index([namespace])
+  @@index([providerName])
+  @@index([ownerType, ownerId])
+  @@index([deletedAt])
+  @@map("runtime_state")
+}
+
 enum ApiKeyStatus {
   active
   revoked
