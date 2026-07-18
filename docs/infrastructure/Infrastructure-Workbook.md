@@ -30,6 +30,7 @@
 | 2026-07-18 | Blueprint | v3.1.1 Implementation Constitution Published | `9024726` | Design Approved |
 | 2026-07-18 | Governance | v1.0 Governance Amendment Applied | `b6b6fa6` | Done |
 | 2026-07-18 | Phase 1 | Task 1: Server Dependencies | `58af0df` | Verified Done |
+| 2026-07-18 | Phase 1 | Task 2: State Manager | `d374853` | Verified Done |
 
 ---
 
@@ -466,9 +467,62 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，待启动真实�
 | Compliance | ✅ | arch-check: layer=infrastructure, gateway=true, risk=low |
 | Acceptance | ✅ | 19 个依赖全部可 resolve，环境模板已覆盖配置项 |
 
-**下一步**: Task 2: State Manager（待总工程师授权启动）
 
----
+### 9.2 Task 2: State Manager
+
+**Status: Verified Done**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Verified Done |
+| Evidence Level | Full |
+| Evidence Location | `ailos-server/src/infrastructure/state-manager/` (13 files) |
+| Commit Hash | `d374853` |
+| Reviewer | 待总工程师验收 |
+| Verification Date | 2026-07-18 |
+
+**实现范围**:
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| 核心类型 | `state-manager.types.ts` | 8 interfaces + 3 types + 2 enums |
+| Provider Registry | `provider-registry.ts` | 命名空间隔离、Provider 生命周期管理 |
+| MySQL Adapter | `mysql-storage.adapter.ts` | Source of Truth 持久化适配器 |
+| Redis Adapter | `redis-storage.adapter.ts` | 缓存层适配器（Graceful Degradation） |
+| StateManager Core | `state-manager.service.ts` | 统一调度逻辑、CRUD、原子更新、快照/恢复 |
+| Session Provider | `providers/session-state.provider.ts` | 命名空间: `session` |
+| System Provider | `providers/system-state.provider.ts` | 命名空间: `system` |
+| Default Provider | `providers/default-state.provider.ts` | 命名空间: `default` |
+| Module | `state-manager.module.ts` | @Global() 全局模块 |
+| Barrel Export | `index.ts` | 统一导出 |
+| Prisma Schema | `prisma/schema.prisma` | `runtime_state` 表（12 字段白名单） |
+| App Module | `src/app.module.ts` | 注册 StateManagerModule |
+| 测试 | `state-manager.service.spec.ts` | 24 项核心场景测试 |
+
+**数据一致性规则（已冻结）**:
+- MySQL = 唯一持久化真值源
+- Redis = 运行时缓存层，不具备最终数据效力
+- Write Flow: MySQL 事务提交 → Redis 缓存更新
+- Read Flow: Redis 命中 → 返回; 未命中 → MySQL 查询 → 回写 Redis
+
+**Provider Governance**:
+- 3 个内置 Provider 通过统一 Registry 注册
+- 命名空间隔离强制生效：`session.*` / `system.*` / `default.*`
+- 越权访问被拦截并返回失败
+
+**证据（5类）**:
+
+| 证据类型 | 状态 | 说明 |
+|----------|------|------|
+| Implementation | ✅ | 13 个文件，核心类型 + Provider Registry + 存储适配器 + StateManager + 3 Provider + Module + Prisma Schema |
+| Testing | ✅ | 24/24 测试通过（CRUD、原子更新、批量操作、快照恢复、命名空间隔离、生命周期） |
+| Execution | ✅ | `npm run build` PASS，零错误 |
+| Compliance | ✅ | arch-check: layer=runtime, gateway=true, risk=low; 无业务字段侵入; 无模块越界 |
+| Acceptance | ✅ | 自测通过，所有验收标准 100% PASS |
+
+**下一步**: Task 3: Permission Manager（待总工程师授权启动）
+
 
 ## 10. Governance Rules
 
@@ -543,7 +597,7 @@ Open → Resolved Pending Verify → Verified Done → Closed
 ### Phase 1: Foundation
 
 - [x] P1-T1: Server Dependencies — 依赖安装 + 编译验证
-- [ ] P1-T2: State Manager — 待授权
+- [x] P1-T2: State Manager — Verified Done
 - [ ] P1-T3: Permission Manager — 待授权
 - [ ] P1-T4: Event Bus — 待授权
 - [ ] P1-T5: Context Manager — 待授权
