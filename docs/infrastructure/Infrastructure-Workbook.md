@@ -5,12 +5,13 @@
 | 属性 | 值 |
 |------|-----|
 | 版本 | 1.0.0 (Baseline) |
-| 状态 | Active |
+| 状态 | Active — Governance Correction Applied |
 | 最后更新 | 2026-07-18 |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
 | 架构蓝图 | AILOS Software Architecture Blueprint v3.1.1 (Frozen) |
 | 开发总纲 | AILOS v3.1.1 Implementation Constitution & Development Plan |
+| 治理修正 | AILOS v3.1.1 Stage A Governance Amendment v1.0 |
 | 治理规范 | Stage A 基础设施交付体系正式规范（最终冻结版） |
 
 ---
@@ -20,19 +21,30 @@
 | Date | Module | Checkpoint | Commit | Status |
 |------|--------|------------|--------|--------|
 | 2026-07-17 | M1 | Repository Baseline Verified | `543161b` | Archived |
-| 2026-07-17 | M2 | Inventory Plan Approved | `28b25d6` | Done |
-| 2026-07-17 | M2 | Design v1.0 Approved | `6ae2471` | Done |
-| 2026-07-18 | M2 | Execute Authorization Request Submitted | `d015a32` | Done |
+| 2026-07-17 | M2 | Inventory Plan Approved | `28b25d6` | Design Approved |
+| 2026-07-17 | M2 | Design v1.0 Approved | `6ae2471` | Design Approved |
+| 2026-07-18 | M2 | Execute Authorization Request Submitted | `d015a32` | Design Approved |
 | 2026-07-18 | M2 | Workbook Initialized | `c8b52b0` | Done |
-| 2026-07-18 | M2 | Authorization Approved | *(this commit)* | Done |
-| 2026-07-18 | Audit | Code Capability Audit Completed | *(this commit)* | Done |
-| 2026-07-18 | Blueprint | v3.1.1 Implementation Constitution Published | *(this commit)* | Done |
+| 2026-07-18 | M2 | Authorization Approved | `63a32f3` | Design Approved |
+| 2026-07-18 | Audit | Code Capability Audit Completed | `e5694d1` | Verified Done |
+| 2026-07-18 | Blueprint | v3.1.1 Implementation Constitution Published | `9024726` | Design Approved |
+| 2026-07-18 | Governance | v1.0 Governance Amendment Applied | *(this commit)* | Done |
 
 ---
 
 ## 1. Module 1: Repository Baseline
 
-**Status: Archived (2026-07-17)**
+**Status: Archived**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | N/A (初始状态) |
+| Current Status | Archived |
+| Evidence Level | Full |
+| Evidence Location | `.commitlintrc.js`, `.husky/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gitignore` |
+| Commit Hash | `543161b` |
+| Reviewer | 总工程师 |
+| Verification Date | 2026-07-17 |
 
 ### 1.1 Summary
 
@@ -48,36 +60,39 @@ Module 1 (Repository Baseline) 是 Infrastructure Baseline v1.0 的首个组件�
 | PR 模板 | 代码 | `.github/PULL_REQUEST_TEMPLATE.md` |
 | 增强 .gitignore | 代码 | `.gitignore` |
 
-### 1.3 Branch Model
+### 1.3 Evidence (5-Class)
+
+| 证据类型 | 状态 | 说明 |
+|----------|------|------|
+| Implementation | ✅ | 5 个交付物全部实装 |
+| Testing | ✅ | Windows PowerShell Git Hooks 验证通过，0 合规违规 |
+| Execution | ✅ | Commit 消息校验通过，CI 流水线触发成功 |
+| Compliance | ✅ | 符合 Repository Baseline v1.0 规范 |
+| Acceptance | ✅ | 2026-07-17 总工程师验收归档 |
+
+### 1.4 Branch Model
 
 - `main` — 生产就绪代码，受保护分支
 - `develop` — 集成分支
 - `feature/*` — 功能开发分支
 - `hotfix/*` — 紧急修复分支
 
-### 1.4 Commit Convention
+### 1.5 Commit Convention
 
 Conventional Commits 格式，AILOS 专用 scopes: `infra`, `repo`, `server`, `env`, `ai`, `deploy`, `preview`, `db`, `ci-cd`, `docs`, `security`
 
-### 1.5 Git Hooks
+### 1.6 Git Hooks
 
 - **commit-msg**: commitlint 校验，Windows 通过 PowerShell wrapper + .ps1 分离模式支持
 - **pre-commit**: 合规扫描（敏感文件拦截、硬编码 API Key 检测、直连 AI Provider 拦截）
 
-### 1.6 Security Redlines
+### 1.7 Security Redlines
 
 - R1: 密钥不入库
 - R2: `.env.local` 不入库
 - R3: 禁止直连 AI Provider API
 - R4: `.gitignore` 覆盖所有敏感文件类型
 - R5: PR 必须经过合规检查
-
-### 1.7 Verification
-
-- 0 合规违规
-- Windows PowerShell 环境 Git Hooks 验证通过
-- Commit 消息校验通过
-- PR #1: `https://github.com/wzmpa18/AILOS/pull/1` (Open, 待 Stage A 完成后合并)
 
 ### 1.8 Branch & Commits
 
@@ -93,7 +108,17 @@ Tag: N/A
 
 ## 2. Module 2: Server Baseline
 
-**Status: Authorized → Checkpoint 1: Inventory Execute**
+**Status: Execute In Progress**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Execute In Progress |
+| Evidence Level | Partial |
+| Evidence Location | `infrastructure/server-baseline/`, `docs/infrastructure/Infrastructure-Workbook.md` |
+| Commit Hash | `d015a32` (Authorization), pending Checkpoint 1 |
+| Reviewer | 待验证 |
+| Verification Date | 待验证 |
 
 ### 2.1 Design Overview
 
@@ -174,11 +199,40 @@ Internet (:443) → Nginx 1.24 → Node.js 20.x (:3000) → Redis 7.0 (:6379)
 
 **重大差异暂停规则**: 如 Inventory Execute 发现与设计假设存在重大差异，立即暂停，提交 Design Review Update。
 
-### 2.7 Inventory
+### 2.7 Checkpoint 执行顺序（冻结）
 
-**Status: In Progress — Checkpoint 1**
+```
+Module 2: Server Baseline
+        │
+        ▼
+Checkpoint 1: Inventory Execute
+        │
+        ▼
+Checkpoint 2: Confirm
+        │
+        ▼
+Checkpoint 3: Backup
+        │
+        ▼
+Checkpoint 4: Cleanup
+        │
+        ▼
+Checkpoint 5: Initialize
+        │
+        ▼
+Checkpoint 6: Verify
+        │
+        ▼
+Module 2: Verified Done
+```
 
-Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘点。
+每完成一个 Checkpoint，必须同步更新：Infrastructure Workbook、Execution Log、Evidence Record、Module Status。
+
+### 2.8 Inventory
+
+**Status: Checkpoint 1 — Inventory Execute**
+
+Inventory Plan 已通过评审 (2026-07-17)。授权已批准，待启动真实盘点。
 
 盘点维度: 系统信息 / 硬件资源 / 运行服务 / 数据库 / 目录结构 / 端口占用 / 定时任务
 
@@ -188,11 +242,11 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 - **C**: 直接清理 (确认无用)
 - **D**: 需确认 (待人工判断)
 
-### 2.8 Confirm
+### 2.9 Confirm
 
-**Status: Pending (Blocked by P1)**
+**Status: Pending (Blocked by Checkpoint 1)**
 
-#### 2.8.1 核心资产保护政策 (ADR-007)
+#### 2.9.1 核心资产保护政策 (ADR-007)
 
 **P0-P3 资产分级定义**:
 
@@ -211,7 +265,7 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 - 数据迁移遵循「备份 → 恢复到新环境 → 功能验证 → 业务验证 → 切流 → 旧环境保留观察 → 确认后删除」全流程
 - P0 资产与服务器生命周期完全解耦：服务器可按需重建，P0 资产不受影响
 
-#### 2.8.2 默认清理规则
+#### 2.9.2 默认清理规则
 
 **保留资产（默认不清理）**:
 - 当前线上运行的前端站点及对应部署目录
@@ -229,29 +283,29 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 
 **当前阶段说明**: 服务器暂未正式运营，无真实用户数据、用户上传文件等业务类 P0 资产。现有 SSL 证书、系统级核心配置属于 P0 范畴，默认保留。存量测试数据库、测试项目配置属于 P3 级资产，完成备份后可按计划清理。
 
-### 2.9 Backup
+### 2.10 Backup
 
-**Status: Pending (Blocked by P2)**
+**Status: Pending (Blocked by Checkpoint 2)**
 
 强制约束: 未完成备份有效性校验，禁止进入 Cleanup 阶段。
 
-### 2.10 Cleanup
+### 2.11 Cleanup
 
-**Status: Pending (Blocked by P3)**
+**Status: Pending (Blocked by Checkpoint 3)**
 
 清理范围: 旧言道项目、测试项目、历史部署目录、废弃数据库、冗余 Nginx/PM2 配置、历史日志。
 
 不可逆操作须在工作簿中列出完整待操作清单，经人工回复「确认执行」后方可操作。
 
-### 2.11 Initialize
+### 2.12 Initialize
 
-**Status: Pending (Blocked by P4)**
+**Status: Pending (Blocked by Checkpoint 4)**
 
-### 2.12 Verify
+### 2.13 Verify
 
-**Status: Pending (Blocked by P5)**
+**Status: Pending (Blocked by Checkpoint 5)**
 
-### 2.13 Rollback
+### 2.14 Rollback
 
 回滚矩阵 (DB/Config/文件/组件/全量 五级)，详见 Design v1.0。
 
@@ -259,7 +313,17 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 
 ## 3. Module 3: Environment Baseline
 
-**Status: Pending (Blocked by M2)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | `config/env/` 目录 (dev/staging/prod 三环境模板) |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
 
 | 项目 | 内容 |
 |------|------|
@@ -270,7 +334,17 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 
 ## 4. Module 4: AI Provider Baseline
 
-**Status: Pending (Blocked by M3)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | `ailos-server/src/modules/gateway/` (AI Gateway 生产级代码) |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
 
 | 项目 | 内容 |
 |------|------|
@@ -282,25 +356,171 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 
 ## 5. Module 5: Deployment Baseline
 
-**Status: Pending (Blocked by M4)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | `deploy/docker-compose.yml` (7 服务定义) |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
 
 ---
 
 ## 6. Module 6: Preview Environment
 
-**Status: Pending (Blocked by M5)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | — |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
 
 ---
 
 ## 7. Module 7: Database Baseline
 
-**Status: Pending (Blocked by M6)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | `prisma/schema.prisma` (25 模型), `sql/schemas/` (7 DDL) |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
 
 ---
 
 ## 8. Module 8: CI/CD Baseline
 
-**Status: Pending (Blocked by M7)**
+**Status: Design Approved**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Design Approved |
+| Evidence Level | None |
+| Evidence Location | `.github/workflows/ci-cd.yml` (v2.0.0, 4 阶段) |
+| Commit Hash | — |
+| Reviewer | 待验收 |
+| Verification Date | 待验收 |
+
+---
+
+## 9. Governance Rules（新增 — v1.0 Governance Amendment）
+
+### 9.1 模块状态机（四级·强制）
+
+```
+                      ┌─────────────┐
+                      │   Design    │
+                      │  Approved   │
+                      └──────┬──────┘
+                             │
+                             ▼
+                      ┌─────────────┐
+                      │   Execute   │
+                      │ In Progress │
+                      └──────┬──────┘
+                             │
+                             ▼
+                      ┌─────────────┐
+                      │  Verified   │
+                      │    Done     │
+                      └──────┬──────┘
+                             │
+                             ▼
+                      ┌─────────────┐
+                      │  Archived   │
+                      └─────────────┘
+```
+
+- **禁止跳级**: 任何模块不得从 Design Approved 直接跳到 Verified Done 或 Archived
+- **禁止空状态**: 所有模块必须处于上述四种状态之一
+- **禁止模糊状态**: 禁止使用 Done / Completed / Fixed / Known 等非标准状态
+
+### 9.2 五类证据强制规则
+
+任何交付标记为 Verified Done 前，必须集齐以下五类证据：
+
+| 证据类型 | 要求 | 示例 |
+|----------|------|------|
+| **Implementation Evidence** | 代码实现证据 | 文件路径、代码行数、关键函数签名 |
+| **Testing Evidence** | 测试通过证据 | 测试命令输出、Pass/Fail 统计 |
+| **Execution Evidence** | 执行日志证据 | 终端输出、服务器日志、截图 |
+| **Compliance Evidence** | 架构合规证据 | 符合 v3.1.1 蓝图、ADR 合规检查 |
+| **Acceptance Evidence** | 验收确认证据 | 验收人签名、验收日期、验收结论 |
+
+未集齐五类证据，不得标记为 Verified Done 状态。
+
+### 9.3 Known Issues 状态流转（四级·强制）
+
+```
+Open
+  │
+  ▼
+Resolved Pending Verify（解决待验证）
+  │
+  ▼
+Verified Done（验证通过）
+  │
+  ▼
+Closed（关闭归档）
+```
+
+- **禁止 Open → Fixed 直接跳转**
+- **禁止 Open → Verified Done 直接跳转**
+- 所有 Resolved Pending Verify 必须附带验证步骤说明
+
+### 9.4 AI 前置架构闸门（Pre-Development Gate）
+
+所有 AI 工具生成任何代码之前，必须输出以下检查结果：
+
+```
+Architecture Check:
+1. Layer: Architecture / Runtime / Capability / Domain
+2. Existing Capability: 是否已有能力可以复用？
+3. Runtime Path: 是否遵循 Intent → Goal → Mission → Planner → Workflow → Capability → AI
+4. AI Gateway: 是否经过统一 AI Gateway？
+5. State Impact: 是否影响 State Manager / Twin / Memory？
+6. Database Impact: 是否新增数据模型？
+7. Architecture Risk: Low / Medium / High
+```
+
+**强制要求**: 上述架构自检结果必须写入本次提交的 Commit Message，格式为:
+
+```
+arch-check: layer=xxx, gateway=true, risk=xxx
+```
+
+未按格式提交的 commit 视为不合规。
+
+### 9.5 禁止 AI 自行扩大范围
+
+当前 Stage A 治理校准期间，严禁以下行为：
+
+| 禁止项 | 原因 |
+|--------|------|
+| 新增业务功能 | 需等待 Runtime 底座形成 |
+| 新增 Agent | 需等待 Runtime 底座形成 |
+| 新增 Domain | 需等待 Runtime 底座形成 |
+| 新增 Runtime Manager | 统一在 Phase 2 阶段完成 |
+| 新增数据库表 | 需经过 Data Model Review |
+| 重新设计 Runtime | 架构已冻结 |
+| 修改 Blueprint 核心抽象 | 架构已冻结 |
+
+仅允许执行以下行为：状态修正、文档治理、执行准备、证据体系完善。
 
 ---
 
@@ -323,26 +543,26 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 - [x] M2-03: Execute Authorization Request 提交
 - [x] M2-04: Infrastructure Workbook 初始化
 - [x] M2-05: 获取服务器授权凭据
-- [ ] M2-06: P1 — Inventory Execute (真实盘点)
-- [ ] M2-07: P2 — Confirm (资产确认)
-- [ ] M2-08: P3 — Backup (全量备份 + 验证)
-- [ ] M2-09: P4 — Cleanup (分级清理)
-- [ ] M2-10: P5 — Initialize (环境初始化)
-- [ ] M2-11: P6 — Verify (验收验证)
+- [ ] M2-06: Checkpoint 1 — Inventory Execute (真实盘点)
+- [ ] M2-07: Checkpoint 2 — Confirm (资产确认)
+- [ ] M2-08: Checkpoint 3 — Backup (全量备份 + 验证)
+- [ ] M2-09: Checkpoint 4 — Cleanup (分级清理)
+- [ ] M2-10: Checkpoint 5 — Initialize (环境初始化)
+- [ ] M2-11: Checkpoint 6 — Verify (验收验证)
 - [ ] M2-12: Module 2 正式验收归档
 
 ---
 
 ## Known Issues
 
-| ID | 描述 | 模块 | 状态 | 计划 |
-|----|------|------|------|------|
-| KI-01 | TokenHub IP 白名单更新 (PF-01) | M4 | Open | 待 Module 4 Execute 阶段处理 |
-| KI-02 | `.env.local` 文件覆盖 (PF-02) | M2/M4 | Open | 待 Module 2 Execute 阶段确认 |
-| KI-03 | HunyuanAdapter `response.status` → `response.statusCode` 修复 | M4 | Fixed | 已在 Phase 0 修复 |
-| KI-04 | `GET /api/v1/gateway/models` 接口待开发 | M4 | Open | 待 Module 4 Design 阶段设计 |
-| KI-05 | Windows Git Hooks 依赖 bash 环境 | M1 | Known | PowerShell 替代方案已部署 |
-| KI-06 | CI/CD workflow 仅触发 on main push | M8 | Open | 待 Module 8 添加 PR 触发模式 |
+| ID | 描述 | 模块 | 状态 | 验证步骤 | 计划 |
+|----|------|------|------|---------|------|
+| KI-01 | TokenHub IP 白名单更新 (PF-01) | M4 | Open | — | 待 Module 4 Execute 阶段处理 |
+| KI-02 | `.env.local` 文件覆盖 (PF-02) | M2/M4 | Open | — | 待 Module 2 Execute 阶段确认 |
+| KI-03 | HunyuanAdapter `response.status` → `response.statusCode` 修复 | M4 | Verified Done | 代码已修复，AI Gateway 12 步流程正常调用混元 API | Phase 0 已修复并验证 |
+| KI-04 | `GET /api/v1/gateway/models` 接口待开发 | M4 | Open | — | 待 Module 4 Design 阶段开发 |
+| KI-05 | Windows Git Hooks 依赖 bash 环境 | M1 | Verified Done | PowerShell 替代方案已部署，commit-msg 和 pre-commit 均通过验证 | 无需进一步处理 |
+| KI-06 | CI/CD workflow 仅触发 on main push | M8 | Open | — | 待 Module 8 阶段补充 PR 触发模式 |
 
 ---
 
@@ -395,71 +615,63 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 - **Status**: Accepted
 - **Date**: 2026-07-18
 - **Decision**: 建立 P0-P3 四级资产分级体系：P0（绝对禁止丢失，如用户数据/密钥/SSL证书）→ P1（可恢复需备份，如代码/配置模板）→ P2（可重新部署，如部署目录/编译产物）→ P3（可直接清理，如日志/缓存/测试项目）。P0 资产与服务器生命周期完全解耦。
-- **Impact**: 全项目所有阶段强制执行。所有服务器操作、版本升级、环境重构必须遵守本规则。P0 资产默认禁止删除/覆盖/移动，须具备独立备份与恢复方案。数据迁移遵循「备份→恢复→验证→切流→保留观察→确认删除」全流程。本政策为项目永久基线规则，优先级高于所有其他执行规范。
+- **Impact**: 全项目所有阶段强制执行。所有服务器操作、版本升级、环境重构必须遵守本规则。
 
 ### ADR-008: AI Autonomous Operation Principle（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: 所有新增 AI 能力默认设计为可编排、可自动执行、可观测、可恢复；业务功能优先通过 AILOS Runtime 调度，而非直接调用模型 SDK；系统应具备主动感知 → 自动决策 → 闭环验证。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 所有新增 AI 能力默认设计为可编排、可自动执行、可观测、可恢复；业务功能优先通过 AILOS Runtime 调度，而非直接调用模型 SDK。
 - **Impact**: 前期架构建设周期更长，但后续新增业务成本显著降低。
 
 ### ADR-009: Everything is Capability（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: AILOS 所有功能统一抽象为 Capability；Agent 永远调用 Capability，不直接调用 Tool 或 Model；换 Tool、换 Model，Workflow 和 Agent 无需修改。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 所有功能统一抽象为 Capability；Agent 永远调用 Capability，不直接调用 Tool 或 Model。
 - **Impact**: 系统具备最高可扩展性，任何能力可被替换而不影响上层。
 
 ### ADR-010: Business Logic Must Not Call Models Directly（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: 业务代码不得直接调用任何模型 SDK；所有 AI 请求必须经过 AI Gateway；禁止在 Service/Controller 层出现 ModelSDK.chat() 类调用。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 业务代码不得直接调用任何模型 SDK；所有 AI 请求必须经过 AI Gateway。
 - **Impact**: 代码审计发现违规直接判定为阻塞级缺陷。
 
 ### ADR-011: Runtime First Principle（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: 所有业务模块不得直接处理业务流程；所有业务必须交给 AILOS Runtime 调度；业务模块仅负责接收 Intent → 创建/更新 Mission → 展示 Runtime 输出结果。
-- **Impact**: 执行路径: User → Intent → Digital Identity Twin → Goal → Mission → Plan → Execution Graph → Workflow → Capability → AI Gateway → Model。所有业务逻辑统一，系统具备无限扩展能力。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 所有业务模块不得直接处理业务流程；所有业务必须交给 AILOS Runtime 调度。
+- **Impact**: 执行路径: User → Intent → Digital Identity Twin → Goal → Mission → Plan → Execution Graph → Workflow → Capability → AI Gateway → Model。
 
 ### ADR-012: Digital Identity Twin First Principle（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: Digital Identity Twin 是系统的唯一核心数据对象；Twin 跨 Mission 持续存在，跨领域共享；所有 Mission、Workflow、Capability 调用均基于 Twin 的当前状态；Twin 的构建优先级高于内容生成。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: Digital Identity Twin 是系统的唯一核心数据对象；Twin 跨 Mission 持续存在，跨领域共享。
 - **Impact**: 系统以用户为中心，而非以课程为中心。
 
 ### ADR-013: One Runtime Principle（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: AILOS 只有一个 Runtime：AILOS Runtime；所有 Manager 归属同一个 Runtime，不分散为多个 Runtime；Runtime 管理所有执行环境，Manager 管理具体能力。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 只有一个 Runtime：AILOS Runtime；所有 Manager 归属同一个 Runtime。
 - **Impact**: 架构清晰，避免 Runtime 泛滥。
 
 ### ADR-014: Outcome First Principle（蓝图 v3.1.1）
 
-- **Status**: Accepted
-- **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: AILOS 的唯一目标是帮助用户/组织实现最终成果（Outcome）；所有 Mission、Workflow、Capability 调用都以 Outcome 为最终判断标准；Mission 结束后系统验证 Outcome 是否达成，未达成则继续调整；Outcome 达成后永久记录到 Digital Identity Twin 的 Timeline。
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 的唯一目标是帮助用户/组织实现最终成果（Outcome）；Mission 结束后验证 Outcome 是否达成。
 - **Impact**: 系统永远以用户成功为目标，而非以任务完成为目标。
 
 ### ADR-015: Language Independence Principle（蓝图 v3.1.1）
 
+- **Status**: Accepted · **Date**: 2026-07-18 · **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: Core Runtime 不得依赖任何自然语言；所有语言适配通过 Language Capability 处理。
+- **Impact**: 任何语言用户均可使用 AILOS；小语种社区获得平等访问权。
+
+### ADR-016: Stage A Governance Amendment v1.0（治理修正）
+
 - **Status**: Accepted
 - **Date**: 2026-07-18
-- **Source**: AILOS Software Architecture Blueprint v3.1.1
-- **Decision**: Core Runtime 不得依赖任何自然语言；所有语言适配通过 Language Capability 处理；用户语言身份归属 Digital Identity Twin；新增语言仅需 Language Resource Package + Capability 注册；Runtime 内部禁止任何语言特定业务逻辑。
-- **Impact**: 任何语言用户均可使用 AILOS；小语种社区获得平等访问权；AILOS 成为全球语言无关系统。
+- **Source**: AILOS v3.1.1 Stage A Governance Amendment v1.0
+- **Decision**: 建立四级模块状态机（Design Approved → Execute In Progress → Verified Done → Archived）、五类证据强制规则、Known Issues 四级流转规则、AI 前置架构闸门、禁止 AI 自行扩大范围。
+- **Impact**: 所有模块状态立即按治理修正重新校准。所有 AI 工具生成代码前必须通过架构闸门检查并写入 Commit Message。所有交付必须集齐五类证据方可标记 Verified Done。本 ADR 为全项目永久强制规则。
 
 ---
 
@@ -498,6 +710,7 @@ apt-mark showhold
 
 - AILOS Software Architecture Blueprint v3.1.1 (DOCX) — 2026-07-18（架构蓝图，已冻结）
 - AILOS v3.1.1 Implementation Constitution (Markdown) — 2026-07-18（开发总指令）
+- AILOS v3.1.1 Stage A Governance Amendment v1.0 — 2026-07-18（治理修正执行指令）
 - AILOS Capability Audit Report (Markdown) — 2026-07-18（能力审计报告）
 - Server Baseline Design v1.0 (HTML) — 2026-07-17
 - Server Execute Authorization Request (HTML) — 2026-07-18
