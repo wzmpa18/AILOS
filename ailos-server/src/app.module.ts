@@ -18,6 +18,7 @@ import { StateManagerModule } from './infrastructure/state-manager/state-manager
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { PermissionModule } from './infrastructure/permission/permission.module';
+import { AuditLogModule } from './infrastructure/audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PermissionModule } from './infrastructure/permission/permission.module'
     StateManagerModule,
     PrismaModule,
     PermissionModule,
+    AuditLogModule,
     AiGatewayModule,
     AssetCenterModule,
     LearningEngineModule,
