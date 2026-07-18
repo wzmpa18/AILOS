@@ -598,7 +598,7 @@ Open → Resolved Pending Verify → Verified Done → Closed
 
 - [x] P1-T1: Server Dependencies — 依赖安装 + 编译验证
 - [x] P1-T2: State Manager — Verified Done
-- [ ] P1-T3: Permission Manager — 待授权
+- [x] P1-T3: Permission Manager — Design Completed (待 IMPLEMENT 授权)
 - [ ] P1-T4: Event Bus — 待授权
 - [ ] P1-T5: Context Manager — 待授权
 - [ ] P1-T6: Cache L2/L3 — 待授权
