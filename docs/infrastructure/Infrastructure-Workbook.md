@@ -6,7 +6,7 @@
 |------|-----|
 | 版本 | 1.0.0 (Baseline) |
 | 状态 | Active — Phase 1 Foundation Execution |
-| 最后更新 | 2026-07-18 (Task 3 FREEZE) |
+| 最后更新 | 2026-07-19 (Task 4 FREEZE + Task 5 DESIGN) |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
 | 架构蓝图 | AILOS Software Architecture Blueprint v3.2.0 (Frozen) |
@@ -32,6 +32,8 @@
 | 2026-07-18 | Phase 1 | Task 1: Server Dependencies | `58af0df` | Verified Done |
 | 2026-07-18 | Phase 1 | Task 2: State Manager | `d374853` | Verified Done |
 | 2026-07-18 | Phase 1 | Task 3: Permission Manager | `c74bbfc` | Implemented |
+| 2026-07-18 | Phase 1 | Task 4: Event Bus | `4891c66` | **FREEZED v1.0** |
+| 2026-07-19 | Phase 1 | Task 5: Audit Log | — | DESIGN 🚀 |
 
 ---
 
@@ -646,8 +648,8 @@ Open → Resolved Pending Verify → Verified Done → Closed
 - [x] P1-T1: Server Dependencies — 依赖安装 + 编译验证
 - [x] P1-T2: State Manager — Verified Done
 - [x] P1-T3: Permission Manager — **FREEZED v1.0**
-- [ ] P1-T4: Event Bus — 待授权
-- [ ] P1-T5: Context Manager — 待授权
+- [x] P1-T4: Event Bus — **FREEZED v1.0** (4891c66)
+- [ ] P1-T5: Audit Log — **DESIGN 🚀**
 - [ ] P1-T6: Cache L2/L3 — 待授权
 - [ ] P1-T7: Content Audit — 待授权
 
@@ -821,3 +823,134 @@ Tag: N/A
 ### 5.11 Next Step
 
 申请启动 Phase 1 Task 4 Event Bus 设计阶段。
+
+---
+
+## 6. Phase 1 Task 4: Event Bus
+
+**Status: FREEZED v1.0**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | VERIFY |
+| Current Status | **FREEZED v1.0** |
+| Evidence Level | Full |
+| Evidence Location | `ailos-server/src/infrastructure/event-bus/` (8 files) |
+| Commit Hash | `4891c66` |
+| Freeze Tag | `event-bus-v1.0-freeze` |
+| Reviewer | 总工程师 |
+| Verification Date | 2026-07-19 (Formal Freeze) |
+
+### 6.1 Design Overview
+
+Event Bus v1.0 是 AILOS Runtime Infrastructure Layer 的全局事件通信总线，承担平台内所有跨模块异步事件的路由、分发与可靠性保障。不实现任何业务逻辑，仅作为事件传输管道。
+
+### 6.2 Architecture
+
+| 组件 | 说明 |
+|------|------|
+| 核心接口 | IEventBus — publish / subscribe / unsubscribe / getFailedEvents |
+| 适配器 | MemoryAdapter (Phase 1) / IMessageQueueAdapter (Phase 2 预留) |
+| 装饰器 | @OnEvent — 声明式订阅，支持精确匹配 + 前缀通配 |
+| 可靠性 | 3 次重试 / LRU 幂等去重 / 失败事件缓冲 / 64KB payload 上限 |
+| 命名规范 | domain.entity.action 三段式，8 个标准动词 |
+
+### 6.3 Deliverables
+
+| 交付物 | 类型 | 位置 |
+|--------|------|------|
+| 类型定义 | 代码 | `src/infrastructure/event-bus/event-bus.types.ts` |
+| DI Token | 代码 | `src/infrastructure/event-bus/event-bus.provider.ts` |
+| 核心服务 | 代码 | `src/infrastructure/event-bus/event-bus.service.ts` |
+| 全局模块 | 代码 | `src/infrastructure/event-bus/event-bus.module.ts` |
+| Memory Adapter | 代码 | `src/infrastructure/event-bus/adapters/memory-adapter.ts` |
+| @OnEvent 装饰器 | 代码 | `src/infrastructure/event-bus/decorators/on-event.decorator.ts` |
+| Barrel Export | 代码 | `src/infrastructure/event-bus/index.ts` |
+| 单元测试 | 测试 | `src/infrastructure/event-bus/event-bus.spec.ts` |
+| 设计文档 | 设计 | `docs/design/ailos-p4-event-bus-design.md` |
+
+### 6.4 API Surface (Frozen)
+
+| 类别 | 冻结暴露符号 |
+|------|-------------|
+| DI Token | IEventBus |
+| 核心服务 | EventBusService |
+| 模块 | EventBusModule |
+| 装饰器 | OnEvent |
+| 契约类型 | IEventBusContract / EventHandler / SubscribeOptions / IMessageQueueAdapter |
+| 内部实现（不对外） | MemoryAdapter — 仅通过 Module DI 注入 |
+
+### 6.5 Event Naming Registry v1.0 (Frozen)
+
+| # | 事件名称 | 来源 |
+|---|----------|------|
+| 1 | `permission.granted` | Permission Manager |
+| 2 | `permission.revoked` | Permission Manager |
+| 3 | `role.assigned` | Permission Manager |
+| 4 | `role.unassigned` | Permission Manager |
+| 5 | `permission.denied` | Permission Manager |
+
+### 6.6 Performance Baseline
+
+| 指标 | 数值 |
+|------|------|
+| publish 平均延迟 | 0.006 ms |
+| publish P99 | 0.026 ms |
+| 参考吞吐量 | 84,354 events/sec |
+| 最大订阅者数 | 100 |
+
+### 6.7 Evidence (5-Class)
+
+| 证据类型 | 状态 | 说明 |
+|----------|------|------|
+| Implementation | ✅ | 7 个实现文件 + 1 个测试文件 |
+| Testing | ✅ | 24/24 单元测试全通过 |
+| Execution | ✅ | `npm run build` 零错误，NestJS 启动零异常 |
+| Compliance | ✅ | EventEnvelope 单一来源 / Permission Manager 零侵入 / RabbitMQ 仅接口 |
+| Acceptance | ✅ | VERIFY 全链路通过，FREEZE PREPARATION 7 项工作全完成 |
+
+### 6.8 Freeze Baseline
+
+| 属性 | 值 |
+|------|-----|
+| 冻结日期 | 2026-07-19 |
+| 冻结 Commit | 4891c66 |
+| 冻结 Tag | event-bus-v1.0-freeze |
+| 冻结分支 | develop |
+| 冻结范围 | IEventBus 接口 / 路由匹配 / 重试机制 / 幂等去重 / 失败缓冲 / API Surface / Event Naming Registry |
+| ACR 要求 | 任何核心变更须提交 Architecture Change Request |
+
+### 6.9 Next Step
+
+**FREEZED v1.0** — 正式冻结。进入 PROTECTED ASSET STATE。所有核心变更须走 ACR 审批。
+
+---
+
+## 7. Phase 1 Task 5: Audit Log
+
+**Status: DESIGN 🚀**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | N/A |
+| Current Status | DESIGN 🚀 |
+| Evidence Level | None |
+| Evidence Location | `docs/design/ailos-p5-audit-log-design.md` |
+| Commit Hash | — |
+| Reviewer | 待总工程师评审 |
+| Verification Date | 待验证 |
+
+### 7.1 Design Overview
+
+Audit Log Manager 是 AILOS Runtime Infrastructure Layer 的审计日志子系统，作为 Event Bus 标准订阅方，负责全平台审计日志的接收、标准化、存储与查询。严格遵循 Language Neutral Principle，语言仅作为日志 payload 数据。
+
+### 7.2 Dependencies
+
+| 依赖模块 | 状态 | 关系 |
+|----------|------|------|
+| Permission Manager v1.0 | 🔒 已冻结 | 复用 EventEnvelope 合约 |
+| Event Bus v1.0 | 🔒 已冻结 | 通过 @OnEvent 订阅 |
+
+### 7.3 Next Step
+
+待总工程师正式授权 DESIGN 阶段后，提交完整架构设计文档。
