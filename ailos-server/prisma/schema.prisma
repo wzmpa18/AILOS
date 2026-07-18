@@ -538,6 +538,93 @@ model RuntimeState {
   @@map("runtime_state")
 }
 
+
+// ============================================
+// Permission Manager — 权限管理表 (system_db)
+// Phase 1 Task 3: RBAC (User → Role → Permission)
+// 设计基线: Permission Manager Architecture Design v1.0 (Frozen)
+// 术语标准: Dual-Track Evolution (Personal + Platform)
+// 权限数据属于系统治理数据，不属于双轨学习数据范畴
+// ============================================
+model Role {
+  roleId           String    @id @map("role_id") @db.VarChar(64)
+  name             String    @unique @db.VarChar(128)
+  displayName      String    @map("display_name") @db.VarChar(256)
+  description      String?   @db.VarChar(512)
+  orgScope         String    @default("global") @map("org_scope") @db.VarChar(32)
+  isSystem         Boolean   @default(false) @map("is_system")
+  evolutionTrack   String    @default("platform") @map("evolution_track") @db.VarChar(32)
+  shardKey         String?   @map("shard_key") @db.VarChar(64)
+  policyEngineHook String?   @map("policy_engine_hook") @db.VarChar(256)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@index([orgScope])
+  @@index([shardKey])
+  @@index([deletedAt])
+  @@map("roles")
+}
+
+model Permission {
+  permissionId   String    @id @map("permission_id") @db.VarChar(64)
+  code           String    @unique @db.VarChar(256)
+  name           String    @db.VarChar(256)
+  resource       String    @db.VarChar(128)
+  action         String    @db.VarChar(64)
+  description    String?   @db.VarChar(512)
+  evolutionTrack String    @default("platform") @map("evolution_track") @db.VarChar(32)
+  shardKey       String?   @map("shard_key") @db.VarChar(64)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@index([shardKey])
+  @@index([deletedAt])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @db.VarChar(64)
+  roleId       String   @map("role_id") @db.VarChar(64)
+  permissionId String   @map("permission_id") @db.VarChar(64)
+  grantedBy    String?  @map("granted_by") @db.VarChar(64)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role       Role       @relation(fields: [roleId], references: [roleId])
+  permission Permission @relation(fields: [permissionId], references: [permissionId])
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id         String    @id @db.VarChar(64)
+  userId     BigInt    @map("user_id")
+  roleId     String    @map("role_id") @db.VarChar(64)
+  orgId      BigInt?   @map("org_id")
+  assignedBy String?   @map("assigned_by") @db.VarChar(64)
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  role Role @relation(fields: [roleId], references: [roleId])
+
+  @@unique([userId, roleId, orgId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([orgId])
+  @@map("user_roles")
+}
+
 enum ApiKeyStatus {
   active
   revoked
