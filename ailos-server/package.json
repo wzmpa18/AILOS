@@ -1,7 +1,7 @@
 {
   "name": "ailos-server",
   "version": "0.0.1",
-  "description": "<p align=\"center\">\r   <a href=\"http://nestjs.com/\" target=\"blank\"><img src=\"https://nestjs.com/img/logo-small.svg\" width=\"120\" alt=\"Nest Logo\" /></a>\r </p>",
+  "description": "AILOS Server",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -21,9 +21,20 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.5",
+    "@prisma/client": "^7.0.0",
+    "amqplib": "^0.10.0",
+    "bcrypt": "^5.1.0",
+    "class-transformer": "^0.5.0",
+    "class-validator": "^0.15.0",
+    "ioredis": "^5.4.0",
+    "mysql2": "^3.11.0",
+    "passport-jwt": "^4.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
@@ -35,9 +46,12 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/amqplib": "^0.10.0",
+    "@types/bcrypt": "^5.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
+    "@types/passport-jwt": "^4.0.0",
     "@types/supertest": "^7.0.0",
     "@types/uuid": "^10.0.0",
     "eslint": "^9.18.0",
@@ -71,10 +85,5 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  },
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "keywords": []
+  }
 }
