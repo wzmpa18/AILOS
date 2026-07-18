@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '../../config/config.service';
 import {
   IStorageAdapter,
@@ -44,7 +44,12 @@ export class RedisStorageAdapter implements IStorageAdapter {
       this.logger.log('Redis storage adapter connected');
     });
 
-    await this.redis.connect();
+    try {
+      await this.redis.connect();
+    } catch (error: any) {
+      this.logger.warn(`Redis connection failed, continuing without cache: ${error.message}`);
+      this.connected = false;
+    }
   }
 
   async disconnect(): Promise<void> {

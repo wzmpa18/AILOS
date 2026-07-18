@@ -140,8 +140,8 @@ export class UserRoleService {
     });
 
     return userRoles
-      .filter((ur) => ur.role && !ur.role.deletedAt)
-      .map((ur) => ({
+      .filter((ur: any) => ur.role && !ur.role.deletedAt)
+      .map((ur: any) => ({
         roleId: ur.role.roleId,
         roleName: ur.role.name,
         displayName: ur.role.displayName,
@@ -211,7 +211,7 @@ export class UserRoleService {
       }),
     ]);
 
-    const items = userRoles.map((ur) => ({
+    const items = userRoles.map((ur: any) => ({
       id: ur.id,
       userId: ur.userId.toString(),
       roleId: ur.roleId,

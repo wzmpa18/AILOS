@@ -121,7 +121,7 @@ export class RoleService {
       }),
     ]);
 
-    const items = roles.map((role) => ({
+    const items = roles.map((role: any) => ({
       roleId: role.roleId,
       name: role.name,
       displayName: role.displayName,

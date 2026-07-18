@@ -121,7 +121,7 @@ export class PermissionService {
       }),
     ]);
 
-    const items = permissions.map((p) => ({
+    const items = permissions.map((p: any) => ({
       permissionId: p.permissionId,
       code: p.code,
       name: p.name,
@@ -244,8 +244,8 @@ export class PermissionService {
     });
 
     return associations
-      .filter((a) => a.permission && !a.permission.deletedAt)
-      .map((a) => ({
+      .filter((a: any) => a.permission && !a.permission.deletedAt)
+      .map((a: any) => ({
         permissionId: a.permission.permissionId,
         code: a.permission.code,
         name: a.permission.name,
