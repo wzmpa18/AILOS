@@ -1,5 +1,5 @@
 import { Module, Global, OnModuleInit, Logger } from '@nestjs/common';
-import { DiscoveryService } from '@nestjs/core';
+import { DiscoveryService, DiscoveryModule } from '@nestjs/core';
 import { EventBusService } from './event-bus.service';
 import { MemoryAdapter } from './adapters/memory-adapter';
 import { IEventBus } from './event-bus.provider';
@@ -19,6 +19,7 @@ import { EventHandler } from './event-bus.types';
  */
 @Global()
 @Module({
+  imports: [DiscoveryModule],
   providers: [
     MemoryAdapter,
     EventBusService,
