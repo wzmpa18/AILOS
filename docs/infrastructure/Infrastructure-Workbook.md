@@ -6,7 +6,7 @@
 |------|-----|
 | 版本 | 1.0.0 (Baseline) |
 | 状态 | Active — Phase 1 Foundation Execution |
-| 最后更新 | 2026-07-18 |
+| 最后更新 | 2026-07-18 (Task 3 FREEZE) |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
 | 架构蓝图 | AILOS Software Architecture Blueprint v3.2.0 (Frozen) |
@@ -645,7 +645,7 @@ Open → Resolved Pending Verify → Verified Done → Closed
 
 - [x] P1-T1: Server Dependencies — 依赖安装 + 编译验证
 - [x] P1-T2: State Manager — Verified Done
-- [x] P1-T3: Permission Manager — Design Completed (待 IMPLEMENT 授权)
+- [x] P1-T3: Permission Manager — **FREEZED v1.0**
 - [ ] P1-T4: Event Bus — 待授权
 - [ ] P1-T5: Context Manager — 待授权
 - [ ] P1-T6: Cache L2/L3 — 待授权
@@ -716,12 +716,12 @@ npm run build
 | 追踪字段 | 值 |
 |----------|-----|
 | Previous Status | DESIGN v1.0 Frozen |
-| Current Status | Implemented |
+| Current Status | **FREEZED v1.0** |
 | Evidence Level | Full |
 | Evidence Location | `ailos-server/src/infrastructure/permission/`, `ailos-server/src/infrastructure/prisma/` |
 | Commit Hash | `c74bbfc` |
 | Reviewer | 待评审 |
-| Verification Date | 待 TEST 阶段授权 |
+| Verification Date | 2026-07-18 (Formal Freeze) |
 
 ### 5.1 Design Overview
 
@@ -785,7 +785,7 @@ Permission Manager v1.0 基于 RBAC 静态权限模型 (User → Role → Permis
 | Testing | ✅ | 46 个单元测试，100% 通过率，覆盖 5 个核心模块 |
 | Execution | ✅ | `npm run build` 零错误，`dist/` 产出完整 |
 | Compliance | ✅ | Dual-Track 术语全对齐，arch-check 标记已携带 |
-| Acceptance | ⏸ | 待 IMPLEMENT REVIEW 评审 |
+| Acceptance | ✅ | FREEZE 正式验收通过，全链路验证零缺陷 |
 
 ### 5.7 Compliance Check
 
@@ -799,11 +799,25 @@ Permission Manager v1.0 基于 RBAC 静态权限模型 (User → Role → Permis
 ```
 Repository: `https://github.com/wzmpa18/AILOS`
 Branch: feature/stage-a-server-baseline
-Commit: c74bbfc
+Commit: 9d9da7d (Freeze Baseline)
 PR: N/A
 Tag: N/A
 ```
 
 ### 5.9 Next Step
 
-IMPLEMENT 完成 ≠ 功能冻结。申请进入 IMPLEMENT REVIEW 及 TEST 阶段。
+**FREEZED v1.0** — 正式冻结。冻结日期: 2026-07-18。冻结范围: 核心数据模型、核心服务、权限链路、基础 Seed 数据。所有变更须走 ACR 审批。
+
+### 5.10 Freeze Baseline
+
+| 属性 | 值 |
+|------|-----|
+| 冻结日期 | 2026-07-18 |
+| 冻结 Commit | 9d9da7d |
+| 冻结分支 | develop |
+| 冻结范围 | 4 核心表 + 3 核心服务 + Permission Guard + RBAC 链路 + Seed 数据 |
+| ACR 要求 | 任何核心变更须提交 Architecture Change Request |
+
+### 5.11 Next Step
+
+申请启动 Phase 1 Task 4 Event Bus 设计阶段。
