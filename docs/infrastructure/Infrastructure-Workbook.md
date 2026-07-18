@@ -521,8 +521,54 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，待启动真实�
 | Compliance | ✅ | arch-check: layer=runtime, gateway=true, risk=low; 无业务字段侵入; 无模块越界 |
 | Acceptance | ✅ | 自测通过，所有验收标准 100% PASS |
 
-**下一步**: Task 3: Permission Manager（待总工程师授权启动）
 
+**下一步**: Task 3: Permission Manager DESIGN 阶段（✅ 已完成，待 IMPLEMENT 授权）
+
+### 9.3 Task 2.5: Architecture Alignment Review
+
+**Status: Verified Done**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Design Approved |
+| Current Status | Verified Done |
+| Evidence Level | Full |
+| Evidence Location | 审查报告（对话内交付） |
+| Commit Hash | `51f05db` (Workbook update) |
+| Reviewer | 总工程师 |
+| Verification Date | 2026-07-18 |
+
+**审查结论**: v3.2.0 架构宪法与 Phase 1 代码基线完全对齐，零冲突，零越界，零 ACR 提交。
+
+**术语修正**: Three-Track Evolution → Dual-Track Evolution（删除 Community 轨道）
+
+### 9.4 Task 3: Permission Manager Architecture Design
+
+**Status: Design Completed**
+
+| 追踪字段 | 值 |
+|----------|-----|
+| Previous Status | Pending Authorization |
+| Current Status | Design Completed |
+| Evidence Level | Design Document |
+| Evidence Location | `docs/design/ailos-p3-permission-manager-design.md` |
+| Commit Hash | `ae336eb` |
+| Reviewer | 待总工程师评审 |
+| Verification Date | 2026-07-18 |
+
+**设计范围**:
+- 7+1 强制章节：Module Positioning / Data Model / Permission Flow / Interface Spec / Extension Design / Compliance Review / Implementation Plan / Asset First 专项检查
+- 4 个 Prisma 实体：Role / Permission / RolePermission / UserRole
+- 6 个核心接口：checkPermission / getUserRoles / assignRole / removePermission / getRolePermissions / listRoles
+- 5 项工程裁决全部执行：RBAC / 独立审计 / Dual-Track / 标准 Envelope / system_db 域
+
+**合规状态**:
+- Asset First: ✅ PASS
+- Dual-Track: ✅ PASS
+- State Manager: ✅ PASS（零影响）
+- 审计合规: ✅ PASS
+
+**下一步**: 待总工程师设计评审通过后，申请 IMPLEMENT 授权
 
 ## 10. Governance Rules
 
