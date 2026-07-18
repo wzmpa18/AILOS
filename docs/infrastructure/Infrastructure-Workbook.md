@@ -9,6 +9,8 @@
 | 最后更新 | 2026-07-18 |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
+| 架构蓝图 | AILOS Software Architecture Blueprint v3.1.1 (Frozen) |
+| 开发总纲 | AILOS v3.1.1 Implementation Constitution & Development Plan |
 | 治理规范 | Stage A 基础设施交付体系正式规范（最终冻结版） |
 
 ---
@@ -24,6 +26,7 @@
 | 2026-07-18 | M2 | Workbook Initialized | `c8b52b0` | Done |
 | 2026-07-18 | M2 | Authorization Approved | *(this commit)* | Done |
 | 2026-07-18 | Audit | Code Capability Audit Completed | *(this commit)* | Done |
+| 2026-07-18 | Blueprint | v3.1.1 Implementation Constitution Published | *(this commit)* | Done |
 
 ---
 
@@ -394,6 +397,70 @@ Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘�
 - **Decision**: 建立 P0-P3 四级资产分级体系：P0（绝对禁止丢失，如用户数据/密钥/SSL证书）→ P1（可恢复需备份，如代码/配置模板）→ P2（可重新部署，如部署目录/编译产物）→ P3（可直接清理，如日志/缓存/测试项目）。P0 资产与服务器生命周期完全解耦。
 - **Impact**: 全项目所有阶段强制执行。所有服务器操作、版本升级、环境重构必须遵守本规则。P0 资产默认禁止删除/覆盖/移动，须具备独立备份与恢复方案。数据迁移遵循「备份→恢复→验证→切流→保留观察→确认删除」全流程。本政策为项目永久基线规则，优先级高于所有其他执行规范。
 
+### ADR-008: AI Autonomous Operation Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 所有新增 AI 能力默认设计为可编排、可自动执行、可观测、可恢复；业务功能优先通过 AILOS Runtime 调度，而非直接调用模型 SDK；系统应具备主动感知 → 自动决策 → 闭环验证。
+- **Impact**: 前期架构建设周期更长，但后续新增业务成本显著降低。
+
+### ADR-009: Everything is Capability（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 所有功能统一抽象为 Capability；Agent 永远调用 Capability，不直接调用 Tool 或 Model；换 Tool、换 Model，Workflow 和 Agent 无需修改。
+- **Impact**: 系统具备最高可扩展性，任何能力可被替换而不影响上层。
+
+### ADR-010: Business Logic Must Not Call Models Directly（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 业务代码不得直接调用任何模型 SDK；所有 AI 请求必须经过 AI Gateway；禁止在 Service/Controller 层出现 ModelSDK.chat() 类调用。
+- **Impact**: 代码审计发现违规直接判定为阻塞级缺陷。
+
+### ADR-011: Runtime First Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: 所有业务模块不得直接处理业务流程；所有业务必须交给 AILOS Runtime 调度；业务模块仅负责接收 Intent → 创建/更新 Mission → 展示 Runtime 输出结果。
+- **Impact**: 执行路径: User → Intent → Digital Identity Twin → Goal → Mission → Plan → Execution Graph → Workflow → Capability → AI Gateway → Model。所有业务逻辑统一，系统具备无限扩展能力。
+
+### ADR-012: Digital Identity Twin First Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: Digital Identity Twin 是系统的唯一核心数据对象；Twin 跨 Mission 持续存在，跨领域共享；所有 Mission、Workflow、Capability 调用均基于 Twin 的当前状态；Twin 的构建优先级高于内容生成。
+- **Impact**: 系统以用户为中心，而非以课程为中心。
+
+### ADR-013: One Runtime Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 只有一个 Runtime：AILOS Runtime；所有 Manager 归属同一个 Runtime，不分散为多个 Runtime；Runtime 管理所有执行环境，Manager 管理具体能力。
+- **Impact**: 架构清晰，避免 Runtime 泛滥。
+
+### ADR-014: Outcome First Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: AILOS 的唯一目标是帮助用户/组织实现最终成果（Outcome）；所有 Mission、Workflow、Capability 调用都以 Outcome 为最终判断标准；Mission 结束后系统验证 Outcome 是否达成，未达成则继续调整；Outcome 达成后永久记录到 Digital Identity Twin 的 Timeline。
+- **Impact**: 系统永远以用户成功为目标，而非以任务完成为目标。
+
+### ADR-015: Language Independence Principle（蓝图 v3.1.1）
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Source**: AILOS Software Architecture Blueprint v3.1.1
+- **Decision**: Core Runtime 不得依赖任何自然语言；所有语言适配通过 Language Capability 处理；用户语言身份归属 Digital Identity Twin；新增语言仅需 Language Resource Package + Capability 注册；Runtime 内部禁止任何语言特定业务逻辑。
+- **Impact**: 任何语言用户均可使用 AILOS；小语种社区获得平等访问权；AILOS 成为全球语言无关系统。
+
 ---
 
 ## Appendix
@@ -427,9 +494,11 @@ apt-mark showhold
 
 ### B. 引用附件
 
-以下为 Module 2 已交付的独立文档，作为 Workbook 的参考附件保留（不再更新）:
+以下为 Stage A 已交付的独立文档，作为 Workbook 的参考附件保留（不再更新）:
 
+- AILOS Software Architecture Blueprint v3.1.1 (DOCX) — 2026-07-18（架构蓝图，已冻结）
+- AILOS v3.1.1 Implementation Constitution (Markdown) — 2026-07-18（开发总指令）
+- AILOS Capability Audit Report (Markdown) — 2026-07-18（能力审计报告）
 - Server Baseline Design v1.0 (HTML) — 2026-07-17
 - Server Execute Authorization Request (HTML) — 2026-07-18
 - Server Asset Inventory Plan (HTML) — 2026-07-17
-- AILOS Capability Audit Report (Markdown) — 2026-07-18
