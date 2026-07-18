@@ -23,6 +23,7 @@
 | 2026-07-18 | M2 | Execute Authorization Request Submitted | `d015a32` | Done |
 | 2026-07-18 | M2 | Workbook Initialized | `c8b52b0` | Done |
 | 2026-07-18 | M2 | Authorization Approved | *(this commit)* | Done |
+| 2026-07-18 | Audit | Code Capability Audit Completed | *(this commit)* | Done |
 
 ---
 
@@ -431,3 +432,4 @@ apt-mark showhold
 - Server Baseline Design v1.0 (HTML) — 2026-07-17
 - Server Execute Authorization Request (HTML) — 2026-07-18
 - Server Asset Inventory Plan (HTML) — 2026-07-17
+- AILOS Capability Audit Report (Markdown) — 2026-07-18
