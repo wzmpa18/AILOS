@@ -23,8 +23,8 @@ export { EventBusService } from './event-bus.service';
 // 模块
 export { EventBusModule } from './event-bus.module';
 
-// 适配器
-export { MemoryAdapter } from './adapters/memory-adapter';
+// 适配器（内部实现，仅通过 Module DI 注入，不对外暴露）
+// MemoryAdapter is registered inside EventBusModule, not exported publicly
 
 // 装饰器
 export { OnEvent } from './decorators/on-event.decorator';
