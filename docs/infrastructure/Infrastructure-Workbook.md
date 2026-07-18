@@ -20,8 +20,9 @@
 | 2026-07-17 | M1 | Repository Baseline Verified | `543161b` | Archived |
 | 2026-07-17 | M2 | Inventory Plan Approved | `28b25d6` | Done |
 | 2026-07-17 | M2 | Design v1.0 Approved | `6ae2471` | Done |
-| 2026-07-18 | M2 | Execute Authorization Request Submitted | `d015a32` | Pending Review |
-| 2026-07-18 | M2 | Workbook Initialized | *(this commit)* | Done |
+| 2026-07-18 | M2 | Execute Authorization Request Submitted | `d015a32` | Done |
+| 2026-07-18 | M2 | Workbook Initialized | `c8b52b0` | Done |
+| 2026-07-18 | M2 | Authorization Approved | *(this commit)* | Done |
 
 ---
 
@@ -88,7 +89,7 @@ Tag: N/A
 
 ## 2. Module 2: Server Baseline
 
-**Status: Design Approved → Awaiting Execute Authorization**
+**Status: Authorized → Checkpoint 1: Inventory Execute**
 
 ### 2.1 Design Overview
 
@@ -138,23 +139,23 @@ Internet (:443) → Nginx 1.24 → Node.js 20.x (:3000) → Redis 7.0 (:6379)
 
 ### 2.6 Authorization
 
-**Server Execute Authorization Request** 已提交，等待审批。
+**Status: Approved (2026-07-18)**
 
 | 项目 | 内容 |
 |------|------|
-| 提交日期 | 2026-07-18 |
-| 状态 | Pending Review |
+| 审批日期 | 2026-07-18 |
+| 授权账号 | root 权限账号（含完整 sudo 权限） |
 | 授权范围 | Inventory Execute / Backup / Cleanup / Initialize / Verify |
-| 有效期 | 审批通过后 7 个自然日 |
+| 有效期 | 自凭据发放之日起 7 天；Module 2 验收完成后凭据立即失效 |
+| 凭据发放 | 通过独立安全渠道 |
 | AI Provider | 不涉及 (归属 Module 4) |
 
-**所需权限 (P1-P6)**:
-- P1: 服务器 IP
-- P2: SSH 端口
-- P3: SSH 用户名 (sudo)
-- P4: SSH 登录凭据
-- P5: sudo 权限 (含 apt/systemctl)
-- P6: 登录说明 (跳板机/VPN 等)
+**禁止操作**:
+- 不得修改域名解析
+- 不得调整云服务器安全组 / 防火墙策略
+- 不得操作未列入清理清单的资产
+- 不得部署业务代码
+- 不得申请或配置任何 AI Provider 相关凭据
 
 **分阶段执行计划 (~22h / 5 天)**:
 
@@ -171,11 +172,11 @@ Internet (:443) → Nginx 1.24 → Node.js 20.x (:3000) → Redis 7.0 (:6379)
 
 ### 2.7 Inventory
 
-**Status: Pending (Blocked by Authorization)**
+**Status: In Progress — Checkpoint 1**
 
-Inventory Plan 已通过评审 (2026-07-17)。待授权后执行真实盘点。
+Inventory Plan 已通过评审 (2026-07-17)。授权已批准，启动真实盘点。
 
-盘点维度: 运行环境 / 网络与域名 / 存量项目 / 数据资产 / 系统配置
+盘点维度: 系统信息 / 硬件资源 / 运行服务 / 数据库 / 目录结构 / 端口占用 / 定时任务
 
 四级资产分类:
 - **A**: 保留 (AILOS 必需)
@@ -186,6 +187,43 @@ Inventory Plan 已通过评审 (2026-07-17)。待授权后执行真实盘点。
 ### 2.8 Confirm
 
 **Status: Pending (Blocked by P1)**
+
+#### 2.8.1 核心资产保护政策 (ADR-007)
+
+**P0-P3 资产分级定义**:
+
+| 优先级 | 资产类型 | 删除权限 | 说明 |
+|--------|---------|---------|------|
+| **P0** | 用户数据库、用户上传文件、环境密钥 (.env/Secret/API Key)、SSL 证书及私钥、数据库加密密钥 | 永久禁止删除 | 项目核心业务资产 |
+| **P1** | Git 仓库代码、项目核心配置模板 | 须备份确认后操作 | 可通过仓库恢复 |
+| **P2** | 前端部署目录、后端部署目录、运行时编译产物 | 可清理重建 | 可通过代码重新部署 |
+| **P3** | 运行日志、缓存文件、临时文件、测试项目、历史进程残留、废弃演示环境 | 可直接清理 | 不影响业务运行 |
+
+**永久治理规则**:
+- 所有 P0 级资产默认禁止删除、禁止覆盖、禁止移动
+- P0 资产必须具备独立备份与恢复方案，备份后执行抽样恢复验证
+- 代码发布、环境重构、服务器升级不得影响 P0 资产完整性
+- P0 敏感信息严禁提交至 Git 仓库、写入公开文档、输出到日志文件
+- 数据迁移遵循「备份 → 恢复到新环境 → 功能验证 → 业务验证 → 切流 → 旧环境保留观察 → 确认后删除」全流程
+- P0 资产与服务器生命周期完全解耦：服务器可按需重建，P0 资产不受影响
+
+#### 2.8.2 默认清理规则
+
+**保留资产（默认不清理）**:
+- 当前线上运行的前端站点及对应部署目录
+- 已部署的 SSL 证书及相关配置文件
+- 操作系统基础组件与系统默认服务
+
+**默认清理资产（备份后清理）**:
+- 所有历史后端项目、测试项目、演示项目（含旧言道项目）
+- 所有废弃部署目录、临时文件、历史代码归档
+- 存量 PM2 历史进程与对应服务配置
+- 冗余 Nginx 站点配置（前端站点与证书配置除外）
+- 废弃测试数据库实例与冗余账号
+- 历史运行日志、无关定时任务
+- 与 AILOS 无关的其他运行环境、工具与残留文件
+
+**当前阶段说明**: 服务器暂未正式运营，无真实用户数据、用户上传文件等业务类 P0 资产。现有 SSL 证书、系统级核心配置属于 P0 范畴，默认保留。存量测试数据库、测试项目配置属于 P3 级资产，完成备份后可按计划清理。
 
 ### 2.9 Backup
 
@@ -199,7 +237,7 @@ Inventory Plan 已通过评审 (2026-07-17)。待授权后执行真实盘点。
 
 清理范围: 旧言道项目、测试项目、历史部署目录、废弃数据库、冗余 Nginx/PM2 配置、历史日志。
 
-不可逆操作须在工作簿中列出待操作清单，经人工确认后方可执行。
+不可逆操作须在工作簿中列出完整待操作清单，经人工回复「确认执行」后方可操作。
 
 ### 2.11 Initialize
 
@@ -280,7 +318,7 @@ Inventory Plan 已通过评审 (2026-07-17)。待授权后执行真实盘点。
 - [x] M2-02: Design v1.0 方案设计 + 评审通过
 - [x] M2-03: Execute Authorization Request 提交
 - [x] M2-04: Infrastructure Workbook 初始化
-- [ ] M2-05: 获取服务器授权凭据
+- [x] M2-05: 获取服务器授权凭据
 - [ ] M2-06: P1 — Inventory Execute (真实盘点)
 - [ ] M2-07: P2 — Confirm (资产确认)
 - [ ] M2-08: P3 — Backup (全量备份 + 验证)
@@ -347,6 +385,13 @@ Inventory Plan 已通过评审 (2026-07-17)。待授权后执行真实盘点。
 - **Date**: 2026-07-17
 - **Decision**: 腾讯混元 SecretId/SecretKey、TokenHub 密钥等 AI Provider 凭据不在 Module 2 申请、保存或使用，统一在 Module 4 Execute 阶段提供。
 - **Impact**: Module 2 的 .env.local 配置、备份脚本、验证脚本均不涉及 AI Provider 相关配置。
+
+### ADR-007: 核心资产保护政策 (P0-P3 分级)
+
+- **Status**: Accepted
+- **Date**: 2026-07-18
+- **Decision**: 建立 P0-P3 四级资产分级体系：P0（绝对禁止丢失，如用户数据/密钥/SSL证书）→ P1（可恢复需备份，如代码/配置模板）→ P2（可重新部署，如部署目录/编译产物）→ P3（可直接清理，如日志/缓存/测试项目）。P0 资产与服务器生命周期完全解耦。
+- **Impact**: 全项目所有阶段强制执行。所有服务器操作、版本升级、环境重构必须遵守本规则。P0 资产默认禁止删除/覆盖/移动，须具备独立备份与恢复方案。数据迁移遵循「备份→恢复→验证→切流→保留观察→确认删除」全流程。本政策为项目永久基线规则，优先级高于所有其他执行规范。
 
 ---
 
