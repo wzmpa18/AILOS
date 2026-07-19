@@ -6,7 +6,7 @@
 |------|-----|
 | 版本 | 1.0.0 (Baseline) |
 | 状态 | Active — Phase 1 Foundation Execution |
-| 最后更新 | 2026-07-19 (Task 4 FREEZE + Task 5 DESIGN) |
+| 最后更新 | 2026-07-19 (Task 4 FREEZE + Task 5 FREEZE + v3.2.1 架构对齐) |
 | 关联仓库 | `https://github.com/wzmpa18/AILOS` |
 | 当前分支 | `feature/stage-a-server-baseline` |
 | 架构蓝图 | AILOS Software Architecture Blueprint v3.2.0 (Frozen) |
@@ -33,7 +33,7 @@
 | 2026-07-18 | Phase 1 | Task 2: State Manager | `d374853` | Verified Done |
 | 2026-07-18 | Phase 1 | Task 3: Permission Manager | `c74bbfc` | Implemented |
 | 2026-07-18 | Phase 1 | Task 4: Event Bus | `4891c66` | **FREEZED v1.0** |
-| 2026-07-19 | Phase 1 | Task 5: Audit Log | — | DESIGN 🚀 |
+| 2026-07-19 | Phase 1 | Task 5: Audit Log | a51edc5 | **FREEZED v1.0** 🔒 |
 
 ---
 
@@ -649,7 +649,7 @@ Open → Resolved Pending Verify → Verified Done → Closed
 - [x] P1-T2: State Manager — Verified Done
 - [x] P1-T3: Permission Manager — **FREEZED v1.0**
 - [x] P1-T4: Event Bus — **FREEZED v1.0** (4891c66)
-- [ ] P1-T5: Audit Log — **DESIGN 🚀**
+- [x] P1-T5: Audit Log — **FREEZED v1.0** 🔒
 - [ ] P1-T6: Cache L2/L3 — 待授权
 - [ ] P1-T7: Content Audit — 待授权
 
