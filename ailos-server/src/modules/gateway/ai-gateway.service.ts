@@ -326,7 +326,7 @@ export class AiGatewayService {
       await this.cacheRetrieval.writeL3Cache(cacheKey, content, {
         scene: normalizedRequest.scene,
         domain: normalizedRequest.domain,
-      });
+      }, normalizedRequest);
 
       // ===== Step 10: 成本同步 =====
       await this.costBreaker.recordCost(callId, request.module, request.userId, cost);

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GatewayRequest, CostCheckResult, DegradationLevel } from './dto/gateway-request.dto';
-import { CacheService } from '../../infrastructure/cache/cache.service';
+import { CacheManager } from '../../infrastructure/cache/cache.service';
+import { CacheEntry, CacheType, CacheSecurityLevel, CacheTier } from '../../infrastructure/cache/cache.types';
 
 /**
  * 成本熔断模块
@@ -43,7 +44,7 @@ export class CostCircuitBreakerService {
     },
   };
 
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(private readonly cacheManager: CacheManager) {}
 
   /**
    * Step 3: 成本判断
@@ -99,7 +100,8 @@ export class CostCircuitBreakerService {
   private async checkGlobalBudget(): Promise<{ allowed: boolean }> {
     const today = new Date().toISOString().split('T')[0];
     const key = `cost:global:daily:${today}`;
-    const currentCost = parseFloat((await this.cacheService.get(key)) || '0');
+    const result = await this.cacheManager.get(key);
+    const currentCost = parseFloat((result?.value?.cost as string) || '0');
 
     if (currentCost >= this.config.global.dailyBudget * this.config.global.circuitBreakThreshold) {
       return { allowed: false };
@@ -120,7 +122,8 @@ export class CostCircuitBreakerService {
   private async checkModuleBudget(module: string): Promise<{ allowed: boolean }> {
     const today = new Date().toISOString().split('T')[0];
     const key = `cost:module:${module}:daily:${today}`;
-    const currentCost = parseFloat((await this.cacheService.get(key)) || '0');
+    const result = await this.cacheManager.get(key);
+    const currentCost = parseFloat((result?.value?.cost as string) || '0');
 
     const moduleConfig = this.config.modules[module] || this.config.modules.default;
     const budget = moduleConfig.dailyBudget;
@@ -134,7 +137,8 @@ export class CostCircuitBreakerService {
   async checkUserQuota(userId: string, userLevel: string): Promise<{ allowed: boolean; remainingQuota: number }> {
     const today = new Date().toISOString().split('T')[0];
     const key = `quota:user:${userId}:daily:${today}`;
-    const used = parseInt((await this.cacheService.get(key)) || '0', 10);
+    const result = await this.cacheManager.get(key);
+    const used = parseInt((result?.value?.count as string) || '0', 10);
 
     const levelConfig = this.config.userLevels[userLevel] || this.config.userLevels.free;
     const quota = levelConfig.dailyQuota;
@@ -153,19 +157,68 @@ export class CostCircuitBreakerService {
 
     // 全局
     const globalKey = `cost:global:daily:${today}`;
-    const currentGlobal = parseFloat((await this.cacheService.get(globalKey)) || '0');
-    await this.cacheService.set(globalKey, (currentGlobal + cost).toString(), 86400);
+    const globalResult = await this.cacheManager.get(globalKey);
+    const currentGlobal = parseFloat((globalResult?.value?.cost as string) || '0');
+    const globalEntry: CacheEntry = {
+      id: `cost:global:${today}:${Date.now()}`,
+      cacheKey: globalKey,
+      namespace: 'system.cost.tracking',
+      schemaVersion: 1,
+      cacheType: CacheType.GENERATED_RESULT,
+      securityLevel: CacheSecurityLevel.PUBLIC,
+      sourceModule: 'cost-circuit-breaker',
+      dataScope: 'platform',
+      accessCount: 0,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 86400 * 1000).toISOString(),
+      value: { cost: (currentGlobal + cost).toString() },
+      metadata: { scene: 'cost', domain: 'system' },
+    };
+    await this.cacheManager.set(globalKey, globalEntry, { tiers: [CacheTier.L1, CacheTier.L2] });
 
     // 模块
     const moduleKey = `cost:module:${module}:daily:${today}`;
-    const currentModule = parseFloat((await this.cacheService.get(moduleKey)) || '0');
-    await this.cacheService.set(moduleKey, (currentModule + cost).toString(), 86400);
+    const moduleResult = await this.cacheManager.get(moduleKey);
+    const currentModule = parseFloat((moduleResult?.value?.cost as string) || '0');
+    const moduleEntry: CacheEntry = {
+      id: `cost:module:${module}:${today}:${Date.now()}`,
+      cacheKey: moduleKey,
+      namespace: 'system.cost.tracking',
+      schemaVersion: 1,
+      cacheType: CacheType.GENERATED_RESULT,
+      securityLevel: CacheSecurityLevel.PUBLIC,
+      sourceModule: 'cost-circuit-breaker',
+      dataScope: 'platform',
+      accessCount: 0,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 86400 * 1000).toISOString(),
+      value: { cost: (currentModule + cost).toString() },
+      metadata: { scene: 'cost', domain: 'system' },
+    };
+    await this.cacheManager.set(moduleKey, moduleEntry, { tiers: [CacheTier.L1, CacheTier.L2] });
 
     // 用户
     if (userId) {
       const userKey = `quota:user:${userId}:daily:${today}`;
-      const currentUser = parseInt((await this.cacheService.get(userKey)) || '0', 10);
-      await this.cacheService.set(userKey, (currentUser + 1).toString(), 86400);
+      const userResult = await this.cacheManager.get(userKey);
+      const currentUser = parseInt((userResult?.value?.count as string) || '0', 10);
+      const userEntry: CacheEntry = {
+        id: `quota:user:${userId}:${today}:${Date.now()}`,
+        cacheKey: userKey,
+        namespace: 'system.cost.tracking',
+        schemaVersion: 1,
+        cacheType: CacheType.GENERATED_RESULT,
+        securityLevel: CacheSecurityLevel.RESTRICTED,
+        sourceModule: 'cost-circuit-breaker',
+        dataScope: 'personal',
+        userId,
+        accessCount: 0,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400 * 1000).toISOString(),
+        value: { count: (currentUser + 1).toString() },
+        metadata: { scene: 'cost', domain: 'system' },
+      };
+      await this.cacheManager.set(userKey, userEntry, { tiers: [CacheTier.L1, CacheTier.L2] });
     }
 
     this.logger.debug(`[Cost] Recorded: callId=${callId}, cost=$${cost.toFixed(6)}`);
