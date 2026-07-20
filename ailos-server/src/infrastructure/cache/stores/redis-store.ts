@@ -88,7 +88,8 @@ export class RedisStore implements ICacheStore, OnModuleDestroy {
     }
   }
 
-  private markDegraded(): void {
+  /** 标记降级（测试可见） */
+  markDegraded(): void {
     this.degraded = true;
     this.available = false;
     // 60 秒后自动重试
@@ -126,7 +127,7 @@ export class RedisStore implements ICacheStore, OnModuleDestroy {
 
   async get(key: string): Promise<CacheEntry | null> {
     if (!this.isAvailable()) {
-      throw new CacheStorageUnavailableError(CacheTier.L2, 'Redis not connected');
+      return null; // 降级模式：静默返回 null，不抛异常
     }
 
     const startTime = Date.now();
@@ -171,13 +172,14 @@ export class RedisStore implements ICacheStore, OnModuleDestroy {
     }
 
     // TTL 强制校验：L2 禁止写入无 TTL 的永久 Key
-    const ttlSeconds = this.getTTL(entry);
-    if (ttlSeconds <= 0) {
-      throw new Error(`L2 RedisStore: TTL is required. Got ttlSeconds=${ttlSeconds}. Permanent cache only allowed in L3.`);
+    if (!entry.expiresAt) {
+      throw new Error('L2 RedisStore: TTL is required. Permanent cache only allowed in L3.');
     }
+    const ttlSeconds = this.getTTL(entry);
 
     const redisKey = this.buildRedisKey(key);
-    const ttlWithJitter = this.applyJitter(ttlSeconds);
+    // 短 TTL / 已过期 TTL 使用最小 1 秒兜底，确保条目能写入并快速过期
+    const ttlWithJitter = this.applyJitter(Math.max(1, ttlSeconds));
 
     try {
       await this.redis!.setex(redisKey, ttlWithJitter, JSON.stringify(entry));
@@ -287,7 +289,7 @@ export class RedisStore implements ICacheStore, OnModuleDestroy {
     const ttlSeconds = Math.floor(
       (new Date(entry.expiresAt).getTime() - Date.now()) / 1000
     );
-    return Math.max(1, ttlSeconds);
+    return ttlSeconds; // 返回原始值，调用方负责 clamp
   }
 
   /** TTL 随机抖动 */

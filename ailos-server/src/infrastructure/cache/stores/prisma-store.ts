@@ -121,6 +121,13 @@ export class PrismaStore implements ICacheStore, OnModuleDestroy {
       }
 
       const entry = this.mapRowToEntry(row);
+
+      // 检查 expiresAt 过期
+      if (entry.expiresAt && new Date(entry.expiresAt).getTime() <= Date.now()) {
+        this.missCount++;
+        return null;
+      }
+
       this.hitCount++;
       return entry;
     } catch (error) {
@@ -200,10 +207,12 @@ export class PrismaStore implements ICacheStore, OnModuleDestroy {
     }
 
     try {
+      // Strip wildcard chars from pattern for Prisma contains (substring match)
+      const cleanPattern = pattern.replace(/[*?]/g, '');
       const result = await (this.prisma as any).cacheEntry.updateMany({
         where: {
           namespace,
-          cacheKey: { contains: pattern },
+          cacheKey: { contains: cleanPattern },
         },
         data: {
           state: 'INVALIDATED',
@@ -366,6 +375,13 @@ export class PrismaStore implements ICacheStore, OnModuleDestroy {
   // ============================================================================
 
   private mapRowToEntry(row: any): CacheEntry {
+    const toISO = (val: any): string | undefined => {
+      if (!val) return undefined;
+      if (typeof val === 'string') return val;
+      if (val instanceof Date) return val.toISOString();
+      if (typeof val.toISOString === 'function') return val.toISOString();
+      return String(val);
+    };
     return {
       id: row.id,
       cacheKey: row.cacheKey,
@@ -379,11 +395,11 @@ export class PrismaStore implements ICacheStore, OnModuleDestroy {
       dataScope: row.dataScope,
       assetId: row.assetId,
       accessCount: row.accessCount,
-      lastAccessedAt: row.lastAccessedAt?.toISOString(),
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt?.toISOString(),
-      expiresAt: row.expiresAt?.toISOString(),
-      archivedAt: row.archivedAt?.toISOString(),
+      lastAccessedAt: toISO(row.lastAccessedAt),
+      createdAt: toISO(row.createdAt) ?? new Date().toISOString(),
+      updatedAt: toISO(row.updatedAt),
+      expiresAt: toISO(row.expiresAt),
+      archivedAt: toISO(row.archivedAt),
       value: typeof row.value === 'string' ? JSON.parse(row.value) : row.value,
       languageIdentityHash: row.languageIdentityHash,
       metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata || {}),

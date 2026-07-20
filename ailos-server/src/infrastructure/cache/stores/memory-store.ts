@@ -168,7 +168,12 @@ export class MemoryStore implements ICacheStore {
 
   async invalidatePattern(namespace: string, pattern: string): Promise<number> {
     let count = 0;
-    const regex = new RegExp(pattern);
+    // Convert glob pattern to regex: escape special chars, convert * and ?
+    const escaped = pattern
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.');
+    const regex = new RegExp(escaped);
 
     for (const [key, memEntry] of this.store.entries()) {
       if (memEntry.entry.namespace === namespace && regex.test(key)) {

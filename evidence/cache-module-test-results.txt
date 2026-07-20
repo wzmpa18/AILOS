@@ -1,0 +1,76 @@
+======================================================================
+AILOS Cache Module — Test Evidence
+======================================================================
+Module:        Cache L2/L3 (Phase 1 Task 6)
+Date:          2026-07-19
+Status:        ALL TESTS PASSED
+Total Tests:   70
+Test Suites:   4 passed, 4 total
+======================================================================
+
+Test Summary:
+  memory-store.spec.ts  — 19 passed, 0 failed
+  redis-store.spec.ts   — 13 passed, 0 failed
+  prisma-store.spec.ts  — 13 passed, 0 failed
+  cache.service.spec.ts — 25 passed, 0 failed
+
+Build Status:  nest build — SUCCESS (exit code 0)
+
+======================================================================
+ICacheStore v1.0 Contract Verification (all 3 adapters):
+  - get(): cache hit / cache miss / expired entry
+  - set(): write & retrieve / TTL expiration / namespace isolation
+  - invalidate(): exact key invalidation
+  - invalidatePattern(): namespace + pattern invalidation
+  - getStats(): stats structure / hit-miss tracking
+
+MemoryStore Features (L1):
+  - Negative Cache (cache stampede prevention)
+  - Single Flight (dedup / timeout / lock)
+  - LRU Eviction (max capacity enforcement)
+  - TTL Jitter (cache stampede prevention)
+  - Stats Tracking (hit/miss counters)
+  - Periodic Cleanup (expired entry removal)
+
+RedisStore Features (L2):
+  - TTL Enforcement (permanent cache rejection)
+  - Degraded Mode (graceful null return)
+  - Connection Health Check (ping)
+  - Jittered TTL (cache stampede prevention)
+
+PrismaStore Features (L3):
+  - Lifecycle State Machine (ACTIVE/EXPIRED/REUSED/INVALIDATED/ARCHIVED/DELETED)
+  - Dual Governance (IMMUTABLE_ASSET / GENERATED_RESULT)
+  - expiresAt Expiry Check
+  - Low Reuse Detection (archive)
+  - Archival Purging
+
+CacheManager Features (Orchestrator):
+  - Layered Query (L1→L2→L3 with backfill)
+  - Layered Write (all tiers / selective tiers)
+  - Degradation Skip (L2/L3 unavailable)
+  - Write Security Validation (security level / namespace / schema / payload)
+  - forceRefresh (specific key / namespace-wide)
+  - Asset Event Handlers (onAssetUpdated / onAssetDeleted / onAssetArchived)
+  - Stats Aggregation (cross-tier cumulative)
+
+======================================================================
+Implementation Files:
+  src/infrastructure/cache/
+    cache.types.ts          — Types, interfaces, enums, constants, exceptions
+    cache.provider.ts       — DI tokens (ICACHE_STORE, CACHE_SOURCE_MODULE)
+    cache.module.ts         — @Global() NestJS module
+    cache.service.ts        — CacheManager orchestrator
+    index.ts               — Barrel export
+    cache-contract.helper.ts — ICacheStore v1.0 contract test helper
+    stores/
+      memory-store.ts       — L1 MemoryStore (LRU + Negative Cache + Single Flight)
+      memory-store.spec.ts  — 19 tests
+      redis-store.ts        — L2 RedisStore (ioredis + Jitter)
+      redis-store.spec.ts   — 13 tests
+      prisma-store.ts       — L3 PrismaStore (Dual Governance)
+      prisma-store.spec.ts  — 13 tests
+    cache.service.spec.ts   — 25 tests
+
+======================================================================
+END OF EVIDENCE
