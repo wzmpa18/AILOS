@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AILOS - 平台财务总账</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: #1a1a35;
+            --bg-card-hover: #1f1f40;
+            --bg-input: #15152e;
+            --border: #2a2a4a;
+            --border-light: #333358;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0c0;
+            --text-muted: #6a6a8a;
+            --accent: #8B5CF6;
+            --accent-dark: #6D28D9;
+            --accent-light: #A78BFA;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --transition: 0.2s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+        .lang-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+        .lang-select:hover { border-color: var(--accent); }
+        .lang-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,0.2); }
+        /* Main */
+        .main {
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+        }
+        .summary-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .summary-card .card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .summary-card .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .summary-card .card-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .summary-card.accent .card-value { color: var(--accent-light); }
+        .summary-card.success .card-value { color: var(--success); }
+        .summary-card.danger .card-value { color: var(--danger); }
+        .summary-card.warning .card-value { color: var(--warning); }
+        /* Commission Split Section */
+        .section {
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+        }
+        .commission-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .commission-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .commission-panel h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .commission-panel h3 .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .commission-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .commission-panel .stat-row:last-child { border-bottom: none; }
+        .commission-panel .stat-label { color: var(--text-muted); }
+        .commission-panel .stat-value { font-weight: 600; color: var(--text-primary); }
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-bar input,
+        .filter-bar select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
+        }
+        .filter-bar input { min-width: 160px; }
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn:hover { background: var(--accent-dark); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent-light);
+        }
+        .btn-outline:hover { background: rgba(139,92,246,0.1); }
+        /* Table */
+        .table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .table-scroll {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 1100px;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        tr:hover td { background: rgba(139,92,246,0.05); }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-personal { background: rgba(59,130,246,0.2); color: #60A5FA; }
+        .badge-platform { background: rgba(139,92,246,0.2); color: #A78BFA; }
+        .amount-positive { color: var(--success); }
+        .amount-negative { color: var(--danger); }
+        /* AI Cost Section */
+        .ai-cost-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .ai-cost-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        .ai-cost-card .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+        .ai-cost-card .metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        /* Infrastructure Row */
+        .infra-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .infra-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .infra-card .infra-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: rgba(139,92,246,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .infra-card .infra-info h4 {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .infra-card .infra-info .infra-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .commission-grid { grid-template-columns: 1fr; }
+            .ai-cost-grid { grid-template-columns: 1fr; }
+            .infra-row { grid-template-columns: 1fr; }
+            .main { padding: 16px; }
+            .header { padding: 0 12px; }
+            .header-title { font-size: 15px; }
+            .summary-card .card-value { font-size: 22px; }
+        }
+        @media (max-width: 375px) {
+            .summary-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
+            .filter-bar input, .filter-bar select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">A</div>
+            <span class="header-title" data-i18n="page.title">AILOS 平台财务总账</span>
+            <span class="header-subtitle" data-i18n="page.subtitle">Finance Ledger</span>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="switchLang(this.value)">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+        </select>
+    </header>
+
+    <main class="main">
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card accent">
+                <div class="card-label" data-i18n="card.dailyRevenue">当日收入</div>
+                <div class="card-value" id="dailyRevenue">¥12,850</div>
+                <div class="card-sub" id="dailyRevenueSub">较昨日 +8.3%</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label" data-i18n="card.monthlyRevenue">本月累计收入</div>
+                <div class="card-value" id="monthlyRevenue">¥386,420</div>
+                <div class="card-sub" id="monthlyRevenueSub">较上月同期 +12.5%</div>
+            </div>
+            <div class="summary-card success">
+                <div class="card-label" data-i18n="card.totalRevenue">总收入</div>
+                <div class="card-value" id="totalRevenue">¥4,852,300</div>
+                <div class="card-sub" data-i18n="card.totalRevenueSub">自平台上线以来</div>
+            </div>
+            <div class="summary-card warning">
+                <div class="card-label" data-i18n="card.aiCost">AI成本（本月）</div>
+                <div class="card-value" id="aiCost">¥58,240</div>
+                <div class="card-sub" data-i18n="card.aiCostSub">占总收入 15.1%</div>
+            </div>
+            <div class="summary-card success">
+                <div class="card-label" data-i18n="card.netProfit">净利润（本月）</div>
+                <div class="card-value" id="netProfit">¥328,180</div>
+                <div class="card-sub" data-i18n="card.netProfitSub">净利润率 41.2%</div>
+            </div>
+        </div>
+
+        <!-- Commission Split -->
+        <div class="section">
+            <h2 class="section-title" data-i18n="section.commissionTitle">佣金分栏统计</h2>
+            <div class="commission-grid">
+                <div class="commission-panel">
+                    <h3><span class="dot" style="background:#3B82F6;"></span> <span data-i18n="section.personalCommission">个人推广佣金</span></h3>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.level1">一级佣金</span>
+                        <span class="stat-value" id="personalL1">¥45,200</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.level2">二级佣金</span>
+                        <span class="stat-value" id="personalL2">¥12,800</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.refundDeduction">退款扣佣</span>
+                        <span class="stat-value amount-negative" id="personalRefund">-¥3,420</span>
+                    </div>
+                    <div class="stat-row" style="font-weight:700; border-top:1px solid var(--accent); padding-top:12px; margin-top:8px;">
+                        <span class="stat-label" data-i18n="comm.subtotal">个人佣金小计</span>
+                        <span class="stat-value" style="color:var(--accent-light);" id="personalSubtotal">¥54,580</span>
+                    </div>
+                </div>
+                <div class="commission-panel">
+                    <h3><span class="dot" style="background:#8B5CF6;"></span> <span data-i18n="section.platformCommission">平台自主注册佣金</span></h3>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.level1">一级佣金</span>
+                        <span class="stat-value" id="platformL1">¥18,600</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.level2">二级佣金</span>
+                        <span class="stat-value" id="platformL2">¥5,100</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label" data-i18n="comm.refundDeduction">退款扣佣</span>
+                        <span class="stat-value amount-negative" id="platformRefund">-¥1,880</span>
+                    </div>
+                    <div class="stat-row" style="font-weight:700; border-top:1px solid var(--accent); padding-top:12px; margin-top:8px;">
+                        <span class="stat-label" data-i18n="comm.subtotal">平台佣金小计</span>
+                        <span class="stat-value" style="color:var(--accent-light);" id="platformSubtotal">¥21,820</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Detail Table -->
+        <div class="section">
+            <h2 class="section-title" data-i18n="section.revenueDetail">收入明细</h2>
+            <div class="filter-bar">
+                <input type="date" id="filterDateFrom" title="Start Date" onchange="applyFilter()">
+                <span style="color:var(--text-muted);" data-i18n="filter.to">至</span>
+                <input type="date" id="filterDateTo" title="End Date" onchange="applyFilter()">
+                <select id="filterType" onchange="applyFilter()">
+                    <option value="all" data-i18n="filter.all">全部类型</option>
+                    <option value="personal" data-i18n="filter.personalPromo">个人推广</option>
+                    <option value="platform" data-i18n="filter.platformReg">平台注册</option>
+                </select>
+                <button class="btn btn-outline" onclick="resetFilter()" data-i18n="filter.reset">重置</button>
+            </div>
+            <div class="table-wrap">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="table.date">日期</th>
+                                <th data-i18n="table.orderNo">订单号</th>
+                                <th data-i18n="table.plan">会员套餐</th>
+                                <th data-i18n="table.amount">金额</th>
+                                <th data-i18n="table.type">类型</th>
+                                <th data-i18n="table.level1Personal">一级佣金(个人)</th>
+                                <th data-i18n="table.level1Platform">一级佣金(平台)</th>
+                                <th data-i18n="table.level2Personal">二级佣金(个人)</th>
+                                <th data-i18n="table.level2Platform">二级佣金(平台)</th>
+                                <th data-i18n="table.refundDeduction">退款扣佣</th>
+                                <th data-i18n="table.netIncome">净收入</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Cost Statistics -->
+        <div class="section">
+            <h2 class="section-title" data-i18n="section.aiCostStats">AI成本统计（本月）</h2>
+            <div class="ai-cost-grid">
+                <div class="ai-cost-card">
+                    <div class="metric-value" id="aiCalls">2,845,000</div>
+                    <div class="metric-label" data-i18n="ai.calls">AI调用次数</div>
+                </div>
+                <div class="ai-cost-card">
+                    <div class="metric-value" id="aiTokens">1.28B</div>
+                    <div class="metric-label" data-i18n="ai.tokens">Token消耗量</div>
+                </div>
+                <div class="ai-cost-card">
+                    <div class="metric-value" id="aiEstimatedCost">¥58,240</div>
+                    <div class="metric-label" data-i18n="ai.estimatedCost">预估成本</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Infrastructure Costs -->
+        <div class="section">
+            <h2 class="section-title" data-i18n="section.infraCost">基础设施成本（本月）</h2>
+            <div class="infra-row">
+                <div class="infra-card">
+                    <div class="infra-icon">🖥</div>
+                    <div class="infra-info">
+                        <h4 data-i18n="server.cost">服务器成本</h4>
+                        <div class="infra-value" id="serverCost">¥18,500</div>
+                    </div>
+                </div>
+                <div class="infra-card">
+                    <div class="infra-icon">📡</div>
+                    <div class="infra-info">
+                        <h4 data-i18n="bandwidth.cost">带宽成本</h4>
+                        <div class="infra-value" id="bandwidthCost">¥6,320</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span data-i18n="footer.copyright">AILOS &copy; 2026</span>
+    </footer>
+
+    <script>
+    // ========== I18N Data ==========
+    const I18N = {
+        zh: {
+            "page.title": "AILOS 平台财务总账",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "当日收入",
+            "card.monthlyRevenue": "本月累计收入",
+            "card.totalRevenue": "总收入",
+            "card.aiCost": "AI成本（本月）",
+            "card.aiCostSub": "占总收入",
+            "card.netProfit": "净利润（本月）",
+            "card.netProfitSub": "净利润率",
+            "card.totalRevenueSub": "自平台上线以来",
+            "section.commissionTitle": "佣金分栏统计",
+            "section.personalCommission": "个人推广佣金",
+            "section.platformCommission": "平台自主注册佣金",
+            "section.revenueDetail": "收入明细",
+            "section.aiCostStats": "AI成本统计（本月）",
+            "section.infraCost": "基础设施成本（本月）",
+            "comm.level1": "一级佣金",
+            "comm.level2": "二级佣金",
+            "comm.refundDeduction": "退款扣佣",
+            "comm.subtotal": "小计",
+            "table.date": "日期",
+            "table.orderNo": "订单号",
+            "table.plan": "会员套餐",
+            "table.amount": "金额",
+            "table.type": "类型",
+            "table.level1Personal": "一级佣金(个人)",
+            "table.level1Platform": "一级佣金(平台)",
+            "table.level2Personal": "二级佣金(个人)",
+            "table.level2Platform": "二级佣金(平台)",
+            "table.refundDeduction": "退款扣佣",
+            "table.netIncome": "净收入",
+            "filter.to": "至",
+            "filter.all": "全部类型",
+            "filter.personalPromo": "个人推广",
+            "filter.platformReg": "平台注册",
+            "filter.reset": "重置",
+            "ai.calls": "AI调用次数",
+            "ai.tokens": "Token消耗量",
+            "ai.estimatedCost": "预估成本",
+            "server.cost": "服务器成本",
+            "bandwidth.cost": "带宽成本",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "个人推广",
+            "type.platform": "平台注册",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        en: {
+            "page.title": "AILOS Finance Ledger",
+            "page.subtitle": "Platform Finance Ledger",
+            "card.dailyRevenue": "Daily Revenue",
+            "card.monthlyRevenue": "Monthly Revenue",
+            "card.totalRevenue": "Total Revenue",
+            "card.aiCost": "AI Cost (This Month)",
+            "card.aiCostSub": "of Total Revenue",
+            "card.netProfit": "Net Profit (This Month)",
+            "card.netProfitSub": "Net Profit Margin",
+            "card.totalRevenueSub": "Since Platform Launch",
+            "section.commissionTitle": "Commission Breakdown",
+            "section.personalCommission": "Personal Promotion Commission",
+            "section.platformCommission": "Platform Registration Commission",
+            "section.revenueDetail": "Revenue Details",
+            "section.aiCostStats": "AI Cost Statistics (This Month)",
+            "section.infraCost": "Infrastructure Costs (This Month)",
+            "comm.level1": "Level 1 Commission",
+            "comm.level2": "Level 2 Commission",
+            "comm.refundDeduction": "Refund Deduction",
+            "comm.subtotal": "Subtotal",
+            "table.date": "Date",
+            "table.orderNo": "Order No.",
+            "table.plan": "Plan",
+            "table.amount": "Amount",
+            "table.type": "Type",
+            "table.level1Personal": "L1 Comm. (Personal)",
+            "table.level1Platform": "L1 Comm. (Platform)",
+            "table.level2Personal": "L2 Comm. (Personal)",
+            "table.level2Platform": "L2 Comm. (Platform)",
+            "table.refundDeduction": "Refund Deduction",
+            "table.netIncome": "Net Income",
+            "filter.to": "to",
+            "filter.all": "All Types",
+            "filter.personalPromo": "Personal Promotion",
+            "filter.platformReg": "Platform Registration",
+            "filter.reset": "Reset",
+            "ai.calls": "AI API Calls",
+            "ai.tokens": "Token Consumption",
+            "ai.estimatedCost": "Estimated Cost",
+            "server.cost": "Server Cost",
+            "bandwidth.cost": "Bandwidth Cost",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "Personal Promo",
+            "type.platform": "Platform Reg",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        ja: {
+            "page.title": "AILOS 財務総勘定",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "当日収入",
+            "card.monthlyRevenue": "本月累計収入",
+            "card.totalRevenue": "総収入",
+            "card.aiCost": "AIコスト（今月）",
+            "card.aiCostSub": "総収入の",
+            "card.netProfit": "純利益（今月）",
+            "card.netProfitSub": "純利益率",
+            "card.totalRevenueSub": "プラットフォーム開始以来",
+            "section.commissionTitle": "コミッション内訳",
+            "section.personalCommission": "個人紹介コミッション",
+            "section.platformCommission": "プラットフォーム登録コミッション",
+            "section.revenueDetail": "収入明細",
+            "section.aiCostStats": "AIコスト統計（今月）",
+            "section.infraCost": "インフラコスト（今月）",
+            "comm.level1": "1次コミッション",
+            "comm.level2": "2次コミッション",
+            "comm.refundDeduction": "返金控除",
+            "comm.subtotal": "小計",
+            "table.date": "日付",
+            "table.orderNo": "注文番号",
+            "table.plan": "プラン",
+            "table.amount": "金額",
+            "table.type": "タイプ",
+            "table.level1Personal": "1次(個人)",
+            "table.level1Platform": "1次(プラットフォーム)",
+            "table.level2Personal": "2次(個人)",
+            "table.level2Platform": "2次(プラットフォーム)",
+            "table.refundDeduction": "返金控除",
+            "table.netIncome": "純収入",
+            "filter.to": "〜",
+            "filter.all": "すべて",
+            "filter.personalPromo": "個人紹介",
+            "filter.platformReg": "プラットフォーム登録",
+            "filter.reset": "リセット",
+            "ai.calls": "AI呼出回数",
+            "ai.tokens": "トークン消費量",
+            "ai.estimatedCost": "推定コスト",
+            "server.cost": "サーバーコスト",
+            "bandwidth.cost": "帯域幅コスト",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "個人紹介",
+            "type.platform": "プラットフォーム",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        ko: {
+            "page.title": "AILOS 재무 총계정원장",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "당일 수익",
+            "card.monthlyRevenue": "월간 누적 수익",
+            "card.totalRevenue": "총 수익",
+            "card.aiCost": "AI 비용 (이번 달)",
+            "card.aiCostSub": "총 수익 대비",
+            "card.netProfit": "순이익 (이번 달)",
+            "card.netProfitSub": "순이익률",
+            "card.totalRevenueSub": "플랫폼 출시 이후",
+            "section.commissionTitle": "수수료 분석",
+            "section.personalCommission": "개인 프로모션 수수료",
+            "section.platformCommission": "플랫폼 등록 수수료",
+            "section.revenueDetail": "수익明细",
+            "section.aiCostStats": "AI 비용 통계 (이번 달)",
+            "section.infraCost": "인프라 비용 (이번 달)",
+            "comm.level1": "1차 수수료",
+            "comm.level2": "2차 수수료",
+            "comm.refundDeduction": "환불 차감",
+            "comm.subtotal": "소계",
+            "table.date": "날짜",
+            "table.orderNo": "주문번호",
+            "table.plan": "플랜",
+            "table.amount": "금액",
+            "table.type": "유형",
+            "table.level1Personal": "1차(개인)",
+            "table.level1Platform": "1차(플랫폼)",
+            "table.level2Personal": "2차(개인)",
+            "table.level2Platform": "2차(플랫폼)",
+            "table.refundDeduction": "환불 차감",
+            "table.netIncome": "순수익",
+            "filter.to": "~",
+            "filter.all": "전체",
+            "filter.personalPromo": "개인 프로모션",
+            "filter.platformReg": "플랫폼 등록",
+            "filter.reset": "초기화",
+            "ai.calls": "AI 호출 횟수",
+            "ai.tokens": "토큰 소비량",
+            "ai.estimatedCost": "예상 비용",
+            "server.cost": "서버 비용",
+            "bandwidth.cost": "대역폭 비용",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "개인 프로모션",
+            "type.platform": "플랫폼 등록",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        fr: {
+            "page.title": "AILOS Grand Livre Financier",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "Revenu Quotidien",
+            "card.monthlyRevenue": "Revenu Mensuel",
+            "card.totalRevenue": "Revenu Total",
+            "card.aiCost": "Coût IA (Ce Mois)",
+            "card.aiCostSub": "du Revenu Total",
+            "card.netProfit": "Bénéfice Net (Ce Mois)",
+            "card.netProfitSub": "Marge Nette",
+            "card.totalRevenueSub": "Depuis le Lancement",
+            "section.commissionTitle": "Répartition des Commissions",
+            "section.personalCommission": "Commission Promotion Personnelle",
+            "section.platformCommission": "Commission Inscription Plateforme",
+            "section.revenueDetail": "Détail des Revenus",
+            "section.aiCostStats": "Statistiques Coût IA (Ce Mois)",
+            "section.infraCost": "Coûts Infrastructure (Ce Mois)",
+            "comm.level1": "Commission Niveau 1",
+            "comm.level2": "Commission Niveau 2",
+            "comm.refundDeduction": "Déduction Remboursement",
+            "comm.subtotal": "Sous-total",
+            "table.date": "Date",
+            "table.orderNo": "N° Commande",
+            "table.plan": "Forfait",
+            "table.amount": "Montant",
+            "table.type": "Type",
+            "table.level1Personal": "N1 (Personnel)",
+            "table.level1Platform": "N1 (Plateforme)",
+            "table.level2Personal": "N2 (Personnel)",
+            "table.level2Platform": "N2 (Plateforme)",
+            "table.refundDeduction": "Déduction Remb.",
+            "table.netIncome": "Revenu Net",
+            "filter.to": "à",
+            "filter.all": "Tous",
+            "filter.personalPromo": "Promo Personnelle",
+            "filter.platformReg": "Inscription Plateforme",
+            "filter.reset": "Réinitialiser",
+            "ai.calls": "Appels API IA",
+            "ai.tokens": "Consommation Tokens",
+            "ai.estimatedCost": "Coût Estimé",
+            "server.cost": "Coût Serveur",
+            "bandwidth.cost": "Coût Bande Passante",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "Promo Perso.",
+            "type.platform": "Plateforme",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        es: {
+            "page.title": "AILOS Libro Mayor Financiero",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "Ingreso Diario",
+            "card.monthlyRevenue": "Ingreso Mensual",
+            "card.totalRevenue": "Ingreso Total",
+            "card.aiCost": "Coste IA (Este Mes)",
+            "card.aiCostSub": "del Ingreso Total",
+            "card.netProfit": "Beneficio Neto (Este Mes)",
+            "card.netProfitSub": "Margen Neto",
+            "card.totalRevenueSub": "Desde el Lanzamiento",
+            "section.commissionTitle": "Desglose de Comisiones",
+            "section.personalCommission": "Comisión Promoción Personal",
+            "section.platformCommission": "Comisión Registro Plataforma",
+            "section.revenueDetail": "Detalle de Ingresos",
+            "section.aiCostStats": "Estadísticas Coste IA (Este Mes)",
+            "section.infraCost": "Costes Infraestructura (Este Mes)",
+            "comm.level1": "Comisión Nivel 1",
+            "comm.level2": "Comisión Nivel 2",
+            "comm.refundDeduction": "Deducción Reembolso",
+            "comm.subtotal": "Subtotal",
+            "table.date": "Fecha",
+            "table.orderNo": "Nº Pedido",
+            "table.plan": "Plan",
+            "table.amount": "Importe",
+            "table.type": "Tipo",
+            "table.level1Personal": "N1 (Personal)",
+            "table.level1Platform": "N1 (Plataforma)",
+            "table.level2Personal": "N2 (Personal)",
+            "table.level2Platform": "N2 (Plataforma)",
+            "table.refundDeduction": "Ded. Reembolso",
+            "table.netIncome": "Ingreso Neto",
+            "filter.to": "a",
+            "filter.all": "Todos",
+            "filter.personalPromo": "Promo Personal",
+            "filter.platformReg": "Registro Plataforma",
+            "filter.reset": "Restablecer",
+            "ai.calls": "Llamadas API IA",
+            "ai.tokens": "Consumo de Tokens",
+            "ai.estimatedCost": "Coste Estimado",
+            "server.cost": "Coste Servidor",
+            "bandwidth.cost": "Coste Ancho Banda",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "Promo Personal",
+            "type.platform": "Plataforma",
+            "plan.basic": "Básico",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        },
+        de: {
+            "page.title": "AILOS Finanzhauptbuch",
+            "page.subtitle": "Finance Ledger",
+            "card.dailyRevenue": "Tageseinnahmen",
+            "card.monthlyRevenue": "Monatseinnahmen",
+            "card.totalRevenue": "Gesamteinnahmen",
+            "card.aiCost": "KI-Kosten (Dieser Monat)",
+            "card.aiCostSub": "der Gesamteinnahmen",
+            "card.netProfit": "Nettogewinn (Dieser Monat)",
+            "card.netProfitSub": "Nettomarge",
+            "card.totalRevenueSub": "Seit Plattformstart",
+            "section.commissionTitle": "Provisionsaufteilung",
+            "section.personalCommission": "Persönliche Werbeprovision",
+            "section.platformCommission": "Plattform-Registrierungsprovision",
+            "section.revenueDetail": "Einnahmendetails",
+            "section.aiCostStats": "KI-Kostenstatistik (Dieser Monat)",
+            "section.infraCost": "Infrastrukturkosten (Dieser Monat)",
+            "comm.level1": "Provision Stufe 1",
+            "comm.level2": "Provision Stufe 2",
+            "comm.refundDeduction": "Rückerstattungsabzug",
+            "comm.subtotal": "Zwischensumme",
+            "table.date": "Datum",
+            "table.orderNo": "Bestell-Nr.",
+            "table.plan": "Tarif",
+            "table.amount": "Betrag",
+            "table.type": "Typ",
+            "table.level1Personal": "St1 (Persönlich)",
+            "table.level1Platform": "St1 (Plattform)",
+            "table.level2Personal": "St2 (Persönlich)",
+            "table.level2Platform": "St2 (Plattform)",
+            "table.refundDeduction": "Rückerstattungsabzug",
+            "table.netIncome": "Nettoeinnahmen",
+            "filter.to": "bis",
+            "filter.all": "Alle",
+            "filter.personalPromo": "Persönliche Werbung",
+            "filter.platformReg": "Plattform-Registrierung",
+            "filter.reset": "Zurücksetzen",
+            "ai.calls": "KI-API-Aufrufe",
+            "ai.tokens": "Token-Verbrauch",
+            "ai.estimatedCost": "Geschätzte Kosten",
+            "server.cost": "Serverkosten",
+            "bandwidth.cost": "Bandbreitenkosten",
+            "footer.copyright": "AILOS © 2026",
+            "type.personal": "Persönliche Werbung",
+            "type.platform": "Plattform",
+            "plan.basic": "Basic",
+            "plan.pro": "Pro",
+            "plan.enterprise": "Enterprise"
+        }
+    };
+
+    let currentLang = 'zh';
+
+    function switchLang(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (I18N[lang] && I18N[lang][key]) {
+                el.textContent = I18N[lang][key];
+            }
+        });
+        document.getElementById('langSelect').value = lang;
+        renderTable();
+    }
+
+    // ========== Demo Data ==========
+    const demoOrders = [
+        { date: '2026-07-21', orderNo: 'ORD-20260721-001', plan: 'Pro', amount: 299, type: 'personal', l1p: 59.80, l1pf: 0, l2p: 14.95, l2pf: 0, refund: 0 },
+        { date: '2026-07-21', orderNo: 'ORD-20260721-002', plan: 'Enterprise', amount: 999, type: 'platform', l1p: 0, l1pf: 99.90, l2p: 0, l2pf: 29.97, refund: 0 },
+        { date: '2026-07-21', orderNo: 'ORD-20260721-003', plan: 'Basic', amount: 99, type: 'personal', l1p: 19.80, l1pf: 0, l2p: 4.95, l2pf: 0, refund: 0 },
+        { date: '2026-07-20', orderNo: 'ORD-20260720-004', plan: 'Pro', amount: 299, type: 'platform', l1p: 0, l1pf: 59.80, l2p: 0, l2pf: 0, refund: 0 },
+        { date: '2026-07-20', orderNo: 'ORD-20260720-005', plan: 'Basic', amount: 99, type: 'personal', l1p: 19.80, l1pf: 0, l2p: 0, l2pf: 0, refund: 19.80 },
+        { date: '2026-07-19', orderNo: 'ORD-20260719-006', plan: 'Enterprise', amount: 999, type: 'personal', l1p: 199.80, l1pf: 0, l2p: 49.95, l2pf: 0, refund: 0 },
+        { date: '2026-07-19', orderNo: 'ORD-20260719-007', plan: 'Pro', amount: 299, type: 'platform', l1p: 0, l1pf: 59.80, l2p: 0, l2pf: 14.95, refund: 0 },
+        { date: '2026-07-18', orderNo: 'ORD-20260718-008', plan: 'Basic', amount: 99, type: 'platform', l1p: 0, l1pf: 19.80, l2p: 0, l2pf: 0, refund: 0 },
+        { date: '2026-07-18', orderNo: 'ORD-20260718-009', plan: 'Pro', amount: 299, type: 'personal', l1p: 59.80, l1pf: 0, l2p: 14.95, l2pf: 0, refund: 0 },
+        { date: '2026-07-17', orderNo: 'ORD-20260717-010', plan: 'Enterprise', amount: 999, type: 'platform', l1p: 0, l1pf: 199.80, l2p: 0, l2pf: 49.95, refund: 0 },
+        { date: '2026-07-16', orderNo: 'ORD-20260716-011', plan: 'Basic', amount: 99, type: 'personal', l1p: 19.80, l1pf: 0, l2p: 4.95, l2pf: 0, refund: 4.95 },
+        { date: '2026-07-15', orderNo: 'ORD-20260715-012', plan: 'Pro', amount: 299, type: 'personal', l1p: 59.80, l1pf: 0, l2p: 0, l2pf: 0, refund: 0 },
+        { date: '2026-07-15', orderNo: 'ORD-20260715-013', plan: 'Enterprise', amount: 999, type: 'personal', l1p: 199.80, l1pf: 0, l2p: 49.95, l2pf: 0, refund: 0 },
+        { date: '2026-07-14', orderNo: 'ORD-20260714-014', plan: 'Basic', amount: 99, type: 'platform', l1p: 0, l1pf: 19.80, l2p: 0, l2pf: 4.95, refund: 0 },
+        { date: '2026-07-13', orderNo: 'ORD-20260713-015', plan: 'Pro', amount: 299, type: 'platform', l1p: 0, l1pf: 59.80, l2p: 0, l2pf: 0, refund: 59.80 },
+    ];
+
+    function formatMoney(val) {
+        return '¥' + val.toFixed(2);
+    }
+
+    function getTypeLabel(type) {
+        const labels = {
+            zh: { personal: '个人推广', platform: '平台注册' },
+            en: { personal: 'Personal Promo', platform: 'Platform Reg' },
+            ja: { personal: '個人紹介', platform: 'プラットフォーム' },
+            ko: { personal: '개인 프로모션', platform: '플랫폼 등록' },
+            fr: { personal: 'Promo Perso.', platform: 'Plateforme' },
+            es: { personal: 'Promo Personal', platform: 'Plataforma' },
+            de: { personal: 'Persönliche Werbung', platform: 'Plattform' }
+        };
+        return labels[currentLang] ? labels[currentLang][type] : type;
+    }
+
+    function getPlanLabel(plan) {
+        return plan;
+    }
+
+    function applyFilter() {
+        renderTable();
+    }
+
+    function resetFilter() {
+        document.getElementById('filterDateFrom').value = '';
+        document.getElementById('filterDateTo').value = '';
+        document.getElementById('filterType').value = 'all';
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+        const typeFilter = document.getElementById('filterType').value;
+
+        let filtered = demoOrders.filter(o => {
+            if (dateFrom && o.date < dateFrom) return false;
+            if (dateTo && o.date > dateTo) return false;
+            if (typeFilter !== 'all' && o.type !== typeFilter) return false;
+            return true;
+        });
+
+        tbody.innerHTML = filtered.map(o => {
+            const netIncome = o.amount - o.l1p - o.l1pf - o.l2p - o.l2pf - o.refund;
+            const typeClass = o.type === 'personal' ? 'badge-personal' : 'badge-platform';
+            return `<tr>
+                <td>${o.date}</td>
+                <td>${o.orderNo}</td>
+                <td>${getPlanLabel(o.plan)}</td>
+                <td style="font-weight:600;">${formatMoney(o.amount)}</td>
+                <td><span class="badge ${typeClass}">${getTypeLabel(o.type)}</span></td>
+                <td>${o.l1p > 0 ? formatMoney(o.l1p) : '-'}</td>
+                <td>${o.l1pf > 0 ? formatMoney(o.l1pf) : '-'}</td>
+                <td>${o.l2p > 0 ? formatMoney(o.l2p) : '-'}</td>
+                <td>${o.l2pf > 0 ? formatMoney(o.l2pf) : '-'}</td>
+                <td>${o.refund > 0 ? '<span class="amount-negative">' + formatMoney(-o.refund) + '</span>' : '-'}</td>
+                <td style="font-weight:600;">${formatMoney(netIncome)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // Initial render
+    renderTable();
+    </script>
+</body>
+</html>

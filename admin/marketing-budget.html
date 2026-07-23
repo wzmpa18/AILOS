@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AILOS - 营销预算管控</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: #1a1a35;
+            --bg-card-hover: #1f1f40;
+            --bg-input: #15152e;
+            --bg-modal: rgba(0,0,0,0.6);
+            --border: #2a2a4a;
+            --border-light: #333358;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0c0;
+            --text-muted: #6a6a8a;
+            --accent: #8B5CF6;
+            --accent-dark: #6D28D9;
+            --accent-light: #A78BFA;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --transition: 0.2s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+        .lang-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+        .lang-select:hover { border-color: var(--accent); }
+        .lang-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,0.2); }
+        .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .section { margin-bottom: 28px; }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        /* Budget Overview */
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .budget-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+        }
+        .budget-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .budget-card .card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .budget-card .card-value {
+            font-size: 26px;
+            font-weight: 700;
+        }
+        .budget-card .progress-bar-wrap {
+            margin-top: 12px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            height: 6px;
+            overflow: hidden;
+        }
+        .budget-card .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .budget-card .progress-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        .progress-safe { background: var(--success); }
+        .progress-warn { background: var(--warning); }
+        .progress-danger { background: var(--danger); }
+        /* ROI Formula Box */
+        .roi-formula-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .roi-formula-box .formula-icon {
+            font-size: 28px;
+        }
+        .roi-formula-box .formula-text {
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            color: var(--accent-light);
+        }
+        .roi-formula-box .formula-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+        .roi-formula-box .formula-note .danger-text {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        /* Activity Table */
+        .table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .table-scroll { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead { background: var(--bg-secondary); }
+        th {
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        tr:hover td { background: rgba(139,92,246,0.05); }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-active { background: rgba(16,185,129,0.2); color: #34D399; }
+        .status-warning { background: rgba(239,68,68,0.2); color: #F87171; }
+        .status-ended { background: rgba(107,114,128,0.2); color: #9CA3AF; }
+        .roi-value { font-weight: 700; }
+        .roi-danger { color: var(--danger); }
+        .roi-safe { color: var(--success); }
+        /* Progress in table */
+        .mini-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mini-progress-bar {
+            width: 80px;
+            height: 5px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .mini-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--accent);
+        }
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: var(--accent-dark); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent-light);
+        }
+        .btn-outline:hover { background: rgba(139,92,246,0.1); }
+        .btn-danger {
+            background: var(--danger);
+        }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-modal);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: var(--shadow);
+        }
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .form-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        /* ROI Warning Alert */
+        .alert {
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-danger {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #FCA5A5;
+        }
+        .alert-warning {
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.3);
+            color: #FCD34D;
+        }
+        .alert-info {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: #93C5FD;
+        }
+        .alert-icon { font-size: 18px; flex-shrink: 0; }
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        @media (max-width: 768px) {
+            .budget-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .main { padding: 16px; }
+            .header { padding: 0 12px; }
+            .header-title { font-size: 15px; }
+            .modal { padding: 20px; }
+        }
+        @media (max-width: 375px) {
+            .section-header { flex-direction: column; align-items: stretch; }
+            .roi-formula-box { flex-direction: column; align-items: flex-start; }
+            .roi-formula-box .formula-note { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">A</div>
+            <span class="header-title" data-i18n="page.title">AILOS 营销预算管控</span>
+            <span class="header-subtitle" data-i18n="page.subtitle">Marketing Budget</span>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="switchLang(this.value)">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+        </select>
+    </header>
+
+    <main class="main">
+        <!-- ROI Formula -->
+        <div class="roi-formula-box">
+            <span class="formula-icon">&#x1F4CA;</span>
+            <span class="formula-text" data-i18n="roi.formula">ROI = 活动收入 / 活动成本</span>
+            <span class="formula-note"><span class="danger-text" data-i18n="roi.warning">ROI &lt; 1.2 红色预警拦截</span></span>
+        </div>
+
+        <!-- Budget Overview -->
+        <div class="section">
+            <h2 class="section-title" data-i18n="section.budgetOverview">预算概览</h2>
+            <div class="budget-grid">
+                <div class="budget-card">
+                    <div class="card-label" data-i18n="budget.personalPromo">个人推广佣金预算</div>
+                    <div class="card-value" style="color:var(--info);">¥200,000</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar progress-safe" style="width:62%;"></div>
+                    </div>
+                    <div class="progress-text"><span data-i18n="budget.consumed">已消耗</span> ¥124,000 (62%)</div>
+                </div>
+                <div class="budget-card">
+                    <div class="card-label" data-i18n="budget.platformReg">平台自然注册佣金预算</div>
+                    <div class="card-value" style="color:var(--accent-light);">¥80,000</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar progress-safe" style="width:45%;"></div>
+                    </div>
+                    <div class="progress-text"><span data-i18n="budget.consumed">已消耗</span> ¥36,000 (45%)</div>
+                </div>
+                <div class="budget-card">
+                    <div class="card-label" data-i18n="budget.aiCost">AI成本预算</div>
+                    <div class="card-value" style="color:var(--warning);">¥100,000</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar progress-warn" style="width:58%;"></div>
+                    </div>
+                    <div class="progress-text"><span data-i18n="budget.consumed">已消耗</span> ¥58,240 (58%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROI Alerts -->
+        <div id="alertContainer"></div>
+
+        <!-- Activity List -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title" style="margin-bottom:0;border-bottom:none;display:inline;" data-i18n="section.activityList">当前活动列表</h2>
+                <button class="btn" onclick="openModal()" data-i18n="activity.newActivity">+ 新增活动</button>
+            </div>
+            <div class="table-wrap">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="table.activityName">活动名称</th>
+                                <th data-i18n="table.budget">预算</th>
+                                <th data-i18n="table.consumed">已消耗</th>
+                                <th data-i18n="table.consumedPercent">消耗比例</th>
+                                <th data-i18n="table.revenue">活动收入</th>
+                                <th data-i18n="table.roi">ROI</th>
+                                <th data-i18n="table.status">状态</th>
+                                <th data-i18n="table.actions">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Activity Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 data-i18n="modal.title">新增营销活动</h3>
+            <div class="form-group">
+                <label data-i18n="modal.activityName">活动名称</label>
+                <input type="text" id="newActivityName" placeholder="输入活动名称">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label data-i18n="modal.budget">预算金额 (¥)</label>
+                    <input type="number" id="newBudget" placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="modal.expectedRoi">预期ROI</label>
+                    <input type="number" id="newExpectedRoi" placeholder="1.5" min="0" step="0.1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label data-i18n="modal.startDate">开始日期</label>
+                    <input type="date" id="newStartDate">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="modal.endDate">结束日期</label>
+                    <input type="date" id="newEndDate">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()" data-i18n="modal.cancel">取消</button>
+                <button class="btn" onclick="addActivity()" data-i18n="modal.confirm">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <span data-i18n="footer.copyright">AILOS &copy; 2026</span>
+    </footer>
+
+    <script>
+    // ========== I18N ==========
+    const I18N = {
+        zh: {
+            "page.title": "AILOS 营销预算管控",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = 活动收入 / 活动成本",
+            "roi.warning": "ROI < 1.2 红色预警拦截",
+            "section.budgetOverview": "预算概览",
+            "section.activityList": "当前活动列表",
+            "budget.personalPromo": "个人推广佣金预算",
+            "budget.platformReg": "平台自然注册佣金预算",
+            "budget.aiCost": "AI成本预算",
+            "budget.consumed": "已消耗",
+            "table.activityName": "活动名称",
+            "table.budget": "预算",
+            "table.consumed": "已消耗",
+            "table.consumedPercent": "消耗比例",
+            "table.revenue": "活动收入",
+            "table.roi": "ROI",
+            "table.status": "状态",
+            "table.actions": "操作",
+            "status.active": "进行中",
+            "status.roiWarning": "ROI预警",
+            "status.ended": "已结束",
+            "activity.newActivity": "+ 新增活动",
+            "modal.title": "新增营销活动",
+            "modal.activityName": "活动名称",
+            "modal.budget": "预算金额 (¥)",
+            "modal.expectedRoi": "预期ROI",
+            "modal.startDate": "开始日期",
+            "modal.endDate": "结束日期",
+            "modal.cancel": "取消",
+            "modal.confirm": "确认添加",
+            "alert.roiWarning": "以下活动ROI低于1.2，请立即关注：",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "结束活动"
+        },
+        en: {
+            "page.title": "AILOS Marketing Budget",
+            "page.subtitle": "Marketing Budget Control",
+            "roi.formula": "ROI = Campaign Revenue / Campaign Cost",
+            "roi.warning": "ROI < 1.2 triggers Red Alert",
+            "section.budgetOverview": "Budget Overview",
+            "section.activityList": "Active Campaigns",
+            "budget.personalPromo": "Personal Promotion Budget",
+            "budget.platformReg": "Platform Registration Budget",
+            "budget.aiCost": "AI Cost Budget",
+            "budget.consumed": "Consumed",
+            "table.activityName": "Campaign Name",
+            "table.budget": "Budget",
+            "table.consumed": "Consumed",
+            "table.consumedPercent": "Consumption %",
+            "table.revenue": "Revenue",
+            "table.roi": "ROI",
+            "table.status": "Status",
+            "table.actions": "Actions",
+            "status.active": "Active",
+            "status.roiWarning": "ROI Warning",
+            "status.ended": "Ended",
+            "activity.newActivity": "+ New Campaign",
+            "modal.title": "New Campaign",
+            "modal.activityName": "Campaign Name",
+            "modal.budget": "Budget (¥)",
+            "modal.expectedRoi": "Expected ROI",
+            "modal.startDate": "Start Date",
+            "modal.endDate": "End Date",
+            "modal.cancel": "Cancel",
+            "modal.confirm": "Confirm",
+            "alert.roiWarning": "The following campaigns have ROI below 1.2, immediate attention required:",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "End Campaign"
+        },
+        ja: {
+            "page.title": "AILOS マーケティング予算管理",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = キャンペーン収入 / キャンペーンコスト",
+            "roi.warning": "ROI < 1.2 赤色警告",
+            "section.budgetOverview": "予算概要",
+            "section.activityList": "キャンペーン一覧",
+            "budget.personalPromo": "個人紹介予算",
+            "budget.platformReg": "プラットフォーム登録予算",
+            "budget.aiCost": "AIコスト予算",
+            "budget.consumed": "消費済み",
+            "table.activityName": "キャンペーン名",
+            "table.budget": "予算",
+            "table.consumed": "消費済み",
+            "table.consumedPercent": "消費率",
+            "table.revenue": "収入",
+            "table.roi": "ROI",
+            "table.status": "ステータス",
+            "table.actions": "操作",
+            "status.active": "進行中",
+            "status.roiWarning": "ROI警告",
+            "status.ended": "終了",
+            "activity.newActivity": "+ 新規キャンペーン",
+            "modal.title": "新規キャンペーン",
+            "modal.activityName": "キャンペーン名",
+            "modal.budget": "予算 (¥)",
+            "modal.expectedRoi": "予想ROI",
+            "modal.startDate": "開始日",
+            "modal.endDate": "終了日",
+            "modal.cancel": "キャンセル",
+            "modal.confirm": "確認",
+            "alert.roiWarning": "以下のキャンペーンのROIが1.2未満です。早急な対応が必要です：",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "終了"
+        },
+        ko: {
+            "page.title": "AILOS 마케팅 예산 관리",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = 캠페인 수익 / 캠페인 비용",
+            "roi.warning": "ROI < 1.2 적색 경고",
+            "section.budgetOverview": "예산 개요",
+            "section.activityList": "캠페인 목록",
+            "budget.personalPromo": "개인 프로모션 예산",
+            "budget.platformReg": "플랫폼 등록 예산",
+            "budget.aiCost": "AI 비용 예산",
+            "budget.consumed": "소진됨",
+            "table.activityName": "캠페인명",
+            "table.budget": "예산",
+            "table.consumed": "소진됨",
+            "table.consumedPercent": "소진율",
+            "table.revenue": "수익",
+            "table.roi": "ROI",
+            "table.status": "상태",
+            "table.actions": "작업",
+            "status.active": "진행중",
+            "status.roiWarning": "ROI 경고",
+            "status.ended": "종료됨",
+            "activity.newActivity": "+ 새 캠페인",
+            "modal.title": "새 캠페인",
+            "modal.activityName": "캠페인명",
+            "modal.budget": "예산 (¥)",
+            "modal.expectedRoi": "예상 ROI",
+            "modal.startDate": "시작일",
+            "modal.endDate": "종료일",
+            "modal.cancel": "취소",
+            "modal.confirm": "확인",
+            "alert.roiWarning": "다음 캠페인의 ROI가 1.2 미만입니다. 즉시 조치가 필요합니다:",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "종료"
+        },
+        fr: {
+            "page.title": "AILOS Budget Marketing",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = Revenu Campagne / Coût Campagne",
+            "roi.warning": "ROI < 1.2 Alerte Rouge",
+            "section.budgetOverview": "Aperçu du Budget",
+            "section.activityList": "Campagnes Actives",
+            "budget.personalPromo": "Budget Promotion Personnelle",
+            "budget.platformReg": "Budget Inscription Plateforme",
+            "budget.aiCost": "Budget Coût IA",
+            "budget.consumed": "Consommé",
+            "table.activityName": "Nom Campagne",
+            "table.budget": "Budget",
+            "table.consumed": "Consommé",
+            "table.consumedPercent": "% Consommation",
+            "table.revenue": "Revenu",
+            "table.roi": "ROI",
+            "table.status": "Statut",
+            "table.actions": "Actions",
+            "status.active": "En Cours",
+            "status.roiWarning": "Alerte ROI",
+            "status.ended": "Terminé",
+            "activity.newActivity": "+ Nouvelle Campagne",
+            "modal.title": "Nouvelle Campagne",
+            "modal.activityName": "Nom Campagne",
+            "modal.budget": "Budget (¥)",
+            "modal.expectedRoi": "ROI Attendu",
+            "modal.startDate": "Date Début",
+            "modal.endDate": "Date Fin",
+            "modal.cancel": "Annuler",
+            "modal.confirm": "Confirmer",
+            "alert.roiWarning": "Les campagnes suivantes ont un ROI inférieur à 1,2, attention immédiate requise :",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "Terminer"
+        },
+        es: {
+            "page.title": "AILOS Presupuesto Marketing",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = Ingreso Campaña / Coste Campaña",
+            "roi.warning": "ROI < 1.2 Alerta Roja",
+            "section.budgetOverview": "Resumen Presupuesto",
+            "section.activityList": "Campañas Activas",
+            "budget.personalPromo": "Presupuesto Promo Personal",
+            "budget.platformReg": "Presupuesto Registro Plataforma",
+            "budget.aiCost": "Presupuesto Coste IA",
+            "budget.consumed": "Consumido",
+            "table.activityName": "Nombre Campaña",
+            "table.budget": "Presupuesto",
+            "table.consumed": "Consumido",
+            "table.consumedPercent": "% Consumo",
+            "table.revenue": "Ingreso",
+            "table.roi": "ROI",
+            "table.status": "Estado",
+            "table.actions": "Acciones",
+            "status.active": "Activo",
+            "status.roiWarning": "Alerta ROI",
+            "status.ended": "Finalizado",
+            "activity.newActivity": "+ Nueva Campaña",
+            "modal.title": "Nueva Campaña",
+            "modal.activityName": "Nombre Campaña",
+            "modal.budget": "Presupuesto (¥)",
+            "modal.expectedRoi": "ROI Esperado",
+            "modal.startDate": "Fecha Inicio",
+            "modal.endDate": "Fecha Fin",
+            "modal.cancel": "Cancelar",
+            "modal.confirm": "Confirmar",
+            "alert.roiWarning": "Las siguientes campañas tienen ROI inferior a 1.2, requiere atención inmediata:",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "Finalizar"
+        },
+        de: {
+            "page.title": "AILOS Marketing-Budget",
+            "page.subtitle": "Marketing Budget",
+            "roi.formula": "ROI = Kampagnen-Einnahmen / Kampagnen-Kosten",
+            "roi.warning": "ROI < 1,2 Rote Warnung",
+            "section.budgetOverview": "Budgetübersicht",
+            "section.activityList": "Aktive Kampagnen",
+            "budget.personalPromo": "Budget Persönliche Werbung",
+            "budget.platformReg": "Budget Plattform-Registrierung",
+            "budget.aiCost": "Budget KI-Kosten",
+            "budget.consumed": "Verbraucht",
+            "table.activityName": "Kampagnenname",
+            "table.budget": "Budget",
+            "table.consumed": "Verbraucht",
+            "table.consumedPercent": "Verbrauch %",
+            "table.revenue": "Einnahmen",
+            "table.roi": "ROI",
+            "table.status": "Status",
+            "table.actions": "Aktionen",
+            "status.active": "Aktiv",
+            "status.roiWarning": "ROI-Warnung",
+            "status.ended": "Beendet",
+            "activity.newActivity": "+ Neue Kampagne",
+            "modal.title": "Neue Kampagne",
+            "modal.activityName": "Kampagnenname",
+            "modal.budget": "Budget (¥)",
+            "modal.expectedRoi": "Erwarteter ROI",
+            "modal.startDate": "Startdatum",
+            "modal.endDate": "Enddatum",
+            "modal.cancel": "Abbrechen",
+            "modal.confirm": "Bestätigen",
+            "alert.roiWarning": "Folgende Kampagnen haben ROI unter 1,2, sofortige Aufmerksamkeit erforderlich:",
+            "footer.copyright": "AILOS © 2026",
+            "action.end": "Beenden"
+        }
+    };
+
+    let currentLang = 'zh';
+
+    function switchLang(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (I18N[lang] && I18N[lang][key]) {
+                el.textContent = I18N[lang][key];
+            }
+        });
+        document.getElementById('langSelect').value = lang;
+        renderActivities();
+    }
+
+    // ========== Demo Data ==========
+    let activities = [
+        { id: 1, name: '2026夏季促销活动', budget: 80000, consumed: 62000, revenue: 85000, startDate: '2026-06-01', endDate: '2026-08-31', status: 'active' },
+        { id: 2, name: '新用户注册激励计划', budget: 50000, consumed: 48000, revenue: 45000, startDate: '2026-05-15', endDate: '2026-07-31', status: 'roiWarning' },
+        { id: 3, name: 'KOL联合推广项目', budget: 120000, consumed: 95000, revenue: 186000, startDate: '2026-04-01', endDate: '2026-07-15', status: 'active' },
+        { id: 4, name: '企业客户拓展计划', budget: 60000, consumed: 58000, revenue: 78000, startDate: '2026-03-01', endDate: '2026-06-30', status: 'ended' },
+        { id: 5, name: '会员续费优惠活动', budget: 40000, consumed: 28000, revenue: 48000, startDate: '2026-07-01', endDate: '2026-09-30', status: 'active' },
+    ];
+
+    function calcROI(revenue, consumed) {
+        if (consumed === 0) return 0;
+        return revenue / consumed;
+    }
+
+    function formatMoney(val) {
+        return '¥' + val.toLocaleString('zh-CN');
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            zh: { active: '进行中', roiWarning: 'ROI预警', ended: '已结束' },
+            en: { active: 'Active', roiWarning: 'ROI Warning', ended: 'Ended' },
+            ja: { active: '進行中', roiWarning: 'ROI警告', ended: '終了' },
+            ko: { active: '진행중', roiWarning: 'ROI 경고', ended: '종료됨' },
+            fr: { active: 'En Cours', roiWarning: 'Alerte ROI', ended: 'Terminé' },
+            es: { active: 'Activo', roiWarning: 'Alerta ROI', ended: 'Finalizado' },
+            de: { active: 'Aktiv', roiWarning: 'ROI-Warnung', ended: 'Beendet' }
+        };
+        return labels[currentLang] ? labels[currentLang][status] : status;
+    }
+
+    function getStatusClass(status) {
+        if (status === 'active') return 'status-active';
+        if (status === 'roiWarning') return 'status-warning';
+        return 'status-ended';
+    }
+
+    function renderActivities() {
+        const tbody = document.getElementById('activityTableBody');
+        const alertContainer = document.getElementById('alertContainer');
+
+        // Check for ROI warnings
+        const warningActivities = activities.filter(a => {
+            if (a.status === 'ended') return false;
+            const roi = calcROI(a.revenue, a.consumed);
+            return roi < 1.2;
+        });
+
+        if (warningActivities.length > 0) {
+            const names = warningActivities.map(a => a.name).join('、');
+            alertContainer.innerHTML = `<div class="alert alert-danger">
+                <span class="alert-icon">&#x26A0;</span>
+                <span>${I18N[currentLang]['alert.roiWarning']} ${names}</span>
+            </div>`;
+        } else {
+            alertContainer.innerHTML = '';
+        }
+
+        tbody.innerHTML = activities.map(a => {
+            const roi = calcROI(a.revenue, a.consumed);
+            const roiClass = roi < 1.2 ? 'roi-danger' : 'roi-safe';
+            const consumedPercent = a.budget > 0 ? Math.round((a.consumed / a.budget) * 100) : 0;
+            const statusLabel = getStatusLabel(a.status);
+            const statusClass = getStatusClass(a.status);
+            const endLabel = I18N[currentLang]['action.end'] || '结束活动';
+
+            return `<tr>
+                <td style="font-weight:600;">${a.name}</td>
+                <td>${formatMoney(a.budget)}</td>
+                <td>${formatMoney(a.consumed)}</td>
+                <td>
+                    <div class="mini-progress">
+                        <span style="font-size:12px;">${consumedPercent}%</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width:${consumedPercent}%;${consumedPercent > 80 ? 'background:var(--danger);' : ''}"></div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-weight:600;">${formatMoney(a.revenue)}</td>
+                <td><span class="roi-value ${roiClass}">${roi.toFixed(2)}</span></td>
+                <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                <td>
+                    ${a.status !== 'ended' ? `<button class="btn btn-sm btn-outline" onclick="endActivity(${a.id})">${endLabel}</button>` : '<span style="color:var(--text-muted);">-</span>'}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function endActivity(id) {
+        const activity = activities.find(a => a.id === id);
+        if (activity) {
+            activity.status = 'ended';
+            renderActivities();
+        }
+    }
+
+    function openModal() {
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+        document.getElementById('newActivityName').value = '';
+        document.getElementById('newBudget').value = '';
+        document.getElementById('newExpectedRoi').value = '';
+        document.getElementById('newStartDate').value = '';
+        document.getElementById('newEndDate').value = '';
+    }
+
+    function addActivity() {
+        const name = document.getElementById('newActivityName').value.trim();
+        const budget = parseFloat(document.getElementById('newBudget').value) || 0;
+        const expectedRoi = parseFloat(document.getElementById('newExpectedRoi').value) || 0;
+        const startDate = document.getElementById('newStartDate').value;
+        const endDate = document.getElementById('newEndDate').value;
+
+        if (!name || budget <= 0) {
+            alert(currentLang === 'zh' ? '请填写活动名称和预算金额' : 'Please fill in campaign name and budget');
+            return;
+        }
+
+        const newActivity = {
+            id: Date.now(),
+            name,
+            budget,
+            consumed: 0,
+            revenue: 0,
+            startDate: startDate || new Date().toISOString().split('T')[0],
+            endDate: endDate || '',
+            status: 'active'
+        };
+
+        activities.unshift(newActivity);
+        renderActivities();
+        closeModal();
+    }
+
+    // Close modal on background click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // Initial render
+    renderActivities();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AILOS - 经营利润驾驶舱</title>
+    <script src="/xuewaiyu/assets/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: #1a1a35;
+            --bg-card-hover: #1f1f40;
+            --bg-input: #15152e;
+            --border: #2a2a4a;
+            --border-light: #333358;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0c0;
+            --text-muted: #6a6a8a;
+            --accent: #8B5CF6;
+            --accent-dark: #6D28D9;
+            --accent-light: #A78BFA;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --transition: 0.2s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+        .lang-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+        .lang-select:hover { border-color: var(--accent); }
+        .lang-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,0.2); }
+        .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        /* Alert System */
+        .alert-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .alert-item {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        .alert-item.red {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: #FCA5A5;
+        }
+        .alert-item.orange {
+            background: rgba(249,115,22,0.15);
+            border: 1px solid rgba(249,115,22,0.35);
+            color: #FDBA74;
+        }
+        .alert-item.yellow {
+            background: rgba(234,179,8,0.15);
+            border: 1px solid rgba(234,179,8,0.35);
+            color: #FDE047;
+        }
+        .alert-item.green {
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.35);
+            color: #6EE7B7;
+        }
+        .alert-item .alert-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alert-item .alert-dot.red-dot { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
+        .alert-item .alert-dot.orange-dot { background: #F97316; box-shadow: 0 0 8px #F97316; }
+        .alert-item .alert-dot.yellow-dot { background: #EAB308; box-shadow: 0 0 8px #EAB308; }
+        .alert-item .alert-dot.green-dot { background: #10B981; box-shadow: 0 0 8px #10B981; }
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .kpi-card .kpi-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .kpi-card .kpi-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .kpi-card .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+        .kpi-card .kpi-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .kpi-card .kpi-accent-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+        .kpi-card .kpi-accent-bar.purple { background: var(--accent); }
+        .kpi-card .kpi-accent-bar.blue { background: var(--info); }
+        .kpi-card .kpi-accent-bar.green { background: var(--success); }
+        .kpi-card .kpi-accent-bar.orange { background: var(--warning); }
+        /* Platform Revenue Card */
+        .platform-rev-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .platform-rev-card .rev-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .platform-rev-card .rev-info .rev-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+        .platform-rev-card .rev-details {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .platform-rev-card .rev-detail-item {
+            text-align: center;
+        }
+        .platform-rev-card .rev-detail-item .rd-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .platform-rev-card .rev-detail-item .rd-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .chart-card canvas {
+            max-height: 320px;
+        }
+        .chart-full {
+            grid-column: 1 / -1;
+        }
+        .chart-half {
+            /* uses grid auto-placement */
+        }
+        /* Bottom charts row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        /* Threshold indicators */
+        .threshold-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+        .threshold-safe { background: rgba(16,185,129,0.15); color: #6EE7B7; }
+        .threshold-warn { background: rgba(245,158,11,0.15); color: #FCD34D; }
+        .threshold-danger { background: rgba(239,68,68,0.15); color: #FCA5A5; }
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+            .main { padding: 16px; }
+            .header { padding: 0 12px; }
+            .header-title { font-size: 15px; }
+            .kpi-card .kpi-value { font-size: 24px; }
+            .platform-rev-card { flex-direction: column; align-items: flex-start; }
+            .alert-bar { flex-direction: column; }
+        }
+        @media (max-width: 375px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .platform-rev-card .rev-details { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">A</div>
+            <span class="header-title" data-i18n="page.title">AILOS 经营利润驾驶舱</span>
+            <span class="header-subtitle" data-i18n="page.subtitle">Business Dashboard</span>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="switchLang(this.value)">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+        </select>
+    </header>
+
+    <main class="main">
+        <!-- Alert System -->
+        <div class="alert-bar" id="alertBar">
+            <div class="alert-item green" id="alertCommission">
+                <span class="alert-dot green-dot"></span>
+                <span><strong data-i18n="alert.commission">佣金总占比</strong>: 22.3% <span data-i18n="alert.commissionSafe">（安全线25%以内）</span></span>
+            </div>
+            <div class="alert-item green" id="alertAI">
+                <span class="alert-dot green-dot"></span>
+                <span><strong data-i18n="alert.aiCost">AI成本占比</strong>: 18.5% <span data-i18n="alert.aiCostSafe">（安全线40%以内）</span></span>
+            </div>
+            <div class="alert-item green" id="alertProfit">
+                <span class="alert-dot green-dot"></span>
+                <span><strong data-i18n="alert.profit">净利润率</strong>: 41.2% <span data-i18n="alert.profitSafe">（安全线20%以上）</span></span>
+            </div>
+        </div>
+
+        <!-- KPI Big Number Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-accent-bar purple"></div>
+                <div class="kpi-icon">&#x1F4B0;</div>
+                <div class="kpi-label" data-i18n="kpi.ltv">LTV 用户生命周期价值</div>
+                <div class="kpi-value" style="color:var(--accent-light);">&yen;285</div>
+                <div class="kpi-sub" data-i18n="kpi.ltvSub">12个月平均周期</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar blue"></div>
+                <div class="kpi-icon">&#x1F465;</div>
+                <div class="kpi-label" data-i18n="kpi.cac">CAC 用户获取成本</div>
+                <div class="kpi-value" style="color:var(--info);">&yen;42</div>
+                <div class="kpi-sub" data-i18n="kpi.cacSub">LTV/CAC = 6.79</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar green"></div>
+                <div class="kpi-icon">&#x1F4C8;</div>
+                <div class="kpi-label" data-i18n="kpi.arpu">ARPU 每用户平均收入</div>
+                <div class="kpi-value" style="color:var(--success);">&yen;68<span style="font-size:16px;">/月</span></div>
+                <div class="kpi-sub" data-i18n="kpi.arpuSub">较上月 +5.2%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar orange"></div>
+                <div class="kpi-icon">&#x1F916;</div>
+                <div class="kpi-label" data-i18n="kpi.aiCostRatio">AI成本占比</div>
+                <div class="kpi-value" style="color:var(--warning);">18.5<span style="font-size:16px;">%</span></div>
+                <div class="kpi-sub"><span class="threshold-indicator threshold-safe" data-i18n="kpi.aiCostStatus">安全</span></div>
+            </div>
+        </div>
+
+        <!-- Second row KPI cards -->
+        <div class="kpi-grid" style="margin-bottom:24px;">
+            <div class="kpi-card">
+                <div class="kpi-accent-bar purple"></div>
+                <div class="kpi-icon">&#x1F4CB;</div>
+                <div class="kpi-label" data-i18n="kpi.commissionRatio">佣金总占比</div>
+                <div class="kpi-value" style="color:var(--accent-light);">22.3<span style="font-size:16px;">%</span></div>
+                <div class="kpi-sub"><span class="threshold-indicator threshold-safe" data-i18n="kpi.commissionThreshold">红线 &le;25%</span></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar green"></div>
+                <div class="kpi-icon">&#x2705;</div>
+                <div class="kpi-label" data-i18n="kpi.netProfitRate">净利润率</div>
+                <div class="kpi-value" style="color:var(--success);">41.2<span style="font-size:16px;">%</span></div>
+                <div class="kpi-sub"><span class="threshold-indicator threshold-safe" data-i18n="kpi.profitThreshold">安全线 &ge;20%</span></div>
+            </div>
+            <div class="kpi-card" style="grid-column: span 2;">
+                <div class="kpi-accent-bar purple"></div>
+                <div class="kpi-icon">&#x1F3E2;</div>
+                <div class="kpi-label" data-i18n="kpi.platformRegRevenue">平台自主注册收益（本月）</div>
+                <div class="kpi-value" style="color:var(--accent-light);">&yen;86,420</div>
+                <div class="kpi-sub" data-i18n="kpi.platformRegRevenueSub">占比总收入 22.4% | 较上月 +15.3%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar green"></div>
+                <div class="kpi-icon">&#x1F916;</div>
+                <div class="kpi-label" data-i18n="kpi.companionCreated">AI伴读创建量</div>
+                <div class="kpi-value" style="color:var(--accent-light);">1,247</div>
+                <div class="kpi-sub" data-i18n="kpi.companionCreatedSub">本月 | 较上月 +28.6%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-accent-bar orange"></div>
+                <div class="kpi-icon">&#x1F4C8;</div>
+                <div class="kpi-label" data-i18n="kpi.trialConvertRate">游客试用转化率</div>
+                <div class="kpi-value" style="color:var(--warning);">18.7<span style="font-size:16px;">%</span></div>
+                <div class="kpi-sub"><span class="threshold-indicator threshold-warning" data-i18n="kpi.trialConvertSub">试用转付费ROI 1.42</span></div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card chart-half">
+                <h3 data-i18n="chart.monthlyRevenue">月度收入趋势</h3>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-card chart-half">
+                <h3 data-i18n="chart.commissionPie">佣金占比分布</h3>
+                <canvas id="commissionPieChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3 data-i18n="chart.aiCostVsRevenue">AI成本 vs 收入对比</h3>
+                <canvas id="aiCostChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3 data-i18n="chart.keyMetrics">关键指标趋势</h3>
+                <canvas id="metricsChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span data-i18n="footer.copyright">AILOS &copy; 2026</span>
+    </footer>
+
+    <script>
+    // ========== I18N ==========
+    const I18N = {
+        zh: {
+            "page.title": "AILOS 经营利润驾驶舱",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "佣金总占比",
+            "alert.commissionSafe": "（安全线25%以内）",
+            "alert.commissionWarn": "（接近红线25%）",
+            "alert.commissionDanger": "（超过红线25%！）",
+            "alert.aiCost": "AI成本占比",
+            "alert.aiCostSafe": "（安全线40%以内）",
+            "alert.aiCostWarn": "（接近警戒线40%）",
+            "alert.aiCostDanger": "（超过警戒线40%！）",
+            "alert.profit": "净利润率",
+            "alert.profitSafe": "（安全线20%以上）",
+            "alert.profitWarn": "（接近警戒线20%）",
+            "alert.profitDanger": "（低于警戒线20%！）",
+            "kpi.ltv": "LTV 用户生命周期价值",
+            "kpi.ltvSub": "12个月平均周期",
+            "kpi.cac": "CAC 用户获取成本",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU 每用户平均收入",
+            "kpi.arpuSub": "较上月 +5.2%",
+            "kpi.aiCostRatio": "AI成本占比",
+            "kpi.aiCostStatus": "安全",
+            "kpi.commissionRatio": "佣金总占比",
+            "kpi.commissionThreshold": "红线 ≤25%",
+            "kpi.netProfitRate": "净利润率",
+            "kpi.profitThreshold": "安全线 ≥20%",
+            "kpi.platformRegRevenue": "平台自主注册收益（本月）",
+            "kpi.platformRegRevenueSub": "占比总收入 22.4% | 较上月 +15.3%",
+            "kpi.companionCreated": "AI伴读创建量",
+            "kpi.companionCreatedSub": "本月 | 较上月 +28.6%",
+            "kpi.trialConvertRate": "游客试用转化率",
+            "kpi.trialConvertSub": "试用转付费ROI 1.42",
+            "chart.monthlyRevenue": "月度收入趋势",
+            "chart.commissionPie": "佣金占比分布",
+            "chart.aiCostVsRevenue": "AI成本 vs 收入对比",
+            "chart.keyMetrics": "关键指标趋势",
+            "chart.personalPromo": "个人推广",
+            "chart.platformReg": "平台注册",
+            "chart.revenue": "收入",
+            "chart.aiCost": "AI成本",
+            "chart.level1": "一级佣金",
+            "chart.level2": "二级佣金",
+            "chart.platformComm": "平台佣金",
+            "chart.refundDeduction": "退款扣佣",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        en: {
+            "page.title": "AILOS Business Dashboard",
+            "page.subtitle": "Profit Cockpit",
+            "alert.commission": "Commission Ratio",
+            "alert.commissionSafe": "(within 25% safe line)",
+            "alert.commissionWarn": "(approaching 25% red line)",
+            "alert.commissionDanger": "(exceeded 25% red line!)",
+            "alert.aiCost": "AI Cost Ratio",
+            "alert.aiCostSafe": "(within 40% safe line)",
+            "alert.aiCostWarn": "(approaching 40% threshold)",
+            "alert.aiCostDanger": "(exceeded 40% threshold!)",
+            "alert.profit": "Net Profit Margin",
+            "alert.profitSafe": "(above 20% safe line)",
+            "alert.profitWarn": "(approaching 20% threshold)",
+            "alert.profitDanger": "(below 20% threshold!)",
+            "kpi.ltv": "LTV Lifetime Value",
+            "kpi.ltvSub": "12-month avg cycle",
+            "kpi.cac": "CAC Acquisition Cost",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU Avg Revenue/User",
+            "kpi.arpuSub": "+5.2% vs last month",
+            "kpi.aiCostRatio": "AI Cost Ratio",
+            "kpi.aiCostStatus": "Safe",
+            "kpi.commissionRatio": "Commission Ratio",
+            "kpi.commissionThreshold": "Red Line ≤25%",
+            "kpi.netProfitRate": "Net Profit Margin",
+            "kpi.profitThreshold": "Safe Line ≥20%",
+            "kpi.platformRegRevenue": "Platform Registration Revenue (This Month)",
+            "kpi.platformRegRevenueSub": "22.4% of total | +15.3% vs last month",
+            "kpi.companionCreated": "AI Companion Created",
+            "kpi.companionCreatedSub": "This month | +28.6% vs last month",
+            "kpi.trialConvertRate": "Guest Trial Conversion Rate",
+            "kpi.trialConvertSub": "Trial-to-Pay ROI 1.42",
+            "chart.monthlyRevenue": "Monthly Revenue Trend",
+            "chart.commissionPie": "Commission Distribution",
+            "chart.aiCostVsRevenue": "AI Cost vs Revenue",
+            "chart.keyMetrics": "Key Metrics Trend",
+            "chart.personalPromo": "Personal Promo",
+            "chart.platformReg": "Platform Reg",
+            "chart.revenue": "Revenue",
+            "chart.aiCost": "AI Cost",
+            "chart.level1": "Level 1 Commission",
+            "chart.level2": "Level 2 Commission",
+            "chart.platformComm": "Platform Commission",
+            "chart.refundDeduction": "Refund Deduction",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        ja: {
+            "page.title": "AILOS 経営利益ダッシュボード",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "コミッション比率",
+            "alert.commissionSafe": "（安全ライン25%以内）",
+            "alert.commissionWarn": "（レッドライン25%接近）",
+            "alert.commissionDanger": "（レッドライン25%超過！）",
+            "alert.aiCost": "AIコスト比率",
+            "alert.aiCostSafe": "（安全ライン40%以内）",
+            "alert.aiCostWarn": "（警戒ライン40%接近）",
+            "alert.aiCostDanger": "（警戒ライン40%超過！）",
+            "alert.profit": "純利益率",
+            "alert.profitSafe": "（安全ライン20%以上）",
+            "alert.profitWarn": "（警戒ライン20%接近）",
+            "alert.profitDanger": "（警戒ライン20%以下！）",
+            "kpi.ltv": "LTV 顧客生涯価値",
+            "kpi.ltvSub": "12ヶ月平均",
+            "kpi.cac": "CAC 顧客獲得コスト",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU ユーザー平均収入",
+            "kpi.arpuSub": "前月比 +5.2%",
+            "kpi.aiCostRatio": "AIコスト比率",
+            "kpi.aiCostStatus": "安全",
+            "kpi.commissionRatio": "コミッション比率",
+            "kpi.commissionThreshold": "レッドライン ≤25%",
+            "kpi.netProfitRate": "純利益率",
+            "kpi.profitThreshold": "安全ライン ≥20%",
+            "kpi.platformRegRevenue": "プラットフォーム登録収益（今月）",
+            "kpi.platformRegRevenueSub": "総収入の22.4% | 前月比 +15.3%",
+            "kpi.companionCreated": "AIパートナー作成数",
+            "kpi.companionCreatedSub": "今月 | 前月比 +28.6%",
+            "kpi.trialConvertRate": "ゲスト試用転換率",
+            "kpi.trialConvertSub": "試用→有料ROI 1.42",
+            "chart.monthlyRevenue": "月間収入推移",
+            "chart.commissionPie": "コミッション分布",
+            "chart.aiCostVsRevenue": "AIコスト vs 収入",
+            "chart.keyMetrics": "主要指標推移",
+            "chart.personalPromo": "個人紹介",
+            "chart.platformReg": "プラットフォーム登録",
+            "chart.revenue": "収入",
+            "chart.aiCost": "AIコスト",
+            "chart.level1": "1次コミッション",
+            "chart.level2": "2次コミッション",
+            "chart.platformComm": "プラットフォームコミッション",
+            "chart.refundDeduction": "返金控除",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        ko: {
+            "page.title": "AILOS 경영 이익 대시보드",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "수수료 비율",
+            "alert.commissionSafe": "（안전선 25% 이내）",
+            "alert.commissionWarn": "（레드라인 25% 접근）",
+            "alert.commissionDanger": "（레드라인 25% 초과！）",
+            "alert.aiCost": "AI 비용 비율",
+            "alert.aiCostSafe": "（안전선 40% 이내）",
+            "alert.aiCostWarn": "（경계선 40% 접근）",
+            "alert.aiCostDanger": "（경계선 40% 초과！）",
+            "alert.profit": "순이익률",
+            "alert.profitSafe": "（안전선 20% 이상）",
+            "alert.profitWarn": "（경계선 20% 접근）",
+            "alert.profitDanger": "（경계선 20% 이하！）",
+            "kpi.ltv": "LTV 고객 생애 가치",
+            "kpi.ltvSub": "12개월 평균",
+            "kpi.cac": "CAC 고객 획득 비용",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU 사용자당 평균 수익",
+            "kpi.arpuSub": "전월 대비 +5.2%",
+            "kpi.aiCostRatio": "AI 비용 비율",
+            "kpi.aiCostStatus": "안전",
+            "kpi.commissionRatio": "수수료 비율",
+            "kpi.commissionThreshold": "레드라인 ≤25%",
+            "kpi.netProfitRate": "순이익률",
+            "kpi.profitThreshold": "안전선 ≥20%",
+            "kpi.platformRegRevenue": "플랫폼 등록 수익（이번 달）",
+            "kpi.platformRegRevenueSub": "총 수익의 22.4% | 전월 대비 +15.3%",
+            "kpi.companionCreated": "AI 파트너 생성량",
+            "kpi.companionCreatedSub": "이번 달 | 전월 대비 +28.6%",
+            "kpi.trialConvertRate": "게스트 체험 전환율",
+            "kpi.trialConvertSub": "체험→유료 ROI 1.42",
+            "chart.monthlyRevenue": "월간 수익 추이",
+            "chart.commissionPie": "수수료 분포",
+            "chart.aiCostVsRevenue": "AI 비용 vs 수익",
+            "chart.keyMetrics": "주요 지표 추이",
+            "chart.personalPromo": "개인 프로모션",
+            "chart.platformReg": "플랫폼 등록",
+            "chart.revenue": "수익",
+            "chart.aiCost": "AI 비용",
+            "chart.level1": "1차 수수료",
+            "chart.level2": "2차 수수료",
+            "chart.platformComm": "플랫폼 수수료",
+            "chart.refundDeduction": "환불 차감",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        fr: {
+            "page.title": "AILOS Tableau de Bord",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "Ratio Commission",
+            "alert.commissionSafe": "(dans la limite de 25%)",
+            "alert.commissionWarn": "(proche de la ligne rouge 25%)",
+            "alert.commissionDanger": "(ligne rouge 25% dépassée!)",
+            "alert.aiCost": "Ratio Coût IA",
+            "alert.aiCostSafe": "(dans la limite de 40%)",
+            "alert.aiCostWarn": "(proche du seuil 40%)",
+            "alert.aiCostDanger": "(seuil 40% dépassé!)",
+            "alert.profit": "Marge Nette",
+            "alert.profitSafe": "(au-dessus de 20%)",
+            "alert.profitWarn": "(proche du seuil 20%)",
+            "alert.profitDanger": "(en dessous de 20%!)",
+            "kpi.ltv": "LTV Valeur Vie Client",
+            "kpi.ltvSub": "cycle moyen 12 mois",
+            "kpi.cac": "CAC Coût Acquisition",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU Revenu Moyen/Utilisateur",
+            "kpi.arpuSub": "+5.2% vs mois dernier",
+            "kpi.aiCostRatio": "Ratio Coût IA",
+            "kpi.aiCostStatus": "Sûr",
+            "kpi.commissionRatio": "Ratio Commission",
+            "kpi.commissionThreshold": "Ligne Rouge ≤25%",
+            "kpi.netProfitRate": "Marge Nette",
+            "kpi.profitThreshold": "Ligne Sûre ≥20%",
+            "kpi.platformRegRevenue": "Revenu Inscription Plateforme (Ce Mois)",
+            "kpi.platformRegRevenueSub": "22.4% du total | +15.3% vs mois dernier",
+            "kpi.companionCreated": "Compagnons IA Creés",
+            "kpi.companionCreatedSub": "Ce mois | +28.6% vs mois dernier",
+            "kpi.trialConvertRate": "Taux de Conversion Essai",
+            "kpi.trialConvertSub": "ROI Essai→Paiement 1.42",
+            "chart.monthlyRevenue": "Tendance Revenu Mensuel",
+            "chart.commissionPie": "Distribution Commissions",
+            "chart.aiCostVsRevenue": "Coût IA vs Revenu",
+            "chart.keyMetrics": "Tendance Indicateurs Clés",
+            "chart.personalPromo": "Promo Personnelle",
+            "chart.platformReg": "Plateforme",
+            "chart.revenue": "Revenu",
+            "chart.aiCost": "Coût IA",
+            "chart.level1": "Commission N1",
+            "chart.level2": "Commission N2",
+            "chart.platformComm": "Commission Plateforme",
+            "chart.refundDeduction": "Déduction Remb.",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        es: {
+            "page.title": "AILOS Panel de Negocio",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "Ratio Comisión",
+            "alert.commissionSafe": "(dentro de línea segura 25%)",
+            "alert.commissionWarn": "(cerca de línea roja 25%)",
+            "alert.commissionDanger": "(¡línea roja 25% superada!)",
+            "alert.aiCost": "Ratio Coste IA",
+            "alert.aiCostSafe": "(dentro de línea segura 40%)",
+            "alert.aiCostWarn": "(cerca del umbral 40%)",
+            "alert.aiCostDanger": "(¡umbral 40% superado!)",
+            "alert.profit": "Margen Neto",
+            "alert.profitSafe": "(por encima de 20%)",
+            "alert.profitWarn": "(cerca del umbral 20%)",
+            "alert.profitDanger": "(¡por debajo del 20%!)",
+            "kpi.ltv": "LTV Valor Vida Cliente",
+            "kpi.ltvSub": "ciclo promedio 12 meses",
+            "kpi.cac": "CAC Coste Adquisición",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU Ingreso Medio/Usuario",
+            "kpi.arpuSub": "+5.2% vs mes anterior",
+            "kpi.aiCostRatio": "Ratio Coste IA",
+            "kpi.aiCostStatus": "Seguro",
+            "kpi.commissionRatio": "Ratio Comisión",
+            "kpi.commissionThreshold": "Línea Roja ≤25%",
+            "kpi.netProfitRate": "Margen Neto",
+            "kpi.profitThreshold": "Línea Segura ≥20%",
+            "kpi.platformRegRevenue": "Ingreso Registro Plataforma (Este Mes)",
+            "kpi.platformRegRevenueSub": "22.4% del total | +15.3% vs mes anterior",
+            "kpi.companionCreated": "Compañeros IA Creados",
+            "kpi.companionCreatedSub": "Este mes | +28.6% vs mes anterior",
+            "kpi.trialConvertRate": "Tasa Conversión Prueba",
+            "kpi.trialConvertSub": "ROI Prueba→Pago 1.42",
+            "chart.monthlyRevenue": "Tendencia Ingreso Mensual",
+            "chart.commissionPie": "Distribución Comisiones",
+            "chart.aiCostVsRevenue": "Coste IA vs Ingreso",
+            "chart.keyMetrics": "Tendencia Indicadores Clave",
+            "chart.personalPromo": "Promo Personal",
+            "chart.platformReg": "Plataforma",
+            "chart.revenue": "Ingreso",
+            "chart.aiCost": "Coste IA",
+            "chart.level1": "Comisión N1",
+            "chart.level2": "Comisión N2",
+            "chart.platformComm": "Comisión Plataforma",
+            "chart.refundDeduction": "Ded. Reembolso",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        },
+        de: {
+            "page.title": "AILOS Geschäfts-Dashboard",
+            "page.subtitle": "Business Dashboard",
+            "alert.commission": "Provisionsanteil",
+            "alert.commissionSafe": "(innerhalb 25% Sicherheitslinie)",
+            "alert.commissionWarn": "(nahe 25% roter Linie)",
+            "alert.commissionDanger": "(rote Linie 25% überschritten!)",
+            "alert.aiCost": "KI-Kostenanteil",
+            "alert.aiCostSafe": "(innerhalb 40% Sicherheitslinie)",
+            "alert.aiCostWarn": "(nahe 40% Schwelle)",
+            "alert.aiCostDanger": "(40% Schwelle überschritten!)",
+            "alert.profit": "Nettomarge",
+            "alert.profitSafe": "(über 20% Sicherheitslinie)",
+            "alert.profitWarn": "(nahe 20% Schwelle)",
+            "alert.profitDanger": "(unter 20% Schwelle!)",
+            "kpi.ltv": "LTV Kundenlebenswert",
+            "kpi.ltvSub": "12-Monats-Durchschnitt",
+            "kpi.cac": "CAC Akquisitionskosten",
+            "kpi.cacSub": "LTV/CAC = 6.79",
+            "kpi.arpu": "ARPU Durchschn. Umsatz/Nutzer",
+            "kpi.arpuSub": "+5,2% vs Vormonat",
+            "kpi.aiCostRatio": "KI-Kostenanteil",
+            "kpi.aiCostStatus": "Sicher",
+            "kpi.commissionRatio": "Provisionsanteil",
+            "kpi.commissionThreshold": "Rote Linie ≤25%",
+            "kpi.netProfitRate": "Nettomarge",
+            "kpi.profitThreshold": "Sicherheitslinie ≥20%",
+            "kpi.platformRegRevenue": "Plattform-Registrierungsumsatz (Diesen Monat)",
+            "kpi.platformRegRevenueSub": "22,4% des Gesamt | +15,3% vs Vormonat",
+            "kpi.companionCreated": "KI-Begleiter Erstellt",
+            "kpi.companionCreatedSub": "Dieser Monat | +28,6% vs Vormonat",
+            "kpi.trialConvertRate": "Gast-Test-Konversionsrate",
+            "kpi.trialConvertSub": "Test→Zahlung ROI 1.42",
+            "chart.monthlyRevenue": "Monatlicher Umsatztrend",
+            "chart.commissionPie": "Provisionsverteilung",
+            "chart.aiCostVsRevenue": "KI-Kosten vs Umsatz",
+            "chart.keyMetrics": "Kennzahlen-Trend",
+            "chart.personalPromo": "Persönliche Werbung",
+            "chart.platformReg": "Plattform",
+            "chart.revenue": "Umsatz",
+            "chart.aiCost": "KI-Kosten",
+            "chart.level1": "Provision Stufe 1",
+            "chart.level2": "Provision Stufe 2",
+            "chart.platformComm": "Plattform-Provision",
+            "chart.refundDeduction": "Rückerstattungsabzug",
+            "chart.ltv": "LTV",
+            "chart.cac": "CAC",
+            "chart.arpu": "ARPU",
+            "footer.copyright": "AILOS © 2026"
+        }
+    };
+
+    let currentLang = 'zh';
+
+    function switchLang(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (I18N[lang] && I18N[lang][key]) {
+                el.textContent = I18N[lang][key];
+            }
+        });
+        document.getElementById('langSelect').value = lang;
+        updateAlerts();
+        updateCharts();
+    }
+
+    function t(key) {
+        return I18N[currentLang] && I18N[currentLang][key] ? I18N[currentLang][key] : key;
+    }
+
+    // ========== Alert System ==========
+    function updateAlerts() {
+        const commissionRatio = 22.3;
+        const aiCostRatio = 18.5;
+        const netProfitRate = 41.2;
+
+        const alertCommission = document.getElementById('alertCommission');
+        const alertAI = document.getElementById('alertAI');
+        const alertProfit = document.getElementById('alertProfit');
+
+        // Commission alert
+        if (commissionRatio >= 25) {
+            alertCommission.className = 'alert-item red';
+            alertCommission.querySelector('.alert-dot').className = 'alert-dot red-dot';
+            alertCommission.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.commission') + '</strong>: ' + commissionRatio + '% ' + t('alert.commissionDanger');
+        } else if (commissionRatio >= 22) {
+            alertCommission.className = 'alert-item yellow';
+            alertCommission.querySelector('.alert-dot').className = 'alert-dot yellow-dot';
+            alertCommission.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.commission') + '</strong>: ' + commissionRatio + '% ' + t('alert.commissionWarn');
+        } else {
+            alertCommission.className = 'alert-item green';
+            alertCommission.querySelector('.alert-dot').className = 'alert-dot green-dot';
+            alertCommission.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.commission') + '</strong>: ' + commissionRatio + '% ' + t('alert.commissionSafe');
+        }
+
+        // AI cost alert
+        if (aiCostRatio >= 40) {
+            alertAI.className = 'alert-item red';
+            alertAI.querySelector('.alert-dot').className = 'alert-dot red-dot';
+            alertAI.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.aiCost') + '</strong>: ' + aiCostRatio + '% ' + t('alert.aiCostDanger');
+        } else if (aiCostRatio >= 30) {
+            alertAI.className = 'alert-item orange';
+            alertAI.querySelector('.alert-dot').className = 'alert-dot orange-dot';
+            alertAI.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.aiCost') + '</strong>: ' + aiCostRatio + '% ' + t('alert.aiCostWarn');
+        } else {
+            alertAI.className = 'alert-item green';
+            alertAI.querySelector('.alert-dot').className = 'alert-dot green-dot';
+            alertAI.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.aiCost') + '</strong>: ' + aiCostRatio + '% ' + t('alert.aiCostSafe');
+        }
+
+        // Profit margin alert
+        if (netProfitRate <= 20) {
+            alertProfit.className = 'alert-item yellow';
+            alertProfit.querySelector('.alert-dot').className = 'alert-dot yellow-dot';
+            alertProfit.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.profit') + '</strong>: ' + netProfitRate + '% ' + t('alert.profitDanger');
+        } else if (netProfitRate <= 25) {
+            alertProfit.className = 'alert-item orange';
+            alertProfit.querySelector('.alert-dot').className = 'alert-dot orange-dot';
+            alertProfit.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.profit') + '</strong>: ' + netProfitRate + '% ' + t('alert.profitWarn');
+        } else {
+            alertProfit.className = 'alert-item green';
+            alertProfit.querySelector('.alert-dot').className = 'alert-dot green-dot';
+            alertProfit.querySelector('span:last-child').innerHTML = '<strong>' + t('alert.profit') + '</strong>: ' + netProfitRate + '% ' + t('alert.profitSafe');
+        }
+    }
+
+    // ========== Chart.js Configuration ==========
+    Chart.defaults.color = '#a0a0c0';
+    Chart.defaults.borderColor = '#2a2a4a';
+    Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif";
+
+    const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsJa = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    const monthsKo = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+    function getMonthLabels() {
+        const map = { zh: months, en: monthsEn, ja: monthsJa, ko: monthsKo, fr: monthsEn, es: monthsEn, de: monthsEn };
+        return map[currentLang] || months;
+    }
+
+    let revenueChartInstance, commissionPieInstance, aiCostChartInstance, metricsChartInstance;
+
+    // Demo data
+    const personalRevenue = [285, 310, 298, 340, 355, 380, 410, 395, 420, 450, 470, 495];
+    const platformRevenue = [85, 92, 105, 115, 128, 140, 155, 148, 162, 175, 188, 210];
+    const aiCostData = [42, 45, 48, 50, 52, 55, 58, 56, 60, 62, 65, 68];
+    const totalRevenueData = personalRevenue.map((v, i) => v + platformRevenue[i]);
+
+    const ltvData = [220, 230, 240, 245, 252, 260, 268, 272, 276, 280, 283, 285];
+    const cacData = [55, 53, 50, 48, 47, 46, 45, 44, 43, 42, 42, 42];
+    const arpuData = [52, 54, 56, 58, 60, 62, 64, 65, 66, 67, 67, 68];
+
+    function createRevenueChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChartInstance) revenueChartInstance.destroy();
+
+        const gradient1 = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient1.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        gradient1.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        const gradient2 = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient2.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
+        gradient2.addColorStop(1, 'rgba(139, 92, 246, 0)');
+
+        revenueChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: getMonthLabels(),
+                datasets: [
+                    {
+                        label: t('chart.personalPromo'),
+                        data: personalRevenue,
+                        borderColor: '#3B82F6',
+                        backgroundColor: gradient1,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3B82F6',
+                        borderWidth: 2
+                    },
+                    {
+                        label: t('chart.platformReg'),
+                        data: platformRevenue,
+                        borderColor: '#8B5CF6',
+                        backgroundColor: gradient2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#8B5CF6',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20, color: '#a0a0c0' }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return ctx.dataset.label + ': ¥' + (ctx.raw * 1000).toLocaleString(); }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: 'rgba(42,42,74,0.5)' },
+                        ticks: { callback: v => '¥' + (v * 1000).toLocaleString() }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function createCommissionPieChart() {
+        const ctx = document.getElementById('commissionPieChart').getContext('2d');
+        if (commissionPieInstance) commissionPieInstance.destroy();
+
+        commissionPieInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [t('chart.level1'), t('chart.level2'), t('chart.platformComm'), t('chart.refundDeduction')],
+                datasets: [{
+                    data: [42.5, 18.8, 28.3, 10.4],
+                    backgroundColor: ['#8B5CF6', '#A78BFA', '#3B82F6', '#EF4444'],
+                    borderColor: '#1a1a35',
+                    borderWidth: 3,
+                    hoverBorderColor: '#2a2a4a'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 16, color: '#a0a0c0' }
+                    },
+                    tooltip: {
+                        callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '%' }
+                    }
+                }
+            }
+        });
+    }
+
+    function createAiCostChart() {
+        const ctx = document.getElementById('aiCostChart').getContext('2d');
+        if (aiCostChartInstance) aiCostChartInstance.destroy();
+
+        aiCostChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: getMonthLabels(),
+                datasets: [
+                    {
+                        label: t('chart.revenue'),
+                        data: totalRevenueData,
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: '#8B5CF6',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: t('chart.aiCost'),
+                        data: aiCostData,
+                        backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                        borderColor: '#F59E0B',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20, color: '#a0a0c0' }
+                    },
+                    tooltip: {
+                        callbacks: { label: ctx => ctx.dataset.label + ': ¥' + (ctx.raw * 1000).toLocaleString() }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(42,42,74,0.5)' },
+                        ticks: { callback: v => '¥' + (v * 1000).toLocaleString() }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function createMetricsChart() {
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        if (metricsChartInstance) metricsChartInstance.destroy();
+
+        metricsChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: getMonthLabels(),
+                datasets: [
+                    {
+                        label: t('chart.ltv'),
+                        data: ltvData,
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'transparent',
+                        tension: 0.3,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: t('chart.cac'),
+                        data: cacData,
+                        borderColor: '#EF4444',
+                        backgroundColor: 'transparent',
+                        tension: 0.3,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: t('chart.arpu'),
+                        data: arpuData,
+                        borderColor: '#10B981',
+                        backgroundColor: 'transparent',
+                        tension: 0.3,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20, color: '#a0a0c0' }
+                    },
+                    tooltip: {
+                        callbacks: { label: ctx => ctx.dataset.label + ': ¥' + ctx.raw }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: 'rgba(42,42,74,0.5)' },
+                        ticks: { callback: v => '¥' + v }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: v => '¥' + v }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function updateCharts() {
+        createRevenueChart();
+        createCommissionPieChart();
+        createAiCostChart();
+        createMetricsChart();
+    }
+
+    // Initialize
+    updateAlerts();
+    updateCharts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#7C3AED">
+<title>AILOS AI Learning Ecosystem</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #7C3AED;
+    --primary-dark: #5B21B6;
+    --primary-hover: #6D28D9;
+    --primary-light: #EDE9FE;
+    --primary-lighter: #F5F3FF;
+    --secondary: #A78BFA;
+    --accent: #C084FC;
+    --gradient-start: #7C3AED;
+    --gradient-mid: #8B5CF6;
+    --gradient-end: #A78BFA;
+    --bg: #FAFAFA;
+    --card-bg: #FFFFFF;
+    --text: #1E1B4B;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --border: #E5E7EB;
+    --success: #059669;
+    --warning: #D97706;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
+    --shadow-xl: 0 8px 16px rgba(0,0,0,.06), 0 20px 60px rgba(0,0,0,.12);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7; min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== Language Bar ===== */
+  .lang-bar {
+    display: flex; justify-content: flex-end; gap: 4px; flex-wrap: wrap;
+    padding: 10px 16px; max-width: 1000px; margin: 0 auto;
+  }
+  .lang-flag {
+    padding: 5px 12px; border-radius: 20px; font-size: 13px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap;
+  }
+  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
+  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+  /* ===== Container ===== */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+    color: #fff; border-radius: var(--radius-lg); padding: 48px 32px;
+    margin: 12px 0 36px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(255,255,255,.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero * { position: relative; z-index: 1; }
+  .hero .badge {
+    display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 13px;
+    font-weight: 600; background: rgba(255,255,255,.2); backdrop-filter: blur(4px);
+    margin-bottom: 16px; letter-spacing: .5px;
+  }
+  .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; line-height: 1.25; letter-spacing: -.5px; }
+  .hero .subtitle { font-size: 18px; opacity: .92; font-weight: 500; margin-bottom: 8px; }
+  .hero .desc { font-size: 14px; opacity: .78; max-width: 560px; margin: 0 auto; line-height: 1.7; }
+
+  /* ===== Section ===== */
+  .section { margin-bottom: 36px; }
+  .section-header { text-align: center; margin-bottom: 24px; }
+  .section-header .section-icon { font-size: 32px; margin-bottom: 8px; }
+  .section-header h2 { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
+  .section-header .section-desc { font-size: 14px; color: var(--text-secondary); margin-top: 6px; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+  /* ===== Ecosystem Architecture ===== */
+  .ecosystem-layers {
+    display: flex; flex-direction: column; gap: 16px; position: relative;
+  }
+  .ecosystem-layers::before {
+    content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(to bottom, var(--primary), var(--accent));
+    transform: translateX(-50%); border-radius: 1px;
+  }
+  .layer-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 24px 28px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    position: relative; margin: 0 auto; width: 100%; max-width: 600px;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .layer-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .layer-card .layer-num {
+    position: absolute; top: -12px; left: 24px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; box-shadow: 0 2px 8px rgba(124,58,237,.35);
+  }
+  .layer-card .layer-icon { font-size: 28px; margin-bottom: 8px; }
+  .layer-card h3 { font-size: 18px; font-weight: 700; color: var(--primary-dark); margin-bottom: 4px; }
+  .layer-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.65; }
+
+  /* ===== Capability Cards ===== */
+  .cap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .cap-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .cap-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .cap-card .cap-icon { font-size: 36px; margin-bottom: 12px; }
+  .cap-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .cap-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+
+  /* ===== AI Assets ===== */
+  .assets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .asset-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 22px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .asset-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .asset-card .asset-icon { font-size: 28px; margin-bottom: 8px; }
+  .asset-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+  .asset-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ===== Comparison ===== */
+  .compare-container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;
+  }
+  .compare-col {
+    border-radius: var(--radius); padding: 28px 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .compare-col.old { background: #FEF2F2; border-color: #FECACA; }
+  .compare-col.new { background: var(--primary-lighter); border-color: var(--primary-light); }
+  .compare-col h3 { font-size: 18px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .compare-col.old h3 { color: #DC2626; }
+  .compare-col.new h3 { color: var(--primary); }
+  .compare-col ul { list-style: none; padding: 0; }
+  .compare-col li {
+    padding: 8px 0; font-size: 14px; color: var(--text-secondary);
+    display: flex; align-items: flex-start; gap: 8px; line-height: 1.6;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .compare-col li:last-child { border-bottom: none; }
+  .compare-col.old li::before { content: '\2716'; color: #DC2626; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .compare-col.new li::before { content: '\2714'; color: var(--success); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* ===== Section Divider ===== */
+  .section-divider {
+    display: flex; align-items: center; gap: 16px; margin: 44px 0 36px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+  .section-divider .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* ===== CTA ===== */
+  .bottom-cta {
+    text-align: center; padding: 44px 32px;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+    border-radius: var(--radius-lg); color: #fff; margin-top: 20px;
+    position: relative; overflow: hidden;
+  }
+  .bottom-cta::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(255,255,255,.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .bottom-cta * { position: relative; z-index: 1; }
+  .bottom-cta h2 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .bottom-cta p { font-size: 15px; opacity: .9; margin-bottom: 22px; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .btn-cta {
+    display: inline-block; padding: 14px 40px; border-radius: 50px; font-size: 16px;
+    font-weight: 700; text-decoration: none; cursor: pointer;
+    background: #fff; color: var(--primary); transition: all .25s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .btn-cta:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.2); }
+
+  /* ===== Footer ===== */
+  .footer { text-align: center; padding: 24px 20px; font-size: 12px; color: var(--text-muted); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .hero { padding: 36px 24px; border-radius: var(--radius); }
+    .hero h1 { font-size: 28px; }
+    .hero .subtitle { font-size: 15px; }
+    .section-header h2 { font-size: 20px; }
+    .assets-grid { grid-template-columns: 1fr; }
+    .compare-container { grid-template-columns: 1fr; }
+    .ecosystem-layers::before { display: none; }
+    .layer-card { max-width: 100%; }
+    .bottom-cta h2 { font-size: 22px; }
+    .cap-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 375px) {
+    .hero { padding: 28px 16px; }
+    .hero h1 { font-size: 24px; }
+    .hero .subtitle { font-size: 14px; }
+    .hero .desc { font-size: 13px; }
+    .lang-bar { padding: 8px 10px; gap: 2px; }
+    .lang-flag { padding: 4px 8px; font-size: 11px; }
+    .section-header h2 { font-size: 18px; }
+    .layer-card { padding: 18px 16px; }
+    .layer-card h3 { font-size: 16px; }
+    .cap-card { padding: 18px 16px; }
+    .asset-card { padding: 16px; }
+    .compare-col { padding: 20px 16px; }
+    .bottom-cta { padding: 32px 20px; }
+    .bottom-cta h2 { font-size: 20px; }
+    .container { padding: 0 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar" id="langBar"></div>
+
+<div class="container">
+
+  <!-- ===== 1. Hero ===== -->
+  <div class="hero">
+    <div class="badge" data-i18n="hero_badge">AILOS ECOSYSTEM</div>
+    <h1 data-i18n="hero_title">AILOS AI学习生态系统</h1>
+    <div class="subtitle" data-i18n="hero_subtitle">AI学习操作系统 - 重新定义语言学习</div>
+    <div class="desc" data-i18n="hero_desc">AILOS是面向全球学习者的AI驱动语言学习平台，通过AI私人伴读、成长奖励机制和机构教育解决方案，构建完整的AI学习生态闭环。</div>
+  </div>
+
+  <!-- ===== 2. Three-Layer Ecosystem Architecture ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x1F331;</div>
+      <h2 data-i18n="eco_title">三层生态系统架构</h2>
+      <div class="section-desc" data-i18n="eco_desc">以学习者为核心，连接成长伙伴与机构伙伴，形成可持续增长飞轮</div>
+    </div>
+    <div class="ecosystem-layers">
+      <div class="layer-card">
+        <div class="layer-num">1</div>
+        <div class="layer-icon">&#x1F393;</div>
+        <h3 data-i18n="layer1_title">学习者 - AI私人伴读</h3>
+        <p data-i18n="layer1_desc">每位学习者获得专属AI导师，提供个性化学习路径、实时语音对话、语法纠错和进度追踪。AI理解你的学习风格，用母语深度讲解，让语言学习真正高效。</p>
+      </div>
+      <div class="layer-card">
+        <div class="layer-num">2</div>
+        <div class="layer-icon">&#x1F91D;</div>
+        <h3 data-i18n="layer2_title">成长伙伴 - 分享现金奖励</h3>
+        <p data-i18n="layer2_desc">学习者通过邀请好友加入平台获得现金奖励。分享学习成果、打卡记录至社交平台，吸引更多用户，形成病毒式用户增长。每一位学习者都可以成为生态的共建者和受益者。</p>
+        <div class="layer-note" style="margin-top:10px; padding:8px 14px; background:var(--primary-lighter); border-radius:8px; border-left:3px solid var(--primary); font-size:12px; color:var(--primary-dark); line-height:1.6;" data-i18n="layer2_note">平台自然流量收益模型：无邀请码自主注册用户的订单佣金，归入平台官方账户，按标准两级规则自动结算。</div>
+      </div>
+      <div class="layer-card">
+        <div class="layer-num">3</div>
+        <div class="layer-icon">&#x1F3EB;</div>
+        <h3 data-i18n="layer3_title">机构伙伴 - AI教育解决方案</h3>
+        <p data-i18n="layer3_desc">为学校、培训机构和企业提供完整的AI教育解决方案。包括定制化课程管理、学情数据看板、AI教学助手集成，帮助机构降本增效，实现数字化转型。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="dot"></div></div>
+
+  <!-- ===== 3. User-side: AI Companion ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x1F916;</div>
+      <h2 data-i18n="user_title">用户端：AI智能伴读</h2>
+      <div class="section-desc" data-i18n="user_desc">超越传统学习工具的AI语言伴读，懂你、陪你、帮你成长</div>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F9E0;</div>
+        <h4 data-i18n="user_feat1_title">AI人格化互动</h4>
+        <p data-i18n="user_feat1_desc">AI语言伴读拥有独特的性格设定和对话风格，支持多角色扮演（如导师、朋友、考官），让每次学习都充满趣味和温度。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F399;</div>
+        <h4 data-i18n="user_feat2_title">多语言语音引擎</h4>
+        <p data-i18n="user_feat2_desc">支持50+语言的实时语音识别与合成，精准评测发音准确度，提供逐词纠音反馈。自然流畅的TTS，让口语练习像真人对话一样自然。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F3AF;</div>
+        <h4 data-i18n="user_feat3_title">场景化学习模式</h4>
+        <p data-i18n="user_feat3_desc">覆盖旅行、商务、考试、日常等20+真实场景，AI根据场景动态生成对话内容，让你在沉浸式环境中快速提升应用能力。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 4. Sharing-side: Growth Rewards ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x1F4B0;</div>
+      <h2 data-i18n="share_title">分享端：成长奖励体系</h2>
+      <div class="section-desc" data-i18n="share_desc">让每一次分享都产生价值，让学习成果成为社交货币</div>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F4E3;</div>
+        <h4 data-i18n="share_feat1_title">邀请返现机制</h4>
+        <p data-i18n="share_feat1_desc">每成功邀请一位好友注册并完成首课，双方均可获得现金奖励。多级邀请体系，让学习分享成为可持续的收入来源。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F3C6;</div>
+        <h4 data-i18n="share_feat2_title">成就徽章系统</h4>
+        <p data-i18n="share_feat2_desc">学习打卡、连续天数、课程完成等里程碑解锁专属成就徽章。可分享至社交平台展示学习成果，激励持续学习。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F465;</div>
+        <h4 data-i18n="share_feat3_title">学习圈社群</h4>
+        <p data-i18n="share_feat3_desc">加入同语言学习圈，组队打卡、互相纠错、分享学习笔记。活跃用户可获得平台流量扶持和额外奖励。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F3E2;</div>
+        <h4 data-i18n="share_feat4_title">平台自主注册分佣</h4>
+        <p data-i18n="share_feat4_desc">无邀请码自主注册用户自动归属平台主账户，按标准两级规则结算佣金。该用户后续付费订单，平台主账户正常领取一级佣金；其邀请的下级付费时，平台主账户为二级。所有收益归集至平台财务总账。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 5. Institution-side: AI Education Solutions ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x1F4CA;</div>
+      <h2 data-i18n="inst_title">机构端：AI教育解决方案</h2>
+      <div class="section-desc" data-i18n="inst_desc">为教育机构提供一站式AI赋能方案，降低运营成本，提升教学效果</div>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cap-icon">&#x2699;</div>
+        <h4 data-i18n="inst_feat1_title">智能课程管理</h4>
+        <p data-i18n="inst_feat1_desc">AI自动生成课程大纲、课后练习和测评试卷。支持自定义知识图谱，灵活适配不同教学大纲和考试标准。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F4CA;</div>
+        <h4 data-i18n="inst_feat2_title">学情数据看板</h4>
+        <p data-i18n="inst_feat2_desc">实时追踪每位学生的知识点掌握度、学习时长、薄弱环节。可视化数据看板，帮助教师精准定位教学重点，实现因材施教。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#x1F4E1;</div>
+        <h4 data-i18n="inst_feat3_title">API集成方案</h4>
+        <p data-i18n="inst_feat3_desc">提供标准化API接口，无缝对接机构现有LMS系统。支持品牌定制、白标部署，快速上线自有品牌的AI教学平台。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="dot"></div></div>
+
+  <!-- ===== 6. AI Learning Assets (Moat) ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x1F512;</div>
+      <h2 data-i18n="assets_title">AI学习资产 - 长期竞争壁垒</h2>
+      <div class="section-desc" data-i18n="assets_desc">随着用户学习数据持续积累，构建不可替代的AI学习资产护城河</div>
+    </div>
+    <div class="assets-grid">
+      <div class="asset-card">
+        <div class="asset-icon">&#x1F4D6;</div>
+        <h4 data-i18n="asset1_title">学习历史与语言能力模型</h4>
+        <p data-i18n="asset1_desc">记录每一次学习轨迹，构建个人语言能力雷达图。词汇量、语法、听力、口语、阅读、写作六维评估，精准定位当前水平。</p>
+      </div>
+      <div class="asset-card">
+        <div class="asset-icon">&#x1F3AF;</div>
+        <h4 data-i18n="asset2_title">兴趣画像与错题库</h4>
+        <p data-i18n="asset2_desc">AI分析学习偏好和兴趣领域，动态调整内容推荐。自动收集错题并生成针对性练习，智能间隔重复确保知识长期留存。</p>
+      </div>
+      <div class="asset-card">
+        <div class="asset-icon">&#x1F9E0;</div>
+        <h4 data-i18n="asset3_title">AI记忆与知识图谱</h4>
+        <p data-i18n="asset3_desc">构建个人知识图谱，AI记忆学习者的强项、弱点和遗忘曲线。基于艾宾浩斯遗忘规律，在最佳时机推送复习内容。</p>
+      </div>
+      <div class="asset-card">
+        <div class="asset-icon">&#x1F4C8;</div>
+        <h4 data-i18n="asset4_title">个性化课程路径</h4>
+        <p data-i18n="asset4_desc">AI根据能力模型、学习目标和时间预算，动态规划最优学习路径。每完成一个阶段，自动校准下一阶段目标，实现自适应学习。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 7. Old vs New Comparison ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">&#x2696;</div>
+      <h2 data-i18n="compare_title">传统 vs AI驱动：教育模式变革</h2>
+      <div class="section-desc" data-i18n="compare_desc">AI正在从根本上改变语言学习的效率与体验</div>
+    </div>
+    <div class="compare-container">
+      <div class="compare-col old">
+        <h3 data-i18n="old_title">传统教育模式</h3>
+        <ul>
+          <li data-i18n="old_1">一对多标准化教学，无法适配个体差异</li>
+          <li data-i18n="old_2">缺乏实时反馈，学习效果难以量化追踪</li>
+          <li data-i18n="old_3">教师资源有限，优质教育分布不均</li>
+          <li data-i18n="old_4">学习内容静态，无法根据进度动态调整</li>
+          <li data-i18n="old_5">缺乏口语练习环境，哑巴外语普遍</li>
+        </ul>
+      </div>
+      <div class="compare-col new">
+        <h3 data-i18n="new_title">AILOS AI驱动模式</h3>
+        <ul>
+          <li data-i18n="new_1">一对一AI个性化教学，千人千面自适应学习</li>
+          <li data-i18n="new_2">实时多维数据反馈，学习效果可视化精准追踪</li>
+          <li data-i18n="new_3">24/7 AI导师全天候可用，打破时间空间限制</li>
+          <li data-i18n="new_4">AI动态调整课程内容，基于知识图谱精准导航</li>
+          <li data-i18n="new_5">沉浸式AI语音对话，随时随地练习地道口语</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 8. Bottom CTA ===== -->
+  <div class="bottom-cta">
+    <h2 data-i18n="cta_title">加入AILOS生态，共建AI学习未来</h2>
+    <p data-i18n="cta_desc">无论你是学习者、分享者，还是教育机构，AILOS为你提供AI驱动的全新可能。联系我们，成为生态伙伴。</p>
+    <p style="font-size:12px; opacity:.75; margin-bottom:18px; max-width:560px; margin-left:auto; margin-right:auto; line-height:1.6;" data-i18n="cta_note">平台自主注册用户自动归属平台主账户，按标准两级规则结算。所有自然注册佣金归集至财务总账，计入平台经营收益。</p>
+    <a class="btn-cta" href="javascript:void(0)" data-i18n="cta_btn">成为合作伙伴</a>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span data-i18n="footer_text">&copy; 2026 AILOS AI Learning Ecosystem. All rights reserved.</span>
+  </div>
+
+</div>
+
+<script>
+// ==================== GLOI i18n ====================
+const I18N = {
+  zh: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'AILOS AI学习生态系统',
+    hero_subtitle: 'AI学习操作系统 - 重新定义语言学习',
+    hero_desc: 'AILOS是面向全球学习者的AI驱动语言学习平台，通过AI私人伴读、成长奖励机制和机构教育解决方案，构建完整的AI学习生态闭环。',
+    eco_title: '三层生态系统架构',
+    eco_desc: '以学习者为核心，连接成长伙伴与机构伙伴，形成可持续增长飞轮',
+    layer1_title: '学习者 - AI私人伴读',
+    layer1_desc: '每位学习者获得专属AI导师，提供个性化学习路径、实时语音对话、语法纠错和进度追踪。AI理解你的学习风格，用母语深度讲解，让语言学习真正高效。',
+    layer2_title: '成长伙伴 - 分享现金奖励',
+    layer2_desc: '学习者通过邀请好友加入平台获得现金奖励。分享学习成果、打卡记录至社交平台，吸引更多用户，形成病毒式用户增长。每一位学习者都可以成为生态的共建者和受益者。',
+    layer2_note: '平台自然流量收益模型：无邀请码自主注册用户的订单佣金，归入平台官方账户，按标准两级规则自动结算。',
+    layer3_title: '机构伙伴 - AI教育解决方案',
+    layer3_desc: '为学校、培训机构和企业提供完整的AI教育解决方案。包括定制化课程管理、学情数据看板、AI教学助手集成，帮助机构降本增效，实现数字化转型。',
+    user_title: '用户端：AI智能伴读',
+    user_desc: '超越传统学习工具的AI语言伴读，懂你、陪你、帮你成长',
+    user_feat1_title: 'AI人格化互动',
+    user_feat1_desc: 'AI语言伴读拥有独特的性格设定和对话风格，支持多角色扮演（如导师、朋友、考官），让每次学习都充满趣味和温度。',
+    user_feat2_title: '多语言语音引擎',
+    user_feat2_desc: '支持50+语言的实时语音识别与合成，精准评测发音准确度，提供逐词纠音反馈。自然流畅的TTS，让口语练习像真人对话一样自然。',
+    user_feat3_title: '场景化学习模式',
+    user_feat3_desc: '覆盖旅行、商务、考试、日常等20+真实场景，AI根据场景动态生成对话内容，让你在沉浸式环境中快速提升应用能力。',
+    share_title: '分享端：成长奖励体系',
+    share_desc: '让每一次分享都产生价值，让学习成果成为社交货币',
+    share_feat1_title: '邀请返现机制',
+    share_feat1_desc: '每成功邀请一位好友注册并完成首课，双方均可获得现金奖励。多级邀请体系，让学习分享成为可持续的收入来源。',
+    share_feat2_title: '成就徽章系统',
+    share_feat2_desc: '学习打卡、连续天数、课程完成等里程碑解锁专属成就徽章。可分享至社交平台展示学习成果，激励持续学习。',
+    share_feat3_title: '学习圈社群',
+    share_feat3_desc: '加入同语言学习圈，组队打卡、互相纠错、分享学习笔记。活跃用户可获得平台流量扶持和额外奖励。',
+    share_feat4_title: '平台自主注册分佣',
+    share_feat4_desc: '无邀请码自主注册用户自动归属平台主账户，按标准两级规则结算佣金。该用户后续付费订单，平台主账户正常领取一级佣金；其邀请的下级付费时，平台主账户为二级。所有收益归集至平台财务总账。',
+    inst_title: '机构端：AI教育解决方案',
+    inst_desc: '为教育机构提供一站式AI赋能方案，降低运营成本，提升教学效果',
+    inst_feat1_title: '智能课程管理',
+    inst_feat1_desc: 'AI自动生成课程大纲、课后练习和测评试卷。支持自定义知识图谱，灵活适配不同教学大纲和考试标准。',
+    inst_feat2_title: '学情数据看板',
+    inst_feat2_desc: '实时追踪每位学生的知识点掌握度、学习时长、薄弱环节。可视化数据看板，帮助教师精准定位教学重点，实现因材施教。',
+    inst_feat3_title: 'API集成方案',
+    inst_feat3_desc: '提供标准化API接口，无缝对接机构现有LMS系统。支持品牌定制、白标部署，快速上线自有品牌的AI教学平台。',
+    assets_title: 'AI学习资产 - 长期竞争壁垒',
+    assets_desc: '随着用户学习数据持续积累，构建不可替代的AI学习资产护城河',
+    asset1_title: '学习历史与语言能力模型',
+    asset1_desc: '记录每一次学习轨迹，构建个人语言能力雷达图。词汇量、语法、听力、口语、阅读、写作六维评估，精准定位当前水平。',
+    asset2_title: '兴趣画像与错题库',
+    asset2_desc: 'AI分析学习偏好和兴趣领域，动态调整内容推荐。自动收集错题并生成针对性练习，智能间隔重复确保知识长期留存。',
+    asset3_title: 'AI记忆与知识图谱',
+    asset3_desc: '构建个人知识图谱，AI记忆学习者的强项、弱点和遗忘曲线。基于艾宾浩斯遗忘规律，在最佳时机推送复习内容。',
+    asset4_title: '个性化课程路径',
+    asset4_desc: 'AI根据能力模型、学习目标和时间预算，动态规划最优学习路径。每完成一个阶段，自动校准下一阶段目标，实现自适应学习。',
+    compare_title: '传统 vs AI驱动：教育模式变革',
+    compare_desc: 'AI正在从根本上改变语言学习的效率与体验',
+    old_title: '传统教育模式',
+    old_1: '一对多标准化教学，无法适配个体差异',
+    old_2: '缺乏实时反馈，学习效果难以量化追踪',
+    old_3: '教师资源有限，优质教育分布不均',
+    old_4: '学习内容静态，无法根据进度动态调整',
+    old_5: '缺乏口语练习环境，哑巴外语普遍',
+    new_title: 'AILOS AI驱动模式',
+    new_1: '一对一AI个性化教学，千人千面自适应学习',
+    new_2: '实时多维数据反馈，学习效果可视化精准追踪',
+    new_3: '24/7 AI导师全天候可用，打破时间空间限制',
+    new_4: 'AI动态调整课程内容，基于知识图谱精准导航',
+    new_5: '沉浸式AI语音对话，随时随地练习地道口语',
+    cta_title: '加入AILOS生态，共建AI学习未来',
+    cta_desc: '无论你是学习者、分享者，还是教育机构，AILOS为你提供AI驱动的全新可能。联系我们，成为生态伙伴。',
+    cta_note: '平台自主注册用户自动归属平台主账户，按标准两级规则结算。所有自然注册佣金归集至财务总账，计入平台经营收益。',
+    cta_btn: '成为合作伙伴',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. All rights reserved.',
+  },
+  en: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'AILOS AI Learning Ecosystem',
+    hero_subtitle: 'AI Learning Operating System - Redefining Language Learning',
+    hero_desc: 'AILOS is an AI-driven language learning platform for global learners. Through AI private tutoring, growth reward mechanisms, and institutional education solutions, it builds a complete AI learning ecosystem loop.',
+    eco_title: 'Three-Layer Ecosystem Architecture',
+    eco_desc: 'Learner-centric, connecting growth partners and institutional partners to form a sustainable growth flywheel',
+    layer1_title: 'Learners - AI Private Tutor',
+    layer1_desc: 'Each learner receives a dedicated AI tutor offering personalized learning paths, real-time voice conversations, grammar correction, and progress tracking. The AI understands your learning style and explains concepts in-depth in your native language for truly efficient learning.',
+    layer2_title: 'Growth Partners - Share & Earn Cash Rewards',
+    layer2_desc: 'Learners earn cash rewards by inviting friends to join the platform. Share learning achievements and check-in records on social platforms to attract more users, creating viral user growth. Every learner can become a co-builder and beneficiary of the ecosystem.',
+    layer2_note: 'Platform Natural Traffic Revenue Model: Order commissions from self-registered users without invitation codes are attributed to the platform official account, settled automatically under standard two-tier rules.',
+    layer3_title: 'Institutional Partners - AI Education Solutions',
+    layer3_desc: 'Complete AI education solutions for schools, training institutions, and enterprises. Includes customized course management, learning analytics dashboards, and AI teaching assistant integration, helping institutions reduce costs, improve efficiency, and achieve digital transformation.',
+    user_title: 'User Side: AI Smart Companion',
+    user_desc: 'An AI companion beyond traditional learning tools - understands, accompanies, and helps you grow',
+    user_feat1_title: 'AI Personalized Interaction',
+    user_feat1_desc: 'AI companions with unique personality settings and conversation styles, supporting multi-role play (tutor, friend, examiner) to make every learning session engaging and warm.',
+    user_feat2_title: 'Multilingual Speech Engine',
+    user_feat2_desc: 'Real-time speech recognition and synthesis for 50+ languages, with precise pronunciation assessment and word-by-word correction feedback. Natural TTS makes speaking practice feel like real conversation.',
+    user_feat3_title: 'Scenario-Based Learning',
+    user_feat3_desc: 'Covers 20+ real-world scenarios including travel, business, exams, and daily life. AI dynamically generates dialogue content based on scenarios for rapid skill improvement in immersive environments.',
+    share_title: 'Sharing Side: Growth Rewards System',
+    share_desc: 'Make every share valuable, turn learning achievements into social currency',
+    share_feat1_title: 'Referral Cashback',
+    share_feat1_desc: 'Both parties earn cash rewards when a friend registers and completes their first lesson. Multi-tier referral system makes learning sharing a sustainable income source.',
+    share_feat2_title: 'Achievement Badge System',
+    share_feat2_desc: 'Unlock exclusive achievement badges for milestones like daily check-ins, consecutive days, and course completion. Share on social platforms to showcase progress and stay motivated.',
+    share_feat3_title: 'Learning Circle Community',
+    share_feat3_desc: 'Join language-specific learning circles for team check-ins, peer correction, and note sharing. Active users receive platform traffic support and additional rewards.',
+    share_feat4_title: 'Platform Self-Registration Commission',
+    share_feat4_desc: 'Self-registered users without invitation codes are automatically attributed to the platform master account, with commissions settled under standard two-tier rules. The platform master account receives tier-1 commission for their paid orders; tier-2 commission when their referrals make payments. All revenue is consolidated into the platform financial ledger.',
+    inst_title: 'Institution Side: AI Education Solutions',
+    inst_desc: 'One-stop AI empowerment for educational institutions - reduce costs, improve outcomes',
+    inst_feat1_title: 'Smart Course Management',
+    inst_feat1_desc: 'AI auto-generates course syllabi, exercises, and assessments. Custom knowledge graphs flexibly adapt to different curricula and exam standards.',
+    inst_feat2_title: 'Learning Analytics Dashboard',
+    inst_feat2_desc: 'Real-time tracking of each student\'s knowledge mastery, study duration, and weak areas. Visual dashboards help teachers precisely target teaching priorities for personalized instruction.',
+    inst_feat3_title: 'API Integration',
+    inst_feat3_desc: 'Standardized API interfaces for seamless integration with existing LMS systems. Brand customization and white-label deployment for rapid launch of your own AI teaching platform.',
+    assets_title: 'AI Learning Assets - Long-Term Competitive Moat',
+    assets_desc: 'As user learning data accumulates, build an irreplaceable AI learning asset moat',
+    asset1_title: 'Learning History & Language Ability Model',
+    asset1_desc: 'Record every learning trajectory and build a personal language ability radar chart. Six-dimensional assessment of vocabulary, grammar, listening, speaking, reading, and writing for precise level positioning.',
+    asset2_title: 'Interest Profile & Error Database',
+    asset2_desc: 'AI analyzes learning preferences and interest areas, dynamically adjusting content recommendations. Automatically collects errors and generates targeted exercises with intelligent spaced repetition for long-term retention.',
+    asset3_title: 'AI Memory & Knowledge Graph',
+    asset3_desc: 'Build a personal knowledge graph where AI memorizes your strengths, weaknesses, and forgetting curve. Based on the Ebbinghaus forgetting curve, pushes review content at optimal intervals.',
+    asset4_title: 'Personalized Course Path',
+    asset4_desc: 'AI dynamically plans the optimal learning path based on ability model, learning goals, and time budget. After each stage, automatically recalibrates the next stage goals for adaptive learning.',
+    compare_title: 'Traditional vs AI-Driven: Education Model Revolution',
+    compare_desc: 'AI is fundamentally transforming the efficiency and experience of language learning',
+    old_title: 'Traditional Education Model',
+    old_1: 'One-to-many standardized teaching, cannot adapt to individual differences',
+    old_2: 'Lack of real-time feedback, learning outcomes difficult to quantify and track',
+    old_3: 'Limited teacher resources, uneven distribution of quality education',
+    old_4: 'Static learning content, cannot dynamically adjust to progress',
+    old_5: 'Lack of speaking practice environment, "mute foreign language" is common',
+    new_title: 'AILOS AI-Driven Model',
+    new_1: 'One-on-one AI personalized teaching, adaptive learning for every individual',
+    new_2: 'Real-time multi-dimensional data feedback, visualized and precise learning outcome tracking',
+    new_3: '24/7 AI tutor always available, breaking time and space constraints',
+    new_4: 'AI dynamically adjusts course content, precise navigation via knowledge graph',
+    new_5: 'Immersive AI voice conversations, practice authentic speaking anytime, anywhere',
+    cta_title: 'Join AILOS Ecosystem, Build the Future of AI Learning',
+    cta_desc: 'Whether you are a learner, a sharer, or an educational institution, AILOS offers AI-driven new possibilities. Contact us to become an ecosystem partner.',
+    cta_note: 'Platform self-registered users are automatically attributed to the platform master account, settled under standard two-tier rules. All natural registration commissions are consolidated into the financial ledger as platform operating revenue.',
+    cta_btn: 'Become a Partner',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. All rights reserved.',
+  },
+  ja: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'AILOS AI学習エコシステム',
+    hero_subtitle: 'AI学習オペレーティングシステム - 言語学習を再定義',
+    hero_desc: 'AILOSは世界中の学習者向けAI駆動型言語学習プラットフォームです。AIプライベートチューター、成長報酬メカニズム、機関向け教育ソリューションを通じて、完全なAI学習エコシステムを構築します。',
+    eco_title: '三層エコシステムアーキテクチャ',
+    eco_desc: '学習者を中心に、成長パートナーと機関パートナーをつなぎ、持続可能な成長フライホイールを形成',
+    layer1_title: '学習者 - AIプライベートチューター',
+    layer1_desc: '各学習者に専属AIチューターを提供し、パーソナライズされた学習パス、リアルタイム音声会話、文法修正、進捗追跡を実現。AIがあなたの学習スタイルを理解し、母語で深く解説します。',
+    layer2_title: '成長パートナー - 共有で現金報酬',
+    layer2_desc: '友人を招待して登録完了で現金報酬を獲得。学習成果やチェックイン記録をSNSで共有し、より多くのユーザーを惹きつけ、バイラル成長を実現。すべての学習者がエコシステムの共同構築者かつ受益者に。',
+    layer2_note: 'プラットフォーム自然流入収益モデル：招待コードなしで自主登録したユーザーの注文コミッションは、プラットフォーム公式アカウントに帰属し、標準の二段階ルールで自動決済されます。',
+    layer3_title: '機関パートナー - AI教育ソリューション',
+    layer3_desc: '学校、研修機関、企業向けの完全なAI教育ソリューション。カスタマイズされたコース管理、学習分析ダッシュボード、AI教育アシスタント統合により、コスト削減とデジタル変革を実現。',
+    user_title: 'ユーザー側：AIスマートコンパニオン',
+    user_desc: '従来の学習ツールを超えたAIコンパニオン - 理解し、寄り添い、成長をサポート',
+    user_feat1_title: 'AIパーソナライズ対話',
+    user_feat1_desc: '独自の性格設定と会話スタイルを持つAIコンパニオン。講師、友達、試験官など多役割に対応し、毎回の学習を楽しく温かいものに。',
+    user_feat2_title: '多言語音声エンジン',
+    user_feat2_desc: '50以上の言語に対応するリアルタイム音声認識・合成。発音精度を正確に評価し、単語ごとの修正フィードバックを提供。自然なTTSで本物の会話のような練習を。',
+    user_feat3_title: 'シナリオベース学習',
+    user_feat3_desc: '旅行、ビジネス、試験、日常など20以上のリアルシナリオをカバー。AIがシナリオに応じて動的に対話コンテンツを生成し、没入型環境で応用力を急速に向上。',
+    share_title: '共有側：成長報酬システム',
+    share_desc: 'すべての共有に価値を、学習成果をソーシャル通貨に',
+    share_feat1_title: '紹介キャッシュバック',
+    share_feat1_desc: '友人が登録して初回レッスンを完了すると、双方に現金報酬。多層紹介システムにより、学習共有が持続可能な収入源に。',
+    share_feat2_title: '実績バッジシステム',
+    share_feat2_desc: 'デイリーチェックイン、連続日数、コース完了などのマイルストーンで専用バッジをアンロック。SNSで共有して学習成果を披露し、継続を促進。',
+    share_feat3_title: '学習サークルコミュニティ',
+    share_feat3_desc: '同じ言語の学習サークルに参加し、チームチェックイン、相互添削、ノート共有。アクティブユーザーにはプラットフォームのトラフィック支援と追加報酬を提供。',
+    share_feat4_title: 'プラットフォーム自主登録コミッション',
+    share_feat4_desc: '招待コードなしで自主登録したユーザーは自動的にプラットフォームマスターアカウントに帰属し、標準の二段階ルールでコミッションが決済されます。マスターアカウントはそのユーザーの有料注文に対して一級コミッションを、その紹介者が支払いを行った場合は二級コミッションを受け取ります。すべての収益はプラットフォーム財務台帳に統合されます。',
+    inst_title: '機関側：AI教育ソリューション',
+    inst_desc: '教育機関向けワンストップAI支援 - コスト削減と教育効果向上',
+    inst_feat1_title: 'スマートコース管理',
+    inst_feat1_desc: 'AIがコースシラバス、演習、評価を自動生成。カスタム知識グラフで様々なカリキュラムや試験基準に柔軟に対応。',
+    inst_feat2_title: '学習分析ダッシュボード',
+    inst_feat2_desc: '各学生の知識習得度、学習時間、弱点をリアルタイムで追跡。可視化ダッシュボードで教師が指導重点を正確に特定し、個別最適化された指導を実現。',
+    inst_feat3_title: 'API統合',
+    inst_feat3_desc: '標準化されたAPIインターフェースで既存のLMSシステムとシームレスに統合。ブランドカスタマイズとホワイトラベル展開で、自社ブランドのAI教育プラットフォームを迅速に立ち上げ。',
+    assets_title: 'AI学習資産 - 長期的競争優位性',
+    assets_desc: 'ユーザーの学習データが蓄積されるにつれて、代替不可能なAI学習資産の堀を構築',
+    asset1_title: '学習履歴と言語能力モデル',
+    asset1_desc: 'すべての学習軌跡を記録し、個人の言語能力レーダーチャートを構築。語彙、文法、リスニング、スピーキング、リーディング、ライティングの6次元評価で現在のレベルを正確に把握。',
+    asset2_title: '興味プロファイルとエラーデータベース',
+    asset2_desc: 'AIが学習嗜好と興味分野を分析し、コンテンツ推奨を動的に調整。間違いを自動収集し、ターゲット演習を生成。インテリジェントな間隔反復で長期記憶を確保。',
+    asset3_title: 'AIメモリと知識グラフ',
+    asset3_desc: '個人の知識グラフを構築し、AIがあなたの強み、弱み、忘却曲線を記憶。エビングハウスの忘却曲線に基づき、最適なタイミングで復習コンテンツをプッシュ。',
+    asset4_title: 'パーソナライズ学習パス',
+    asset4_desc: 'AIが能力モデル、学習目標、時間予算に基づいて最適な学習パスを動的に計画。各段階完了後、自動的に次の目標を再調整し、適応学習を実現。',
+    compare_title: '従来型 vs AI駆動型：教育モデルの変革',
+    compare_desc: 'AIは言語学習の効率と体験を根本的に変革しています',
+    old_title: '従来の教育モデル',
+    old_1: '一対多の標準化された教育、個人差に適応できない',
+    old_2: 'リアルタイムフィードバックの欠如、学習効果の定量化・追跡が困難',
+    old_3: '教師リソースの制限、質の高い教育の不均等な分布',
+    old_4: '静的な学習コンテンツ、進捗に応じた動的調整が不可能',
+    old_5: 'スピーキング練習環境の不足、「喋れない外国語」が一般的',
+    new_title: 'AILOS AI駆動モデル',
+    new_1: '一対一のAIパーソナライズ教育、一人ひとりに適応する学習',
+    new_2: 'リアルタイム多次元データフィードバック、可視化された精密な学習成果追跡',
+    new_3: '24時間365日AIチューターが常時利用可能、時間と空間の制約を打破',
+    new_4: 'AIがコース内容を動的に調整、知識グラフによる精密ナビゲーション',
+    new_5: '没入型AI音声会話、いつでもどこでも本物の会話練習',
+    cta_title: 'AILOSエコシステムに参加し、AI学習の未来を共に創る',
+    cta_desc: '学習者、共有者、教育機関のいずれであっても、AILOSはAI駆動の新たな可能性を提供します。お問い合わせください。',
+    cta_note: 'プラットフォーム自主登録ユーザーは自動的にプラットフォームマスターアカウントに帰属し、標準の二段階ルールで決済されます。すべての自然登録コミッションは財務台帳に統合され、プラットフォーム運営収益として計上されます。',
+    cta_btn: 'パートナーになる',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. All rights reserved.',
+  },
+  ko: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'AILOS AI 학습 생태계',
+    hero_subtitle: 'AI 학습 운영체제 - 언어 학습을 재정의하다',
+    hero_desc: 'AILOS는 전 세계 학습자를 위한 AI 기반 언어 학습 플랫폼입니다. AI 개인 교사, 성장 보상 메커니즘, 기관 교육 솔루션을 통해 완전한 AI 학습 생태계를 구축합니다.',
+    eco_title: '3계층 생태계 아키텍처',
+    eco_desc: '학습자를 중심으로 성장 파트너와 기관 파트너를 연결하여 지속 가능한 성장 플라이휠 형성',
+    layer1_title: '학습자 - AI 개인 교사',
+    layer1_desc: '각 학습자에게 전담 AI 튜터를 제공하여 개인화된 학습 경로, 실시간 음성 대화, 문법 교정, 진행 상황 추적을 실현합니다. AI가 당신의 학습 스타일을 이해하고 모국어로 깊이 있게 설명합니다.',
+    layer2_title: '성장 파트너 - 공유하고 현금 보상 받기',
+    layer2_desc: '친구를 초대하여 등록 완료 시 현금 보상을 획득합니다. 학습 성과와 체크인 기록을 SNS에 공유하여 더 많은 사용자를 유치하고 바이럴 성장을 실현합니다. 모든 학습자가 생태계의 공동 구축자이자 수혜자가 됩니다.',
+    layer2_note: '플랫폼 자연 트래픽 수익 모델: 초대 코드 없이 자체 등록한 사용자의 주문 수수료는 플랫폼 공식 계정에 귀속되며, 표준 2단계 규칙에 따라 자동 정산됩니다.',
+    layer3_title: '기관 파트너 - AI 교육 솔루션',
+    layer3_desc: '학교, 교육 기관, 기업을 위한 완전한 AI 교육 솔루션. 맞춤형 과정 관리, 학습 분석 대시보드, AI 교육 보조 통합을 통해 비용 절감과 디지털 전환을 실현합니다.',
+    user_title: '사용자 측: AI 스마트 컴패니언',
+    user_desc: '전통적인 학습 도구를 넘어선 AI 컴패니언 - 이해하고, 함께하고, 성장을 돕습니다',
+    user_feat1_title: 'AI 개인화 상호작용',
+    user_feat1_desc: '독특한 성격 설정과 대화 스타일을 가진 AI 컴패니언. 튜터, 친구, 시험관 등 다양한 역할을 지원하여 매 학습을 즐겁고 따뜻하게 만듭니다.',
+    user_feat2_title: '다국어 음성 엔진',
+    user_feat2_desc: '50개 이상의 언어에 대한 실시간 음성 인식 및 합성. 정확한 발음 평가와 단어별 교정 피드백을 제공합니다. 자연스러운 TTS로 실제 대화와 같은 연습을.',
+    user_feat3_title: '시나리오 기반 학습',
+    user_feat3_desc: '여행, 비즈니스, 시험, 일상 등 20개 이상의 실제 시나리오를 커버. AI가 시나리오에 따라 동적으로 대화 콘텐츠를 생성하여 몰입형 환경에서 응용 능력을 빠르게 향상.',
+    share_title: '공유 측: 성장 보상 시스템',
+    share_desc: '모든 공유에 가치를, 학습 성과를 소셜 화폐로',
+    share_feat1_title: '추천 캐시백',
+    share_feat1_desc: '친구가 등록하고 첫 수업을 완료하면 양측 모두 현금 보상을 받습니다. 다단계 추천 시스템으로 학습 공유가 지속 가능한 수입원이 됩니다.',
+    share_feat2_title: '성취 배지 시스템',
+    share_feat2_desc: '일일 체크인, 연속 일수, 과정 완료 등의 마일스톤으로 전용 배지를 획득. SNS에 공유하여 학습 성과를 과시하고 지속적인 학습을 장려.',
+    share_feat3_title: '학습 서클 커뮤니티',
+    share_feat3_desc: '같은 언어 학습 서클에 참여하여 팀 체크인, 상호 첨삭, 노트 공유. 활성 사용자에게는 플랫폼 트래픽 지원과 추가 보상을 제공.',
+    share_feat4_title: '플랫폼 자체 등록 수수료',
+    share_feat4_desc: '초대 코드 없이 자체 등록한 사용자는 자동으로 플랫폼 마스터 계정에 귀속되며, 표준 2단계 규칙에 따라 수수료가 정산됩니다. 마스터 계정은 해당 사용자의 유료 주문에 대해 1단계 수수료를, 그 추천인이 결제 시 2단계 수수료를 받습니다. 모든 수익은 플랫폼 재무 원장에 통합됩니다.',
+    inst_title: '기관 측: AI 교육 솔루션',
+    inst_desc: '교육 기관을 위한 원스톱 AI 지원 - 비용 절감과 교육 효과 향상',
+    inst_feat1_title: '스마트 과정 관리',
+    inst_feat1_desc: 'AI가 과정 개요, 연습 문제, 평가를 자동 생성. 맞춤형 지식 그래프로 다양한 커리큘럼과 시험 기준에 유연하게 대응.',
+    inst_feat2_title: '학습 분석 대시보드',
+    inst_feat2_desc: '각 학생의 지식 숙달도, 학습 시간, 취약점을 실시간으로 추적. 시각화된 대시보드로 교사가 교육 중점을 정확히 파악하여 개인별 맞춤 지도를 실현.',
+    inst_feat3_title: 'API 통합',
+    inst_feat3_desc: '표준화된 API 인터페이스로 기존 LMS 시스템과 원활하게 통합. 브랜드 맞춤화와 화이트 라벨 배포로 자체 브랜드 AI 교육 플랫폼을 신속하게 출시.',
+    assets_title: 'AI 학습 자산 - 장기적 경쟁 우위',
+    assets_desc: '사용자 학습 데이터가 축적됨에 따라 대체 불가능한 AI 학습 자산 해자를 구축',
+    asset1_title: '학습 이력 및 언어 능력 모델',
+    asset1_desc: '모든 학습 궤적을 기록하고 개인 언어 능력 레이더 차트를 구축. 어휘, 문법, 듣기, 말하기, 읽기, 쓰기의 6차원 평가로 현재 수준을 정확히 파악.',
+    asset2_title: '관심 프로필 및 오답 데이터베이스',
+    asset2_desc: 'AI가 학습 선호도와 관심 분야를 분석하여 콘텐츠 추천을 동적으로 조정. 오류를 자동 수집하고 타겟 연습을 생성. 지능형 간격 반복으로 장기 기억을 보장.',
+    asset3_title: 'AI 메모리 및 지식 그래프',
+    asset3_desc: '개인 지식 그래프를 구축하고 AI가 당신의 강점, 약점, 망각 곡선을 기억. 에빙하우스 망각 곡선에 기반하여 최적의 타이밍에 복습 콘텐츠를 푸시.',
+    asset4_title: '개인화 학습 경로',
+    asset4_desc: 'AI가 능력 모델, 학습 목표, 시간 예산에 기반하여 최적의 학습 경로를 동적으로 계획. 각 단계 완료 후 자동으로 다음 목표를 재조정하여 적응형 학습을 실현.',
+    compare_title: '전통적 vs AI 기반: 교육 모델 혁명',
+    compare_desc: 'AI가 언어 학습의 효율성과 경험을 근본적으로 변화시키고 있습니다',
+    old_title: '전통적 교육 모델',
+    old_1: '일대다 표준화 교육, 개인차에 적응 불가',
+    old_2: '실시간 피드백 부족, 학습 효과의 정량화 및 추적이 어려움',
+    old_3: '교사 리소스 제한, 양질의 교육 불균등 분포',
+    old_4: '정적 학습 콘텐츠, 진행에 따른 동적 조정 불가',
+    old_5: '말하기 연습 환경 부족, "벙어리 외국어"가 일반적',
+    new_title: 'AILOS AI 기반 모델',
+    new_1: '일대일 AI 개인화 교육, 개인별 적응형 학습',
+    new_2: '실시간 다차원 데이터 피드백, 시각화된 정밀 학습 성과 추적',
+    new_3: '24/7 AI 튜터 상시 이용 가능, 시간과 공간의 제약을 타파',
+    new_4: 'AI가 과정 내용을 동적으로 조정, 지식 그래프 기반 정밀 내비게이션',
+    new_5: '몰입형 AI 음성 대화, 언제 어디서나 실제 회화 연습',
+    cta_title: 'AILOS 생태계에 참여하여 AI 학습의 미래를 함께 만들어가세요',
+    cta_desc: '학습자, 공유자, 교육 기관 모두 AILOS가 AI 기반의 새로운 가능성을 제공합니다. 문의하시어 생태계 파트너가 되세요.',
+    cta_note: '플랫폼 자체 등록 사용자는 자동으로 플랫폼 마스터 계정에 귀속되며, 표준 2단계 규칙에 따라 정산됩니다. 모든 자연 등록 수수료는 재무 원장에 통합되어 플랫폼 운영 수익으로 계상됩니다.',
+    cta_btn: '파트너 되기',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. All rights reserved.',
+  },
+  fr: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'Écosystème d\'apprentissage IA AILOS',
+    hero_subtitle: 'Système d\'exploitation d\'apprentissage IA - Redéfinir l\'apprentissage des langues',
+    hero_desc: 'AILOS est une plateforme d\'apprentissage des langues basée sur l\'IA pour les apprenants du monde entier. Grâce au tutorat privé IA, aux mécanismes de récompense de croissance et aux solutions éducatives institutionnelles, elle construit une boucle complète d\'écosystème d\'apprentissage IA.',
+    eco_title: 'Architecture de l\'écosystème à trois niveaux',
+    eco_desc: 'Centré sur l\'apprenant, reliant les partenaires de croissance et les partenaires institutionnels pour former un cercle vertueux de croissance durable',
+    layer1_title: 'Apprenants - Tuteur privé IA',
+    layer1_desc: 'Chaque apprenant reçoit un tuteur IA dédié offrant des parcours d\'apprentissage personnalisés, des conversations vocales en temps réel, une correction grammaticale et un suivi des progrès. L\'IA comprend votre style d\'apprentissage et explique en profondeur dans votre langue maternelle.',
+    layer2_title: 'Partenaires de croissance - Partagez et gagnez des récompenses',
+    layer2_desc: 'Les apprenants gagnent des récompenses en espèces en invitant des amis. Partagez vos réalisations sur les réseaux sociaux pour attirer plus d\'utilisateurs et créer une croissance virale. Chaque apprenant devient co-constructeur et bénéficiaire de l\'écosystème.',
+    layer2_note: 'Modèle de revenus du trafic naturel de la plateforme : Les commissions des commandes des utilisateurs auto-inscrits sans code d\'invitation sont attribuées au compte officiel de la plateforme, réglées automatiquement selon les règles standard à deux niveaux.',
+    layer3_title: 'Partenaires institutionnels - Solutions éducatives IA',
+    layer3_desc: 'Solutions éducatives IA complètes pour les écoles, centres de formation et entreprises. Gestion de cours personnalisée, tableaux de bord d\'analyse et intégration d\'assistants pédagogiques IA pour réduire les coûts et réaliser la transformation numérique.',
+    user_title: 'Côté utilisateur : Compagnon IA intelligent',
+    user_desc: 'Un compagnon IA au-delà des outils d\'apprentissage traditionnels - comprend, accompagne et aide à grandir',
+    user_feat1_title: 'Interaction IA personnalisée',
+    user_feat1_desc: 'Des compagnons IA avec des personnalités uniques et des styles de conversation, supportant plusieurs rôles (tuteur, ami, examinateur) pour rendre chaque session d\'apprentissage engageante et chaleureuse.',
+    user_feat2_title: 'Moteur vocal multilingue',
+    user_feat2_desc: 'Reconnaissance et synthèse vocale en temps réel pour plus de 50 langues, avec évaluation précise de la prononciation et correction mot par mot. Une synthèse vocale naturelle pour une pratique orale authentique.',
+    user_feat3_title: 'Apprentissage par scénarios',
+    user_feat3_desc: 'Plus de 20 scénarios réels : voyage, affaires, examens, vie quotidienne. L\'IA génère dynamiquement du contenu de dialogue selon le scénario pour une amélioration rapide en environnement immersif.',
+    share_title: 'Côté partage : Système de récompenses de croissance',
+    share_desc: 'Donnez de la valeur à chaque partage, transformez les résultats d\'apprentissage en monnaie sociale',
+    share_feat1_title: 'Parrainage avec cashback',
+    share_feat1_desc: 'Les deux parties gagnent des récompenses lorsqu\'un ami s\'inscrit et termine sa première leçon. Un système de parrainage à plusieurs niveaux fait du partage d\'apprentissage une source de revenus durable.',
+    share_feat2_title: 'Système de badges de réussite',
+    share_feat2_desc: 'Débloquez des badges exclusifs pour les jalons comme les check-ins quotidiens, les jours consécutifs et l\'achèvement des cours. Partagez sur les réseaux sociaux pour montrer vos progrès.',
+    share_feat3_title: 'Communauté de cercles d\'apprentissage',
+    share_feat3_desc: 'Rejoignez des cercles d\'apprentissage par langue pour des check-ins en équipe, la correction par les pairs et le partage de notes. Les utilisateurs actifs reçoivent un soutien de trafic et des récompenses supplémentaires.',
+    share_feat4_title: 'Commission d\'auto-inscription à la plateforme',
+    share_feat4_desc: 'Les utilisateurs auto-inscrits sans code d\'invitation sont automatiquement attribués au compte maître de la plateforme, avec des commissions réglées selon les règles standard à deux niveaux. Le compte maître reçoit une commission de niveau 1 pour leurs commandes payantes ; une commission de niveau 2 lorsque leurs filleuls effectuent des paiements. Tous les revenus sont consolidés dans le grand livre financier de la plateforme.',
+    inst_title: 'Côté institution : Solutions éducatives IA',
+    inst_desc: 'Une solution IA tout-en-un pour les établissements éducatifs - réduire les coûts, améliorer les résultats',
+    inst_feat1_title: 'Gestion intelligente des cours',
+    inst_feat1_desc: 'L\'IA génère automatiquement des plans de cours, des exercices et des évaluations. Des graphes de connaissances personnalisés s\'adaptent à différents programmes et normes d\'examen.',
+    inst_feat2_title: 'Tableau de bord d\'analyse d\'apprentissage',
+    inst_feat2_desc: 'Suivi en temps réel de la maîtrise des connaissances, du temps d\'étude et des faiblesses de chaque étudiant. Des tableaux de bord visuels aident les enseignants à cibler précisément les priorités pédagogiques.',
+    inst_feat3_title: 'Intégration API',
+    inst_feat3_desc: 'Interfaces API standardisées pour une intégration transparente avec les LMS existants. Personnalisation de marque et déploiement en marque blanche pour lancer rapidement votre propre plateforme.',
+    assets_title: 'Actifs d\'apprentissage IA - Avantage concurrentiel à long terme',
+    assets_desc: 'À mesure que les données d\'apprentissage s\'accumulent, construisez un fossé irremplaçable d\'actifs d\'apprentissage IA',
+    asset1_title: 'Historique d\'apprentissage et modèle de compétence linguistique',
+    asset1_desc: 'Enregistrez chaque trajectoire d\'apprentissage et construisez un radar de compétence linguistique personnel. Évaluation en six dimensions : vocabulaire, grammaire, écoute, expression orale, lecture, écriture.',
+    asset2_title: 'Profil d\'intérêt et base de données d\'erreurs',
+    asset2_desc: 'L\'IA analyse les préférences d\'apprentissage et ajuste dynamiquement les recommandations. Collecte automatique des erreurs et génération d\'exercices ciblés avec répétition espacée intelligente.',
+    asset3_title: 'Mémoire IA et graphe de connaissances',
+    asset3_desc: 'Construisez un graphe de connaissances personnel où l\'IA mémorise vos forces, faiblesses et courbe d\'oubli. Basé sur la courbe d\'Ebbinghaus, pousse le contenu de révision au moment optimal.',
+    asset4_title: 'Parcours de cours personnalisé',
+    asset4_desc: 'L\'IA planifie dynamiquement le parcours optimal en fonction du modèle de compétence, des objectifs et du budget temps. Après chaque étape, recalibre automatiquement les objectifs suivants pour un apprentissage adaptatif.',
+    compare_title: 'Traditionnel vs IA : Révolution du modèle éducatif',
+    compare_desc: 'L\'IA transforme fondamentalement l\'efficacité et l\'expérience de l\'apprentissage des langues',
+    old_title: 'Modèle éducatif traditionnel',
+    old_1: 'Enseignement standardisé un-à-plusieurs, ne peut s\'adapter aux différences individuelles',
+    old_2: 'Manque de feedback en temps réel, résultats d\'apprentissage difficiles à quantifier',
+    old_3: 'Ressources enseignantes limitées, distribution inégale de l\'éducation de qualité',
+    old_4: 'Contenu d\'apprentissage statique, impossible à ajuster dynamiquement selon la progression',
+    old_5: 'Manque d\'environnement de pratique orale, la "langue étrangère muette" est courante',
+    new_title: 'Modèle AILOS basé sur l\'IA',
+    new_1: 'Enseignement personnalisé IA un-à-un, apprentissage adaptatif pour chaque individu',
+    new_2: 'Feedback de données multidimensionnelles en temps réel, suivi visuel et précis des résultats',
+    new_3: 'Tuteur IA disponible 24h/24 et 7j/7, brisant les contraintes de temps et d\'espace',
+    new_4: 'L\'IA ajuste dynamiquement le contenu des cours, navigation précise via le graphe de connaissances',
+    new_5: 'Conversations vocales IA immersives, pratiquez un langage authentique partout et à tout moment',
+    cta_title: 'Rejoignez l\'écosystème AILOS, construisez l\'avenir de l\'apprentissage IA',
+    cta_desc: 'Que vous soyez apprenant, partageur ou établissement éducatif, AILOS offre de nouvelles possibilités basées sur l\'IA. Contactez-nous pour devenir partenaire.',
+    cta_note: 'Les utilisateurs auto-inscrits à la plateforme sont automatiquement attribués au compte maître de la plateforme, réglés selon les règles standard à deux niveaux. Toutes les commissions d\'inscription naturelle sont consolidées dans le grand livre financier en tant que revenus d\'exploitation de la plateforme.',
+    cta_btn: 'Devenir partenaire',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. Tous droits réservés.',
+  },
+  es: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'Ecosistema de Aprendizaje IA AILOS',
+    hero_subtitle: 'Sistema Operativo de Aprendizaje IA - Redefiniendo el aprendizaje de idiomas',
+    hero_desc: 'AILOS es una plataforma de aprendizaje de idiomas impulsada por IA para estudiantes de todo el mundo. A través de tutoría privada IA, mecanismos de recompensa de crecimiento y soluciones educativas institucionales, construye un ciclo completo de ecosistema de aprendizaje IA.',
+    eco_title: 'Arquitectura del ecosistema de tres capas',
+    eco_desc: 'Centrado en el estudiante, conectando socios de crecimiento y socios institucionales para formar un círculo virtuoso de crecimiento sostenible',
+    layer1_title: 'Estudiantes - Tutor privado IA',
+    layer1_desc: 'Cada estudiante recibe un tutor IA dedicado con rutas de aprendizaje personalizadas, conversaciones de voz en tiempo real, corrección gramatical y seguimiento del progreso. La IA entiende tu estilo de aprendizaje y explica en profundidad en tu idioma nativo.',
+    layer2_title: 'Socios de crecimiento - Comparte y gana recompensas',
+    layer2_desc: 'Los estudiantes ganan recompensas en efectivo invitando a amigos. Comparte logros en redes sociales para atraer más usuarios y crear crecimiento viral. Cada estudiante se convierte en co-constructor y beneficiario del ecosistema.',
+    layer2_note: 'Modelo de ingresos por tráfico natural de la plataforma: Las comisiones de pedidos de usuarios auto-registrados sin código de invitación se atribuyen a la cuenta oficial de la plataforma, liquidándose automáticamente según las reglas estándar de dos niveles.',
+    layer3_title: 'Socios institucionales - Soluciones educativas IA',
+    layer3_desc: 'Soluciones educativas IA completas para escuelas, centros de formación y empresas. Gestión de cursos personalizada, paneles de análisis de aprendizaje e integración de asistentes de enseñanza IA para reducir costos y lograr la transformación digital.',
+    user_title: 'Lado del usuario: Compañero IA inteligente',
+    user_desc: 'Un compañero IA más allá de las herramientas tradicionales - entiende, acompaña y ayuda a crecer',
+    user_feat1_title: 'Interacción IA personalizada',
+    user_feat1_desc: 'Compañeros IA con personalidades únicas y estilos de conversación, soportando múltiples roles (tutor, amigo, examinador) para hacer cada sesión atractiva y cálida.',
+    user_feat2_title: 'Motor de voz multilingüe',
+    user_feat2_desc: 'Reconocimiento y síntesis de voz en tiempo real para más de 50 idiomas, con evaluación precisa de pronunciación y corrección palabra por palabra. TTS natural para una práctica de conversación auténtica.',
+    user_feat3_title: 'Aprendizaje basado en escenarios',
+    user_feat3_desc: 'Más de 20 escenarios reales: viajes, negocios, exámenes, vida cotidiana. La IA genera dinámicamente contenido de diálogo según el escenario para una mejora rápida en entornos inmersivos.',
+    share_title: 'Lado de compartir: Sistema de recompensas de crecimiento',
+    share_desc: 'Da valor a cada compartición, convierte los logros de aprendizaje en moneda social',
+    share_feat1_title: 'Recompensa por referidos',
+    share_feat1_desc: 'Ambas partes ganan recompensas cuando un amigo se registra y completa su primera lección. Un sistema de referidos multinivel hace del aprendizaje compartido una fuente de ingresos sostenible.',
+    share_feat2_title: 'Sistema de insignias de logro',
+    share_feat2_desc: 'Desbloquea insignias exclusivas por hitos como check-ins diarios, días consecutivos y finalización de cursos. Comparte en redes sociales para mostrar tu progreso.',
+    share_feat3_title: 'Comunidad de círculos de aprendizaje',
+    share_feat3_desc: 'Únete a círculos de aprendizaje por idioma para check-ins en equipo, corrección entre pares y compartir notas. Los usuarios activos reciben apoyo de tráfico y recompensas adicionales.',
+    share_feat4_title: 'Comisión por auto-registro en la plataforma',
+    share_feat4_desc: 'Los usuarios auto-registrados sin código de invitación se atribuyen automáticamente a la cuenta maestra de la plataforma, con comisiones liquidadas según las reglas estándar de dos niveles. La cuenta maestra recibe comisión de nivel 1 por sus pedidos pagados; comisión de nivel 2 cuando sus referidos realizan pagos. Todos los ingresos se consolidan en el libro mayor financiero de la plataforma.',
+    inst_title: 'Lado institucional: Soluciones educativas IA',
+    inst_desc: 'Solución IA integral para instituciones educativas - reducir costos, mejorar resultados',
+    inst_feat1_title: 'Gestión inteligente de cursos',
+    inst_feat1_desc: 'La IA genera automáticamente planes de estudio, ejercicios y evaluaciones. Grafos de conocimiento personalizados se adaptan a diferentes currículos y estándares de examen.',
+    inst_feat2_title: 'Panel de análisis de aprendizaje',
+    inst_feat2_desc: 'Seguimiento en tiempo real del dominio de conocimientos, tiempo de estudio y debilidades de cada estudiante. Paneles visuales ayudan a los profesores a enfocar las prioridades de enseñanza.',
+    inst_feat3_title: 'Integración API',
+    inst_feat3_desc: 'Interfaces API estandarizadas para integración perfecta con LMS existentes. Personalización de marca y despliegue en marca blanca para lanzar rápidamente tu propia plataforma.',
+    assets_title: 'Activos de aprendizaje IA - Ventaja competitiva a largo plazo',
+    assets_desc: 'A medida que se acumulan los datos de aprendizaje, construye un foso irremplazable de activos de aprendizaje IA',
+    asset1_title: 'Historial de aprendizaje y modelo de habilidad lingüística',
+    asset1_desc: 'Registra cada trayectoria de aprendizaje y construye un radar de habilidad lingüística personal. Evaluación en seis dimensiones: vocabulario, gramática, comprensión auditiva, expresión oral, lectura, escritura.',
+    asset2_title: 'Perfil de interés y base de datos de errores',
+    asset2_desc: 'La IA analiza las preferencias de aprendizaje y ajusta dinámicamente las recomendaciones. Recopilación automática de errores y generación de ejercicios específicos con repetición espaciada inteligente.',
+    asset3_title: 'Memoria IA y grafo de conocimiento',
+    asset3_desc: 'Construye un grafo de conocimiento personal donde la IA memoriza tus fortalezas, debilidades y curva de olvido. Basado en la curva de Ebbinghaus, envía contenido de repaso en el momento óptimo.',
+    asset4_title: 'Ruta de curso personalizada',
+    asset4_desc: 'La IA planifica dinámicamente la ruta óptima según el modelo de habilidad, objetivos y presupuesto de tiempo. Después de cada etapa, recalibra automáticamente los objetivos siguientes para un aprendizaje adaptativo.',
+    compare_title: 'Tradicional vs IA: Revolución del modelo educativo',
+    compare_desc: 'La IA está transformando fundamentalmente la eficiencia y experiencia del aprendizaje de idiomas',
+    old_title: 'Modelo educativo tradicional',
+    old_1: 'Enseñanza estandarizada de uno a muchos, no puede adaptarse a diferencias individuales',
+    old_2: 'Falta de retroalimentación en tiempo real, resultados difíciles de cuantificar y seguir',
+    old_3: 'Recursos docentes limitados, distribución desigual de educación de calidad',
+    old_4: 'Contenido de aprendizaje estático, no se puede ajustar dinámicamente según el progreso',
+    old_5: 'Falta de entorno de práctica oral, el "idioma extranjero mudo" es común',
+    new_title: 'Modelo AILOS impulsado por IA',
+    new_1: 'Enseñanza personalizada IA uno a uno, aprendizaje adaptativo para cada individuo',
+    new_2: 'Retroalimentación de datos multidimensionales en tiempo real, seguimiento visual y preciso de resultados',
+    new_3: 'Tutor IA disponible 24/7, rompiendo las barreras de tiempo y espacio',
+    new_4: 'La IA ajusta dinámicamente el contenido del curso, navegación precisa mediante grafo de conocimiento',
+    new_5: 'Conversaciones de voz IA inmersivas, practica un idioma auténtico en cualquier momento y lugar',
+    cta_title: 'Únete al ecosistema AILOS, construye el futuro del aprendizaje IA',
+    cta_desc: 'Ya seas estudiante, compartidor o institución educativa, AILOS ofrece nuevas posibilidades impulsadas por IA. Contáctanos para ser socio.',
+    cta_note: 'Los usuarios auto-registrados en la plataforma se atribuyen automáticamente a la cuenta maestra de la plataforma, liquidándose según las reglas estándar de dos niveles. Todas las comisiones de registro natural se consolidan en el libro mayor financiero como ingresos operativos de la plataforma.',
+    cta_btn: 'Convertirse en socio',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. Todos los derechos reservados.',
+  },
+  de: {
+    hero_badge: 'AILOS ECOSYSTEM',
+    hero_title: 'AILOS KI-Lernökosystem',
+    hero_subtitle: 'KI-Lernbetriebssystem - Sprachenlernen neu definiert',
+    hero_desc: 'AILOS ist eine KI-gesteuerte Sprachlernplattform für Lernende weltweit. Durch private KI-Nachhilfe, Wachstumsbelohnungsmechanismen und institutionelle Bildungslösungen entsteht ein vollständiger KI-Lernökosystem-Kreislauf.',
+    eco_title: 'Dreischichtige Ökosystem-Architektur',
+    eco_desc: 'Lernendenzentriert, verbindet Wachstumspartner und institutionelle Partner zu einem nachhaltigen Wachstumskreislauf',
+    layer1_title: 'Lernende - KI-Privattutor',
+    layer1_desc: 'Jeder Lernende erhält einen eigenen KI-Tutor mit personalisierten Lernpfaden, Echtzeit-Sprachkonversationen, Grammatikkorrektur und Fortschrittsverfolgung. Die KI versteht Ihren Lernstil und erklärt ausführlich in Ihrer Muttersprache.',
+    layer2_title: 'Wachstumspartner - Teilen und Geldprämien verdienen',
+    layer2_desc: 'Lernende verdienen Geldprämien durch Einladung von Freunden. Teilen Sie Lernerfolge in sozialen Medien, um mehr Nutzer anzuziehen und virales Wachstum zu schaffen. Jeder Lernende wird zum Mitgestalter und Nutznießer des Ökosystems.',
+    layer2_note: 'Plattform-Ertragsmodell für natürlichen Traffic: Auftragsprovisionen von selbst registrierten Nutzern ohne Einladungscode werden dem offiziellen Plattformkonto zugewiesen und automatisch nach den Standard-Zwei-Stufen-Regeln abgerechnet.',
+    layer3_title: 'Institutionelle Partner - KI-Bildungslösungen',
+    layer3_desc: 'Vollständige KI-Bildungslösungen für Schulen, Bildungseinrichtungen und Unternehmen. Mit personalisierter Kursverwaltung, Lernanalyse-Dashboards und KI-Lehrassistenten-Integration zur Kostensenkung und digitalen Transformation.',
+    user_title: 'Nutzerseite: KI-Smart-Begleiter',
+    user_desc: 'Ein KI-Begleiter jenseits traditioneller Lernwerkzeuge - versteht, begleitet und hilft beim Wachsen',
+    user_feat1_title: 'KI-Personalisierte Interaktion',
+    user_feat1_desc: 'KI-Begleiter mit einzigartigen Persönlichkeiten und Gesprächsstilen, unterstützt mehrere Rollen (Tutor, Freund, Prüfer) für jede Lernsitzung ansprechend und herzlich.',
+    user_feat2_title: 'Mehrsprachige Sprach-Engine',
+    user_feat2_desc: 'Echtzeit-Spracherkennung und -synthese für über 50 Sprachen mit präziser Aussprachebewertung und wortweiser Korrektur. Natürliche TTS für authentische Sprechpraxis.',
+    user_feat3_title: 'Szenariobasiertes Lernen',
+    user_feat3_desc: 'Über 20 reale Szenarien: Reisen, Business, Prüfungen, Alltag. Die KI generiert dynamisch Dialoginhalte je nach Szenario für schnelle Verbesserung in immersiven Umgebungen.',
+    share_title: 'Teilen-Seite: Wachstumsbelohnungssystem',
+    share_desc: 'Geben Sie jedem Teilen Wert, machen Sie Lernerfolge zu sozialer Währung',
+    share_feat1_title: 'Empfehlungs-Cashback',
+    share_feat1_desc: 'Beide Parteien erhalten Geldprämien, wenn ein Freund sich registriert und die erste Lektion abschließt. Ein mehrstufiges Empfehlungssystem macht das Teilen von Lernen zu einer nachhaltigen Einnahmequelle.',
+    share_feat2_title: 'Erfolgsabzeichen-System',
+    share_feat2_desc: 'Schalten Sie exklusive Abzeichen für Meilensteine wie tägliche Check-ins, aufeinanderfolgende Tage und Kursabschluss frei. Teilen Sie in sozialen Medien, um Fortschritte zu zeigen.',
+    share_feat3_title: 'Lernkreis-Community',
+    share_feat3_desc: 'Treten Sie sprachspezifischen Lernkreisen bei für Team-Check-ins, Peer-Korrektur und Notizenaustausch. Aktive Nutzer erhalten Traffic-Unterstützung und zusätzliche Belohnungen.',
+    share_feat4_title: 'Plattform-Selbstregistrierungsprovision',
+    share_feat4_desc: 'Selbst registrierte Nutzer ohne Einladungscode werden automatisch dem Plattform-Masterkonto zugewiesen, die Provisionen werden nach den Standard-Zwei-Stufen-Regeln abgerechnet. Das Masterkonto erhält Stufe-1-Provision für deren bezahlte Bestellungen; Stufe-2-Provision, wenn deren Geworbene Zahlungen leisten. Alle Einnahmen werden im Finanzhauptbuch der Plattform konsolidiert.',
+    inst_title: 'Institutionsseite: KI-Bildungslösungen',
+    inst_desc: 'Eine umfassende KI-Lösung für Bildungseinrichtungen - Kosten senken, Ergebnisse verbessern',
+    inst_feat1_title: 'Intelligente Kursverwaltung',
+    inst_feat1_desc: 'KI generiert automatisch Lehrpläne, Übungen und Bewertungen. Anpassbare Wissensgraphen passen sich flexibel verschiedenen Lehrplänen und Prüfungsstandards an.',
+    inst_feat2_title: 'Lernanalyse-Dashboard',
+    inst_feat2_desc: 'Echtzeit-Verfolgung von Wissensbeherrschung, Lernzeit und Schwächen jedes Schülers. Visuelle Dashboards helfen Lehrern, Unterrichtsprioritäten präzise zu setzen.',
+    inst_feat3_title: 'API-Integration',
+    inst_feat3_desc: 'Standardisierte API-Schnittstellen für nahtlose Integration mit bestehenden LMS-Systemen. Markenanpassung und White-Label-Bereitstellung für schnellen Start Ihrer eigenen KI-Plattform.',
+    assets_title: 'KI-Lernvermögen - Langfristiger Wettbewerbsvorteil',
+    assets_desc: 'Während sich Lerndaten ansammeln, entsteht ein unersetzlicher Burggraben aus KI-Lernvermögen',
+    asset1_title: 'Lernhistorie und Sprachfähigkeitsmodell',
+    asset1_desc: 'Zeichnen Sie jeden Lernverlauf auf und erstellen Sie ein persönliches Sprachfähigkeits-Radar. Sechsdimensionale Bewertung: Wortschatz, Grammatik, Hören, Sprechen, Lesen, Schreiben.',
+    asset2_title: 'Interessenprofil und Fehlerdatenbank',
+    asset2_desc: 'KI analysiert Lernpräferenzen und passt Empfehlungen dynamisch an. Automatische Fehlersammlung und Generierung gezielter Übungen mit intelligenter verteilter Wiederholung.',
+    asset3_title: 'KI-Gedächtnis und Wissensgraph',
+    asset3_desc: 'Erstellen Sie einen persönlichen Wissensgraphen, in dem die KI Ihre Stärken, Schwächen und Vergessenskurve speichert. Basierend auf der Ebbinghaus-Kurve werden Wiederholungsinhalte zum optimalen Zeitpunkt bereitgestellt.',
+    asset4_title: 'Personalisierter Kurspfad',
+    asset4_desc: 'KI plant dynamisch den optimalen Pfad basierend auf Fähigkeitsmodell, Lernzielen und Zeitbudget. Nach jeder Phase automatische Neukalibrierung der nächsten Ziele für adaptives Lernen.',
+    compare_title: 'Traditionell vs. KI-gesteuert: Revolution des Bildungsmodells',
+    compare_desc: 'KI verändert grundlegend die Effizienz und Erfahrung des Sprachenlernens',
+    old_title: 'Traditionelles Bildungsmodell',
+    old_1: 'Standardisierter Einzelunterricht für viele, kann individuelle Unterschiede nicht berücksichtigen',
+    old_2: 'Fehlendes Echtzeit-Feedback, Lernergebnisse schwer zu quantifizieren und zu verfolgen',
+    old_3: 'Begrenzte Lehrerressourcen, ungleiche Verteilung qualitativer Bildung',
+    old_4: 'Statische Lerninhalte, können nicht dynamisch an den Fortschritt angepasst werden',
+    old_5: 'Fehlende Sprechpraxis-Umgebung, "stumme Fremdsprache" ist weit verbreitet',
+    new_title: 'AILOS KI-gesteuertes Modell',
+    new_1: 'Eins-zu-eins KI-personalisierter Unterricht, adaptives Lernen für jeden Einzelnen',
+    new_2: 'Echtzeit-mehrdimensionales Datenfeedback, visuelle und präzise Lernfortschrittsverfolgung',
+    new_3: '24/7 KI-Tutor jederzeit verfügbar, überwindet Zeit- und Raumbeschränkungen',
+    new_4: 'KI passt Kursinhalte dynamisch an, präzise Navigation durch Wissensgraph',
+    new_5: 'Immersive KI-Sprachkonversationen, üben Sie authentische Sprache jederzeit und überall',
+    cta_title: 'Treten Sie dem AILOS-Ökosystem bei, gestalten Sie die Zukunft des KI-Lernens',
+    cta_desc: 'Ob Lernender, Teilender oder Bildungseinrichtung - AILOS bietet KI-gesteuerte neue Möglichkeiten. Kontaktieren Sie uns, um Partner zu werden.',
+    cta_note: 'Plattform-selbstregistrierte Nutzer werden automatisch dem Plattform-Masterkonto zugewiesen und nach den Standard-Zwei-Stufen-Regeln abgerechnet. Alle Provisionen aus natürlichen Registrierungen werden im Finanzhauptbuch als Plattform-Betriebseinnahmen konsolidiert.',
+    cta_btn: 'Partner werden',
+    footer_text: '\u00a9 2026 AILOS AI Learning Ecosystem. Alle Rechte vorbehalten.',
+  },
+};
+
+const LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko', 'fr':'fr', 'es':'es', 'de':'de' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh[key]) || key; }
+
+function renderLangBar() {
+  document.getElementById('langBar').innerHTML = Object.keys(LANG_NAMES).map(code =>
+    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
+  ).join('');
+}
+
+function switchLang(code) {
+  currentLang = code;
+  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
+  updateI18n();
+  renderLangBar();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const text = t(el.getAttribute('data-i18n'));
+    if (text !== undefined) el.textContent = text;
+  });
+}
+
+// Init
+renderLangBar();
+updateI18n();
+</script>
+</body>
+</html>

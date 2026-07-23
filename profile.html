@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title data-i18n="page_title">个人中心 - AILOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --error-light: #FEF2F2;
+    --success: #10B981;
+    --success-light: #ECFDF5;
+    --warning: #F59E0B;
+    --warning-light: #FFFBEB;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 16px 40px;
+    line-height: 1.6;
+  }
+
+  /* ===== Navbar ===== */
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; position: sticky; top: 0; z-index: 100;
+    background: var(--bg); gap: 8px; flex-wrap: wrap;
+  }
+  .nav-back {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    transition: color .2s;
+  }
+  .nav-back:hover { color: var(--primary); }
+  .nav-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+  }
+  .lang-switch {
+    display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .lang-flag {
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap;
+  }
+  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
+  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+  /* ===== Container ===== */
+  .container {
+    width: 100%; max-width: 680px; margin: 0 auto;
+  }
+
+  /* ===== Card ===== */
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 24px; margin-bottom: 16px;
+  }
+  .card-header {
+    font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-header .icon { font-size: 18px; }
+
+  /* ===== Profile Header ===== */
+  .profile-header {
+    display: flex; align-items: center; gap: 16px; padding: 8px 0;
+  }
+  .avatar-wrap {
+    position: relative; flex-shrink: 0;
+  }
+  .avatar {
+    width: 72px; height: 72px; border-radius: 50%; background: var(--primary-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--primary);
+    overflow: hidden; border: 3px solid var(--primary-light);
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-edit-btn {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--primary);
+    color: #fff; border: 2px solid #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: background .2s;
+  }
+  .avatar-edit-btn:hover { background: var(--primary-hover); }
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-nickname {
+    font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .profile-uid {
+    font-size: 12px; color: var(--text-muted);
+  }
+  .profile-edit-row {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .profile-edit-row input {
+    flex: 1; padding: 8px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs); font-size: 14px; font-family: inherit;
+    background: var(--card-bg); color: var(--text);
+    transition: border-color .2s;
+  }
+  .profile-edit-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .btn-sm {
+    padding: 8px 16px; border-radius: var(--radius-xs); font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; white-space: nowrap;
+  }
+  .btn-sm-primary { background: var(--primary); color: #fff; }
+  .btn-sm-primary:hover { background: var(--primary-hover); }
+  .btn-sm-outline { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+  .btn-sm-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ===== Language Preferences ===== */
+  .pref-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .pref-row:last-child { border-bottom: none; }
+  .pref-label {
+    font-size: 14px; font-weight: 600; color: var(--text); flex-shrink: 0;
+  }
+  .pref-label small { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+  .pref-select {
+    padding: 6px 32px 6px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs); font-size: 13px; font-family: inherit;
+    background: var(--card-bg); color: var(--text); cursor: pointer;
+    appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    transition: border-color .2s; min-width: 140px;
+  }
+  .pref-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .pref-current {
+    font-size: 13px; color: var(--primary); font-weight: 600; text-align: right;
+  }
+
+  /* ===== Stats Grid ===== */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  }
+  .stat-card {
+    background: var(--bg); border-radius: var(--radius-sm); padding: 16px;
+    text-align: center; border: 1px solid var(--border); transition: all .2s;
+  }
+  .stat-card:hover { border-color: var(--primary-light); }
+  .stat-icon { font-size: 24px; margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ===== Badges ===== */
+  .badges-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .badge-item {
+    text-align: center; padding: 12px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); transition: all .2s;
+  }
+  .badge-item.locked { opacity: .4; filter: grayscale(1); }
+  .badge-icon { font-size: 28px; margin-bottom: 4px; }
+  .badge-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .badge-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ===== Settings ===== */
+  .settings-list { }
+  .settings-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+    transition: all .2s; gap: 12px;
+  }
+  .settings-item:last-child { border-bottom: none; }
+  .settings-item:hover { color: var(--primary); }
+  .settings-item .si-icon { font-size: 20px; flex-shrink: 0; }
+  .settings-item .si-text { flex: 1; }
+  .settings-item .si-title { font-size: 14px; font-weight: 600; }
+  .settings-item .si-desc { font-size: 11px; color: var(--text-muted); }
+  .settings-item .si-arrow { color: var(--text-muted); font-size: 14px; }
+  .settings-item.danger .si-title { color: var(--error); }
+  .settings-item.danger:hover { background: var(--error-light); border-radius: var(--radius-xs); }
+
+  /* ===== Change Password Form ===== */
+  .pwd-form {
+    display: none; margin-top: 12px; padding: 16px;
+    background: var(--bg); border-radius: var(--radius-sm);
+  }
+  .pwd-form.show { display: block; }
+  .pwd-form .form-group { margin-bottom: 12px; }
+  .pwd-form .form-group label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;
+  }
+  .pwd-form .form-group input {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs); font-size: 14px; font-family: inherit;
+    background: var(--card-bg); color: var(--text); transition: border-color .2s;
+  }
+  .pwd-form .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .pwd-form .form-group input.error { border-color: var(--error); }
+  .pwd-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .btn {
+    padding: 10px 20px; border-radius: var(--radius-xs); font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-cancel { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+  .btn-cancel:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-danger { background: var(--error); color: #fff; }
+  .btn-danger:hover { background: #DC2626; }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-md);
+    padding: 28px 24px; max-width: 400px; width: 100%; text-align: center;
+  }
+  .modal-icon { font-size: 48px; margin-bottom: 12px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .modal-actions .btn { min-width: 100px; }
+
+  /* ===== Guest / Login Banner ===== */
+  .guest-banner {
+    background: linear-gradient(135deg, var(--primary-light), #E0E7FF);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px 24px;
+    text-align: center; margin-bottom: 16px;
+  }
+  .guest-banner .gb-icon { font-size: 48px; margin-bottom: 12px; }
+  .guest-banner .gb-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .guest-banner .gb-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+  .guest-banner .btn-lg {
+    padding: 12px 32px; border-radius: var(--radius-xs); font-size: 15px; font-weight: 700;
+    cursor: pointer; border: none; background: var(--primary); color: #fff; transition: all .2s;
+  }
+  .guest-banner .btn-lg:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300;
+    padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    display: none; white-space: nowrap; max-width: 90vw;
+    animation: toastIn .3s ease;
+  }
+  .toast.show { display: block; }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error { background: var(--error); color: #fff; }
+  .toast.info { background: var(--primary); color: #fff; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* ===== Loading ===== */
+  .loading-spinner {
+    display: flex; align-items: center; justify-content: center; padding: 40px;
+  }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Hidden ===== */
+  .hidden { display: none !important; }
+
+  /* ===== Responsive: 375px ===== */
+  @media (max-width: 420px) {
+    .card { padding: 18px 14px; }
+    .profile-header { flex-direction: column; text-align: center; }
+    .profile-info { text-align: center; }
+    .profile-nickname { justify-content: center; }
+    .profile-edit-row { flex-direction: column; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-value { font-size: 18px; }
+    .badges-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .badge-item { padding: 8px 4px; }
+    .badge-icon { font-size: 22px; }
+    .lang-switch { justify-content: center; width: 100%; }
+    .navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .modal { padding: 20px 16px; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .btn { width: 100%; }
+    .pref-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .pref-select { width: 100%; }
+    .pwd-actions { flex-direction: column; }
+    .pwd-actions .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title" data-i18n="delete_modal_title">确认注销账号</div>
+    <div class="modal-desc" data-i18n="delete_modal_desc">此操作不可撤销。你的所有学习数据、进度记录和成就都将被永久删除。请确认是否继续？</div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeDeleteModal()" data-i18n="btn_cancel">取消</button>
+      <button class="btn btn-danger" id="btnConfirmDelete" onclick="confirmDeleteAccount()" data-i18n="btn_confirm_delete">确认注销</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a class="nav-back" href="/xuewaiyu/landing.html" data-i18n="back_to_home">← 返回首页</a>
+    <span class="nav-title" data-i18n="page_title">个人中心</span>
+    <div class="lang-switch" id="langSwitch"></div>
+  </nav>
+
+  <!-- Guest / Not Logged In -->
+  <div class="guest-banner hidden" id="guestBanner">
+    <div class="gb-icon">🔐</div>
+    <div class="gb-title" data-i18n="guest_title">登录后解锁完整功能</div>
+    <div class="gb-desc" data-i18n="guest_desc">登录后可以查看学习数据、同步进度、获取成就徽章</div>
+    <button class="btn-lg" onclick="goToLogin()" data-i18n="btn_go_login">去登录</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-spinner hidden" id="loadingSpinner">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="mainContent" class="hidden">
+
+    <!-- Profile Header Card -->
+    <div class="card">
+      <div class="profile-header">
+        <div class="avatar-wrap">
+          <div class="avatar" id="avatarDisplay">
+            <span id="avatarInitial">U</span>
+          </div>
+          <button class="avatar-edit-btn" onclick="triggerAvatarUpload()" title="Change avatar">✎</button>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarChange(event)">
+        </div>
+        <div class="profile-info">
+          <div class="profile-nickname">
+            <span id="nicknameDisplay">User</span>
+          </div>
+          <div class="profile-uid" id="uidDisplay">UID: ---</div>
+          <div class="profile-edit-row hidden" id="nicknameEditRow">
+            <input type="text" id="nicknameInput" maxlength="30" placeholder="输入新昵称">
+            <button class="btn-sm btn-sm-primary" onclick="saveNickname()" data-i18n="btn_save">保存</button>
+            <button class="btn-sm btn-sm-outline" onclick="cancelEditNickname()" data-i18n="btn_cancel">取消</button>
+          </div>
+          <button class="btn-sm btn-sm-outline" id="btnEditNickname" onclick="startEditNickname()" data-i18n="btn_edit_nickname" style="margin-top:8px">编辑昵称</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Language Preferences Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🌐</span>
+        <span data-i18n="lang_prefs_title">语言偏好</span>
+      </div>
+      <div class="pref-row">
+        <div class="pref-label">
+          <span data-i18n="pref_ui_lang">界面语言</span>
+          <small data-i18n="pref_ui_lang_desc">页面和按钮的显示语言</small>
+        </div>
+        <select class="pref-select" id="uiLangSelect" onchange="onUiLangChange()"></select>
+      </div>
+      <div class="pref-row">
+        <div class="pref-label">
+          <span data-i18n="pref_native_lang">母语</span>
+          <small data-i18n="pref_native_lang_desc">你的第一语言</small>
+        </div>
+        <select class="pref-select" id="nativeLangSelect" onchange="onNativeLangChange()"></select>
+      </div>
+      <div class="pref-row">
+        <div class="pref-label">
+          <span data-i18n="pref_target_lang">目标学习语言</span>
+          <small data-i18n="pref_target_lang_desc">你正在学习的语言</small>
+        </div>
+        <select class="pref-select" id="targetLangSelect" onchange="onTargetLangChange()"></select>
+      </div>
+    </div>
+
+    <!-- Learning Stats Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">📊</span>
+        <span data-i18n="stats_title">学习统计</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="statTotalHours">0</div>
+          <div class="stat-label" data-i18n="stat_total_hours">总学习时长 (小时)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value" id="statCourses">0</div>
+          <div class="stat-label" data-i18n="stat_courses">完成课程数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label" data-i18n="stat_streak">连续打卡天数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value" id="statPoints">0</div>
+          <div class="stat-label" data-i18n="stat_points">总积分</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🏆</span>
+        <span data-i18n="badges_title">成就徽章</span>
+      </div>
+      <div class="badges-grid" id="badgesGrid"></div>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">⚙️</span>
+        <span data-i18n="settings_title">设置</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-item" onclick="togglePasswordForm()">
+          <span class="si-icon">🔑</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="settings_change_pwd">修改密码</div>
+            <div class="si-desc" data-i18n="settings_change_pwd_desc">更新你的登录密码</div>
+          </div>
+          <span class="si-arrow" id="pwdArrow">›</span>
+        </div>
+        <div class="pwd-form" id="pwdForm">
+          <div class="form-group">
+            <label data-i18n="label_old_password">当前密码</label>
+            <input type="password" id="oldPassword" placeholder="" data-i18n-placeholder="placeholder_old_password">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_new_password">新密码</label>
+            <input type="password" id="newPassword" placeholder="" data-i18n-placeholder="placeholder_new_password">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_confirm_password">确认新密码</label>
+            <input type="password" id="confirmPassword" placeholder="" data-i18n-placeholder="placeholder_confirm_password">
+          </div>
+          <div class="pwd-actions">
+            <button class="btn btn-primary" id="btnChangePassword" onclick="changePassword()" data-i18n="btn_change_password">修改密码</button>
+            <button class="btn btn-cancel" onclick="togglePasswordForm()" data-i18n="btn_cancel">取消</button>
+          </div>
+        </div>
+
+        <div class="settings-item danger" onclick="openDeleteModal()">
+          <span class="si-icon">🗑️</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="settings_delete_account">注销账号</div>
+            <div class="si-desc" data-i18n="settings_delete_account_desc">永久删除你的账号和所有数据</div>
+          </div>
+          <span class="si-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ==================== GLOI i18n System ====================
+const I18N = {
+  zh: {
+    page_title: '个人中心',
+    back_to_home: '← 返回首页',
+    guest_title: '登录后解锁完整功能',
+    guest_desc: '登录后可以查看学习数据、同步进度、获取成就徽章',
+    btn_go_login: '去登录',
+    btn_save: '保存',
+    btn_cancel: '取消',
+    btn_edit_nickname: '编辑昵称',
+    btn_change_password: '修改密码',
+    btn_confirm_delete: '确认注销',
+    label_old_password: '当前密码',
+    label_new_password: '新密码',
+    label_confirm_password: '确认新密码',
+    placeholder_old_password: '请输入当前密码',
+    placeholder_new_password: '请输入新密码（至少6位）',
+    placeholder_confirm_password: '请再次输入新密码',
+    lang_prefs_title: '语言偏好',
+    pref_ui_lang: '界面语言',
+    pref_ui_lang_desc: '页面和按钮的显示语言',
+    pref_native_lang: '母语',
+    pref_native_lang_desc: '你的第一语言',
+    pref_target_lang: '目标学习语言',
+    pref_target_lang_desc: '你正在学习的语言',
+    stats_title: '学习统计',
+    stat_total_hours: '总学习时长 (小时)',
+    stat_courses: '完成课程数',
+    stat_streak: '连续打卡天数',
+    stat_points: '总积分',
+    badges_title: '成就徽章',
+    settings_title: '设置',
+    settings_change_pwd: '修改密码',
+    settings_change_pwd_desc: '更新你的登录密码',
+    settings_delete_account: '注销账号',
+    settings_delete_account_desc: '永久删除你的账号和所有数据',
+    delete_modal_title: '确认注销账号',
+    delete_modal_desc: '此操作不可撤销。你的所有学习数据、进度记录和成就都将被永久删除。请确认是否继续？',
+    delete_confirm_input: '请输入 "DELETE" 确认注销',
+    toast_nickname_saved: '昵称已更新',
+    toast_pwd_changed: '密码修改成功',
+    toast_profile_updated: '资料已更新',
+    toast_lang_saved: '语言偏好已保存',
+    toast_avatar_updated: '头像已更新',
+    toast_operation_failed: '操作失败，请重试',
+    toast_pwd_mismatch: '两次密码不一致',
+    toast_pwd_too_short: '新密码至少需要6位',
+    toast_enter_old_pwd: '请输入当前密码',
+    toast_loading: '加载中...',
+    badge_rookie: '初学者',
+    badge_rookie_desc: '完成第一课',
+    badge_streak7: '连续7天',
+    badge_streak7_desc: '连续打卡7天',
+    badge_streak30: '月度之星',
+    badge_streak30_desc: '连续打卡30天',
+    badge_course10: '学习达人',
+    badge_course10_desc: '完成10门课程',
+    badge_course50: '知识探索者',
+    badge_course50_desc: '完成50门课程',
+    badge_hours100: '百时学者',
+    badge_hours100_desc: '累计学习100小时',
+    badge_points1000: '积分达人',
+    badge_points1000_desc: '累计获得1000积分',
+    badge_bilingual: '双语达人',
+    badge_bilingual_desc: '掌握两门语言',
+    badge_polyglot: '多语专家',
+    badge_polyglot_desc: '掌握三门以上语言',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  en: {
+    page_title: 'Profile',
+    back_to_home: '← Back to Home',
+    guest_title: 'Sign in to unlock full features',
+    guest_desc: 'Sign in to view learning data, sync progress, and earn badges',
+    btn_go_login: 'Sign In',
+    btn_save: 'Save',
+    btn_cancel: 'Cancel',
+    btn_edit_nickname: 'Edit Nickname',
+    btn_change_password: 'Change Password',
+    btn_confirm_delete: 'Confirm Delete',
+    label_old_password: 'Current Password',
+    label_new_password: 'New Password',
+    label_confirm_password: 'Confirm New Password',
+    placeholder_old_password: 'Enter current password',
+    placeholder_new_password: 'Enter new password (min 6 chars)',
+    placeholder_confirm_password: 'Re-enter new password',
+    lang_prefs_title: 'Language Preferences',
+    pref_ui_lang: 'Interface Language',
+    pref_ui_lang_desc: 'Display language for pages and buttons',
+    pref_native_lang: 'Native Language',
+    pref_native_lang_desc: 'Your first language',
+    pref_target_lang: 'Target Learning Language',
+    pref_target_lang_desc: 'The language you are learning',
+    stats_title: 'Learning Statistics',
+    stat_total_hours: 'Total Study Hours',
+    stat_courses: 'Courses Completed',
+    stat_streak: 'Day Streak',
+    stat_points: 'Total Points',
+    badges_title: 'Achievement Badges',
+    settings_title: 'Settings',
+    settings_change_pwd: 'Change Password',
+    settings_change_pwd_desc: 'Update your login password',
+    settings_delete_account: 'Delete Account',
+    settings_delete_account_desc: 'Permanently delete your account and all data',
+    delete_modal_title: 'Confirm Account Deletion',
+    delete_modal_desc: 'This action cannot be undone. All your learning data, progress records, and achievements will be permanently deleted. Are you sure?',
+    delete_confirm_input: 'Type "DELETE" to confirm',
+    toast_nickname_saved: 'Nickname updated',
+    toast_pwd_changed: 'Password changed successfully',
+    toast_profile_updated: 'Profile updated',
+    toast_lang_saved: 'Language preferences saved',
+    toast_avatar_updated: 'Avatar updated',
+    toast_operation_failed: 'Operation failed, please try again',
+    toast_pwd_mismatch: 'Passwords do not match',
+    toast_pwd_too_short: 'New password must be at least 6 characters',
+    toast_enter_old_pwd: 'Please enter your current password',
+    toast_loading: 'Loading...',
+    badge_rookie: 'Beginner',
+    badge_rookie_desc: 'Complete your first lesson',
+    badge_streak7: '7-Day Streak',
+    badge_streak7_desc: '7 consecutive days',
+    badge_streak30: 'Monthly Star',
+    badge_streak30_desc: '30 consecutive days',
+    badge_course10: 'Learner',
+    badge_course10_desc: 'Complete 10 courses',
+    badge_course50: 'Knowledge Seeker',
+    badge_course50_desc: 'Complete 50 courses',
+    badge_hours100: 'Century Scholar',
+    badge_hours100_desc: '100 hours of study',
+    badge_points1000: 'Point Master',
+    badge_points1000_desc: 'Earn 1000 points',
+    badge_bilingual: 'Bilingual',
+    badge_bilingual_desc: 'Master two languages',
+    badge_polyglot: 'Polyglot',
+    badge_polyglot_desc: 'Master 3+ languages',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  ja: {
+    page_title: 'プロフィール',
+    back_to_home: '← ホームに戻る',
+    guest_title: 'ログインして全機能を利用',
+    guest_desc: 'ログインすると学習データの表示、進捗の同期、バッジの獲得が可能です',
+    btn_go_login: 'ログイン',
+    btn_save: '保存',
+    btn_cancel: 'キャンセル',
+    btn_edit_nickname: 'ニックネーム編集',
+    btn_change_password: 'パスワード変更',
+    btn_confirm_delete: '削除を確認',
+    label_old_password: '現在のパスワード',
+    label_new_password: '新しいパスワード',
+    label_confirm_password: '新しいパスワード確認',
+    placeholder_old_password: '現在のパスワードを入力',
+    placeholder_new_password: '新しいパスワードを入力（6文字以上）',
+    placeholder_confirm_password: '新しいパスワードを再入力',
+    lang_prefs_title: '言語設定',
+    pref_ui_lang: 'インターフェース言語',
+    pref_ui_lang_desc: 'ページとボタンの表示言語',
+    pref_native_lang: '母国語',
+    pref_native_lang_desc: 'あなたの第一言語',
+    pref_target_lang: '学習目標言語',
+    pref_target_lang_desc: '学習中の言語',
+    stats_title: '学習統計',
+    stat_total_hours: '総学習時間 (時間)',
+    stat_courses: '完了コース数',
+    stat_streak: '連続学習日数',
+    stat_points: '総ポイント',
+    badges_title: '達成バッジ',
+    settings_title: '設定',
+    settings_change_pwd: 'パスワード変更',
+    settings_change_pwd_desc: 'ログインパスワードを更新',
+    settings_delete_account: 'アカウント削除',
+    settings_delete_account_desc: 'アカウントとすべてのデータを完全に削除',
+    delete_modal_title: 'アカウント削除の確認',
+    delete_modal_desc: 'この操作は取り消せません。すべての学習データ、進捗記録、達成バッジが完全に削除されます。続行しますか？',
+    delete_confirm_input: '確認のため "DELETE" と入力してください',
+    toast_nickname_saved: 'ニックネームを更新しました',
+    toast_pwd_changed: 'パスワードを変更しました',
+    toast_profile_updated: 'プロフィールを更新しました',
+    toast_lang_saved: '言語設定を保存しました',
+    toast_avatar_updated: 'アバターを更新しました',
+    toast_operation_failed: '操作に失敗しました。再試行してください',
+    toast_pwd_mismatch: 'パスワードが一致しません',
+    toast_pwd_too_short: '新しいパスワードは6文字以上必要です',
+    toast_enter_old_pwd: '現在のパスワードを入力してください',
+    toast_loading: '読み込み中...',
+    badge_rookie: 'ビギナー',
+    badge_rookie_desc: '最初のレッスンを完了',
+    badge_streak7: '7日連続',
+    badge_streak7_desc: '7日連続学習',
+    badge_streak30: '月間スター',
+    badge_streak30_desc: '30日連続学習',
+    badge_course10: '学習者',
+    badge_course10_desc: '10コース完了',
+    badge_course50: '知識探求者',
+    badge_course50_desc: '50コース完了',
+    badge_hours100: '100時間学者',
+    badge_hours100_desc: '100時間学習達成',
+    badge_points1000: 'ポイントマスター',
+    badge_points1000_desc: '1000ポイント獲得',
+    badge_bilingual: 'バイリンガル',
+    badge_bilingual_desc: '2言語を習得',
+    badge_polyglot: 'マルチリンガル',
+    badge_polyglot_desc: '3言語以上を習得',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  ko: {
+    page_title: '프로필',
+    back_to_home: '← 홈으로 돌아가기',
+    guest_title: '로그인하여 모든 기능 이용하기',
+    guest_desc: '로그인하면 학습 데이터 확인, 진행 상황 동기화, 배지 획득이 가능합니다',
+    btn_go_login: '로그인',
+    btn_save: '저장',
+    btn_cancel: '취소',
+    btn_edit_nickname: '닉네임 편집',
+    btn_change_password: '비밀번호 변경',
+    btn_confirm_delete: '삭제 확인',
+    label_old_password: '현재 비밀번호',
+    label_new_password: '새 비밀번호',
+    label_confirm_password: '새 비밀번호 확인',
+    placeholder_old_password: '현재 비밀번호 입력',
+    placeholder_new_password: '새 비밀번호 입력 (6자 이상)',
+    placeholder_confirm_password: '새 비밀번호 재입력',
+    lang_prefs_title: '언어 설정',
+    pref_ui_lang: '인터페이스 언어',
+    pref_ui_lang_desc: '페이지와 버튼의 표시 언어',
+    pref_native_lang: '모국어',
+    pref_native_lang_desc: '당신의 첫 번째 언어',
+    pref_target_lang: '목표 학습 언어',
+    pref_target_lang_desc: '학습 중인 언어',
+    stats_title: '학습 통계',
+    stat_total_hours: '총 학습 시간',
+    stat_courses: '완료한 코스',
+    stat_streak: '연속 출석 일수',
+    stat_points: '총 포인트',
+    badges_title: '성취 배지',
+    settings_title: '설정',
+    settings_change_pwd: '비밀번호 변경',
+    settings_change_pwd_desc: '로그인 비밀번호 업데이트',
+    settings_delete_account: '계정 삭제',
+    settings_delete_account_desc: '계정과 모든 데이터를 영구 삭제',
+    delete_modal_title: '계정 삭제 확인',
+    delete_modal_desc: '이 작업은 취소할 수 없습니다. 모든 학습 데이터, 진행 기록, 성취 배지가 영구적으로 삭제됩니다. 계속하시겠습니까?',
+    delete_confirm_input: '확인을 위해 "DELETE"를 입력하세요',
+    toast_nickname_saved: '닉네임이 업데이트되었습니다',
+    toast_pwd_changed: '비밀번호가 변경되었습니다',
+    toast_profile_updated: '프로필이 업데이트되었습니다',
+    toast_lang_saved: '언어 설정이 저장되었습니다',
+    toast_avatar_updated: '아바타가 업데이트되었습니다',
+    toast_operation_failed: '작업 실패, 다시 시도해 주세요',
+    toast_pwd_mismatch: '비밀번호가 일치하지 않습니다',
+    toast_pwd_too_short: '새 비밀번호는 최소 6자 이상이어야 합니다',
+    toast_enter_old_pwd: '현재 비밀번호를 입력해 주세요',
+    toast_loading: '로딩 중...',
+    badge_rookie: '초보자',
+    badge_rookie_desc: '첫 수업 완료',
+    badge_streak7: '7일 연속',
+    badge_streak7_desc: '7일 연속 출석',
+    badge_streak30: '월간 스타',
+    badge_streak30_desc: '30일 연속 출석',
+    badge_course10: '학습자',
+    badge_course10_desc: '10개 코스 완료',
+    badge_course50: '지식 탐구자',
+    badge_course50_desc: '50개 코스 완료',
+    badge_hours100: '100시간 학자',
+    badge_hours100_desc: '100시간 학습 달성',
+    badge_points1000: '포인트 마스터',
+    badge_points1000_desc: '1000포인트 획득',
+    badge_bilingual: '이중 언어',
+    badge_bilingual_desc: '2개 언어 습득',
+    badge_polyglot: '다중 언어',
+    badge_polyglot_desc: '3개 이상 언어 습득',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  fr: {
+    page_title: 'Profil',
+    back_to_home: '← Retour à l\'accueil',
+    guest_title: 'Connectez-vous pour tout débloquer',
+    guest_desc: 'Connectez-vous pour voir vos données, synchroniser votre progression et gagner des badges',
+    btn_go_login: 'Se connecter',
+    btn_save: 'Enregistrer',
+    btn_cancel: 'Annuler',
+    btn_edit_nickname: 'Modifier le pseudo',
+    btn_change_password: 'Changer le mot de passe',
+    btn_confirm_delete: 'Confirmer la suppression',
+    label_old_password: 'Mot de passe actuel',
+    label_new_password: 'Nouveau mot de passe',
+    label_confirm_password: 'Confirmer le mot de passe',
+    placeholder_old_password: 'Entrez le mot de passe actuel',
+    placeholder_new_password: 'Entrez le nouveau mot de passe (min 6 car.)',
+    placeholder_confirm_password: 'Confirmez le nouveau mot de passe',
+    lang_prefs_title: 'Préférences linguistiques',
+    pref_ui_lang: 'Langue de l\'interface',
+    pref_ui_lang_desc: 'Langue d\'affichage des pages',
+    pref_native_lang: 'Langue maternelle',
+    pref_native_lang_desc: 'Votre première langue',
+    pref_target_lang: 'Langue cible',
+    pref_target_lang_desc: 'La langue que vous apprenez',
+    stats_title: 'Statistiques',
+    stat_total_hours: 'Heures d\'étude',
+    stat_courses: 'Cours terminés',
+    stat_streak: 'Jours consécutifs',
+    stat_points: 'Points totaux',
+    badges_title: 'Badges',
+    settings_title: 'Paramètres',
+    settings_change_pwd: 'Changer le mot de passe',
+    settings_change_pwd_desc: 'Mettre à jour votre mot de passe',
+    settings_delete_account: 'Supprimer le compte',
+    settings_delete_account_desc: 'Supprimer définitivement votre compte et toutes vos données',
+    delete_modal_title: 'Confirmer la suppression',
+    delete_modal_desc: 'Cette action est irréversible. Toutes vos données, votre progression et vos badges seront définitivement supprimés. Continuer ?',
+    delete_confirm_input: 'Tapez "DELETE" pour confirmer',
+    toast_nickname_saved: 'Pseudo mis à jour',
+    toast_pwd_changed: 'Mot de passe modifié',
+    toast_profile_updated: 'Profil mis à jour',
+    toast_lang_saved: 'Préférences enregistrées',
+    toast_avatar_updated: 'Avatar mis à jour',
+    toast_operation_failed: 'Échec, veuillez réessayer',
+    toast_pwd_mismatch: 'Les mots de passe ne correspondent pas',
+    toast_pwd_too_short: 'Le mot de passe doit contenir au moins 6 caractères',
+    toast_enter_old_pwd: 'Veuillez entrer votre mot de passe actuel',
+    toast_loading: 'Chargement...',
+    badge_rookie: 'Débutant',
+    badge_rookie_desc: 'Première leçon terminée',
+    badge_streak7: '7 jours',
+    badge_streak7_desc: '7 jours consécutifs',
+    badge_streak30: 'Étoile du mois',
+    badge_streak30_desc: '30 jours consécutifs',
+    badge_course10: 'Apprenant',
+    badge_course10_desc: '10 cours terminés',
+    badge_course50: 'Explorateur',
+    badge_course50_desc: '50 cours terminés',
+    badge_hours100: 'Cent heures',
+    badge_hours100_desc: '100 heures d\'étude',
+    badge_points1000: 'Maître des points',
+    badge_points1000_desc: '1000 points gagnés',
+    badge_bilingual: 'Bilingue',
+    badge_bilingual_desc: 'Deux langues maîtrisées',
+    badge_polyglot: 'Polyglotte',
+    badge_polyglot_desc: '3+ langues maîtrisées',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  es: {
+    page_title: 'Perfil',
+    back_to_home: '← Volver al inicio',
+    guest_title: 'Inicia sesión para desbloquear',
+    guest_desc: 'Inicia sesión para ver tus datos, sincronizar tu progreso y ganar insignias',
+    btn_go_login: 'Iniciar sesión',
+    btn_save: 'Guardar',
+    btn_cancel: 'Cancelar',
+    btn_edit_nickname: 'Editar apodo',
+    btn_change_password: 'Cambiar contraseña',
+    btn_confirm_delete: 'Confirmar eliminación',
+    label_old_password: 'Contraseña actual',
+    label_new_password: 'Nueva contraseña',
+    label_confirm_password: 'Confirmar nueva contraseña',
+    placeholder_old_password: 'Ingresa la contraseña actual',
+    placeholder_new_password: 'Ingresa la nueva contraseña (mín. 6)',
+    placeholder_confirm_password: 'Confirma la nueva contraseña',
+    lang_prefs_title: 'Preferencias de idioma',
+    pref_ui_lang: 'Idioma de interfaz',
+    pref_ui_lang_desc: 'Idioma de páginas y botones',
+    pref_native_lang: 'Lengua materna',
+    pref_native_lang_desc: 'Tu primer idioma',
+    pref_target_lang: 'Idioma objetivo',
+    pref_target_lang_desc: 'El idioma que estás aprendiendo',
+    stats_title: 'Estadísticas',
+    stat_total_hours: 'Horas de estudio',
+    stat_courses: 'Cursos completados',
+    stat_streak: 'Días consecutivos',
+    stat_points: 'Puntos totales',
+    badges_title: 'Insignias',
+    settings_title: 'Configuración',
+    settings_change_pwd: 'Cambiar contraseña',
+    settings_change_pwd_desc: 'Actualiza tu contraseña',
+    settings_delete_account: 'Eliminar cuenta',
+    settings_delete_account_desc: 'Eliminar permanentemente tu cuenta y todos tus datos',
+    delete_modal_title: 'Confirmar eliminación',
+    delete_modal_desc: 'Esta acción no se puede deshacer. Todos tus datos de aprendizaje, registros de progreso e insignias se eliminarán permanentemente. ¿Continuar?',
+    delete_confirm_input: 'Escribe "DELETE" para confirmar',
+    toast_nickname_saved: 'Apodo actualizado',
+    toast_pwd_changed: 'Contraseña cambiada',
+    toast_profile_updated: 'Perfil actualizado',
+    toast_lang_saved: 'Preferencias guardadas',
+    toast_avatar_updated: 'Avatar actualizado',
+    toast_operation_failed: 'Error, inténtalo de nuevo',
+    toast_pwd_mismatch: 'Las contraseñas no coinciden',
+    toast_pwd_too_short: 'La contraseña debe tener al menos 6 caracteres',
+    toast_enter_old_pwd: 'Ingresa tu contraseña actual',
+    toast_loading: 'Cargando...',
+    badge_rookie: 'Principiante',
+    badge_rookie_desc: 'Primera lección completada',
+    badge_streak7: '7 días',
+    badge_streak7_desc: '7 días consecutivos',
+    badge_streak30: 'Estrella mensual',
+    badge_streak30_desc: '30 días consecutivos',
+    badge_course10: 'Aprendiz',
+    badge_course10_desc: '10 cursos completados',
+    badge_course50: 'Explorador',
+    badge_course50_desc: '50 cursos completados',
+    badge_hours100: '100 horas',
+    badge_hours100_desc: '100 horas de estudio',
+    badge_points1000: 'Maestro de puntos',
+    badge_points1000_desc: '1000 puntos ganados',
+    badge_bilingual: 'Bilingüe',
+    badge_bilingual_desc: 'Dos idiomas dominados',
+    badge_polyglot: 'Políglota',
+    badge_polyglot_desc: '3+ idiomas dominados',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  de: {
+    page_title: 'Profil',
+    back_to_home: '← Zurück zur Startseite',
+    guest_title: 'Anmelden für alle Funktionen',
+    guest_desc: 'Melden Sie sich an, um Lerndaten einzusehen, Fortschritte zu synchronisieren und Abzeichen zu verdienen',
+    btn_go_login: 'Anmelden',
+    btn_save: 'Speichern',
+    btn_cancel: 'Abbrechen',
+    btn_edit_nickname: 'Nickname bearbeiten',
+    btn_change_password: 'Passwort ändern',
+    btn_confirm_delete: 'Löschen bestätigen',
+    label_old_password: 'Aktuelles Passwort',
+    label_new_password: 'Neues Passwort',
+    label_confirm_password: 'Neues Passwort bestätigen',
+    placeholder_old_password: 'Aktuelles Passwort eingeben',
+    placeholder_new_password: 'Neues Passwort eingeben (min. 6 Zeichen)',
+    placeholder_confirm_password: 'Neues Passwort erneut eingeben',
+    lang_prefs_title: 'Spracheinstellungen',
+    pref_ui_lang: 'Oberflächensprache',
+    pref_ui_lang_desc: 'Anzeigesprache für Seiten und Schaltflächen',
+    pref_native_lang: 'Muttersprache',
+    pref_native_lang_desc: 'Ihre Erstsprache',
+    pref_target_lang: 'Zielsprache',
+    pref_target_lang_desc: 'Die Sprache, die Sie lernen',
+    stats_title: 'Lernstatistik',
+    stat_total_hours: 'Lernstunden gesamt',
+    stat_courses: 'Abgeschlossene Kurse',
+    stat_streak: 'Tage in Folge',
+    stat_points: 'Gesamtpunkte',
+    badges_title: 'Abzeichen',
+    settings_title: 'Einstellungen',
+    settings_change_pwd: 'Passwort ändern',
+    settings_change_pwd_desc: 'Aktualisieren Sie Ihr Anmeldepasswort',
+    settings_delete_account: 'Konto löschen',
+    settings_delete_account_desc: 'Ihr Konto und alle Daten endgültig löschen',
+    delete_modal_title: 'Löschung bestätigen',
+    delete_modal_desc: 'Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Lerndaten, Fortschritte und Abzeichen werden endgültig gelöscht. Fortfahren?',
+    delete_confirm_input: 'Geben Sie "DELETE" zur Bestätigung ein',
+    toast_nickname_saved: 'Nickname aktualisiert',
+    toast_pwd_changed: 'Passwort erfolgreich geändert',
+    toast_profile_updated: 'Profil aktualisiert',
+    toast_lang_saved: 'Spracheinstellungen gespeichert',
+    toast_avatar_updated: 'Avatar aktualisiert',
+    toast_operation_failed: 'Vorgang fehlgeschlagen, bitte erneut versuchen',
+    toast_pwd_mismatch: 'Passwörter stimmen nicht überein',
+    toast_pwd_too_short: 'Das neue Passwort muss mindestens 6 Zeichen haben',
+    toast_enter_old_pwd: 'Bitte geben Sie Ihr aktuelles Passwort ein',
+    toast_loading: 'Laden...',
+    badge_rookie: 'Anfänger',
+    badge_rookie_desc: 'Erste Lektion abgeschlossen',
+    badge_streak7: '7-Tage',
+    badge_streak7_desc: '7 Tage in Folge',
+    badge_streak30: 'Monatsstar',
+    badge_streak30_desc: '30 Tage in Folge',
+    badge_course10: 'Lerner',
+    badge_course10_desc: '10 Kurse abgeschlossen',
+    badge_course50: 'Wissenssucher',
+    badge_course50_desc: '50 Kurse abgeschlossen',
+    badge_hours100: '100-Stunden',
+    badge_hours100_desc: '100 Stunden gelernt',
+    badge_points1000: 'Punktemeister',
+    badge_points1000_desc: '1000 Punkte verdient',
+    badge_bilingual: 'Zweisprachig',
+    badge_bilingual_desc: 'Zwei Sprachen gemeistert',
+    badge_polyglot: 'Polyglott',
+    badge_polyglot_desc: '3+ Sprachen gemeistert',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+};
+
+// ==================== Language Detection ====================
+const LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko', 'fr':'fr', 'es':'es', 'de':'de' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+const LANG_CODES = ['zh', 'en', 'ja', 'ko', 'fr', 'es', 'de'];
+
+const LANGUAGE_OPTIONS = [
+  { code: 'zh-CN', nameKey: 'lang_zh', flag: '🇨🇳' },
+  { code: 'en', nameKey: 'lang_en', flag: '🇺🇸' },
+  { code: 'ja', nameKey: 'lang_ja', flag: '🇯🇵' },
+  { code: 'ko', nameKey: 'lang_ko', flag: '🇰🇷' },
+  { code: 'fr', nameKey: 'lang_fr', flag: '🇫🇷' },
+  { code: 'es', nameKey: 'lang_es', flag: '🇪🇸' },
+  { code: 'de', nameKey: 'lang_de', flag: '🇩🇪' },
+];
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
+
+// ==================== Render ====================
+function renderLangSwitch() {
+  document.getElementById('langSwitch').innerHTML = LANG_CODES.map(code =>
+    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
+  ).join('');
+}
+
+function switchLang(code) {
+  currentLang = code;
+  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
+  updateI18n();
+  renderLangSwitch();
+  renderLanguageSelects();
+  renderBadges();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const text = t(key);
+    if (text !== undefined) el.textContent = text;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const text = t(key);
+    if (text !== undefined) el.placeholder = text;
+  });
+  document.title = t('page_title') + ' - AILOS';
+}
+
+// ==================== State ====================
+let userData = null;
+let isLoggedIn = false;
+
+// ==================== Token ====================
+function getToken() {
+  try { var t=localStorage.getItem('yandao_token_v1');if(!t){var a=localStorage.getItem('auth_tokens');if(a){try{var p=JSON.parse(a);t=p.accessToken||p.token||a}catch(e){t=a}}}return t; } catch(e) { return null; }
+}
+
+function isGuest() {
+  try { return !!localStorage.getItem('yandao_guest_id_v1'); } catch(e) { return false; }
+}
+
+// ==================== Toast ====================
+let toastTimer = null;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 2500);
+}
+
+// ==================== API ====================
+const API_BASE = '/api';
+
+async function apiCall(method, path, body) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  const resp = await fetch(API_BASE + path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (resp.status === 401) {
+    clearAuthAndReload();
+    throw new Error('Unauthorized');
+  }
+
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || data.message || 'Request failed');
+  return data;
+}
+
+function clearAuthAndReload() {
+  try { localStorage.removeItem('yandao_token_v1'); } catch(e) {}
+  try { localStorage.removeItem('yandao_refresh_token_v1'); } catch(e) {}
+  showToast(t('toast_operation_failed'), 'error');
+  setTimeout(() => { window.location.reload(); }, 1500);
+}
+
+// ==================== Profile ====================
+async function loadUserProfile() {
+  const token = getToken();
+  if (!token) {
+    showGuestBanner();
+    return;
+  }
+
+  isLoggedIn = true;
+  document.getElementById('loadingSpinner').classList.remove('hidden');
+  document.getElementById('guestBanner').classList.add('hidden');
+
+  try {
+    const data = await apiCall('GET', '/user/me');
+    userData = data.user || data;
+    populateProfile(userData);
+    document.getElementById('loadingSpinner').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+    renderLanguageSelects();
+    renderBadges();
+  } catch (e) {
+    document.getElementById('loadingSpinner').classList.add('hidden');
+    if (e.message === 'Unauthorized') {
+      showGuestBanner();
+    } else {
+      showToast(e.message || t('toast_operation_failed'), 'error');
+      // Fallback: show with default data
+      userData = getDefaultUserData();
+      populateProfile(userData);
+      document.getElementById('mainContent').classList.remove('hidden');
+      renderLanguageSelects();
+      renderBadges();
+    }
+  }
+}
+
+function getDefaultUserData() {
+  return {
+    id: '---',
+    nickname: 'User',
+    avatar: null,
+    uiLanguage: 'zh',
+    nativeLanguage: 'zh-CN',
+    targetLanguage: 'en',
+    stats: {
+      totalHours: 0,
+      coursesCompleted: 0,
+      streakDays: 0,
+      totalPoints: 0,
+    },
+    badges: [],
+  };
+}
+
+function populateProfile(data) {
+  // Nickname
+  document.getElementById('nicknameDisplay').textContent = data.nickname || 'User';
+  document.getElementById('uidDisplay').textContent = 'UID: ' + (data.id || data._id || '---');
+
+  // Avatar
+  const avatarEl = document.getElementById('avatarDisplay');
+  const avatarInitial = document.getElementById('avatarInitial');
+  if (data.avatar) {
+    avatarEl.innerHTML = '<img src="' + data.avatar + '" alt="avatar">';
+  } else {
+    avatarEl.innerHTML = '<span id="avatarInitial">' + (data.nickname || 'U').charAt(0).toUpperCase() + '</span>';
+  }
+
+  // Stats
+  const stats = data.stats || {};
+  document.getElementById('statTotalHours').textContent = stats.totalHours || 0;
+  document.getElementById('statCourses').textContent = stats.coursesCompleted || 0;
+  document.getElementById('statStreak').textContent = stats.streakDays || 0;
+  document.getElementById('statPoints').textContent = stats.totalPoints || 0;
+
+  // Store for later use
+  userData = data;
+}
+
+function showGuestBanner() {
+  isLoggedIn = false;
+  document.getElementById('loadingSpinner').classList.add('hidden');
+  document.getElementById('mainContent').classList.add('hidden');
+  document.getElementById('guestBanner').classList.remove('hidden');
+}
+
+function goToLogin() {
+  window.location.href = '/xuewaiyu/login.html';
+}
+
+// ==================== Nickname Edit ====================
+function startEditNickname() {
+  document.getElementById('nicknameEditRow').classList.remove('hidden');
+  document.getElementById('btnEditNickname').classList.add('hidden');
+  document.getElementById('nicknameInput').value = userData.nickname || '';
+  document.getElementById('nicknameInput').focus();
+}
+
+function cancelEditNickname() {
+  document.getElementById('nicknameEditRow').classList.add('hidden');
+  document.getElementById('btnEditNickname').classList.remove('hidden');
+}
+
+async function saveNickname() {
+  const newNickname = document.getElementById('nicknameInput').value.trim();
+  if (!newNickname) {
+    showToast(t('toast_operation_failed'), 'error');
+    return;
+  }
+
+  try {
+    await apiCall('PUT', '/user/profile', { nickname: newNickname });
+    userData.nickname = newNickname;
+    document.getElementById('nicknameDisplay').textContent = newNickname;
+    document.getElementById('avatarInitial').textContent = newNickname.charAt(0).toUpperCase();
+    cancelEditNickname();
+    showToast(t('toast_nickname_saved'), 'success');
+  } catch (e) {
+    showToast(e.message || t('toast_operation_failed'), 'error');
+  }
+}
+
+// ==================== Avatar ====================
+function triggerAvatarUpload() {
+  document.getElementById('avatarInput').click();
+}
+
+async function handleAvatarChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File too large (max 5MB)', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const base64 = e.target.result;
+    // Update UI immediately
+    document.getElementById('avatarDisplay').innerHTML = '<img src="' + base64 + '" alt="avatar">';
+
+    try {
+      await apiCall('PUT', '/user/profile', { avatar: base64 });
+      showToast(t('toast_avatar_updated'), 'success');
+    } catch (err) {
+      showToast(err.message || t('toast_operation_failed'), 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ==================== Language Preferences ====================
+function renderLanguageSelects() {
+  const uiLangSelect = document.getElementById('uiLangSelect');
+  const nativeLangSelect = document.getElementById('nativeLangSelect');
+  const targetLangSelect = document.getElementById('targetLangSelect');
+
+  // UI Language (only i18n codes)
+  uiLangSelect.innerHTML = LANG_CODES.map(code => {
+    const selected = (userData && userData.uiLanguage === code) || (currentLang === code) ? ' selected' : '';
+    return '<option value="' + code + '"' + selected + '>' + LANG_NAMES[code] + '</option>';
+  }).join('');
+
+  // Native and Target languages
+  const langOptionsHtml = LANGUAGE_OPTIONS.map(l => {
+    return '<option value="' + l.code + '">' + l.flag + ' ' + t(l.nameKey) + '</option>';
+  }).join('');
+
+  nativeLangSelect.innerHTML = langOptionsHtml;
+  targetLangSelect.innerHTML = langOptionsHtml;
+
+  if (userData) {
+    if (userData.nativeLanguage) nativeLangSelect.value = userData.nativeLanguage;
+    if (userData.targetLanguage) targetLangSelect.value = userData.targetLanguage;
+  }
+
+  // Set UI lang to current
+  uiLangSelect.value = currentLang;
+}
+
+function onUiLangChange() {
+  const newLang = document.getElementById('uiLangSelect').value;
+  switchLang(newLang);
+  saveLanguagePrefs();
+}
+
+function onNativeLangChange() {
+  saveLanguagePrefs();
+}
+
+function onTargetLangChange() {
+  saveLanguagePrefs();
+}
+
+async function saveLanguagePrefs() {
+  if (!isLoggedIn) return;
+  const nativeLang = document.getElementById('nativeLangSelect').value;
+  const targetLang = document.getElementById('targetLangSelect').value;
+
+  try {
+    await apiCall('PUT', '/user/profile', {
+      nativeLanguage: nativeLang,
+      targetLanguage: targetLang,
+    });
+    if (userData) {
+      userData.nativeLanguage = nativeLang;
+      userData.targetLanguage = targetLang;
+    }
+    showToast(t('toast_lang_saved'), 'success');
+  } catch (e) {
+    showToast(e.message || t('toast_operation_failed'), 'error');
+  }
+}
+
+// ==================== Badges ====================
+const BADGE_DEFS = [
+  { id: 'rookie', icon: '🌱', nameKey: 'badge_rookie', descKey: 'badge_rookie_desc', condition: 'coursesCompleted >= 1' },
+  { id: 'streak7', icon: '🔥', nameKey: 'badge_streak7', descKey: 'badge_streak7_desc', condition: 'streakDays >= 7' },
+  { id: 'streak30', icon: '⭐', nameKey: 'badge_streak30', descKey: 'badge_streak30_desc', condition: 'streakDays >= 30' },
+  { id: 'course10', icon: '📚', nameKey: 'badge_course10', descKey: 'badge_course10_desc', condition: 'coursesCompleted >= 10' },
+  { id: 'course50', icon: '🎓', nameKey: 'badge_course50', descKey: 'badge_course50_desc', condition: 'coursesCompleted >= 50' },
+  { id: 'hours100', icon: '⏰', nameKey: 'badge_hours100', descKey: 'badge_hours100_desc', condition: 'totalHours >= 100' },
+  { id: 'points1000', icon: '💎', nameKey: 'badge_points1000', descKey: 'badge_points1000_desc', condition: 'totalPoints >= 1000' },
+  { id: 'bilingual', icon: '🌐', nameKey: 'badge_bilingual', descKey: 'badge_bilingual_desc', condition: 'languagesCount >= 2' },
+  { id: 'polyglot', icon: '🏅', nameKey: 'badge_polyglot', descKey: 'badge_polyglot_desc', condition: 'languagesCount >= 3' },
+];
+
+function evaluateBadgeCondition(condition, stats) {
+  try {
+    const fn = new Function('totalHours', 'coursesCompleted', 'streakDays', 'totalPoints', 'languagesCount', 'return ' + condition);
+    return fn(stats.totalHours || 0, stats.coursesCompleted || 0, stats.streakDays || 0, stats.totalPoints || 0, stats.languagesCount || 1);
+  } catch(e) {
+    return false;
+  }
+}
+
+function renderBadges() {
+  const grid = document.getElementById('badgesGrid');
+  const stats = userData && userData.stats ? userData.stats : { totalHours: 0, coursesCompleted: 0, streakDays: 0, totalPoints: 0, languagesCount: 1 };
+  const earnedBadges = userData && userData.badges ? userData.badges : [];
+
+  grid.innerHTML = BADGE_DEFS.map(badge => {
+    const earned = earnedBadges.includes(badge.id) || evaluateBadgeCondition(badge.condition, stats);
+    const lockedClass = earned ? '' : ' locked';
+    const lockIcon = earned ? '' : ' 🔒';
+    return '<div class="badge-item' + lockedClass + '">' +
+      '<div class="badge-icon">' + badge.icon + '</div>' +
+      '<div class="badge-name">' + t(badge.nameKey) + lockIcon + '</div>' +
+      '<div class="badge-desc">' + t(badge.descKey) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// ==================== Password Change ====================
+function togglePasswordForm() {
+  const form = document.getElementById('pwdForm');
+  const arrow = document.getElementById('pwdArrow');
+  form.classList.toggle('show');
+  arrow.textContent = form.classList.contains('show') ? '⌄' : '›';
+  if (!form.classList.contains('show')) {
+    document.getElementById('oldPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+  }
+}
+
+async function changePassword() {
+  const oldPassword = document.getElementById('oldPassword').value.trim();
+  const newPassword = document.getElementById('newPassword').value.trim();
+  const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+  if (!oldPassword) { showToast(t('toast_enter_old_pwd'), 'error'); return; }
+  if (newPassword.length < 6) { showToast(t('toast_pwd_too_short'), 'error'); return; }
+  if (newPassword !== confirmPassword) { showToast(t('toast_pwd_mismatch'), 'error'); return; }
+
+  const btn = document.getElementById('btnChangePassword');
+  btn.disabled = true;
+  btn.textContent = t('toast_loading');
+
+  try {
+    await apiCall('PUT', '/user/profile', {
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    });
+    showToast(t('toast_pwd_changed'), 'success');
+    togglePasswordForm();
+  } catch (e) {
+    showToast(e.message || t('toast_operation_failed'), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('btn_change_password');
+  }
+}
+
+// ==================== Delete Account ====================
+function openDeleteModal() {
+  document.getElementById('deleteModal').classList.add('show');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('show');
+}
+
+async function confirmDeleteAccount() {
+  const btn = document.getElementById('btnConfirmDelete');
+  btn.disabled = true;
+  btn.textContent = t('toast_loading');
+
+  try {
+    await apiCall('DELETE', '/user/me');
+    try { localStorage.removeItem('yandao_token_v1'); } catch(e) {}
+    try { localStorage.removeItem('yandao_refresh_token_v1'); } catch(e) {}
+    closeDeleteModal();
+    showToast('Account deleted', 'info');
+    setTimeout(() => { window.location.href = '/xuewaiyu/landing.html'; }, 1500);
+  } catch (e) {
+    showToast(e.message || t('toast_operation_failed'), 'error');
+    btn.disabled = false;
+    btn.textContent = t('btn_confirm_delete');
+  }
+}
+
+// Close modal on overlay click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+
+// ==================== Init ====================
+function init() {
+  renderLangSwitch();
+  updateI18n();
+  loadUserProfile();
+}
+
+init();
+</script>
+</body>
+</html>

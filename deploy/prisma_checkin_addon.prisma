@@ -1,0 +1,20 @@
+// ============================================================
+// Prisma Schema 新增: Checkin Model
+// 追加到现有 prisma/schema.prisma 末尾
+// 迁移命令: npx prisma migrate dev --name add_checkin
+// ============================================================
+
+model Checkin {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  checkinDate DateTime @default(now())
+  streak      Int      @default(1)
+  xpAwarded   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, checkinDate])
+  @@index([userId])
+  @@map("checkins")
+}

@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AILOS - 从零开始，和你的AI语言伙伴轻松学语言</title>
+<style>
+/* ============================================ */
+/* CSS RESET & BASE */
+/* ============================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1a1a2e;background:#0a0a1a;line-height:1.6;overflow-x:hidden}
+img{max-width:100%;height:auto}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;outline:none;font-family:inherit}
+ul{list-style:none}
+
+/* ============================================ */
+/* LANGUAGE BAR */
+/* ============================================ */
+.lang-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,10,26,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;padding:6px 12px;flex-wrap:wrap;gap:4px;min-height:44px}
+.lang-bar button{background:transparent;color:#a0a0b8;border:1px solid rgba(124,58,237,0.25);border-radius:20px;padding:4px 12px;font-size:12px;transition:all 0.25s;white-space:nowrap}
+.lang-bar button:hover{color:#e0d4ff;border-color:rgba(124,58,237,0.6);background:rgba(124,58,237,0.12)}
+.lang-bar button.active{background:linear-gradient(135deg,#7C3AED,#a855f7);color:#fff;border-color:#7C3AED;font-weight:600;box-shadow:0 2px 12px rgba(124,58,237,0.4)}
+
+/* ============================================ */
+/* SCREEN CONTAINER */
+/* ============================================ */
+.screen{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:60px 20px 80px;overflow:hidden}
+.screen-inner{max-width:1100px;width:100%;position:relative;z-index:2}
+.screen-bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+
+/* ============================================ */
+/* SCREEN 1: HERO */
+/* ============================================ */
+.s1-hero{background:linear-gradient(160deg,#0a0a1a 0%,#1a0a3e 30%,#0d0d2b 60%,#0a0a1a 100%);text-align:center}
+.s1-hero .screen-bg::before{content:'';position:absolute;top:-30%;left:-20%;width:140%;height:140%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.18) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(168,85,247,0.12) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(99,102,241,0.1) 0%,transparent 40%);animation:bgPulse 8s ease-in-out infinite}
+@keyframes bgPulse{0%,100%{opacity:0.8}50%{opacity:1}}
+.hero-badge{display:inline-block;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.35);border-radius:50px;padding:6px 20px;font-size:13px;color:#c4b5fd;margin-bottom:24px;animation:fadeInUp 0.8s ease-out}
+.hero-title{font-size:clamp(28px,5vw,48px);font-weight:800;color:#fff;line-height:1.25;margin-bottom:20px;text-shadow:0 2px 20px rgba(124,58,237,0.3)}
+.hero-title span{background:linear-gradient(135deg,#a78bfa,#c084fc,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:clamp(15px,2.5vw,18px);color:#b0b0cc;max-width:700px;margin:0 auto 16px;line-height:1.7}
+.hero-helper{font-size:13px;color:#7c7c9a;margin-bottom:32px;padding:8px 16px;display:inline-block;background:rgba(124,58,237,0.08);border-radius:20px;max-width:650px;line-height:1.6}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:linear-gradient(135deg,#7C3AED,#a855f7);color:#fff;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;transition:all 0.3s;box-shadow:0 4px 24px rgba(124,58,237,0.45);letter-spacing:0.5px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,0.6);background:linear-gradient(135deg,#8b5cf6,#c084fc)}
+.btn-secondary{background:transparent;color:#c4b5fd;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;border:1.5px solid rgba(124,58,237,0.4);transition:all 0.3s}
+.btn-secondary:hover{background:rgba(124,58,237,0.1);border-color:#a855f7;color:#e0d4ff}
+.hero-floating{position:absolute;border-radius:50%;background:rgba(124,58,237,0.08);animation:float 6s ease-in-out infinite;pointer-events:none}
+.hero-floating:nth-child(1){width:180px;height:180px;top:10%;left:5%;animation-delay:0s}
+.hero-floating:nth-child(2){width:120px;height:120px;top:60%;right:8%;animation-delay:2s}
+.hero-floating:nth-child(3){width:90px;height:90px;bottom:15%;left:15%;animation-delay:4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.05)}}
+
+/* ============================================ */
+/* SCREEN 2: THREE-LAYER ECOSYSTEM */
+/* ============================================ */
+.s2-ecosystem{background:linear-gradient(180deg,#0a0a1a,#0f0f2a,#0a0a1a);text-align:center}
+.section-title{font-size:clamp(24px,4vw,36px);font-weight:700;color:#fff;text-align:center;margin-bottom:12px}
+.section-subtitle{font-size:15px;color:#8888aa;text-align:center;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.eco-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.eco-card{background:linear-gradient(145deg,rgba(20,20,50,0.9),rgba(15,15,40,0.95));border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:32px 24px;text-align:center;transition:all 0.35s;position:relative;overflow:hidden}
+.eco-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7C3AED,#a855f7,#7C3AED);opacity:0;transition:opacity 0.35s}
+.eco-card:hover{transform:translateY(-6px);border-color:rgba(124,58,237,0.4);box-shadow:0 12px 40px rgba(124,58,237,0.15)}
+.eco-card:hover::before{opacity:1}
+.eco-icon{font-size:48px;margin-bottom:16px;display:block}
+.eco-card h3{color:#fff;font-size:20px;font-weight:700;margin-bottom:8px}
+.eco-card p{color:#9999bb;font-size:14px;line-height:1.6;margin-bottom:20px}
+.eco-card .btn-primary{padding:10px 24px;font-size:14px}
+
+/* ============================================ */
+/* SCREEN 3: SUBSCRIPTION TABLE */
+/* ============================================ */
+.s3-subscription{background:linear-gradient(180deg,#0a0a1a,#0d0d28,#0a0a1a);text-align:center}
+.sub-table-wrap{overflow-x:auto;margin:0 auto 24px;max-width:960px}
+.sub-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:16px;overflow:hidden;font-size:14px}
+.sub-table thead th{background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(168,85,247,0.15));color:#c4b5fd;padding:14px 12px;font-size:13px;text-align:center;font-weight:600;white-space:nowrap}
+.sub-table tbody td{background:rgba(20,20,50,0.6);color:#b0b0cc;padding:14px 12px;text-align:center;border-bottom:1px solid rgba(124,58,237,0.08);font-size:13px}
+.sub-table tbody tr:last-child td{border-bottom:none}
+.sub-table tbody tr:hover td{background:rgba(124,58,237,0.08)}
+.sub-table .plan-name{color:#fff;font-weight:700;font-size:15px}
+.sub-table .price{color:#fbbf24;font-weight:700;font-size:15px}
+.sub-table .highlight{color:#a78bfa;font-weight:600}
+.sub-table .lv1{color:#34d399;font-weight:600}
+.sub-table .lv2{color:#60a5fa;font-weight:600}
+.sub-table .best-row td{background:rgba(124,58,237,0.12);border-bottom:1px solid rgba(124,58,237,0.2)}
+.sub-table .best-row .plan-name{color:#e0d4ff}
+.sub-table .best-row .price{color:#fbbf24}
+.sub-table .best-badge{display:inline-block;background:linear-gradient(135deg,#7C3AED,#a855f7);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:4px;font-weight:600}
+.sub-footnote{font-size:12px;color:#7c7c9a;text-align:center;max-width:700px;margin:0 auto 0;line-height:1.6;padding:12px 16px;background:rgba(124,58,237,0.06);border-radius:10px;border:1px solid rgba(124,58,237,0.1)}
+
+/* ============================================ */
+/* SCREEN 5: AI COURSE CARDS */
+/* ============================================ */
+.s5-courses{background:linear-gradient(180deg,#0a0a1a,#0f0f2a,#0a0a1a)}
+.course-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.course-card{background:linear-gradient(145deg,rgba(20,20,50,0.9),rgba(15,15,40,0.95));border:1px solid rgba(124,58,237,0.12);border-radius:18px;padding:28px 22px;text-align:center;transition:all 0.35s;position:relative}
+.course-card:hover{transform:translateY(-5px);border-color:rgba(124,58,237,0.35);box-shadow:0 10px 35px rgba(124,58,237,0.12)}
+.course-icon{font-size:40px;display:block;margin-bottom:12px}
+.course-card h4{color:#fff;font-size:18px;margin-bottom:8px;font-weight:700}
+.course-card p{color:#8888aa;font-size:14px;line-height:1.6}
+.scene-tags{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:30px}
+.scene-tag{display:inline-block;padding:8px 20px;border-radius:20px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;cursor:pointer;transition:all 0.3s;font-size:0.9rem}
+.scene-tag:hover,.scene-tag.active{background:rgba(139,92,246,0.25);border-color:#8B5CF6;color:#c4b5fd}
+
+/* ============================================ */
+/* SCREEN 7: B2B */
+/* ============================================ */
+.s7-b2b{background:linear-gradient(180deg,#0a0a1a,#0d0d28,#0a0a1a)}
+.b2b-subtitle{text-align:center;color:#b0b0cc;font-size:15px;margin-bottom:32px;max-width:600px;margin-left:auto;margin-right:auto}
+.compare-table{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:28px;border-radius:16px;overflow:hidden}
+.compare-table th{background:rgba(124,58,237,0.2);color:#c4b5fd;padding:14px 16px;font-size:15px;text-align:center}
+.compare-table td{background:rgba(20,20,50,0.6);color:#b0b0cc;padding:14px 16px;font-size:14px;text-align:center;border-bottom:1px solid rgba(124,58,237,0.08)}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table .check{color:#34d399}
+.compare-table .cross{color:#ef4444}
+
+/* ============================================ */
+/* SCREEN 8: PLATFORM DISCLOSURE */
+/* ============================================ */
+.s8-disclosure{background:#0a0a1a;min-height:auto;padding:30px 20px 30px}
+.disclosure-box{max-width:800px;margin:0 auto;text-align:center;padding:16px 20px;background:rgba(124,58,237,0.04);border:1px solid rgba(124,58,237,0.1);border-radius:12px}
+.disclosure-box p{font-size:12px;color:#666688;line-height:1.7}
+
+/* ============================================ */
+/* SCREEN 9: BOTTOM CONVERSION */
+/* ============================================ */
+.s9-convert{background:linear-gradient(160deg,#0a0a1a 0%,#1a0a3e 40%,#0d0d2b 70%,#0a0a1a 100%);text-align:center;min-height:80vh}
+.s9-convert .screen-bg::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 30%,rgba(124,58,237,0.2) 0%,transparent 60%);animation:bgPulse 6s ease-in-out infinite}
+.convert-title{font-size:clamp(24px,4.5vw,38px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.3}
+.convert-subtitle{font-size:16px;color:#b0b0cc;margin-bottom:36px;max-width:600px;margin-left:auto;margin-right:auto}
+.btn-large{padding:18px 48px;font-size:18px;border-radius:50px;letter-spacing:1px}
+
+/* ============================================ */
+/* POINTS INFO SECTION */
+/* ============================================ */
+.points-info{background:#0a0a1a;padding:30px 20px 30px;border-top:1px solid rgba(124,58,237,0.08)}
+.points-inner{max-width:800px;margin:0 auto;text-align:center}
+.points-inner h4{color:#c4b5fd;font-size:16px;margin-bottom:10px;font-weight:600}
+.points-inner p{font-size:12px;color:#7c7c9a;line-height:1.7}
+
+/* ============================================ */
+/* MODAL */
+/* ============================================ */
+.modal-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all 0.3s}
+.modal-overlay.active{opacity:1;visibility:visible}
+.modal{background:linear-gradient(160deg,#151535,#0f0f2a);border:1px solid rgba(124,58,237,0.3);border-radius:24px;padding:36px 28px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal-close{position:absolute;top:14px;right:18px;background:rgba(255,255,255,0.08);border:none;color:#aaa;font-size:22px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.2s;cursor:pointer}
+.modal-close:hover{background:rgba(255,255,255,0.15);color:#fff}
+.modal h3{color:#fff;font-size:22px;text-align:center;margin-bottom:24px}
+.sim-slider-wrap{margin-bottom:24px}
+.sim-slider-wrap label{display:block;color:#c4b5fd;font-size:14px;margin-bottom:8px;text-align:center}
+.sim-slider-wrap input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:rgba(124,58,237,0.2);outline:none}
+.sim-slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#a855f7);cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,0.5)}
+.sim-value{text-align:center;font-size:28px;color:#a78bfa;font-weight:700;margin-bottom:20px}
+.sim-results{display:grid;gap:12px;margin-bottom:24px}
+.sim-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(124,58,237,0.06);border-radius:12px;border:1px solid rgba(124,58,237,0.1)}
+.sim-row .label{color:#9999bb;font-size:14px}
+.sim-row .value{color:#a78bfa;font-weight:700;font-size:16px}
+.sim-row.range{background:rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.25)}
+.sim-row.range .value{color:#fbbf24;font-size:18px}
+.sim-disclaimer{font-size:11px;color:#7c7c9a;text-align:center;margin-bottom:16px;line-height:1.5;padding:10px 14px;background:rgba(124,58,237,0.04);border-radius:10px;border:1px solid rgba(124,58,237,0.08)}
+
+/* ============================================ */
+/* SHARE MODAL */
+/* ============================================ */
+.share-poster{background:linear-gradient(145deg,#1a0a3e,#0d0d28);border:1px solid rgba(124,58,237,0.2);border-radius:16px;padding:24px;text-align:center;margin-bottom:20px}
+.share-poster .poster-title{color:#c4b5fd;font-size:14px;margin-bottom:16px}
+.share-poster .poster-stats{display:flex;justify-content:space-around;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.share-poster .stat{text-align:center}
+.share-poster .stat .num{color:#a78bfa;font-size:24px;font-weight:700}
+.share-poster .stat .lbl{color:#7c7c9a;font-size:11px;margin-top:4px}
+.share-poster .invite-code{display:inline-block;background:rgba(124,58,237,0.15);border:2px dashed rgba(124,58,237,0.4);border-radius:12px;padding:12px 24px;font-size:22px;color:#fbbf24;font-weight:700;letter-spacing:4px;font-family:'Courier New',monospace;margin-bottom:8px}
+.share-poster .invite-hint{font-size:11px;color:#7c7c9a}
+.share-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.share-btns .btn-primary{font-size:14px;padding:12px 24px}
+.share-btns .btn-secondary{font-size:14px;padding:12px 24px}
+
+/* ============================================ */
+/* ANIMATIONS */
+/* ============================================ */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.anim-fade-up{animation:fadeInUp 0.8s ease-out both}
+.anim-delay-1{animation-delay:0.15s}
+.anim-delay-2{animation-delay:0.3s}
+.anim-delay-3{animation-delay:0.45s}
+
+/* ============================================ */
+/* FOOTER */
+/* ============================================ */
+.footer{text-align:center;padding:40px 20px;color:#555577;font-size:12px;background:#0a0a1a;border-top:1px solid rgba(124,58,237,0.1)}
+.footer a{color:#7C3AED}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+@media (max-width:768px){
+  .screen{padding:50px 16px 60px}
+  .eco-cards{grid-template-columns:1fr}
+  .course-cards{grid-template-columns:1fr}
+  .hero-btns{flex-direction:column;align-items:center}
+  .lang-bar{gap:2px}
+  .lang-bar button{padding:3px 8px;font-size:11px}
+  .compare-table{font-size:12px}
+  .compare-table th,.compare-table td{padding:10px 8px}
+  .sub-table{font-size:11px}
+  .sub-table thead th,.sub-table tbody td{padding:10px 6px}
+  .share-poster .poster-stats{flex-direction:column;gap:8px}
+  .share-btns{flex-direction:column;align-items:center}
+}
+@media (max-width:375px){
+  .hero-title{font-size:24px}
+  .btn-primary{font-size:14px;padding:12px 24px}
+  .section-title{font-size:22px}
+  .sub-table{font-size:10px}
+  .sub-table thead th,.sub-table tbody td{padding:8px 4px}
+  .modal{padding:24px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- LANGUAGE BAR -->
+<!-- ============================================ -->
+<nav class="lang-bar" id="langBar"></nav>
+
+<!-- ============================================ -->
+<!-- SCREEN 1: HERO (第1屏：主视觉) -->
+<!-- ============================================ -->
+<section class="screen s1-hero" id="s1">
+  <div class="screen-bg">
+    <div class="hero-floating"></div>
+    <div class="hero-floating"></div>
+    <div class="hero-floating"></div>
+  </div>
+  <div class="screen-inner">
+    <div class="hero-badge anim-fade-up" data-i18n="s1_badge">AI语言学习伙伴 · 合规成长生态</div>
+    <h1 class="hero-title anim-fade-up anim-delay-1" data-i18n="s1_title">从零开始，和你的AI语言伙伴<br><span>轻松学语言</span></h1>
+    <p class="hero-subtitle anim-fade-up anim-delay-2" data-i18n="s1_subtitle">创建专属AI伴读，全天候陪你口语练习、语法纠错、针对性语言提升</p>
+    <p class="hero-helper anim-fade-up anim-delay-2" data-i18n="s1_helper">注册领30成长积分+3天AI体验额度，分享好友可获得真实订阅现金奖励；平台自然注册用户收益自动归属于官方成长账户</p>
+    <div class="hero-btns anim-fade-up anim-delay-3">
+      <button class="btn-primary" onclick="location.href='ai-companion-builder.html'" data-i18n="s1_cta0">创建我的专属AI伴读</button>
+      <button class="btn-secondary" onclick="openSimulator()" data-i18n="s1_cta2">测算我的成长收益</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 2: THREE-LAYER ECOSYSTEM (第2屏：三层生态三栏卡片) -->
+<!-- ============================================ -->
+<section class="screen s2-ecosystem" id="s2">
+  <div class="screen-inner">
+    <h2 class="section-title anim-fade-up" data-i18n="s2_title">AILOS AI语言学习成长生态</h2>
+    <div class="eco-cards">
+      <div class="eco-card anim-fade-up anim-delay-1">
+        <span class="eco-icon">&#10084;&#65039;</span>
+        <h3 data-i18n="s2_card1_title">C学习者</h3>
+        <p data-i18n="s2_card1_desc">1v1自定义AI人格，游戏化无压力口语练习</p>
+        <button class="btn-primary" onclick="location.href='register.html'" data-i18n="s2_card1_btn">开始学习</button>
+      </div>
+      <div class="eco-card anim-fade-up anim-delay-2">
+        <span class="eco-icon">&#128176;</span>
+        <h3 data-i18n="s2_card2_title">成长伙伴</h3>
+        <p data-i18n="s2_card2_desc">合规两级现金分润，平台自然注册订单官方正常参与分润</p>
+        <button class="btn-primary" onclick="openSimulator()" data-i18n="s2_card2_btn">查看成长规则</button>
+      </div>
+      <div class="eco-card anim-fade-up anim-delay-3">
+        <span class="eco-icon">&#127970;</span>
+        <h3 data-i18n="s2_card3_title">B端机构</h3>
+        <p data-i18n="s2_card3_desc">AI降低师资成本，提升学员留存与合作收益</p>
+        <button class="btn-primary" onclick="document.getElementById('s7').scrollIntoView({behavior:'smooth'})" data-i18n="s2_card3_btn">进入合作专区</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 3: SUBSCRIPTION TABLE (第3屏：会员订阅可视化表格) -->
+<!-- ============================================ -->
+<section class="screen s3-subscription" id="s3">
+  <div class="screen-inner">
+    <h2 class="section-title anim-fade-up" data-i18n="s3_title">会员订阅方案，透明分润一目了然</h2>
+    <p class="section-subtitle anim-fade-up anim-delay-1" data-i18n="s3_subtitle">每日额度管控，合规两级现金分润</p>
+    <div class="sub-table-wrap anim-fade-up anim-delay-2">
+      <table class="sub-table">
+        <thead>
+          <tr>
+            <th data-i18n="s3_th1">套餐</th>
+            <th data-i18n="s3_th2">售价</th>
+            <th data-i18n="s3_th3">每日AI对话额度</th>
+            <th data-i18n="s3_th4">每日纠错额度</th>
+            <th data-i18n="s3_th5">一级分润</th>
+            <th data-i18n="s3_th6">二级分润</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="plan-name" data-i18n="s3_r1_plan">月卡</td>
+            <td class="price" data-i18n="s3_r1_price">29.9元</td>
+            <td class="highlight" data-i18n="s3_r1_chat">30次</td>
+            <td class="highlight" data-i18n="s3_r1_correct">10次</td>
+            <td class="lv1" data-i18n="s3_r1_lv1">10%(3.0元)</td>
+            <td class="lv2" data-i18n="s3_r1_lv2">3%(0.9元)</td>
+          </tr>
+          <tr>
+            <td class="plan-name" data-i18n="s3_r2_plan">季卡</td>
+            <td class="price" data-i18n="s3_r2_price">79元</td>
+            <td class="highlight" data-i18n="s3_r2_chat">50次</td>
+            <td class="highlight" data-i18n="s3_r2_correct">20次</td>
+            <td class="lv1" data-i18n="s3_r2_lv1">15%(11.9元)</td>
+            <td class="lv2" data-i18n="s3_r2_lv2">3%(2.4元)</td>
+          </tr>
+          <tr>
+            <td class="plan-name" data-i18n="s3_r3_plan">年卡</td>
+            <td class="price" data-i18n="s3_r3_price">199元</td>
+            <td class="highlight" data-i18n="s3_r3_chat">100次</td>
+            <td class="highlight" data-i18n="s3_r3_correct">50次</td>
+            <td class="lv1" data-i18n="s3_r3_lv1">18%(35.8元)</td>
+            <td class="lv2" data-i18n="s3_r3_lv2">5%(10.0元)</td>
+          </tr>
+          <tr class="best-row">
+            <td class="plan-name"><span data-i18n="s3_r4_plan">高级年卡</span><span class="best-badge" data-i18n="s3_best">推荐</span></td>
+            <td class="price" data-i18n="s3_r4_price">399元</td>
+            <td class="highlight" data-i18n="s3_r4_chat">200次</td>
+            <td class="highlight" data-i18n="s3_r4_correct">100次</td>
+            <td class="lv1" data-i18n="s3_r4_lv1">20%(79.8元)</td>
+            <td class="lv2" data-i18n="s3_r4_lv2">5%(20.0元)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sub-footnote anim-fade-up anim-delay-3">
+      <p data-i18n="s3_footnote">以上分润为真实付费订单产生，注册/学习仅发放积分与AI体验额度，无现金奖励。平台自主注册用户订单分润归属平台官方账户。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 5: AI COURSE CARDS (第5屏：AI课程三卡片) -->
+<!-- ============================================ -->
+<section class="screen s5-courses" id="s5">
+  <div class="screen-inner">
+    <h2 class="section-title anim-fade-up" data-i18n="s5_title">选择你的AI语言学习场景</h2>
+    <div class="scene-tags anim-fade-up anim-delay-1">
+      <span class="scene-tag active" data-i18n="scene_daily">日常闲聊</span>
+      <span class="scene-tag" data-i18n="scene_business">商务交流</span>
+      <span class="scene-tag" data-i18n="scene_travel">旅行用语</span>
+      <span class="scene-tag" data-i18n="scene_life">生活交流</span>
+      <span class="scene-tag" data-i18n="scene_exam">考级训练</span>
+      <span class="scene-tag" data-i18n="scene_kids">少儿启蒙</span>
+    </div>
+    <div class="course-cards">
+      <div class="course-card anim-fade-up anim-delay-1">
+        <span class="course-icon">&#128172;</span>
+        <h4 data-i18n="s5_card1_title">AI开口训练</h4>
+        <p data-i18n="s5_card1_desc">不用死背句式，和AI伴读自由对话建立语感</p>
+      </div>
+      <div class="course-card anim-fade-up anim-delay-2">
+        <span class="course-icon">&#127918;</span>
+        <h4 data-i18n="s5_card2_title">游戏化语言挑战</h4>
+        <p data-i18n="s5_card2_desc">闯关任务，轻松积累表达能力</p>
+      </div>
+      <div class="course-card anim-fade-up anim-delay-3">
+        <span class="course-icon">&#129302;</span>
+        <h4 data-i18n="s5_card3_title">定制专属AI学习伙伴</h4>
+        <p data-i18n="s5_card3_desc">自定义性格、音色，长期专属学习伙伴</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 7: B2B (第7屏：B端教育机构合作板块) -->
+<!-- ============================================ -->
+<section class="screen s7-b2b" id="s7">
+  <div class="screen-inner">
+    <h2 class="section-title anim-fade-up" data-i18n="s7_title">为什么教育机构都接入AILOS AI生态？</h2>
+    <p class="b2b-subtitle anim-fade-up anim-delay-1" data-i18n="s7_subtitle">AI增强老师，不是替代老师</p>
+    <table class="compare-table anim-fade-up anim-delay-2">
+      <thead><tr><th data-i18n="s7_th1">痛点</th><th data-i18n="s7_th2">传统模式</th><th data-i18n="s7_th3">AILOS AI生态</th></tr></thead>
+      <tbody>
+        <tr><td data-i18n="s7_r1_pain">师资成本</td><td class="cross" data-i18n="s7_r1_old">高成本外教，排课受限</td><td class="check" data-i18n="s7_r1_new">AI自动备课，全天候陪练</td></tr>
+        <tr><td data-i18n="s7_r2_pain">教材更新</td><td class="cross" data-i18n="s7_r2_old">教材滞后，无法个性化</td><td class="check" data-i18n="s7_r2_new">AI实时生成，千人千面</td></tr>
+        <tr><td data-i18n="s7_r3_pain">学员流失</td><td class="cross" data-i18n="s7_r3_old">被动学习，流失严重</td><td class="check" data-i18n="s7_r3_new">游戏化+成长奖励，提升续费</td></tr>
+        <tr><td data-i18n="s7_r4_pain">教学反馈</td><td class="cross" data-i18n="s7_r4_old">滞后、依赖人工评估</td><td class="check" data-i18n="s7_r4_new">实时AI学习数据追踪</td></tr>
+      </tbody>
+    </table>
+    <div style="text-align:center">
+      <button class="btn-primary" onclick="location.href='partner.html'" data-i18n="s7_cta">申请机构AI升级方案</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 8: PLATFORM DISCLOSURE (第8屏：平台分佣公示小字) -->
+<!-- ============================================ -->
+<section class="screen s8-disclosure" id="s8">
+  <div class="screen-inner">
+    <div class="disclosure-box">
+      <p data-i18n="s8_text">无邀请码自主注册用户，系统自动归属平台官方推广账户，对应付费订单按标准两级规则结算分润，全部收支录入财务总账公示。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SCREEN 9: BOTTOM CONVERSION (第9屏：底部转化) -->
+<!-- ============================================ -->
+<section class="screen s9-convert" id="s9">
+  <div class="screen-bg"></div>
+  <div class="screen-inner">
+    <h2 class="convert-title anim-fade-up" data-i18n="s9_title">注册保存专属AI学习伙伴，<br>解锁3天完整免费试用</h2>
+    <p class="convert-subtitle anim-fade-up anim-delay-1" data-i18n="s9_subtitle">免费注册保存你的AI语言学习伙伴，创建专属伴读人设，开启个性化语言学习之旅</p>
+    <button class="btn-primary btn-large anim-fade-up anim-delay-2" onclick="location.href='register.html'" data-i18n="s9_cta">免费注册，创建我的AI学习伙伴</button>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- POINTS SYSTEM INFO -->
+<!-- ============================================ -->
+<section class="points-info">
+  <div class="points-inner">
+    <h4 data-i18n="points_title">成长积分体系说明</h4>
+    <p data-i18n="points_desc">打卡、任务、新手、成就积分仅可兑换AI额度、课程优惠券、AI人格皮肤；单笔订单积分抵扣上限20%；积分不可兑换现金。</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FOOTER -->
+<!-- ============================================ -->
+<footer class="footer">
+  <p data-i18n="footer">AILOS &copy; 2026 · AI语言伴读语言学习 · 合规成长生态</p>
+</footer>
+
+<!-- ============================================ -->
+<!-- MODAL: REVENUE SIMULATOR (第4屏：安全收益模拟器弹窗) -->
+<!-- ============================================ -->
+<div class="modal-overlay" id="simModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSimulator()">&times;</button>
+    <h3 data-i18n="sim_title">成长收益区间预估</h3>
+    <div class="sim-slider-wrap">
+      <label><span data-i18n="sim_label">邀请人数：</span><span id="simCount">10</span> <span data-i18n="sim_unit">人</span></label>
+      <input type="range" min="1" max="100" value="10" id="simSlider" oninput="updateSim()">
+    </div>
+    <div class="sim-results">
+      <div class="sim-row">
+        <span class="label" data-i18n="sim_r1">成长积分预估（仅兑换AI额度/皮肤，不可提现）</span>
+        <span class="value" id="simR1">100~300</span>
+      </div>
+      <div class="sim-row">
+        <span class="label" data-i18n="sim_r2">限时AI体验额度天数</span>
+        <span class="value" id="simR2">1~5天</span>
+      </div>
+      <div class="sim-row range">
+        <span class="label" data-i18n="sim_r3">现金成长奖励预估（区间范围，不做承诺）</span>
+        <span class="value" id="simR3">20~500元</span>
+      </div>
+    </div>
+    <div class="sim-disclaimer" data-i18n="sim_disclaimer">无邀请码自然注册用户，订单分润归属平台官方账户，严格执行两级分账规则。以上为区间预估，不构成任何收益承诺。</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn-primary" style="flex:1;min-width:160px;font-size:14px;padding:12px 20px" onclick="location.href='register.html'" data-i18n="sim_cta">免费注册，开启成长</button>
+      <button class="btn-secondary" style="flex:1;min-width:160px;font-size:14px;padding:12px 20px" onclick="location.href='rewards.html'" data-i18n="sim_cta_rules">查看完整合规成长奖励规则</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL: COURSE SHARE (第6屏：课程完成自动分享弹窗) -->
+<!-- ============================================ -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShareModal()">&times;</button>
+    <h3 data-i18n="share_title">学习成果分享</h3>
+    <div class="share-poster">
+      <p class="poster-title" data-i18n="share_desc">恭喜完成学习！分享你的学习数据海报</p>
+      <div class="poster-stats">
+        <div class="stat">
+          <div class="num" id="shareStatWords">128</div>
+          <div class="lbl" data-i18n="share_stat_words">掌握词汇</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="shareStatMins">45</div>
+          <div class="lbl" data-i18n="share_stat_mins">学习分钟</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="shareStatStreak">7</div>
+          <div class="lbl" data-i18n="share_stat_streak">连续天数</div>
+        </div>
+      </div>
+      <div class="invite-code" id="shareInviteCode">YD000000</div>
+      <p class="invite-hint" data-i18n="share_code_label">个人专属6位邀请码，双方各得成长积分</p>
+    </div>
+    <div class="share-btns">
+      <button class="btn-primary" onclick="shareToWechat()" data-i18n="share_btn1">分享学习成果到朋友圈</button>
+      <button class="btn-secondary" onclick="copyInviteCode()" data-i18n="share_btn2">复制邀请码</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================ -->
+<script>
+/* ============================================ */
+/* I18N DATA - 7 LANGUAGES */
+/* ============================================ */
+const I18N = {
+  zh: {
+    s1_badge: 'AI语言学习伙伴 · 合规成长生态',
+    s1_title: '从零开始，和你的AI语言伙伴<br><span>轻松学语言</span>',
+    s1_subtitle: '创建专属AI伴读，全天候陪你口语练习、语法纠错、针对性语言提升',
+    s1_helper: '注册领30成长积分+3天AI体验额度，分享好友可获得真实订阅现金奖励；平台自然注册用户收益自动归属于官方成长账户',
+    s1_cta0: '创建我的专属AI伴读',
+    s1_cta1: '免费体验AI语言伴读',
+    s1_cta2: '测算我的成长收益',
+    s2_title: 'AILOS AI语言学习成长生态',
+    s2_card1_title: 'C学习者',
+    s2_card1_desc: '1v1自定义AI人格，游戏化无压力口语练习',
+    s2_card1_btn: '开始学习',
+    s2_card2_title: '成长伙伴',
+    s2_card2_desc: '合规两级现金分润，平台自然注册订单官方正常参与分润',
+    s2_card2_btn: '查看成长规则',
+    s2_card3_title: 'B端机构',
+    s2_card3_desc: 'AI降低师资成本，提升学员留存与合作收益',
+    s2_card3_btn: '进入合作专区',
+    s3_title: '会员订阅方案，透明分润一目了然',
+    s3_subtitle: '每日额度管控，合规两级现金分润',
+    s3_th1: '套餐', s3_th2: '售价', s3_th3: '每日AI对话额度', s3_th4: '每日纠错额度', s3_th5: '一级分润', s3_th6: '二级分润',
+    s3_r1_plan: '月卡', s3_r1_price: '29.9元', s3_r1_chat: '30次', s3_r1_correct: '10次', s3_r1_lv1: '10%(3.0元)', s3_r1_lv2: '3%(0.9元)',
+    s3_r2_plan: '季卡', s3_r2_price: '79元', s3_r2_chat: '50次', s3_r2_correct: '20次', s3_r2_lv1: '15%(11.9元)', s3_r2_lv2: '3%(2.4元)',
+    s3_r3_plan: '年卡', s3_r3_price: '199元', s3_r3_chat: '100次', s3_r3_correct: '50次', s3_r3_lv1: '18%(35.8元)', s3_r3_lv2: '5%(10.0元)',
+    s3_r4_plan: '高级年卡', s3_r4_price: '399元', s3_r4_chat: '200次', s3_r4_correct: '100次', s3_r4_lv1: '20%(79.8元)', s3_r4_lv2: '5%(20.0元)',
+    s3_best: '推荐',
+    s3_footnote: '以上分润为真实付费订单产生，注册/学习仅发放积分与AI体验额度，无现金奖励。平台自主注册用户订单分润归属平台官方账户。',
+    sim_title: '成长收益区间预估',
+    sim_label: '邀请人数：',
+    sim_unit: '人',
+    sim_r1: '成长积分预估（仅兑换AI额度/皮肤，不可提现）',
+    sim_r2: '限时AI体验额度天数',
+    sim_r3: '现金成长奖励预估（区间范围，不做承诺）',
+    sim_disclaimer: '无邀请码自然注册用户，订单分润归属平台官方账户，严格执行两级分账规则。以上为区间预估，不构成任何收益承诺。',
+    sim_cta: '免费注册，开启成长',
+    sim_cta_rules: '查看完整合规成长奖励规则',
+    s5_title: '选择你的AI语言学习场景',
+    s5_card1_title: 'AI开口训练',
+    s5_card1_desc: '不用死背句式，和AI伴读自由对话建立语感',
+    s5_card2_title: '游戏化语言挑战',
+    s5_card2_desc: '闯关任务，轻松积累表达能力',
+    s5_card3_title: '定制专属AI学习伙伴',
+    s5_card3_desc: '自定义性格、音色，长期专属学习伙伴',
+    scene_daily: '日常闲聊',
+    scene_business: '商务交流',
+    scene_travel: '旅行用语',
+    scene_life: '生活交流',
+    scene_exam: '考级训练',
+    scene_kids: '少儿启蒙',
+    share_title: '学习成果分享',
+    share_desc: '恭喜完成学习！分享你的学习数据海报',
+    share_stat_words: '掌握词汇',
+    share_stat_mins: '学习分钟',
+    share_stat_streak: '连续天数',
+    share_code_label: '个人专属6位邀请码，双方各得成长积分',
+    share_btn1: '分享学习成果到朋友圈',
+    share_btn2: '复制邀请码',
+    s7_title: '为什么教育机构都接入AILOS AI生态？',
+    s7_subtitle: 'AI增强老师，不是替代老师',
+    s7_th1: '痛点', s7_th2: '传统模式', s7_th3: 'AILOS AI生态',
+    s7_r1_pain: '师资成本', s7_r1_old: '高成本外教，排课受限', s7_r1_new: 'AI自动备课，全天候陪练',
+    s7_r2_pain: '教材更新', s7_r2_old: '教材滞后，无法个性化', s7_r2_new: 'AI实时生成，千人千面',
+    s7_r3_pain: '学员流失', s7_r3_old: '被动学习，流失严重', s7_r3_new: '游戏化+成长奖励，提升续费',
+    s7_r4_pain: '教学反馈', s7_r4_old: '滞后、依赖人工评估', s7_r4_new: '实时AI学习数据追踪',
+    s7_cta: '申请机构AI升级方案',
+    s8_text: '无邀请码自主注册用户，系统自动归属平台官方推广账户，对应付费订单按标准两级规则结算分润，全部收支录入财务总账公示。',
+    s9_title: '注册保存专属AI学习伙伴，<br>解锁3天完整免费试用',
+    s9_subtitle: '免费注册保存你的AI语言学习伙伴，创建专属伴读人设，开启个性化语言学习之旅',
+    s9_cta: '免费注册，创建我的AI学习伙伴',
+    points_title: '成长积分体系说明',
+    points_desc: '打卡、任务、新手、成就积分仅可兑换AI额度、课程优惠券、AI人格皮肤；单笔订单积分抵扣上限20%；积分不可兑换现金。',
+    footer: 'AILOS © 2026 · AI语言伴读语言学习 · 合规成长生态'
+  },
+  en: {
+    s1_badge: 'AI Language Learning Partner · Compliant Growth Ecosystem',
+    s1_title: 'Start from Zero, Learn Languages<br><span>Effortlessly with Your AI Partner</span>',
+    s1_subtitle: 'Create your dedicated AI companion for 24/7 speaking practice, grammar correction, and targeted language improvement',
+    s1_helper: 'Register to get 30 Growth Points + 3-day AI trial quota. Share with friends to earn real subscription cash rewards. Platform organic registrations automatically attributed to the official growth account.',
+    s1_cta0: 'Create My AI Companion',
+    s1_cta1: 'Try AI Companion Free',
+    s1_cta2: 'Estimate My Growth Rewards',
+    s2_title: 'AILOS AI Language Learning Growth Ecosystem',
+    s2_card1_title: 'C Learner',
+    s2_card1_desc: '1-on-1 customizable AI personality, gamified stress-free speaking practice.',
+    s2_card1_btn: 'Start Learning',
+    s2_card2_title: 'Growth Partner',
+    s2_card2_desc: 'Compliant two-tier cash sharing. Platform organic registration orders participate in official sharing.',
+    s2_card2_btn: 'View Growth Rules',
+    s2_card3_title: 'B Institution',
+    s2_card3_desc: 'AI reduces teaching costs, improves student retention and partnership revenue.',
+    s2_card3_btn: 'Partner Zone',
+    s3_title: 'Membership Plans, Transparent Sharing at a Glance',
+    s3_subtitle: 'Daily quota management, compliant two-tier cash sharing',
+    s3_th1: 'Plan', s3_th2: 'Price', s3_th3: 'Daily AI Chat', s3_th4: 'Daily Correction', s3_th5: 'Lv1 Share', s3_th6: 'Lv2 Share',
+    s3_r1_plan: 'Monthly', s3_r1_price: '29.9 CNY', s3_r1_chat: '30 times', s3_r1_correct: '10 times', s3_r1_lv1: '10%(3.0 CNY)', s3_r1_lv2: '3%(0.9 CNY)',
+    s3_r2_plan: 'Quarterly', s3_r2_price: '79 CNY', s3_r2_chat: '50 times', s3_r2_correct: '20 times', s3_r2_lv1: '15%(11.9 CNY)', s3_r2_lv2: '3%(2.4 CNY)',
+    s3_r3_plan: 'Yearly', s3_r3_price: '199 CNY', s3_r3_chat: '100 times', s3_r3_correct: '50 times', s3_r3_lv1: '18%(35.8 CNY)', s3_r3_lv2: '5%(10.0 CNY)',
+    s3_r4_plan: 'Premium', s3_r4_price: '399 CNY', s3_r4_chat: '200 times', s3_r4_correct: '100 times', s3_r4_lv1: '20%(79.8 CNY)', s3_r4_lv2: '5%(20.0 CNY)',
+    s3_best: 'Best',
+    s3_footnote: 'Above sharing is from real paid orders only. Registration/learning grants points and AI trial quota only, no cash rewards. Sharing from platform organic registrations belongs to the official platform account.',
+    sim_title: 'Growth Reward Range Estimate',
+    sim_label: 'Invited friends: ',
+    sim_unit: 'people',
+    sim_r1: 'Growth Points (AI quota/skins only, not withdrawable)',
+    sim_r2: 'Limited AI Trial Days',
+    sim_r3: 'Cash Growth Reward Estimate (range, not guaranteed)',
+    sim_disclaimer: 'Orders from users without invite codes belong to the official platform account, strictly following two-tier sharing rules. Above is a range estimate and does not constitute any earnings promise.',
+    sim_cta: 'Register Free, Start Growing',
+    sim_cta_rules: 'View Complete Compliant Growth Reward Rules',
+    s5_title: 'Choose Your AI Language Learning Scene',
+    s5_card1_title: 'AI Speaking Practice',
+    s5_card1_desc: 'No rote memorization. Build language sense through free conversation with your AI companion.',
+    s5_card2_title: 'Gamified Challenges',
+    s5_card2_desc: 'Quest missions to effortlessly build expression skills.',
+    s5_card3_title: 'Customize Your AI Learning Partner',
+    s5_card3_desc: 'Customize personality and voice for a long-term dedicated learning partner.',
+    scene_daily: 'Daily Chat',
+    scene_business: 'Business Communication',
+    scene_travel: 'Travel Phrases',
+    scene_life: 'Life Communication',
+    scene_exam: 'Exam Training',
+    scene_kids: 'Kids\' Enlightenment',
+    share_title: 'Learning Achievement Share',
+    share_desc: 'Congratulations! Share your learning data poster.',
+    share_stat_words: 'Words Mastered',
+    share_stat_mins: 'Minutes Learned',
+    share_stat_streak: 'Day Streak',
+    share_code_label: 'Personal 6-digit invite code, both get growth points.',
+    share_btn1: 'Share to Moments',
+    share_btn2: 'Copy Invite Code',
+    s7_title: 'Why Educational Institutions Join the AILOS AI Ecosystem?',
+    s7_subtitle: 'AI empowers teachers, never replaces them',
+    s7_th1: 'Pain Point', s7_th2: 'Traditional Model', s7_th3: 'AILOS AI Ecosystem',
+    s7_r1_pain: 'Teacher Cost', s7_r1_old: 'Expensive foreign teachers, limited scheduling', s7_r1_new: 'AI auto-prep, 24/7 practice partner',
+    s7_r2_pain: 'Curriculum Update', s7_r2_old: 'Outdated materials, no personalization', s7_r2_new: 'AI real-time generation, personalized',
+    s7_r3_pain: 'Student Churn', s7_r3_old: 'Passive learning, high dropout', s7_r3_new: 'Gamified + growth rewards, better retention',
+    s7_r4_pain: 'Teaching Feedback', s7_r4_old: 'Delayed, manual evaluation', s7_r4_new: 'Real-time AI learning data tracking',
+    s7_cta: 'Apply for Institution AI Upgrade',
+    s8_text: 'Users registering without an invite code are automatically assigned to the official platform promotion account. Corresponding paid orders are settled according to standard two-tier sharing rules, with all revenue and expenditure recorded in the public financial ledger.',
+    s9_title: 'Save Your AI Learning Partner,<br>Unlock 3-Day Full Free Trial',
+    s9_subtitle: 'Register free to save your AI language partner, create your companion persona, and start your personalized learning journey',
+    s9_cta: 'Sign Up Free, Create My AI Learning Partner',
+    points_title: 'Growth Points System',
+    points_desc: 'Check-in, task, beginner, and achievement points can only be exchanged for AI quota, course coupons, and AI personality skins. Single order point deduction limit: 20%. Points cannot be redeemed for cash.',
+    footer: 'AILOS © 2026 · AI Companion Language Learning · Compliant Growth Ecosystem'
+  },
+  ja: {
+    s1_badge: 'AI言語学習パートナー · コンプライアンス成長エコシステム',
+    s1_title: 'ゼロから始めて、AI言語パートナーと<br><span>楽しく言語学習</span>',
+    s1_subtitle: '専属AIパートナーを作成して、24時間いつでも会話練習、文法添削、目標に合わせた言語力向上をサポート',
+    s1_helper: '登録で30成長ポイント+3日間AI体験枠を獲得。友人と共有して実際のサブスクリプション現金報酬を獲得。プラットフォーム自然登録ユーザーの収益は自動的に公式成長アカウントに帰属します。',
+    s1_cta0: '自分のAIパートナーを作成',
+    s1_cta1: '無料でAIパートナーを体験',
+    s1_cta2: '成長報酬を試算',
+    s2_title: 'AILOS AI言語学習成長エコシステム',
+    s2_card1_title: 'C学習者',
+    s2_card1_desc: '1対1カスタマイズAI人格、ゲーム感覚でストレスフリーの会話練習。',
+    s2_card1_btn: '学習を始める',
+    s2_card2_title: '成長パートナー',
+    s2_card2_desc: 'コンプライアンス準拠の2段階現金シェア。プラットフォーム自然登録注文は公式シェアに参加。',
+    s2_card2_btn: '成長ルールを見る',
+    s2_card3_title: 'B機関',
+    s2_card3_desc: 'AIで教育コストを削減し、学習者維持率とパートナーシップ収益を向上。',
+    s2_card3_btn: 'パートナーゾーン',
+    s3_title: '会員プラン、透明なシェアが一目でわかる',
+    s3_subtitle: '1日あたりの利用枠管理、コンプライアンス準拠の2段階現金シェア',
+    s3_th1: 'プラン', s3_th2: '価格', s3_th3: '1日あたりAI会話', s3_th4: '1日あたり添削', s3_th5: '1次シェア', s3_th6: '2次シェア',
+    s3_r1_plan: '月額', s3_r1_price: '29.9元', s3_r1_chat: '30回', s3_r1_correct: '10回', s3_r1_lv1: '10%(3.0元)', s3_r1_lv2: '3%(0.9元)',
+    s3_r2_plan: '四半期', s3_r2_price: '79元', s3_r2_chat: '50回', s3_r2_correct: '20回', s3_r2_lv1: '15%(11.9元)', s3_r2_lv2: '3%(2.4元)',
+    s3_r3_plan: '年間', s3_r3_price: '199元', s3_r3_chat: '100回', s3_r3_correct: '50回', s3_r3_lv1: '18%(35.8元)', s3_r3_lv2: '5%(10.0元)',
+    s3_r4_plan: 'プレミアム', s3_r4_price: '399元', s3_r4_chat: '200回', s3_r4_correct: '100回', s3_r4_lv1: '20%(79.8元)', s3_r4_lv2: '5%(20.0元)',
+    s3_best: 'おすすめ',
+    s3_footnote: '上記シェアは実際の有料注文からのみ発生します。登録/学習はポイントとAI体験枠のみ付与され、現金報酬はありません。プラットフォーム自主登録ユーザーの注文シェアは公式アカウントに帰属します。',
+    sim_title: '成長報酬の範囲見積もり',
+    sim_label: '招待人数：',
+    sim_unit: '人',
+    sim_r1: '成長ポイント（AI枠/スキンのみ交換可能、現金化不可）',
+    sim_r2: '期間限定AI体験日数',
+    sim_r3: '現金成長報酬見積もり（範囲表示、保証なし）',
+    sim_disclaimer: '招待コードなしの自然登録ユーザーの注文シェアはプラットフォーム公式アカウントに帰属し、2段階シェアルールを厳守します。上記は範囲見積もりであり、収益を約束するものではありません。',
+    sim_cta: '無料登録して成長を始める',
+    sim_cta_rules: '完全なコンプライアンス成長報酬ルールを見る',
+    s5_title: 'AI言語学習シーンを選択',
+    s5_card1_title: 'AIスピーキング練習',
+    s5_card1_desc: '暗記不要。AIパートナーとの自由な会話で言語感覚を構築。',
+    s5_card2_title: 'ゲーム化チャレンジ',
+    s5_card2_desc: 'クエストミッションで表現力を楽に蓄積。',
+    s5_card3_title: '専属AI学習パートナーをカスタマイズ',
+    s5_card3_desc: '性格と音声をカスタマイズして、長期専属の学習パートナーに。',
+    scene_daily: '日常会話',
+    scene_business: 'ビジネス会話',
+    scene_travel: '旅行会話',
+    scene_life: '生活交流',
+    scene_exam: '試験対策',
+    scene_kids: '子供向け入門',
+    share_title: '学習成果の共有',
+    share_desc: 'おめでとうございます！学習データポスターを共有しましょう。',
+    share_stat_words: '習得単語',
+    share_stat_mins: '学習時間(分)',
+    share_stat_streak: '連続日数',
+    share_code_label: '個人専用6桁招待コード、両方に成長ポイント。',
+    share_btn1: 'モーメンツに共有',
+    share_btn2: '招待コードをコピー',
+    s7_title: 'なぜ教育機関はAILOS AIエコシステムに参加するのか？',
+    s7_subtitle: 'AIは教師を強化し、決して代替しません',
+    s7_th1: '課題', s7_th2: '従来モデル', s7_th3: 'AILOS AIエコシステム',
+    s7_r1_pain: '教師コスト', s7_r1_old: '高コストの外国人教師、スケジュール制限', s7_r1_new: 'AI自動準備、24時間対応練習パートナー',
+    s7_r2_pain: '教材更新', s7_r2_old: '時代遅れの教材、個別化不可', s7_r2_new: 'AIリアルタイム生成、パーソナライズ',
+    s7_r3_pain: '学習者離脱', s7_r3_old: '受動的学習、高い離脱率', s7_r3_new: 'ゲーム化+成長報酬、継続率向上',
+    s7_r4_pain: '指導フィードバック', s7_r4_old: '遅延、手動評価に依存', s7_r4_new: 'リアルタイムAI学習データ追跡',
+    s7_cta: '機関AIアップグレードを申請',
+    s8_text: '招待コードなしで自主登録したユーザーは、自動的にプラットフォーム公式プロモーションアカウントに割り当てられます。対応する有料注文は標準の2段階シェアルールに従って決済され、すべての収支は公開財務台帳に記録されます。',
+    s9_title: '専属AI学習パートナーを保存して、<br>3日間の完全無料トライアルを解除',
+    s9_subtitle: '無料登録でAI言語学習パートナーを保存し、専属パートナー設定を作成して、パーソナライズされた学習の旅を始めましょう',
+    s9_cta: '無料登録、AI学習パートナーを作成',
+    points_title: '成長ポイントシステム',
+    points_desc: 'チェックイン、タスク、初心者、実績ポイントはAI枠、コースクーポン、AI人格スキンとのみ交換可能。1注文あたりのポイント使用上限は20%。ポイントは現金化できません。',
+    footer: 'AILOS © 2026 · AIパートナー言語学習 · コンプライアンス成長エコシステム'
+  },
+  ko: {
+    s1_badge: 'AI 언어 학습 파트너 · 규정 준수 성장 생태계',
+    s1_title: '처음부터 시작해, AI 언어 파트너와<br><span>쉽게 언어 배우기</span>',
+    s1_subtitle: '전용 AI 파트너를 만들어 24시간 회화 연습, 문법 교정, 맞춤형 언어 실력 향상을 지원합니다',
+    s1_helper: '회원가입으로 30 성장 포인트 + 3일 AI 체험 한도 획득. 친구와 공유하여 실제 구독 현금 보상을 받으세요. 플랫폼 자연 등록 사용자 수익은 자동으로 공식 성장 계정에 귀속됩니다.',
+    s1_cta0: '내 AI 파트너 만들기',
+    s1_cta1: '무료 AI 파트너 체험',
+    s1_cta2: '성장 보상 계산하기',
+    s2_title: 'AILOS AI 언어 학습 성장 생태계',
+    s2_card1_title: 'C 학습자',
+    s2_card1_desc: '1:1 맞춤형 AI 성격, 게임처럼 스트레스 없는 회화 연습.',
+    s2_card1_btn: '학습 시작',
+    s2_card2_title: '성장 파트너',
+    s2_card2_desc: '규정 준수 2단계 현금 공유. 플랫폼 자연 등록 주문은 공식 공유에 참여.',
+    s2_card2_btn: '성장 규칙 보기',
+    s2_card3_title: 'B 기관',
+    s2_card3_desc: 'AI로 교육 비용 절감, 학습자 유지율 및 파트너십 수익 향상.',
+    s2_card3_btn: '파트너 존',
+    s3_title: '회원 플랜, 투명한 공유를 한눈에',
+    s3_subtitle: '일일 한도 관리, 규정 준수 2단계 현금 공유',
+    s3_th1: '플랜', s3_th2: '가격', s3_th3: '일일 AI 대화', s3_th4: '일일 첨삭', s3_th5: '1차 공유', s3_th6: '2차 공유',
+    s3_r1_plan: '월간', s3_r1_price: '29.9위안', s3_r1_chat: '30회', s3_r1_correct: '10회', s3_r1_lv1: '10%(3.0위안)', s3_r1_lv2: '3%(0.9위안)',
+    s3_r2_plan: '분기', s3_r2_price: '79위안', s3_r2_chat: '50회', s3_r2_correct: '20회', s3_r2_lv1: '15%(11.9위안)', s3_r2_lv2: '3%(2.4위안)',
+    s3_r3_plan: '연간', s3_r3_price: '199위안', s3_r3_chat: '100회', s3_r3_correct: '50회', s3_r3_lv1: '18%(35.8위안)', s3_r3_lv2: '5%(10.0위안)',
+    s3_r4_plan: '프리미엄', s3_r4_price: '399위안', s3_r4_chat: '200회', s3_r4_correct: '100회', s3_r4_lv1: '20%(79.8위안)', s3_r4_lv2: '5%(20.0위안)',
+    s3_best: '추천',
+    s3_footnote: '위 공유는 실제 유료 주문에서만 발생합니다. 등록/학습은 포인트와 AI 체험 한도만 제공되며 현금 보상은 없습니다. 플랫폼 자체 등록 사용자 주문 공유는 공식 계정에 귀속됩니다.',
+    sim_title: '성장 보상 범위 추정',
+    sim_label: '초대 인원: ',
+    sim_unit: '명',
+    sim_r1: '성장 포인트 (AI 한도/스킨만 교환 가능, 현금화 불가)',
+    sim_r2: '한정 AI 체험 일수',
+    sim_r3: '현금 성장 보상 추정 (범위 표시, 보장 없음)',
+    sim_disclaimer: '초대 코드 없이 자연 등록된 사용자의 주문 공유는 플랫폼 공식 계정에 귀속되며 2단계 공유 규칙을 엄격히 준수합니다. 위는 범위 추정이며 수익 약속이 아닙니다.',
+    sim_cta: '무료 등록, 성장 시작',
+    sim_cta_rules: '전체 규정 준수 성장 보상 규칙 보기',
+    s5_title: 'AI 언어 학습 장면 선택하기',
+    s5_card1_title: 'AI 말하기 연습',
+    s5_card1_desc: '암기 없이, AI 파트너와의 자유로운 대화로 언어 감각 형성.',
+    s5_card2_title: '게임화 도전',
+    s5_card2_desc: '퀘스트 미션으로 표현력을 쉽게 쌓아가세요.',
+    s5_card3_title: '전용 AI 학습 파트너 맞춤 설정',
+    s5_card3_desc: '성격과 음성을 맞춤 설정하여 장기 전담 학습 파트너로.',
+    scene_daily: '일상 대화',
+    scene_business: '비즈니스 대화',
+    scene_travel: '여행 회화',
+    scene_life: '생활 소통',
+    scene_exam: '시험 대비',
+    scene_kids: '어린이 입문',
+    share_title: '학습 성과 공유',
+    share_desc: '축하합니다! 학습 데이터 포스터를 공유하세요.',
+    share_stat_words: '습득 단어',
+    share_stat_mins: '학습 시간(분)',
+    share_stat_streak: '연속 일수',
+    share_code_label: '개인 전용 6자리 초대 코드, 양측 모두 성장 포인트 획득.',
+    share_btn1: '모멘트에 공유',
+    share_btn2: '초대 코드 복사',
+    s7_title: '교육 기관이 AILOS AI 생태계에 참여하는 이유는?',
+    s7_subtitle: 'AI는 교사를 강화하고 절대 대체하지 않습니다',
+    s7_th1: '문제점', s7_th2: '전통 모델', s7_th3: 'AILOS AI 생태계',
+    s7_r1_pain: '교사 비용', s7_r1_old: '고비용 외국인 교사, 일정 제한', s7_r1_new: 'AI 자동 준비, 24시간 연습 파트너',
+    s7_r2_pain: '교재 업데이트', s7_r2_old: '오래된 교재, 개인화 불가', s7_r2_new: 'AI 실시간 생성, 맞춤형',
+    s7_r3_pain: '학습자 이탈', s7_r3_old: '수동적 학습, 높은 이탈률', s7_r3_new: '게임화 + 성장 보상, 유지율 향상',
+    s7_r4_pain: '교육 피드백', s7_r4_old: '지연, 수동 평가 의존', s7_r4_new: '실시간 AI 학습 데이터 추적',
+    s7_cta: '기관 AI 업그레이드 신청',
+    s8_text: '초대 코드 없이 자체 등록한 사용자는 자동으로 플랫폼 공식 프로모션 계정에 할당됩니다. 해당 유료 주문은 표준 2단계 공유 규칙에 따라 정산되며 모든 수지 내역은 공개 재무 원장에 기록됩니다.',
+    s9_title: '전용 AI 학습 파트너를 저장하고<br>3일 무료 체험을 시작하세요',
+    s9_subtitle: '무료 등록으로 AI 언어 학습 파트너를 저장하고, 전용 파트너 페르소나를 만들어 맞춤형 학습 여정을 시작하세요',
+    s9_cta: '무료 등록, AI 학습 파트너 만들기',
+    points_title: '성장 포인트 시스템',
+    points_desc: '출석, 과제, 신규, 성취 포인트는 AI 한도, 코스 쿠폰, AI 성격 스킨으로만 교환 가능합니다. 주문당 포인트 사용 한도는 20%입니다. 포인트는 현금화할 수 없습니다.',
+    footer: 'AILOS © 2026 · AI 파트너 언어 학습 · 규정 준수 성장 생태계'
+  },
+  fr: {
+    s1_badge: 'Partenaire d\'Apprentissage Linguistique IA · Ecosystème de Croissance Conforme',
+    s1_title: 'Partez de zéro, apprenez les langues<br><span>facilement avec votre Partenaire IA</span>',
+    s1_subtitle: 'Créez votre compagnon IA dédié pour une pratique orale 24/7, une correction grammaticale et une amélioration linguistique ciblée',
+    s1_helper: 'Inscrivez-vous pour obtenir 30 Points de Croissance + 3 jours d\'essai IA. Partagez avec des amis pour gagner des récompenses en espèces sur les abonnements réels. Les revenus des utilisateurs enregistrés naturellement sont attribués au compte de croissance officiel.',
+    s1_cta0: 'Créer Mon Compagnon IA',
+    s1_cta1: 'Essayer le Compagnon IA',
+    s1_cta2: 'Estimer mes Récompenses',
+    s2_title: 'Ecosystème de Croissance d\'Apprentissage Linguistique AILOS',
+    s2_card1_title: 'C Apprenant',
+    s2_card1_desc: 'Personnalité IA personnalisable en 1-to-1, pratique orale sans stress et ludique.',
+    s2_card1_btn: 'Commencer',
+    s2_card2_title: 'Partenaire de Croissance',
+    s2_card2_desc: 'Partage en espèces conforme à deux niveaux. Les commandes organiques participent au partage officiel.',
+    s2_card2_btn: 'Voir les Règles',
+    s2_card3_title: 'B Institution',
+    s2_card3_desc: 'L\'IA réduit les coûts pédagogiques, améliore la rétention et les revenus de partenariat.',
+    s2_card3_btn: 'Espace Partenaire',
+    s3_title: 'Plans d\'Abonnement, Partage Transparent en un Coup d\'Oeil',
+    s3_subtitle: 'Gestion du quota quotidien, partage en espèces conforme à deux niveaux',
+    s3_th1: 'Plan', s3_th2: 'Prix', s3_th3: 'Chat IA Quotidien', s3_th4: 'Correction Quotidienne', s3_th5: 'Partage Niv.1', s3_th6: 'Partage Niv.2',
+    s3_r1_plan: 'Mensuel', s3_r1_price: '29.9 CNY', s3_r1_chat: '30 fois', s3_r1_correct: '10 fois', s3_r1_lv1: '10%(3.0 CNY)', s3_r1_lv2: '3%(0.9 CNY)',
+    s3_r2_plan: 'Trimestriel', s3_r2_price: '79 CNY', s3_r2_chat: '50 fois', s3_r2_correct: '20 fois', s3_r2_lv1: '15%(11.9 CNY)', s3_r2_lv2: '3%(2.4 CNY)',
+    s3_r3_plan: 'Annuel', s3_r3_price: '199 CNY', s3_r3_chat: '100 fois', s3_r3_correct: '50 fois', s3_r3_lv1: '18%(35.8 CNY)', s3_r3_lv2: '5%(10.0 CNY)',
+    s3_r4_plan: 'Premium', s3_r4_price: '399 CNY', s3_r4_chat: '200 fois', s3_r4_correct: '100 fois', s3_r4_lv1: '20%(79.8 CNY)', s3_r4_lv2: '5%(20.0 CNY)',
+    s3_best: 'Top',
+    s3_footnote: 'Le partage ci-dessus provient uniquement des commandes payantes réelles. L\'inscription/apprentissage n\'accorde que des points et un quota d\'essai IA, sans récompense en espèces. Le partage des commandes des utilisateurs inscrits organiquement appartient au compte officiel.',
+    sim_title: 'Estimation de la Fourchette de Récompenses',
+    sim_label: 'Amis invités : ',
+    sim_unit: 'personnes',
+    sim_r1: 'Points de Croissance (échangeables contre quota IA/skins, non retirables)',
+    sim_r2: 'Jours d\'Essai IA Limité',
+    sim_r3: 'Récompense en Espèces Estimée (fourchette, non garantie)',
+    sim_disclaimer: 'Les commandes des utilisateurs sans code d\'invitation appartiennent au compte officiel, suivant strictement les règles de partage à deux niveaux. Ceci est une estimation et ne constitue pas une promesse de gains.',
+    sim_cta: 'Inscription Gratuite, Lancez-vous',
+    sim_cta_rules: 'Voir les Règles Complètes de Récompenses Conformes',
+    s5_title: 'Choisissez Votre Scène d\'Apprentissage Linguistique IA',
+    s5_card1_title: 'Pratique Orale IA',
+    s5_card1_desc: 'Sans mémorisation. Développez votre sens linguistique par la conversation libre avec votre compagnon IA.',
+    s5_card2_title: 'Défis Ludiques',
+    s5_card2_desc: 'Des missions quêtes pour accumuler vos compétences d\'expression sans effort.',
+    s5_card3_title: 'Personnalisez Votre Partenaire d\'Apprentissage IA',
+    s5_card3_desc: 'Personnalisez la personnalité et la voix pour un partenaire d\'apprentissage dédié à long terme.',
+    scene_daily: 'Conversation Quotidienne',
+    scene_business: 'Communication Professionnelle',
+    scene_travel: 'Vocabulaire de Voyage',
+    scene_life: 'Échange Quotidien',
+    scene_exam: 'Préparation aux Examens',
+    scene_kids: 'Éveil pour Enfants',
+    share_title: 'Partage de Réussite',
+    share_desc: 'Félicitations ! Partagez votre affiche de données d\'apprentissage.',
+    share_stat_words: 'Mots Maîtrisés',
+    share_stat_mins: 'Minutes d\'Apprentissage',
+    share_stat_streak: 'Jours Consécutifs',
+    share_code_label: 'Code d\'invitation personnel à 6 chiffres, les deux reçoivent des points de croissance.',
+    share_btn1: 'Partager sur Moments',
+    share_btn2: 'Copier le Code',
+    s7_title: 'Pourquoi les Institutions Rejoignent l\'Ecosystème AILOS ?',
+    s7_subtitle: 'L\'IA renforce les enseignants, sans les remplacer',
+    s7_th1: 'Problème', s7_th2: 'Modèle Traditionnel', s7_th3: 'Ecosystème AILOS',
+    s7_r1_pain: 'Coût Enseignant', s7_r1_old: 'Enseignants étrangers coûteux, horaires limités', s7_r1_new: 'Préparation IA automatique, pratique 24/7',
+    s7_r2_pain: 'Mise à Jour', s7_r2_old: 'Matériel obsolète, sans personnalisation', s7_r2_new: 'Génération IA en temps réel, personnalisé',
+    s7_r3_pain: 'Abandon', s7_r3_old: 'Apprentissage passif, fort abandon', s7_r3_new: 'Ludique + récompenses, meilleure rétention',
+    s7_r4_pain: 'Feedback', s7_r4_old: 'Retardé, évaluation manuelle', s7_r4_new: 'Suivi IA en temps réel',
+    s7_cta: 'Demander une Mise à Niveau IA',
+    s8_text: 'Les utilisateurs s\'inscrivant sans code d\'invitation sont automatiquement attribués au compte de promotion officiel. Les commandes payantes correspondantes sont réglées selon les règles de partage standard à deux niveaux, tous les revenus et dépenses étant enregistrés dans le grand livre financier public.',
+    s9_title: 'Enregistrez Votre Partenaire d\'Apprentissage IA,<br>Débloquez 3 Jours d\'Essai Gratuit Complet',
+    s9_subtitle: 'Inscrivez-vous gratuitement pour sauvegarder votre partenaire linguistique IA, créez votre personnage de compagnon et commencez votre parcours d\'apprentissage personnalisé',
+    s9_cta: 'Inscription Gratuite, Créer Mon Partenaire d\'Apprentissage IA',
+    points_title: 'Système de Points de Croissance',
+    points_desc: 'Les points de check-in, tâches, débutant et réussite ne peuvent être échangés que contre du quota IA, des coupons de cours et des skins de personnalité IA. Limite d\'utilisation des points par commande : 20%. Les points ne sont pas convertibles en espèces.',
+    footer: 'AILOS © 2026 · Apprentissage par Compagnon IA · Ecosystème de Croissance Conforme'
+  },
+  es: {
+    s1_badge: 'Compañero de Aprendizaje de Idiomas IA · Ecosistema de Crecimiento Conforme',
+    s1_title: 'Empieza desde cero, aprende idiomas<br><span>fácilmente con tu Compañero IA</span>',
+    s1_subtitle: 'Crea tu compañero IA dedicado para práctica oral 24/7, corrección gramatical y mejora lingüística personalizada',
+    s1_helper: 'Regístrate para obtener 30 Puntos de Crecimiento + 3 días de prueba IA. Comparte con amigos para ganar recompensas en efectivo por suscripciones reales. Los ingresos de usuarios registrados orgánicamente se atribuyen a la cuenta de crecimiento oficial.',
+    s1_cta0: 'Crear Mi Compañero IA',
+    s1_cta1: 'Probar Compañero IA Gratis',
+    s1_cta2: 'Estimar mis Recompensas',
+    s2_title: 'Ecosistema de Crecimiento de Aprendizaje de Idiomas AILOS',
+    s2_card1_title: 'C Aprendiz',
+    s2_card1_desc: 'Personalidad IA personalizable 1-a-1, práctica oral sin estrés y gamificada.',
+    s2_card1_btn: 'Comenzar',
+    s2_card2_title: 'Socio de Crecimiento',
+    s2_card2_desc: 'Compartir en efectivo conforme de dos niveles. Los pedidos orgánicos participan en el compartir oficial.',
+    s2_card2_btn: 'Ver Reglas',
+    s2_card3_title: 'B Institución',
+    s2_card3_desc: 'La IA reduce costos docentes, mejora la retención de estudiantes y los ingresos por asociación.',
+    s2_card3_btn: 'Zona de Socios',
+    s3_title: 'Planes de Membresía, Compartir Transparente de un Vistazo',
+    s3_subtitle: 'Gestión de cuota diaria, compartir en efectivo conforme de dos niveles',
+    s3_th1: 'Plan', s3_th2: 'Precio', s3_th3: 'Chat IA Diario', s3_th4: 'Corrección Diaria', s3_th5: 'Compartir Niv.1', s3_th6: 'Compartir Niv.2',
+    s3_r1_plan: 'Mensual', s3_r1_price: '29.9 CNY', s3_r1_chat: '30 veces', s3_r1_correct: '10 veces', s3_r1_lv1: '10%(3.0 CNY)', s3_r1_lv2: '3%(0.9 CNY)',
+    s3_r2_plan: 'Trimestral', s3_r2_price: '79 CNY', s3_r2_chat: '50 veces', s3_r2_correct: '20 veces', s3_r2_lv1: '15%(11.9 CNY)', s3_r2_lv2: '3%(2.4 CNY)',
+    s3_r3_plan: 'Anual', s3_r3_price: '199 CNY', s3_r3_chat: '100 veces', s3_r3_correct: '50 veces', s3_r3_lv1: '18%(35.8 CNY)', s3_r3_lv2: '5%(10.0 CNY)',
+    s3_r4_plan: 'Premium', s3_r4_price: '399 CNY', s3_r4_chat: '200 veces', s3_r4_correct: '100 veces', s3_r4_lv1: '20%(79.8 CNY)', s3_r4_lv2: '5%(20.0 CNY)',
+    s3_best: 'Top',
+    s3_footnote: 'El compartir anterior proviene solo de pedidos pagados reales. El registro/aprendizaje solo otorga puntos y cuota de prueba IA, sin recompensas en efectivo. El compartir de pedidos de usuarios registrados orgánicamente pertenece a la cuenta oficial.',
+    sim_title: 'Estimación de Rango de Recompensas',
+    sim_label: 'Amigos invitados: ',
+    sim_unit: 'personas',
+    sim_r1: 'Puntos de Crecimiento (solo canjeables por cuota IA/skins, no retirables)',
+    sim_r2: 'Días de Prueba IA Limitada',
+    sim_r3: 'Recompensa en Efectivo Estimada (rango, no garantizada)',
+    sim_disclaimer: 'Los pedidos de usuarios sin código de invitación pertenecen a la cuenta oficial, siguiendo estrictamente las reglas de compartir de dos niveles. Esto es una estimación y no constituye una promesa de ganancias.',
+    sim_cta: 'Registro Gratis, Comienza a Crecer',
+    sim_cta_rules: 'Ver Reglas Completas de Recompensas Conformes',
+    s5_title: 'Elige Tu Escena de Aprendizaje de Idiomas IA',
+    s5_card1_title: 'Práctica Oral IA',
+    s5_card1_desc: 'Sin memorización. Desarrolla tu sentido del idioma mediante conversación libre con tu compañero IA.',
+    s5_card2_title: 'Desafíos Gamificados',
+    s5_card2_desc: 'Misiones para acumular habilidades de expresión sin esfuerzo.',
+    s5_card3_title: 'Personaliza Tu Compañero de Aprendizaje IA',
+    s5_card3_desc: 'Personaliza personalidad y voz para un compañero de aprendizaje dedicado a largo plazo.',
+    scene_daily: 'Charla Diaria',
+    scene_business: 'Comunicación de Negocios',
+    scene_travel: 'Frases de Viaje',
+    scene_life: 'Comunicación Cotidiana',
+    scene_exam: 'Preparación de Exámenes',
+    scene_kids: 'Iniciación Infantil',
+    share_title: 'Compartir Logro de Aprendizaje',
+    share_desc: '¡Felicidades! Comparte tu póster de datos de aprendizaje.',
+    share_stat_words: 'Palabras Dominadas',
+    share_stat_mins: 'Minutos de Aprendizaje',
+    share_stat_streak: 'Días Consecutivos',
+    share_code_label: 'Código de invitación personal de 6 dígitos, ambos reciben puntos de crecimiento.',
+    share_btn1: 'Compartir en Momentos',
+    share_btn2: 'Copiar Código',
+    s7_title: '¿Por qué las Instituciones se Unen al Ecosistema AILOS?',
+    s7_subtitle: 'La IA potencia a los profesores, sin reemplazarlos',
+    s7_th1: 'Problema', s7_th2: 'Modelo Tradicional', s7_th3: 'Ecosistema AILOS',
+    s7_r1_pain: 'Costo Docente', s7_r1_old: 'Profesores extranjeros caros, horarios limitados', s7_r1_new: 'Preparación IA automática, práctica 24/7',
+    s7_r2_pain: 'Actualización', s7_r2_old: 'Material obsoleto, sin personalización', s7_r2_new: 'Generación IA en tiempo real, personalizado',
+    s7_r3_pain: 'Abandono', s7_r3_old: 'Aprendizaje pasivo, alto abandono', s7_r3_new: 'Gamificado + recompensas, mejor retención',
+    s7_r4_pain: 'Feedback', s7_r4_old: 'Retrasado, evaluación manual', s7_r4_new: 'Seguimiento IA en tiempo real',
+    s7_cta: 'Solicitar Actualización IA',
+    s8_text: 'Los usuarios que se registran sin código de invitación se asignan automáticamente a la cuenta de promoción oficial. Los pedidos pagados correspondientes se liquidan según las reglas estándar de compartir de dos niveles, con todos los ingresos y gastos registrados en el libro mayor financiero público.',
+    s9_title: 'Guarda Tu Compañero de Aprendizaje IA,<br>Desbloquea 3 Días de Prueba Gratuita Completa',
+    s9_subtitle: 'Regístrate gratis para guardar tu compañero de idiomas IA, crea tu personaje de compañero y comienza tu viaje de aprendizaje personalizado',
+    s9_cta: 'Registro Gratis, Crear Mi Compañero de Aprendizaje IA',
+    points_title: 'Sistema de Puntos de Crecimiento',
+    points_desc: 'Los puntos de check-in, tareas, principiante y logros solo pueden canjearse por cuota IA, cupones de cursos y skins de personalidad IA. Límite de uso de puntos por pedido: 20%. Los puntos no son convertibles en efectivo.',
+    footer: 'AILOS © 2026 · Aprendizaje con Compañero IA · Ecosistema de Crecimiento Conforme'
+  },
+  de: {
+    s1_badge: 'KI-Sprachlernpartner · Konformes Wachstumsokosystem',
+    s1_title: 'Von Null an, lernen Sie Sprachen<br><span>mühelos mit Ihrem KI-Partner</span>',
+    s1_subtitle: 'Erstellen Sie Ihren eigenen KI-Begleiter für 24/7 Sprechpraxis, Grammatikkorrektur und gezielte Sprachverbesserung',
+    s1_helper: 'Registrieren Sie sich fur 30 Wachstumspunkte + 3 Tage KI-Testkontingent. Teilen Sie mit Freunden, um echte Abonnement-Barpramien zu verdienen. Einnahmen von organisch registrierten Nutzern werden dem offiziellen Wachstumskonto zugewiesen.',
+    s1_cta0: 'Meinen KI-Partner erstellen',
+    s1_cta1: 'KI-Begleiter kostenlos testen',
+    s1_cta2: 'Wachstumspramien schatzen',
+    s2_title: 'AILOS KI-Sprachlern-Wachstumsokosystem',
+    s2_card1_title: 'C Lerner',
+    s2_card1_desc: '1-zu-1 anpassbare KI-Personlichkeit, spielerisches stressfreies Sprechubung.',
+    s2_card1_btn: 'Lernen starten',
+    s2_card2_title: 'Wachstumspartner',
+    s2_card2_desc: 'Konforme zweistufige Bargeldbeteiligung. Organische Plattformbestellungen nehmen an offizieller Beteiligung teil.',
+    s2_card2_btn: 'Wachstumsregeln ansehen',
+    s2_card3_title: 'B Institution',
+    s2_card3_desc: 'KI senkt Lehrkosten, verbessert Teilnehmerbindung und Partnerschaftserlose.',
+    s2_card3_btn: 'Partnerbereich',
+    s3_title: 'Mitgliedschaftsplane, Transparente Beteiligung auf einen Blick',
+    s3_subtitle: 'Tagliches Kontingentmanagement, konforme zweistufige Bargeldbeteiligung',
+    s3_th1: 'Plan', s3_th2: 'Preis', s3_th3: 'Tagl. KI-Chat', s3_th4: 'Tagl. Korrektur', s3_th5: 'Stufe 1', s3_th6: 'Stufe 2',
+    s3_r1_plan: 'Monatlich', s3_r1_price: '29.9 CNY', s3_r1_chat: '30 Mal', s3_r1_correct: '10 Mal', s3_r1_lv1: '10%(3.0 CNY)', s3_r1_lv2: '3%(0.9 CNY)',
+    s3_r2_plan: 'Quartal', s3_r2_price: '79 CNY', s3_r2_chat: '50 Mal', s3_r2_correct: '20 Mal', s3_r2_lv1: '15%(11.9 CNY)', s3_r2_lv2: '3%(2.4 CNY)',
+    s3_r3_plan: 'Jahrlich', s3_r3_price: '199 CNY', s3_r3_chat: '100 Mal', s3_r3_correct: '50 Mal', s3_r3_lv1: '18%(35.8 CNY)', s3_r3_lv2: '5%(10.0 CNY)',
+    s3_r4_plan: 'Premium', s3_r4_price: '399 CNY', s3_r4_chat: '200 Mal', s3_r4_correct: '100 Mal', s3_r4_lv1: '20%(79.8 CNY)', s3_r4_lv2: '5%(20.0 CNY)',
+    s3_best: 'Top',
+    s3_footnote: 'Die obige Beteiligung stammt nur aus echten bezahlten Bestellungen. Registrierung/Lernen gewahrt nur Punkte und KI-Testkontingent, keine Barpramien. Die Beteiligung aus Bestellungen organisch registrierter Nutzer gehort dem offiziellen Plattformkonto.',
+    sim_title: 'Wachstumspramien-Bereichsschatzung',
+    sim_label: 'Eingeladene Freunde: ',
+    sim_unit: 'Personen',
+    sim_r1: 'Wachstumspunkte (nur fur KI-Kontingent/Skins, nicht auszahlbar)',
+    sim_r2: 'Begrenzte KI-Testtage',
+    sim_r3: 'Barpramien-Schatzung (Bereich, keine Garantie)',
+    sim_disclaimer: 'Bestellungen von Nutzern ohne Einladungscode gehoren dem offiziellen Plattformkonto und folgen strikt den zweistufigen Beteiligungsregeln. Dies ist eine Bereichsschatzung und stellt kein Ertragsversprechen dar.',
+    sim_cta: 'Kostenlos registrieren, Wachstum starten',
+    sim_cta_rules: 'Vollstandige konforme Wachstumspramienregeln ansehen',
+    s5_title: 'Wahlen Sie Ihre KI-Sprachlernszene',
+    s5_card1_title: 'KI-Sprechubung',
+    s5_card1_desc: 'Ohne Auswendiglernen. Entwickeln Sie Sprachgefühl durch freie Konversation mit Ihrem KI-Begleiter.',
+    s5_card2_title: 'Spielerische Herausforderungen',
+    s5_card2_desc: 'Quest-Missionen zum muhelosen Aufbau von Ausdrucksfahigkeiten.',
+    s5_card3_title: 'Personlichen KI-Lernpartner anpassen',
+    s5_card3_desc: 'Passen Sie Personlichkeit und Stimme fur einen langfristigen Lernpartner an.',
+    scene_daily: 'Alltagsgespräch',
+    scene_business: 'Geschäftskommunikation',
+    scene_travel: 'Reiseausdrücke',
+    scene_life: 'Alltagskommunikation',
+    scene_exam: 'Prüfungsvorbereitung',
+    scene_kids: 'Kindereinführung',
+    share_title: 'Lernerfolg teilen',
+    share_desc: 'Gluckwunsch! Teilen Sie Ihr Lerndaten-Poster.',
+    share_stat_words: 'Gelernte Worter',
+    share_stat_mins: 'Lernminuten',
+    share_stat_streak: 'Tage in Folge',
+    share_code_label: 'Personlicher 6-stelliger Einladungscode, beide erhalten Wachstumspunkte.',
+    share_btn1: 'Auf Moments teilen',
+    share_btn2: 'Code kopieren',
+    s7_title: 'Warum Bildungseinrichtungen dem AILOS KI-Okosystem beitreten?',
+    s7_subtitle: 'KI starkt Lehrer, ersetzt sie nie',
+    s7_th1: 'Problem', s7_th2: 'Traditionelles Modell', s7_th3: 'AILOS KI-Okosystem',
+    s7_r1_pain: 'Lehrerkosten', s7_r1_old: 'Teure auslandische Lehrkrafte, begrenzte Planung', s7_r1_new: 'KI automatische Vorbereitung, 24/7 Ubungspartner',
+    s7_r2_pain: 'Lehrplanaktualisierung', s7_r2_old: 'Veraltetes Material, keine Personalisierung', s7_r2_new: 'KI-Echtzeitgenerierung, personalisiert',
+    s7_r3_pain: 'Teilnehmerabwanderung', s7_r3_old: 'Passives Lernen, hohe Abbruchquote', s7_r3_new: 'Spielerisch + Wachstumspramien, bessere Bindung',
+    s7_r4_pain: 'Unterrichtsfeedback', s7_r4_old: 'Verzogert, manuelle Bewertung', s7_r4_new: 'Echtzeit-KI-Lerndatenverfolgung',
+    s7_cta: 'KI-Upgrade fur Institution beantragen',
+    s8_text: 'Nutzer, die sich ohne Einladungscode registrieren, werden automatisch dem offiziellen Plattform-Promotionkonto zugewiesen. Entsprechende bezahlte Bestellungen werden nach den standardmassigen zweistufigen Beteiligungsregeln abgerechnet, alle Einnahmen und Ausgaben werden im offentlichen Finanzhauptbuch erfasst.',
+    s9_title: 'KI-Lernpartner speichern,<br>3 Tage kostenlose Vollversion freischalten',
+    s9_subtitle: 'Kostenlos registrieren, um Ihren KI-Sprachlernpartner zu speichern, Ihre Begleiter-Persona zu erstellen und Ihre personalisierte Lernreise zu beginnen',
+    s9_cta: 'Kostenlos registrieren, KI-Lernpartner erstellen',
+    points_title: 'Wachstumspunkte-System',
+    points_desc: 'Check-in-, Aufgaben-, Anfanger- und Erfolgspunkte konnen nur gegen KI-Kontingent, Kursgutscheine und KI-Personlichkeitsskins eingetauscht werden. Punktelimit pro Bestellung: 20%. Punkte sind nicht in Bargeld umwandelbar.',
+    footer: 'AILOS © 2026 · KI-Begleiter Sprachenlernen · Konformes Wachstumsokosystem'
+  }
+};
+
+/* ============================================ */
+/* I18N ENGINE */
+/* ============================================ */
+const LANG_MAP = { zh:'zh-CN', en:'en-US', ja:'ja-JP', ko:'ko-KR', fr:'fr-FR', es:'es-ES', de:'de-DE' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+let currentLang = 'zh';
+
+function detectLang() {
+  const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  if (navLang.startsWith('zh')) return 'zh';
+  if (navLang.startsWith('ja')) return 'ja';
+  if (navLang.startsWith('ko')) return 'ko';
+  if (navLang.startsWith('fr')) return 'fr';
+  if (navLang.startsWith('es')) return 'es';
+  if (navLang.startsWith('de')) return 'de';
+  return 'en';
+}
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) ? I18N[currentLang][key] : (I18N['zh'][key] || key);
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = LANG_MAP[lang] || 'zh-CN';
+  updateI18n();
+  updateSim();
+  renderLangBar();
+  // Update share modal stats
+  updateShareStats();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const text = t(key);
+    if (text === undefined) return;
+    // For elements that contain HTML (like titles with <br> and <span>)
+    if (key === 's1_title' || key === 's2_title' || key === 's9_title') {
+      el.innerHTML = text;
+    } else {
+      el.textContent = text;
+    }
+  });
+}
+
+function renderLangBar() {
+  const bar = document.getElementById('langBar');
+  if (!bar) return;
+  let html = '';
+  for (const [code, name] of Object.entries(LANG_NAMES)) {
+    html += '<button class="' + (code === currentLang ? 'active' : '') + '" onclick="switchLang(\'' + code + '\')">' + name + '</button>';
+  }
+  bar.innerHTML = html;
+}
+
+/* ============================================ */
+/* REVENUE SIMULATOR (区间预估，非固定保底) */
+/* ============================================ */
+function updateSim() {
+  const slider = document.getElementById('simSlider');
+  if (!slider) return;
+  const count = parseInt(slider.value);
+  document.getElementById('simCount').textContent = count;
+
+  // Growth points estimate (range)
+  const pointsMin = count * 10;
+  const pointsMax = count * 30;
+  document.getElementById('simR1').textContent = pointsMin + '~' + pointsMax;
+
+  // AI trial days (range)
+  const daysMin = Math.max(1, Math.floor(count * 0.3));
+  const daysMax = Math.max(1, Math.floor(count * 1.5));
+  document.getElementById('simR2').textContent = daysMin + '~' + daysMax + (currentLang === 'zh' ? '天' : (currentLang === 'ja' ? '日' : (currentLang === 'ko' ? '일' : ' days')));
+
+  // Cash reward range (conservative estimate with wide range)
+  const cashMin = Math.max(0, Math.floor(count * 2));
+  const cashMax = Math.floor(count * 50);
+  const currency = currentLang === 'zh' ? '元' : ' CNY';
+  document.getElementById('simR3').textContent = cashMin + '~' + cashMax + currency;
+}
+
+function updateShareStats() {
+  // Update share modal stat labels
+  const wordsEl = document.querySelector('[data-i18n="share_stat_words"]');
+  const minsEl = document.querySelector('[data-i18n="share_stat_mins"]');
+  const streakEl = document.querySelector('[data-i18n="share_stat_streak"]');
+  // Labels are updated via updateI18n
+}
+
+function openSimulator() {
+  document.getElementById('simModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  updateSim();
+}
+
+function closeSimulator() {
+  document.getElementById('simModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ============================================ */
+/* COURSE SHARE MODAL (第6屏弹窗) */
+/* ============================================ */
+// Generate a persistent 6-digit invite code for the session
+function generateInviteCode() {
+  // Check if already generated
+  if (sessionStorage.getItem('ailos_invite_code')) {
+    return sessionStorage.getItem('ailos_invite_code');
+  }
+  const digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = 'YD';
+  for (let i = 0; i < 6; i++) {
+    code += digits.charAt(Math.floor(Math.random() * digits.length));
+  }
+  sessionStorage.setItem('ailos_invite_code', code);
+  return code;
+}
+
+function openShareModal() {
+  // Generate random stats for demo
+  const words = Math.floor(Math.random() * 200) + 50;
+  const mins = Math.floor(Math.random() * 60) + 15;
+  const streak = Math.floor(Math.random() * 21) + 3;
+
+  document.getElementById('shareStatWords').textContent = words;
+  document.getElementById('shareStatMins').textContent = mins;
+  document.getElementById('shareStatStreak').textContent = streak;
+  document.getElementById('shareInviteCode').textContent = generateInviteCode();
+
+  document.getElementById('shareModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function copyInviteCode() {
+  const code = document.getElementById('shareInviteCode').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function() {
+      alert(currentLang === 'zh' ? '邀请码已复制：' + code : 'Invite code copied: ' + code);
+    }).catch(function() {
+      fallbackCopy(code);
+    });
+  } else {
+    fallbackCopy(code);
+  }
+}
+
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert(currentLang === 'zh' ? '邀请码已复制：' + text : 'Invite code copied: ' + text);
+  } catch (e) {
+    alert(currentLang === 'zh' ? '复制失败，请手动复制：' + text : 'Copy failed, please copy manually: ' + text);
+  }
+  document.body.removeChild(textarea);
+}
+
+function shareToWechat() {
+  // Simulate share - in production would trigger WeChat SDK
+  alert(currentLang === 'zh' ? '请截图保存学习海报，分享到朋友圈！' : 'Please screenshot the learning poster and share to Moments!');
+}
+
+/* ============================================ */
+/* MODAL OVERLAY CLICK + ESC */
+/* ============================================ */
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+    if (e.target.id === 'simModal') closeSimulator();
+    if (e.target.id === 'shareModal') closeShareModal();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('simModal').classList.contains('active')) closeSimulator();
+    if (document.getElementById('shareModal').classList.contains('active')) closeShareModal();
+  }
+});
+
+/* ============================================ */
+/* SCROLL ANIMATION */
+/* ============================================ */
+function checkAnimations() {
+  document.querySelectorAll('.anim-fade-up').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 50) {
+      el.style.animationPlayState = 'running';
+    }
+  });
+}
+
+/* ============================================ */
+/* DEMO: Trigger share modal after a delay (simulating course completion) */
+/* ============================================ */
+// In production, this would be triggered by actual course completion.
+// For demo purposes, we expose it as a global function that can be called
+// or triggered by a demo button. The modal is primarily shown when the user
+// completes a course. We keep it hidden until explicitly triggered.
+
+/* ============================================ */
+/* INIT */
+/* ============================================ */
+function init() {
+  currentLang = detectLang();
+  document.documentElement.lang = LANG_MAP[currentLang] || 'zh-CN';
+  updateI18n();
+  renderLangBar();
+  // Pre-generate invite code
+  generateInviteCode();
+  // Pause animations initially for elements out of view
+  document.querySelectorAll('.anim-fade-up').forEach(el => {
+    if (el.getBoundingClientRect().top > window.innerHeight) {
+      el.style.animationPlayState = 'paused';
+    }
+  });
+  window.addEventListener('scroll', checkAnimations, { passive: true });
+  // Initial check
+  setTimeout(checkAnimations, 200);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

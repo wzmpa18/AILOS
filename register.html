@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 注册</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .container { width: 100%; max-width: 420px; }
+  .back-link {
+    display: inline-block; margin-bottom: 12px; font-size: 14px;
+    color: var(--text-secondary); text-decoration: none; transition: color .2s;
+  }
+  .back-link:hover { color: var(--primary); }
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 32px 28px 24px;
+    box-shadow: var(--shadow-md); border: 1px solid var(--border);
+  }
+  .logo { text-align: center; margin-bottom: 20px; }
+  .logo-icon { font-size: 40px; margin-bottom: 6px; }
+  .logo-text { font-size: 24px; font-weight: 700; color: var(--primary); }
+  .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .lang-switch { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
+  .lang-btn {
+    padding: 5px 12px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text-secondary); cursor: pointer; transition: all .2s;
+  }
+  .lang-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .lang-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab {
+    flex: 1; text-align: center; padding: 10px 0; font-size: 14px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .method-switch { display: flex; gap: 8px; margin-bottom: 16px; }
+  .method-btn {
+    flex: 1; padding: 8px; border-radius: var(--radius-sm); font-size: 13px;
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+    cursor: pointer; transition: all .2s; text-align: center;
+  }
+  .method-btn:hover { border-color: var(--primary); }
+  .method-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+  .msg { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 12px; display: none; }
+  .msg.show { display: block; }
+  .msg.error { background: #FEF2F2; color: var(--error); border: 1px solid #FECACA; }
+  .msg.success { background: #F0FDF4; color: var(--success); border: 1px solid #BBF7D0; }
+  .msg.info { background: #EFF6FF; color: #3B82F6; border: 1px solid #BFDBFE; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 15px;
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text);
+    transition: border-color .2s; outline: none;
+  }
+  .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .form-group input::placeholder { color: var(--text-muted); }
+  .form-group input.error { border-color: var(--error); }
+
+  .phone-row { display: flex; gap: 0; }
+  .phone-row select {
+    width: 90px; border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none;
+    background: #F8FAFC; font-size: 13px; padding: 12px 8px;
+  }
+  .phone-row input { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; flex: 1; }
+
+  .sms-row { display: flex; gap: 10px; }
+  .sms-row input { flex: 1; }
+  .btn-sms {
+    padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--primary); background: var(--card-bg); color: var(--primary);
+    cursor: pointer; transition: all .2s; white-space: nowrap; min-width: 100px;
+  }
+  .btn-sms:hover { background: var(--primary-light); }
+  .btn-sms:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-submit {
+    width: 100%; padding: 14px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 700;
+    border: none; cursor: pointer; background: var(--primary); color: #fff;
+    transition: all .2s; margin-top: 4px;
+  }
+  .btn-submit:hover { background: var(--primary-hover); }
+  .btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+  .privacy { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+  .privacy a { color: var(--primary); text-decoration: none; }
+  .privacy input { accent-color: var(--primary); }
+
+  .wechat-section { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .wechat-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px;
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    border: 1px solid #07C160; background: #07C160; color: #fff;
+    cursor: pointer; transition: all .2s;
+  }
+  .wechat-btn:hover { background: #06AD56; }
+
+  .footer {
+    text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted);
+  }
+  .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+  .guest-entry { text-align: center; margin-top: 10px; }
+  .guest-entry a {
+    font-size: 13px; color: var(--text-secondary); text-decoration: none;
+    border-bottom: 1px dashed var(--text-muted); padding-bottom: 2px;
+  }
+  .guest-entry a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .benefits {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;
+  }
+  .benefit-item {
+    text-align: center; padding: 10px 6px; border-radius: var(--radius-sm);
+    background: var(--primary-light); font-size: 11px; color: var(--primary);
+    font-weight: 600; line-height: 1.4;
+  }
+  .benefit-item .bi-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  .invite-hint {
+    font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 8px; line-height: 1.5;
+  }
+
+  @media (max-width: 400px) {
+    .card { padding: 24px 18px 20px; }
+    .sms-row { flex-direction: column; }
+    .benefits { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-link" href="/xuewaiyu/guest.html" data-i18n="back_to_home">← 返回首页</a>
+  <div class="card">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">🌍</div>
+      <div class="logo-text" data-i18n="app_name">AILOS</div>
+      <div class="logo-sub" data-i18n="app_subtitle">AI语言学习伙伴</div>
+    </div>
+
+    <!-- Language Switch -->
+    <div class="lang-switch" id="langSwitch"></div>
+
+    <!-- Benefits -->
+    <div class="benefits">
+      <div class="benefit-item">
+        <span class="bi-icon">🎁</span>
+        <span data-i18n="benefit_points">30成长积分</span>
+      </div>
+      <div class="benefit-item">
+        <span class="bi-icon">🤖</span>
+        <span data-i18n="benefit_trial">3天AI体验</span>
+      </div>
+      <div class="benefit-item">
+        <span class="bi-icon">👤</span>
+        <span data-i18n="benefit_companion">专属AI伴读</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+      <div class="tab" data-mode="login" data-i18n="tab_login">登录</div>
+      <div class="tab active" data-mode="register" data-i18n="tab_register">注册</div>
+      <div class="tab" data-mode="reset" data-i18n="tab_reset">找回密码</div>
+    </div>
+
+    <!-- Method Switch -->
+    <div class="method-switch" id="methodSwitch">
+      <div class="method-btn active" data-method="phone" data-i18n="register_method_phone">手机号注册</div>
+      <div class="method-btn" data-method="email" data-i18n="register_method_email">邮箱注册</div>
+    </div>
+
+    <!-- Message -->
+    <div class="msg" id="msg"></div>
+
+    <!-- Form -->
+    <div id="formContent"></div>
+
+    <!-- Privacy -->
+    <div class="privacy" id="privacyCheck">
+      <input type="checkbox" id="agreePrivacy">
+      <span><span data-i18n="privacy_text">我已阅读并同意</span> <a href="javascript:void(0)" onclick="showPrivacy()" data-i18n="privacy_link">《隐私政策》</a> <span data-i18n="privacy_and">和</span> <a href="/xuewaiyu/terms.html" target="_blank" data-i18n="privacy_terms">《用户协议》</a></span>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-submit" id="btnSubmit" data-i18n="btn_register">注册</button>
+
+    <!-- WeChat Login -->
+    <div class="wechat-section" id="wechatSection">
+      <button class="wechat-btn" onclick="wechatRegister()" data-i18n="wechat_register">微信一键注册</button>
+    </div>
+
+    <!-- Invite Hint -->
+    <div class="invite-hint" data-i18n="invite_hint">无邀请码自主注册用户，系统自动归属平台官方推广账户，按标准两级规则结算分润</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span data-i18n="footer_text_reg">已有账号？</span>
+    <a href="/xuewaiyu/login.html" data-i18n="footer_login">立即登录</a>
+  </div>
+  <div class="guest-entry">
+    <a href="javascript:void(0)" onclick="startGuestMode()" data-i18n="guest_entry">先体验一下，游客模式</a>
+  </div>
+</div>
+
+<script>
+// ==================== GLOI i18n System ====================
+const I18N = {
+  zh: {
+    back_to_home: '← 返回首页',
+    app_name: 'AILOS', app_subtitle: 'AI语言学习伙伴',
+    tab_login: '登录', tab_register: '注册', tab_reset: '找回密码',
+    label_phone: '手机号', label_email: '邮箱', label_password: '密码', label_code: '验证码',
+    label_username: '用户名', label_confirm_pwd: '确认密码',
+    label_old_password: '当前密码', label_new_password: '新密码',
+    btn_send_sms: '发送验证码', btn_send_email: '发送验证码',
+    btn_login: '登录', btn_register: '注册', btn_reset: '重置密码',
+    retry_text: '重新发送', retry_after: '秒后',
+    login_method_phone: '手机号登录', login_method_email: '邮箱登录',
+    register_method_phone: '手机号注册', register_method_email: '邮箱注册',
+    reset_method_phone: '手机号找回', reset_method_email: '邮箱找回',
+    privacy_text: '我已阅读并同意', privacy_link: '《隐私政策》', privacy_and: '和', privacy_terms: '《用户协议》',
+    footer_text: '还没有账号？', footer_register: '立即注册',
+    footer_text_reg: '已有账号？', footer_login: '立即登录',
+    msg_enter_phone: '请输入手机号', msg_enter_email: '请输入邮箱',
+    msg_enter_code: '请输入验证码', msg_enter_password: '请输入密码',
+    msg_enter_username: '请输入用户名', msg_confirm_pwd: '请确认密码',
+    msg_password_mismatch: '两次密码不一致', msg_agree: '请阅读并同意隐私政策和用户协议',
+    msg_phone_invalid: '请输入有效手机号', msg_email_invalid: '请输入有效邮箱',
+    msg_code_sent: '验证码已发送', msg_code_send_failed: '验证码发送失败',
+    msg_login_success: '登录成功，正在跳转...', msg_register_success: '注册成功，正在跳转...',
+    msg_guest_unavailable: '游客模式暂时不可用，请稍后重试',
+    msg_operation_failed: '操作失败，请重试', msg_loading: '处理中...',
+    msg_guest_tip: '正在进入游客模式，无需注册即可体验...',
+    msg_reset_success: '密码重置成功，请重新登录',
+    msg_sending: '发送中...',
+    guest_entry: '先体验一下，游客模式',
+    wechat_register: '微信一键注册',
+    benefit_points: '30成长积分',
+    benefit_trial: '3天AI体验',
+    benefit_companion: '专属AI伴读',
+    invite_hint: '无邀请码自主注册用户，系统自动归属平台官方推广账户，按标准两级规则结算分润',
+    debug_code: '',
+  },
+  en: {
+    back_to_home: '← Back to Home',
+    app_name: 'AILOS', app_subtitle: 'AI Language Learning Partner',
+    tab_login: 'Sign In', tab_register: 'Sign Up', tab_reset: 'Reset',
+    label_phone: 'Phone', label_email: 'Email', label_password: 'Password', label_code: 'Code',
+    label_username: 'Username', label_confirm_pwd: 'Confirm Password',
+    label_old_password: 'Current Password', label_new_password: 'New Password',
+    btn_send_sms: 'Send Code', btn_send_email: 'Send Code',
+    btn_login: 'Sign In', btn_register: 'Sign Up', btn_reset: 'Reset Password',
+    retry_text: 'Resend', retry_after: 's',
+    login_method_phone: 'Phone Login', login_method_email: 'Email Login',
+    register_method_phone: 'Phone Register', register_method_email: 'Email Register',
+    reset_method_phone: 'Phone Reset', reset_method_email: 'Email Reset',
+    privacy_text: 'I have read and agree to the', privacy_link: 'Privacy Policy', privacy_and: 'and', privacy_terms: 'Terms of Service',
+    footer_text: 'Don\'t have an account?', footer_register: 'Sign Up',
+    footer_text_reg: 'Already have an account?', footer_login: 'Sign In',
+    msg_enter_phone: 'Enter phone number', msg_enter_email: 'Enter email',
+    msg_enter_code: 'Enter verification code', msg_enter_password: 'Enter password',
+    msg_enter_username: 'Enter username', msg_confirm_pwd: 'Confirm password',
+    msg_password_mismatch: 'Passwords do not match', msg_agree: 'Please agree to Privacy Policy and Terms',
+    msg_phone_invalid: 'Invalid phone number', msg_email_invalid: 'Invalid email',
+    msg_code_sent: 'Code sent', msg_code_send_failed: 'Failed to send code',
+    msg_login_success: 'Login successful, redirecting...', msg_register_success: 'Registration successful, redirecting...',
+    msg_guest_unavailable: 'Guest mode unavailable, please try later',
+    msg_operation_failed: 'Operation failed, please try again', msg_loading: 'Processing...',
+    msg_guest_tip: 'Entering guest mode, no registration needed...',
+    msg_reset_success: 'Password reset successful, please login again',
+    msg_sending: 'Sending...',
+    guest_entry: 'Try as guest first',
+    wechat_register: 'Register with WeChat',
+    benefit_points: '30 Growth Points',
+    benefit_trial: '3-Day AI Trial',
+    benefit_companion: 'Exclusive AI Companion',
+    invite_hint: 'Users registering without invitation code are automatically attributed to the platform official promotion account, with standard two-tier commission settlement',
+    debug_code: '',
+  },
+  ja: {
+    back_to_home: '← ホームに戻る',
+    app_name: 'AILOS', app_subtitle: 'AI言語学習パートナー',
+    tab_login: 'ログイン', tab_register: '登録', tab_reset: 'リセット',
+    label_phone: '電話番号', label_email: 'メール', label_password: 'パスワード', label_code: '認証コード',
+    label_username: 'ユーザー名', label_confirm_pwd: 'パスワード確認',
+    label_old_password: '現在のパスワード', label_new_password: '新しいパスワード',
+    btn_send_sms: 'コード送信', btn_send_email: 'コード送信',
+    btn_login: 'ログイン', btn_register: '登録', btn_reset: 'パスワードリセット',
+    retry_text: '再送信', retry_after: '秒後',
+    login_method_phone: '電話番号ログイン', login_method_email: 'メールログイン',
+    register_method_phone: '電話番号登録', register_method_email: 'メール登録',
+    reset_method_phone: '電話番号リセット', reset_method_email: 'メールリセット',
+    privacy_text: '以下を読み、同意します', privacy_link: 'プライバシーポリシー', privacy_and: 'および', privacy_terms: '利用規約',
+    footer_text: 'アカウントをお持ちでない方', footer_register: '登録',
+    footer_text_reg: 'アカウントをお持ちの方', footer_login: 'ログイン',
+    msg_enter_phone: '電話番号を入力', msg_enter_email: 'メールを入力',
+    msg_enter_code: '認証コードを入力', msg_enter_password: 'パスワードを入力',
+    msg_enter_username: 'ユーザー名を入力', msg_confirm_pwd: 'パスワードを確認',
+    msg_password_mismatch: 'パスワードが一致しません', msg_agree: 'プライバシーポリシーと利用規約に同意してください',
+    msg_phone_invalid: '有効な電話番号を入力', msg_email_invalid: '有効なメールを入力',
+    msg_code_sent: 'コードを送信しました', msg_code_send_failed: 'コード送信に失敗',
+    msg_login_success: 'ログイン成功、リダイレクト中...', msg_register_success: '登録成功、リダイレクト中...',
+    msg_guest_unavailable: 'ゲストモードは現在利用できません',
+    msg_operation_failed: '操作に失敗しました', msg_loading: '処理中...',
+    msg_guest_tip: 'ゲストモードに入ります、登録不要で体験できます...',
+    msg_reset_success: 'パスワードリセット成功、再ログインしてください',
+    msg_sending: '送信中...',
+    guest_entry: 'まずはゲストで体験',
+    wechat_register: 'WeChatで登録',
+    benefit_points: '30成長ポイント',
+    benefit_trial: '3日間AI体験',
+    benefit_companion: '専用AIパートナー',
+    invite_hint: '招待コードなしで登録したユーザーは、自動的にプラットフォーム公式アカウントに帰属し、標準の2段階コミッションで決済されます',
+    debug_code: '',
+  },
+  ko: {
+    back_to_home: '← 홈으로',
+    app_name: 'AILOS', app_subtitle: 'AI 언어 학습 파트너',
+    tab_login: '로그인', tab_register: '회원가입', tab_reset: '재설정',
+    label_phone: '전화번호', label_email: '이메일', label_password: '비밀번호', label_code: '인증코드',
+    label_username: '사용자명', label_confirm_pwd: '비밀번호 확인',
+    label_old_password: '현재 비밀번호', label_new_password: '새 비밀번호',
+    btn_send_sms: '코드 전송', btn_send_email: '코드 전송',
+    btn_login: '로그인', btn_register: '회원가입', btn_reset: '비밀번호 재설정',
+    retry_text: '재전송', retry_after: '초 후',
+    login_method_phone: '전화번호 로그인', login_method_email: '이메일 로그인',
+    register_method_phone: '전화번호 가입', register_method_email: '이메일 가입',
+    reset_method_phone: '전화번호 재설정', reset_method_email: '이메일 재설정',
+    privacy_text: '다음을 읽고 동의합니다', privacy_link: '개인정보처리방침', privacy_and: '및', privacy_terms: '이용약관',
+    footer_text: '계정이 없으신가요?', footer_register: '회원가입',
+    footer_text_reg: '이미 계정이 있으신가요?', footer_login: '로그인',
+    msg_enter_phone: '전화번호 입력', msg_enter_email: '이메일 입력',
+    msg_enter_code: '인증코드 입력', msg_enter_password: '비밀번호 입력',
+    msg_enter_username: '사용자명 입력', msg_confirm_pwd: '비밀번호 확인',
+    msg_password_mismatch: '비밀번호가 일치하지 않습니다', msg_agree: '개인정보처리방침과 이용약관에 동의해주세요',
+    msg_phone_invalid: '유효한 전화번호 입력', msg_email_invalid: '유효한 이메일 입력',
+    msg_code_sent: '코드 전송 완료', msg_code_send_failed: '코드 전송 실패',
+    msg_login_success: '로그인 성공, 이동 중...', msg_register_success: '회원가입 성공, 이동 중...',
+    msg_guest_unavailable: '게스트 모드를 사용할 수 없습니다',
+    msg_operation_failed: '작업 실패', msg_loading: '처리 중...',
+    msg_guest_tip: '게스트 모드로 들어갑니다, 등록 없이 체험...',
+    msg_reset_success: '비밀번호 재설정 성공, 다시 로그인해주세요',
+    msg_sending: '전송 중...',
+    guest_entry: '먼저 게스트로 체험하기',
+    wechat_register: 'WeChat으로 가입',
+    benefit_points: '30 성장 포인트',
+    benefit_trial: '3일 AI 체험',
+    benefit_companion: '전용 AI 파트너',
+    invite_hint: '초대 코드 없이 등록한 사용자는 자동으로 플랫폼 공식 계정에 귀속되며, 표준 2단계 커미션으로 정산됩니다',
+    debug_code: '',
+  },
+  fr: {
+    back_to_home: '← Accueil',
+    app_name: 'AILOS', app_subtitle: 'Partenaire d\'apprentissage IA',
+    tab_login: 'Connexion', tab_register: 'Inscription', tab_reset: 'Réinitialiser',
+    label_phone: 'Téléphone', label_email: 'Email', label_password: 'Mot de passe', label_code: 'Code',
+    label_username: 'Nom d\'utilisateur', label_confirm_pwd: 'Confirmer le mot de passe',
+    label_old_password: 'Mot de passe actuel', label_new_password: 'Nouveau mot de passe',
+    btn_send_sms: 'Envoyer le code', btn_send_email: 'Envoyer le code',
+    btn_login: 'Connexion', btn_register: 'Inscription', btn_reset: 'Réinitialiser',
+    retry_text: 'Renvoyer', retry_after: 's',
+    login_method_phone: 'Connexion téléphone', login_method_email: 'Connexion email',
+    register_method_phone: 'Inscription téléphone', register_method_email: 'Inscription email',
+    reset_method_phone: 'Réinit. téléphone', reset_method_email: 'Réinit. email',
+    privacy_text: 'J\'ai lu et j\'accepte la', privacy_link: 'Politique de confidentialité', privacy_and: 'et les', privacy_terms: 'Conditions d\'utilisation',
+    footer_text: 'Pas de compte ?', footer_register: 'S\'inscrire',
+    footer_text_reg: 'Déjà un compte ?', footer_login: 'Se connecter',
+    msg_enter_phone: 'Entrez le téléphone', msg_enter_email: 'Entrez l\'email',
+    msg_enter_code: 'Entrez le code', msg_enter_password: 'Entrez le mot de passe',
+    msg_enter_username: 'Entrez le nom', msg_confirm_pwd: 'Confirmez le mot de passe',
+    msg_password_mismatch: 'Mots de passe différents', msg_agree: 'Veuillez accepter la politique',
+    msg_phone_invalid: 'Téléphone invalide', msg_email_invalid: 'Email invalide',
+    msg_code_sent: 'Code envoyé', msg_code_send_failed: 'Échec d\'envoi',
+    msg_login_success: 'Connexion réussie...', msg_register_success: 'Inscription réussie...',
+    msg_guest_unavailable: 'Mode invité indisponible',
+    msg_operation_failed: 'Échec de l\'opération', msg_loading: 'Traitement...',
+    msg_guest_tip: 'Entrée en mode invité...',
+    msg_reset_success: 'Réinitialisation réussie',
+    msg_sending: 'Envoi...',
+    guest_entry: 'Essayer en invité',
+    wechat_register: 'Inscription WeChat',
+    benefit_points: '30 Points',
+    benefit_trial: '3 Jours d\'essai IA',
+    benefit_companion: 'Compagnon IA exclusif',
+    invite_hint: 'Les utilisateurs sans code d\'invitation sont automatiquement attribués au compte officiel de la plateforme',
+    debug_code: '',
+  },
+  es: {
+    back_to_home: '← Inicio',
+    app_name: 'AILOS', app_subtitle: 'Compañero de aprendizaje IA',
+    tab_login: 'Iniciar sesión', tab_register: 'Registrarse', tab_reset: 'Restablecer',
+    label_phone: 'Teléfono', label_email: 'Email', label_password: 'Contraseña', label_code: 'Código',
+    label_username: 'Usuario', label_confirm_pwd: 'Confirmar contraseña',
+    label_old_password: 'Contraseña actual', label_new_password: 'Nueva contraseña',
+    btn_send_sms: 'Enviar código', btn_send_email: 'Enviar código',
+    btn_login: 'Iniciar sesión', btn_register: 'Registrarse', btn_reset: 'Restablecer',
+    retry_text: 'Reenviar', retry_after: 's',
+    login_method_phone: 'Inicio por teléfono', login_method_email: 'Inicio por email',
+    register_method_phone: 'Registro por teléfono', register_method_email: 'Registro por email',
+    reset_method_phone: 'Rest. por teléfono', reset_method_email: 'Rest. por email',
+    privacy_text: 'He leído y acepto la', privacy_link: 'Política de Privacidad', privacy_and: 'y los', privacy_terms: 'Términos de Servicio',
+    footer_text: '¿No tienes cuenta?', footer_register: 'Registrarse',
+    footer_text_reg: '¿Ya tienes cuenta?', footer_login: 'Iniciar sesión',
+    msg_enter_phone: 'Ingresa teléfono', msg_enter_email: 'Ingresa email',
+    msg_enter_code: 'Ingresa código', msg_enter_password: 'Ingresa contraseña',
+    msg_enter_username: 'Ingresa usuario', msg_confirm_pwd: 'Confirma contraseña',
+    msg_password_mismatch: 'Contraseñas no coinciden', msg_agree: 'Acepta la política',
+    msg_phone_invalid: 'Teléfono inválido', msg_email_invalid: 'Email inválido',
+    msg_code_sent: 'Código enviado', msg_code_send_failed: 'Error al enviar',
+    msg_login_success: 'Inicio exitoso...', msg_register_success: 'Registro exitoso...',
+    msg_guest_unavailable: 'Modo invitado no disponible',
+    msg_operation_failed: 'Operación fallida', msg_loading: 'Procesando...',
+    msg_guest_tip: 'Entrando en modo invitado...',
+    msg_reset_success: 'Restablecimiento exitoso',
+    msg_sending: 'Enviando...',
+    guest_entry: 'Probar como invitado',
+    wechat_register: 'Registro con WeChat',
+    benefit_points: '30 Puntos',
+    benefit_trial: '3 Días de prueba IA',
+    benefit_companion: 'Compañero IA exclusivo',
+    invite_hint: 'Usuarios sin código de invitación se atribuyen automáticamente a la cuenta oficial de la plataforma',
+    debug_code: '',
+  },
+  de: {
+    back_to_home: '← Startseite',
+    app_name: 'AILOS', app_subtitle: 'KI-Sprachlernpartner',
+    tab_login: 'Anmelden', tab_register: 'Registrieren', tab_reset: 'Zurücksetzen',
+    label_phone: 'Telefon', label_email: 'E-Mail', label_password: 'Passwort', label_code: 'Code',
+    label_username: 'Benutzername', label_confirm_pwd: 'Passwort bestätigen',
+    label_old_password: 'Aktuelles Passwort', label_new_password: 'Neues Passwort',
+    btn_send_sms: 'Code senden', btn_send_email: 'Code senden',
+    btn_login: 'Anmelden', btn_register: 'Registrieren', btn_reset: 'Zurücksetzen',
+    retry_text: 'Erneut senden', retry_after: 's',
+    login_method_phone: 'Telefon-Anmeldung', login_method_email: 'E-Mail-Anmeldung',
+    register_method_phone: 'Telefon-Registrierung', register_method_email: 'E-Mail-Registrierung',
+    reset_method_phone: 'Telefon-Zurücksetzen', reset_method_email: 'E-Mail-Zurücksetzen',
+    privacy_text: 'Ich habe die', privacy_link: 'Datenschutzerklärung', privacy_and: 'und die', privacy_terms: 'Nutzungsbedingungen',
+    footer_text: 'Kein Konto?', footer_register: 'Registrieren',
+    footer_text_reg: 'Bereits Konto?', footer_login: 'Anmelden',
+    msg_enter_phone: 'Telefon eingeben', msg_enter_email: 'E-Mail eingeben',
+    msg_enter_code: 'Code eingeben', msg_enter_password: 'Passwort eingeben',
+    msg_enter_username: 'Benutzername eingeben', msg_confirm_pwd: 'Passwort bestätigen',
+    msg_password_mismatch: 'Passwörter stimmen nicht überein', msg_agree: 'Bitte Datenschutzerklärung akzeptieren',
+    msg_phone_invalid: 'Ungültige Telefonnummer', msg_email_invalid: 'Ungültige E-Mail',
+    msg_code_sent: 'Code gesendet', msg_code_send_failed: 'Code senden fehlgeschlagen',
+    msg_login_success: 'Anmeldung erfolgreich...', msg_register_success: 'Registrierung erfolgreich...',
+    msg_guest_unavailable: 'Gastmodus nicht verfügbar',
+    msg_operation_failed: 'Vorgang fehlgeschlagen', msg_loading: 'Verarbeitung...',
+    msg_guest_tip: 'Gastmodus wird gestartet...',
+    msg_reset_success: 'Zurücksetzen erfolgreich',
+    msg_sending: 'Senden...',
+    guest_entry: 'Als Gast testen',
+    wechat_register: 'WeChat-Registrierung',
+    benefit_points: '30 Punkte',
+    benefit_trial: '3 Tage KI-Test',
+    benefit_companion: 'Exklusiver KI-Begleiter',
+    invite_hint: 'Nutzer ohne Einladungscode werden automatisch dem offiziellen Plattformkonto zugeordnet',
+    debug_code: '',
+  }
+};
+
+// ==================== State ====================
+let currentLang = 'zh';
+let currentMode = 'register';
+let currentMethod = 'phone';
+let countdownTimer = null;
+let countdownSeconds = 0;
+
+// ==================== Functions ====================
+function detectLang() {
+  try {
+    const navLang = (navigator.language || navigator.userLanguage || 'zh').split('-')[0].toLowerCase();
+    const supported = ['zh', 'en', 'ja', 'ko', 'fr', 'es', 'de'];
+    const map = { 'jp': 'ja', 'cn': 'zh', 'tw': 'zh', 'hk': 'zh', 'kr': 'ko' };
+    currentLang = supported.includes(map[navLang] || navLang) ? (map[navLang] || navLang) : 'zh';
+  } catch(e) { currentLang = 'zh'; }
+}
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) ||
+         (I18N['zh'] && I18N['zh'][key]) || key;
+}
+
+function renderLangSwitch() {
+  const langs = [
+    { code: 'zh', name: '中文' },
+    { code: 'en', name: 'English' },
+    { code: 'ja', name: '日本語' },
+    { code: 'ko', name: '한국어' },
+    { code: 'fr', name: 'Français' },
+    { code: 'es', name: 'Español' },
+    { code: 'de', name: 'Deutsch' },
+  ];
+  const container = document.getElementById('langSwitch');
+  container.innerHTML = langs.map(l =>
+    `<span class="lang-btn${l.code === currentLang ? ' active' : ''}" onclick="switchLang('${l.code}')">${l.name}</span>`
+  ).join('');
+}
+
+function switchLang(code) {
+  currentLang = code;
+  renderLangSwitch();
+  updateI18n();
+  renderForm();
+  updateTabTexts();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (el.tagName === 'INPUT' && el.type === 'text') {
+      el.placeholder = t(key);
+    } else {
+      el.textContent = t(key);
+    }
+  });
+}
+
+function updateTabTexts() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    const mode = tab.getAttribute('data-mode');
+    const keyMap = { login: 'tab_login', register: 'tab_register', reset: 'tab_reset' };
+    tab.textContent = t(keyMap[mode] || keyMap[mode]);
+  });
+  document.querySelectorAll('.method-btn').forEach(btn => {
+    const method = btn.getAttribute('data-method');
+    const keyMap = {
+      'phone_login': 'login_method_phone', 'email_login': 'login_method_email',
+      'phone_register': 'register_method_phone', 'email_register': 'register_method_email',
+      'phone_reset': 'reset_method_phone', 'email_reset': 'reset_method_email',
+    };
+    const key = keyMap[method + '_' + currentMode] || keyMap[method];
+    if (key) btn.textContent = t(key);
+  });
+}
+
+async function apiCall(path, body) {
+  try {
+    const resp = await fetch('/api/auth' + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return await resp.json();
+  } catch(e) {
+    return { success: false, error: t('msg_operation_failed') };
+  }
+}
+
+function renderForm() {
+  const container = document.getElementById('formContent');
+  const isLogin = currentMode === 'login';
+  const isRegister = currentMode === 'register';
+  const isReset = currentMode === 'reset';
+  const isPhone = currentMethod === 'phone';
+
+  let html = '';
+
+  // Phone number or email
+  if (isPhone) {
+    html += `<div class="form-group">
+      <label data-i18n="label_phone">${t('label_phone')}</label>
+      <div class="phone-row">
+        <select id="countryCode"><option value="+86">+86</option><option value="+1">+1</option><option value="+81">+81</option><option value="+82">+82</option><option value="+33">+33</option><option value="+34">+34</option><option value="+49">+49</option></select>
+        <input type="tel" id="phoneInput" placeholder="${t('label_phone')}" autocomplete="tel">
+      </div>
+    </div>`;
+  } else {
+    html += `<div class="form-group">
+      <label data-i18n="label_email">${t('label_email')}</label>
+      <input type="email" id="emailInput" placeholder="${t('label_email')}" autocomplete="email">
+    </div>`;
+  }
+
+  // Username (register only)
+  if (isRegister) {
+    html += `<div class="form-group">
+      <label data-i18n="label_username">${t('label_username')}</label>
+      <input type="text" id="usernameInput" placeholder="${t('label_username')}" autocomplete="username">
+    </div>`;
+  }
+
+  // Verification code (register only)
+  if (isRegister) {
+    html += `<div class="form-group">
+      <label data-i18n="label_code">${t('label_code')}</label>
+      <div class="sms-row">
+        <input type="text" id="codeInput" placeholder="${t('label_code')}" autocomplete="one-time-code">
+        <button class="btn-sms" id="btnSendCode" onclick="sendCode()" data-i18n="${isPhone ? 'btn_send_sms' : 'btn_send_email'}">${t(isPhone ? 'btn_send_sms' : 'btn_send_email')}</button>
+      </div>
+    </div>`;
+  }
+
+  // Password
+  html += `<div class="form-group">
+    <label data-i18n="label_password">${t('label_password')}</label>
+    <input type="password" id="passwordInput" placeholder="${t('label_password')}" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
+  </div>`;
+
+  // Confirm password (register only)
+  if (isRegister) {
+    html += `<div class="form-group">
+      <label data-i18n="label_confirm_pwd">${t('label_confirm_pwd')}</label>
+      <input type="password" id="confirmPwdInput" placeholder="${t('label_confirm_pwd')}" autocomplete="new-password">
+    </div>`;
+  }
+
+  // Old password (reset only)
+  if (isReset) {
+    html += `<div class="form-group">
+      <label data-i18n="label_old_password">${t('label_old_password')}</label>
+      <input type="password" id="oldPasswordInput" placeholder="${t('label_old_password')}">
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_new_password">${t('label_new_password')}</label>
+      <input type="password" id="newPasswordInput" placeholder="${t('label_new_password')}">
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  // Reset method to phone when switching to register
+  if (mode === 'register') {
+    currentMethod = 'phone';
+  }
+  // Update tabs
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-mode') === mode));
+  // Update method buttons
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-method') === currentMethod));
+  // Update method switch visibility
+  const methodSwitch = document.getElementById('methodSwitch');
+  methodSwitch.style.display = (mode === 'login' || mode === 'register') ? 'flex' : 'none';
+  // Update method button texts
+  updateMethodBtnTexts();
+  // Update privacy checkbox
+  document.getElementById('privacyCheck').style.display = mode === 'register' ? 'flex' : 'none';
+  // Update wechat section
+  document.getElementById('wechatSection').style.display = mode === 'register' ? 'block' : 'none';
+  // Update submit button
+  const btnMap = { login: 'btn_login', register: 'btn_register', reset: 'btn_reset' };
+  document.getElementById('btnSubmit').textContent = t(btnMap[mode]);
+  // Update footer
+  const footerText = document.querySelector('.footer span');
+  const footerLink = document.querySelector('.footer a');
+  if (mode === 'register') {
+    footerText.textContent = t('footer_text_reg');
+    footerLink.textContent = t('footer_login');
+    footerLink.href = '/xuewaiyu/login.html';
+  } else {
+    footerText.textContent = t('footer_text');
+    footerLink.textContent = t('footer_register');
+    footerLink.href = '/xuewaiyu/register.html';
+  }
+  renderForm();
+  hideMsg();
+}
+
+function switchMethod(method) {
+  currentMethod = method;
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-method') === method));
+  renderForm();
+  hideMsg();
+}
+
+function updateMethodBtnTexts() {
+  const btns = document.querySelectorAll('.method-btn');
+  btns.forEach(btn => {
+    const method = btn.getAttribute('data-method');
+    const keyMap = {
+      'phone': currentMode === 'login' ? 'login_method_phone' : (currentMode === 'register' ? 'register_method_phone' : 'reset_method_phone'),
+      'email': currentMode === 'login' ? 'login_method_email' : (currentMode === 'register' ? 'register_method_email' : 'reset_method_email'),
+    };
+    btn.textContent = t(keyMap[method] || keyMap[method]);
+  });
+}
+
+async function sendCode() {
+  const isPhone = currentMethod === 'phone';
+  let target = '';
+  if (isPhone) {
+    const code = document.getElementById('countryCode').value;
+    const phone = document.getElementById('phoneInput').value.trim();
+    if (!phone) { showMsg(t('msg_enter_phone'), 'error'); return; }
+    target = phone; // Backend adds +86 prefix, do not include country code
+  } else {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email) { showMsg(t('msg_enter_email'), 'error'); return; }
+    target = email;
+  }
+
+  const btn = document.getElementById('btnSendCode');
+  btn.disabled = true;
+  btn.textContent = t('msg_sending');
+
+  const endpoint = isPhone ? '/sms/send' : '/email/send';
+  const body = isPhone ? { phone: target, countryCode: code } : { email: target };
+  const result = await apiCall(endpoint, body);
+
+  if (result.success) {
+    showMsg(t('msg_code_sent'), 'success');
+    startCountdown();
+  } else {
+    showMsg(result.error || t('msg_code_send_failed'), 'error');
+    btn.disabled = false;
+    btn.textContent = t(isPhone ? 'btn_send_sms' : 'btn_send_email');
+  }
+}
+
+function startCountdown() {
+  countdownSeconds = 60;
+  const btn = document.getElementById('btnSendCode');
+  const isPhone = currentMethod === 'phone';
+  const tick = () => {
+    if (countdownSeconds <= 0) {
+      btn.disabled = false;
+      btn.textContent = t(isPhone ? 'btn_send_sms' : 'btn_send_email');
+      countdownTimer = null;
+      return;
+    }
+    btn.textContent = t('retry_text') + '(' + countdownSeconds + t('retry_after') + ')';
+    countdownSeconds--;
+    countdownTimer = setTimeout(tick, 1000);
+  };
+  tick();
+}
+
+async function handleSubmit() {
+  const isLogin = currentMode === 'login';
+  const isRegister = currentMode === 'register';
+  const isReset = currentMode === 'reset';
+  const isPhone = currentMethod === 'phone';
+
+  // Validate
+  if (isRegister) {
+    if (!document.getElementById('agreePrivacy').checked) {
+      showMsg(t('msg_agree'), 'error'); return;
+    }
+    const username = document.getElementById('usernameInput').value.trim();
+    if (!username) { showMsg(t('msg_enter_username'), 'error'); return; }
+    const code = document.getElementById('codeInput').value.trim();
+    if (!code) { showMsg(t('msg_enter_code'), 'error'); return; }
+    const pwd = document.getElementById('passwordInput').value.trim();
+    if (!pwd) { showMsg(t('msg_enter_password'), 'error'); return; }
+    const confirmPwd = document.getElementById('confirmPwdInput').value.trim();
+    if (pwd !== confirmPwd) { showMsg(t('msg_password_mismatch'), 'error'); return; }
+
+    // Build registration body
+    const body = {
+      username: username,
+      password: pwd,
+      code: code,
+    };
+    if (isPhone) {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!phone) { showMsg(t('msg_enter_phone'), 'error'); return; }
+      body.phone = document.getElementById('countryCode').value + phone;
+    } else {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) { showMsg(t('msg_enter_email'), 'error'); return; }
+      body.email = email;
+    }
+
+    // Check for invite code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('invite') || urlParams.get('ref') || '';
+    if (inviteCode) body.inviteCode = inviteCode;
+
+    showMsg(t('msg_loading'), 'info');
+    document.getElementById('btnSubmit').disabled = true;
+
+    const result = await apiCall('/register', body);
+    if (result.success) {
+      showMsg(t('msg_register_success'), 'success');
+      // Store token
+      if (result.token) {
+        try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
+      }
+      setTimeout(() => {
+        window.location.href = result.redirect || '/xuewaiyu/home.html';
+      }, 1000);
+    } else {
+      showMsg(result.error || t('msg_operation_failed'), 'error');
+      document.getElementById('btnSubmit').disabled = false;
+    }
+    return;
+  }
+
+  if (isLogin) {
+    const pwd = document.getElementById('passwordInput').value.trim();
+    if (!pwd) { showMsg(t('msg_enter_password'), 'error'); return; }
+
+    const body = { password: pwd };
+    if (isPhone) {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!phone) { showMsg(t('msg_enter_phone'), 'error'); return; }
+      body.phone = document.getElementById('countryCode').value + phone;
+    } else {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) { showMsg(t('msg_enter_email'), 'error'); return; }
+      body.email = email;
+    }
+
+    showMsg(t('msg_loading'), 'info');
+    document.getElementById('btnSubmit').disabled = true;
+
+    const result = await apiCall('/password', body);
+    if (result.success) {
+      showMsg(t('msg_login_success'), 'success');
+      if (result.token) {
+        try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
+      }
+      setTimeout(() => {
+        window.location.href = result.redirect || '/xuewaiyu/home.html';
+      }, 1000);
+    } else {
+      showMsg(result.error || t('msg_operation_failed'), 'error');
+      document.getElementById('btnSubmit').disabled = false;
+    }
+    return;
+  }
+
+  if (isReset) {
+    const oldPwd = document.getElementById('oldPasswordInput').value.trim();
+    const newPwd = document.getElementById('newPasswordInput').value.trim();
+    if (!oldPwd || !newPwd) { showMsg(t('msg_enter_password'), 'error'); return; }
+
+    const body = { oldPassword: oldPwd, newPassword: newPwd };
+    const token = localStorage.getItem('yandao_token_v1');
+    if (token) body.token = token;
+
+    showMsg(t('msg_loading'), 'info');
+    document.getElementById('btnSubmit').disabled = true;
+
+    const resp = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' },
+      body: JSON.stringify(body),
+    });
+    const result = await resp.json();
+    if (result.success) {
+      showMsg(t('msg_reset_success'), 'success');
+      setTimeout(() => { switchMode('login'); }, 1500);
+    } else {
+      showMsg(result.error || t('msg_operation_failed'), 'error');
+      document.getElementById('btnSubmit').disabled = false;
+    }
+    return;
+  }
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg show ' + type;
+}
+
+function hideMsg() {
+  const el = document.getElementById('msg');
+  el.className = 'msg';
+}
+
+function showPrivacy() {
+  window.open('/xuewaiyu/privacy.html', '_blank');
+}
+
+async function startGuestMode() {
+  try {
+    showMsg(t('msg_loading'), 'info');
+    const deviceId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const resp = await fetch('/api/auth/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      try { localStorage.setItem('yandao_guest_id_v1', data.guestId || ''); } catch(e) {}
+      window.location.href = '/xuewaiyu/guest.html';
+    } else {
+      showMsg(data.error || t('msg_guest_unavailable'), 'error');
+    }
+  } catch (e) {
+    showMsg(t('msg_guest_unavailable'), 'error');
+  }
+}
+
+function wechatRegister() {
+  showMsg(t('msg_loading'), 'info');
+  // WeChat OAuth redirect
+  const redirectUri = encodeURIComponent(window.location.origin + '/xuewaiyu/home.html');
+  window.location.href = '/api/auth/wechat?redirect=' + redirectUri;
+}
+
+// ==================== Event Listeners ====================
+document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
+
+document.getElementById('tabs').addEventListener('click', function(e) {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  switchMode(tab.getAttribute('data-mode'));
+});
+
+document.getElementById('methodSwitch').addEventListener('click', function(e) {
+  const btn = e.target.closest('.method-btn');
+  if (!btn) return;
+  switchMethod(btn.getAttribute('data-method'));
+});
+
+// Enter key to submit
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT') {
+    e.preventDefault();
+    handleSubmit();
+  }
+});
+
+// ==================== Init ====================
+(function() {
+  detectLang();
+  renderLangSwitch();
+  updateI18n();
+  switchMode('register');
+})();
+</script>
+</body>
+</html>

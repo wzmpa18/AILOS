@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1E40AF">
+<title>AILOS - 教育生态合作伙伴计划</title>
+<style>
+/* ==================== Reset & Base ==================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #1E40AF;
+  --primary-hover: #1E3A8A;
+  --primary-light: #DBEAFE;
+  --primary-soft: #EFF6FF;
+  --accent: #3B82F6;
+  --accent-light: #60A5FA;
+  --accent-dark: #2563EB;
+  --bg: #F0F4F8;
+  --card-bg: #FFFFFF;
+  --text: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border: #CBD5E1;
+  --border-light: #E2E8F0;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+  --shadow-lg: 0 4px 16px rgba(30,64,175,.12), 0 10px 40px rgba(0,0,0,.06);
+  --gradient: linear-gradient(135deg, #1E3A8A, #2563EB, #3B82F6);
+  --gradient-light: linear-gradient(135deg, #DBEAFE, #EFF6FF);
+  --gradient-card: linear-gradient(135deg, #1E40AF, #3B82F6);
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --max-width: 1080px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans', system-ui, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.65; min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==================== Language Bar ==================== */
+.lang-bar {
+  display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px;
+  padding: 10px 16px; max-width: var(--max-width); margin: 0 auto;
+}
+.lang-btn {
+  padding: 5px 11px; border-radius: 20px; font-size: 12px; cursor: pointer;
+  border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+  background: transparent; white-space: nowrap; font-family: inherit;
+}
+.lang-btn:hover { background: var(--primary-light); color: var(--primary); }
+.lang-btn.active {
+  border-color: var(--primary); background: var(--primary-light);
+  color: var(--primary); font-weight: 600;
+}
+
+/* ==================== Container ==================== */
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 20px 60px; }
+
+/* ==================== Hero Section ==================== */
+.hero {
+  background: var(--gradient); color: #fff; border-radius: var(--radius);
+  padding: 48px 36px; margin-bottom: 28px; text-align: center;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.hero::before {
+  content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px;
+  background: rgba(255,255,255,.04); border-radius: 50%; pointer-events: none;
+}
+.hero::after {
+  content: ''; position: absolute; bottom: -30%; left: -10%; width: 300px; height: 300px;
+  background: rgba(255,255,255,.03); border-radius: 50%; pointer-events: none;
+}
+.hero * { position: relative; z-index: 1; }
+.hero-badge {
+  display: inline-block; padding: 6px 18px; border-radius: 50px;
+  background: rgba(255,255,255,.18); font-size: 13px; font-weight: 600;
+  margin-bottom: 16px; letter-spacing: .5px;
+}
+.hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; }
+.hero p { font-size: 16px; opacity: .9; max-width: 640px; margin: 0 auto 24px; line-height: 1.7; }
+.hero .btn-hero {
+  display: inline-block; padding: 14px 36px; border-radius: 50px; font-size: 16px;
+  font-weight: 700; text-decoration: none; cursor: pointer;
+  background: #fff; color: var(--primary); transition: all .25s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+.hero .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+/* ==================== Section Common ==================== */
+.section { margin-bottom: 32px; }
+.section-title {
+  font-size: 22px; font-weight: 800; margin-bottom: 6px; color: var(--text);
+  position: relative; padding-bottom: 12px;
+}
+.section-title::after {
+  content: ''; position: absolute; bottom: 0; left: 0; width: 48px; height: 3px;
+  background: var(--gradient); border-radius: 2px;
+}
+.section-sub {
+  font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; margin-top: 4px;
+}
+
+/* ==================== Pain Points Comparison Table ==================== */
+.pain-table-wrap {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; border: 1px solid var(--border-light);
+}
+.pain-table {
+  width: 100%; border-collapse: collapse;
+}
+.pain-table thead th {
+  padding: 16px 20px; font-size: 14px; font-weight: 700; text-align: left;
+}
+.pain-table thead th:first-child { background: #F8FAFC; color: var(--text-secondary); width: 30%; }
+.pain-table thead th:last-child { background: var(--primary-soft); color: var(--primary); }
+.pain-table td {
+  padding: 14px 20px; font-size: 14px; line-height: 1.6; vertical-align: top;
+  border-top: 1px solid var(--border-light);
+}
+.pain-table td:first-child { color: var(--text-secondary); font-weight: 600; }
+.pain-table td:last-child { color: var(--primary); }
+.pain-table .pain-label {
+  display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px;
+  font-weight: 700; margin-bottom: 4px;
+}
+.pain-label.before { background: #FEE2E2; color: #DC2626; }
+.pain-label.after { background: #DCFCE7; color: #16A34A; }
+
+/* ==================== Solutions Grid ==================== */
+.solution-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+}
+.solution-card {
+  background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light);
+  transition: transform .2s, box-shadow .2s;
+}
+.solution-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.solution-icon {
+  width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; font-size: 24px; margin-bottom: 14px;
+  background: var(--primary-light); color: var(--primary);
+}
+.solution-card h4 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.solution-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ==================== Revenue Model ==================== */
+.revenue-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+.revenue-card {
+  background: var(--card-bg); border-radius: var(--radius); padding: 28px 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light); text-align: center;
+  transition: transform .2s;
+}
+.revenue-card:hover { transform: translateY(-3px); }
+.revenue-card .rev-icon {
+  font-size: 36px; margin-bottom: 12px;
+}
+.revenue-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.revenue-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.revenue-card .rev-highlight {
+  display: inline-block; margin-top: 10px; padding: 4px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 700; background: var(--primary-soft); color: var(--primary);
+}
+
+/* ==================== Tiered Partnership ==================== */
+.tier-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.tier-card {
+  background: var(--card-bg); border-radius: var(--radius); padding: 28px 22px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light); text-align: center;
+  position: relative; transition: transform .25s, box-shadow .25s;
+}
+.tier-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.tier-card.featured {
+  border-color: var(--accent); box-shadow: 0 4px 20px rgba(37,99,235,.2);
+  background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 120px);
+}
+.tier-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  background: var(--gradient); color: #fff; white-space: nowrap;
+}
+.tier-card h4 { font-size: 18px; font-weight: 800; margin-bottom: 4px; margin-top: 6px; }
+.tier-card .tier-price { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+.tier-card .tier-price-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.tier-features { list-style: none; text-align: left; margin-bottom: 20px; }
+.tier-features li {
+  padding: 8px 0; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border-light);
+  position: relative; padding-left: 22px;
+}
+.tier-features li::before {
+  content: '✓'; position: absolute; left: 0; color: var(--success); font-weight: 700;
+}
+.tier-btn {
+  display: inline-block; width: 100%; padding: 12px; border-radius: 50px; font-size: 14px;
+  font-weight: 700; cursor: pointer; transition: all .2s; text-align: center;
+  border: 2px solid var(--primary); background: #fff; color: var(--primary);
+}
+.tier-btn:hover { background: var(--primary); color: #fff; }
+.tier-btn.featured-btn { background: var(--gradient); color: #fff; border: none; }
+.tier-btn.featured-btn:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ==================== Application Form ==================== */
+.form-section {
+  background: var(--card-bg); border-radius: var(--radius); padding: 32px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light);
+}
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.form-group { display: flex; flex-direction: column; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;
+}
+.form-group input, .form-group textarea {
+  padding: 12px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  font-size: 14px; font-family: inherit; transition: border-color .2s; outline: none;
+  background: #F8FAFC;
+}
+.form-group input:focus, .form-group textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+.form-submit {
+  margin-top: 8px; padding: 14px 40px; border-radius: 50px; font-size: 16px;
+  font-weight: 700; cursor: pointer; border: none;
+  background: var(--gradient); color: #fff; transition: all .25s;
+  box-shadow: 0 4px 16px rgba(30,64,175,.3);
+}
+.form-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(30,64,175,.4); }
+.form-success {
+  display: none; text-align: center; padding: 20px; color: var(--success);
+  font-weight: 700; font-size: 16px;
+}
+
+/* ==================== Footer Note ==================== */
+.footer-note {
+  text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;
+  border-top: 1px solid var(--border-light); margin-top: 32px;
+}
+
+/* ==================== Responsive - Tablet ==================== */
+@media (max-width: 768px) {
+  .hero { padding: 36px 24px; }
+  .hero h1 { font-size: 26px; }
+  .hero p { font-size: 14px; }
+  .section-title { font-size: 19px; }
+  .solution-grid { grid-template-columns: 1fr; }
+  .revenue-grid { grid-template-columns: repeat(2, 1fr); }
+  .tier-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .pain-table thead th, .pain-table td { padding: 12px 14px; font-size: 13px; }
+}
+
+/* ==================== Responsive - Mobile (375px) ==================== */
+@media (max-width: 480px) {
+  .lang-bar { justify-content: center; gap: 3px; padding: 8px 10px; }
+  .lang-btn { padding: 4px 9px; font-size: 11px; }
+  .hero { padding: 28px 18px; border-radius: var(--radius-sm); }
+  .hero h1 { font-size: 22px; }
+  .hero p { font-size: 13px; }
+  .hero .btn-hero { padding: 12px 28px; font-size: 14px; }
+  .hero-badge { font-size: 11px; padding: 5px 14px; }
+  .section-title { font-size: 17px; }
+  .section-sub { font-size: 13px; }
+  .solution-card { padding: 18px; }
+  .solution-card h4 { font-size: 15px; }
+  .solution-card p { font-size: 13px; }
+  .revenue-grid { grid-template-columns: 1fr; }
+  .revenue-card { padding: 20px 16px; }
+  .tier-card { padding: 22px 16px; }
+  .form-section { padding: 20px 16px; }
+  .pain-table thead th, .pain-table td { padding: 10px 10px; font-size: 12px; }
+  .pain-table-wrap { overflow-x: auto; }
+  .container { padding: 0 12px 40px; }
+  .footer-note { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== Language Bar ==================== -->
+<div class="lang-bar" id="langBar"></div>
+
+<div class="container">
+
+  <!-- ==================== Hero ==================== -->
+  <section class="hero">
+    <div class="hero-badge" data-i18n="partner_hero_badge">面向教育机构</div>
+    <h1 data-i18n="partner_hero_title">AILOS教育生态合作伙伴计划</h1>
+    <p data-i18n="partner_hero_sub">为教育机构提供一站式AI赋能解决方案。以AI增强教师能力，而非替代教师，助力机构降本增效、拓展收入，共同构建智慧教育新生态。</p>
+    <a class="btn-hero" href="#apply-form" data-i18n="partner_hero_cta">申请成为合作伙伴</a>
+  </section>
+
+  <!-- ==================== Pain Points Comparison ==================== -->
+  <section class="section">
+    <h2 class="section-title" data-i18n="partner_pain_title">传统教培行业痛点 vs AILOS解决方案</h2>
+    <p class="section-sub" data-i18n="partner_pain_sub">AILOS以AI技术赋能教育机构，系统性解决传统教培行业的核心痛点</p>
+    <div class="pain-table-wrap">
+      <table class="pain-table">
+        <thead>
+          <tr>
+            <th data-i18n="partner_pain_col_traditional">传统痛点</th>
+            <th data-i18n="partner_pain_col_ailos">AILOS解决方案</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="pain-label before" data-i18n="partner_pain_1_label">痛点一</span>
+              <div data-i18n="partner_pain_1_desc">老师重复性工作量大，无法专注教学设计</div>
+            </td>
+            <td>
+              <span class="pain-label after" data-i18n="partner_pain_1_sol_label">AI解决方案</span>
+              <div data-i18n="partner_pain_1_sol">AI批量生成课程教案、习题和测评，释放教师创造力，让教师专注于核心教学设计和个性化辅导</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pain-label before" data-i18n="partner_pain_2_label">痛点二</span>
+              <div data-i18n="partner_pain_2_desc">教材更新困难，跟不上变化</div>
+            </td>
+            <td>
+              <span class="pain-label after" data-i18n="partner_pain_2_sol_label">AI解决方案</span>
+              <div data-i18n="partner_pain_2_sol">AI实时同步最新知识库，自动生成与时俱进的课程内容，教学材料始终保持新鲜度和竞争力</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pain-label before" data-i18n="partner_pain_3_label">痛点三</span>
+              <div data-i18n="partner_pain_3_desc">学生课程结束容易流失，续费率低</div>
+            </td>
+            <td>
+              <span class="pain-label after" data-i18n="partner_pain_3_sol_label">AI解决方案</span>
+              <div data-i18n="partner_pain_3_sol">智能学员管理系统，AI预测流失风险并自动推送个性化学习计划和续费激励，显著提升续费率</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pain-label before" data-i18n="partner_pain_4_label">痛点四</span>
+              <div data-i18n="partner_pain_4_desc">无新的收入增长渠道</div>
+            </td>
+            <td>
+              <span class="pain-label after" data-i18n="partner_pain_4_sol_label">AI解决方案</span>
+              <div data-i18n="partner_pain_4_sol">通过平台合作模式，机构可获得课程分发、AI工具授权、品牌联名等多重新型收入来源</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== AI Solutions ==================== -->
+  <section class="section">
+    <h2 class="section-title" data-i18n="partner_solution_title">AILOS AI机构全套解决方案</h2>
+    <p class="section-sub" data-i18n="partner_solution_sub">AI增强教师，而非替代教师 —— 我们相信技术的力量在于赋能，而非取代</p>
+    <div class="solution-grid">
+      <div class="solution-card">
+        <div class="solution-icon">&#x1F4DA;</div>
+        <h4 data-i18n="partner_solution_1_title">AI批量生成课程</h4>
+        <p data-i18n="partner_solution_1_desc">基于机构教学目标，AI一键生成完整课程体系：教案、课件、习题、考试卷，大幅降低教研成本，提升课程产出效率300%以上。</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">&#x1F4CA;</div>
+        <h4 data-i18n="partner_solution_2_title">自动学情分析</h4>
+        <p data-i18n="partner_solution_2_desc">AI实时追踪每位学员的学习数据，自动生成可视化学习报告，精准定位薄弱知识点，为教师提供数据驱动的教学决策支持。</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">&#x1F916;</div>
+        <h4 data-i18n="partner_solution_3_title">个性化AI辅导</h4>
+        <p data-i18n="partner_solution_3_desc">每位学员配备专属AI学习伙伴，24小时多语言答疑辅导、口语对话练习、作文批改，让每个学生都能获得个性化关注。</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">&#x1F465;</div>
+        <h4 data-i18n="partner_solution_4_title">智能学员管理</h4>
+        <p data-i18n="partner_solution_4_desc">AI驱动学员全生命周期管理：智能分班、学习进度监控、流失预警、续费推荐，帮助机构实现精细化运营和高效转化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== Revenue Model ==================== -->
+  <section class="section">
+    <h2 class="section-title" data-i18n="partner_revenue_title">合作收益模式</h2>
+    <p class="section-sub" data-i18n="partner_revenue_sub">多元化收益渠道，让合作伙伴共享平台增长红利</p>
+    <div class="revenue-grid">
+      <div class="revenue-card">
+        <div class="rev-icon">&#x1F4B0;</div>
+        <h4 data-i18n="partner_revenue_1_title">课程分发收益</h4>
+        <p data-i18n="partner_revenue_1_desc">机构课程上架AILOS平台，面向全球学员销售，按销售额获得持续分成收益。</p>
+        <span class="rev-highlight" data-i18n="partner_revenue_1_highlight">最高分成70%</span>
+      </div>
+      <div class="revenue-card">
+        <div class="rev-icon">&#x1F527;</div>
+        <h4 data-i18n="partner_revenue_2_title">AI工具授权</h4>
+        <p data-i18n="partner_revenue_2_desc">向机构提供AILOS AI工具白标授权，机构可自主定价向学员提供AI辅导服务，获取工具差价收益。</p>
+        <span class="rev-highlight" data-i18n="partner_revenue_2_highlight">灵活定价权</span>
+      </div>
+      <div class="revenue-card">
+        <div class="rev-icon">&#x1F31F;</div>
+        <h4 data-i18n="partner_revenue_3_title">品牌联名合作</h4>
+        <p data-i18n="partner_revenue_3_desc">优质合作伙伴可参与AILOS品牌联名计划，获得官方认证背书、联合市场推广和专属流量扶持。</p>
+        <span class="rev-highlight" data-i18n="partner_revenue_3_highlight">品牌增值赋能</span>
+      </div>
+      <div class="revenue-card">
+        <div class="rev-icon">&#x1F30A;</div>
+        <h4 data-i18n="partner_revenue_4_title">平台生态流量分成</h4>
+        <p data-i18n="partner_revenue_4_desc">平台自然注册用户产生的课程订单，机构可获得额外5%生态流量分成。无需额外推广投入，即可享受平台自然增长带来的持续收益。</p>
+        <span class="rev-highlight" data-i18n="partner_revenue_4_highlight">额外5%分成</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== Tiered Partnership ==================== -->
+  <section class="section">
+    <h2 class="section-title" data-i18n="partner_tier_title">合作分级权益</h2>
+    <p class="section-sub" data-i18n="partner_tier_sub">三种合作等级，满足不同规模机构的需求，灵活选择最适合的方案</p>
+    <div class="tier-grid">
+      <!-- Small Studio -->
+      <div class="tier-card">
+        <h4 data-i18n="partner_tier_basic_title">小型工作室</h4>
+        <div class="tier-price" data-i18n="partner_tier_basic_price">免费</div>
+        <div class="tier-price-sub" data-i18n="partner_tier_basic_price_sub">基础合作</div>
+        <ul class="tier-features">
+          <li data-i18n="partner_tier_basic_f1">AI课程生成（每月50课时）</li>
+          <li data-i18n="partner_tier_basic_f2">基础学情分析报告</li>
+          <li data-i18n="partner_tier_basic_f3">标准学员管理系统</li>
+          <li data-i18n="partner_tier_basic_f4">平台课程分发（10%分成）</li>
+          <li data-i18n="partner_tier_basic_f5">在线客服支持</li>
+        </ul>
+        <a class="tier-btn" href="#apply-form" data-i18n="partner_tier_basic_btn">立即申请</a>
+      </div>
+
+      <!-- Medium Campus (Featured) -->
+      <div class="tier-card featured">
+        <div class="tier-badge" data-i18n="partner_tier_medium_badge">推荐</div>
+        <h4 data-i18n="partner_tier_medium_title">中型校区</h4>
+        <div class="tier-price" data-i18n="partner_tier_medium_price">¥2,999/月</div>
+        <div class="tier-price-sub" data-i18n="partner_tier_medium_price_sub">专业合作</div>
+        <ul class="tier-features">
+          <li data-i18n="partner_tier_medium_f1">AI课程生成（每月300课时）</li>
+          <li data-i18n="partner_tier_medium_f2">高级学情分析与预警</li>
+          <li data-i18n="partner_tier_medium_f3">智能学员管理 + 流失预警</li>
+          <li data-i18n="partner_tier_medium_f4">平台课程分发（30%分成）</li>
+          <li data-i18n="partner_tier_medium_f5">AI工具白标授权</li>
+          <li data-i18n="partner_tier_medium_f6">专属客户经理</li>
+          <li data-i18n="partner_tier_medium_f7">API接口对接</li>
+          <li data-i18n="partner_tier_medium_f8">平台生态流量分成（额外5%）</li>
+        </ul>
+        <a class="tier-btn featured-btn" href="#apply-form" data-i18n="partner_tier_medium_btn">立即申请</a>
+      </div>
+
+      <!-- Chain Brand -->
+      <div class="tier-card">
+        <h4 data-i18n="partner_tier_premium_title">连锁品牌</h4>
+        <div class="tier-price" data-i18n="partner_tier_premium_price">定制报价</div>
+        <div class="tier-price-sub" data-i18n="partner_tier_premium_price_sub">战略合作</div>
+        <ul class="tier-features">
+          <li data-i18n="partner_tier_premium_f1">AI课程生成（不限量）</li>
+          <li data-i18n="partner_tier_premium_f2">全量学情分析 + 定制仪表盘</li>
+          <li data-i18n="partner_tier_premium_f3">全功能学员管理系统</li>
+          <li data-i18n="partner_tier_premium_f4">平台课程分发（70%分成）</li>
+          <li data-i18n="partner_tier_premium_f5">品牌联名 + 官方认证</li>
+          <li data-i18n="partner_tier_premium_f6">联合市场推广</li>
+          <li data-i18n="partner_tier_premium_f7">专属技术团队支持</li>
+          <li data-i18n="partner_tier_premium_f8">定制化功能开发</li>
+          <li data-i18n="partner_tier_premium_f9">平台生态流量分成（额外5%）</li>
+        </ul>
+        <a class="tier-btn" href="#apply-form" data-i18n="partner_tier_premium_btn">联系我们</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== Application Form ==================== -->
+  <section class="section" id="apply-form">
+    <h2 class="section-title" data-i18n="partner_form_title">合作申请入口</h2>
+    <p class="section-sub" data-i18n="partner_form_sub">填写以下信息，我们的合作团队将在3个工作日内与您联系</p>
+    <div class="form-section">
+      <form id="partnerForm" onsubmit="handleSubmit(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="partner_form_name">姓名</label>
+            <input type="text" id="formName" required placeholder="" data-i18n-placeholder="partner_form_name_placeholder" data-i18n-orig-placeholder="请输入您的姓名">
+          </div>
+          <div class="form-group">
+            <label data-i18n="partner_form_institution">机构名称</label>
+            <input type="text" id="formInstitution" required placeholder="" data-i18n-placeholder="partner_form_institution_placeholder" data-i18n-orig-placeholder="请输入机构名称">
+          </div>
+          <div class="form-group">
+            <label data-i18n="partner_form_email">电子邮箱</label>
+            <input type="email" id="formEmail" required placeholder="" data-i18n-placeholder="partner_form_email_placeholder" data-i18n-orig-placeholder="请输入电子邮箱">
+          </div>
+          <div class="form-group">
+            <label data-i18n="partner_form_phone">联系电话</label>
+            <input type="tel" id="formPhone" required placeholder="" data-i18n-placeholder="partner_form_phone_placeholder" data-i18n-orig-placeholder="请输入联系电话">
+          </div>
+          <div class="form-group full">
+            <label data-i18n="partner_form_message">留言（选填）</label>
+            <textarea id="formMessage" rows="3" placeholder="" data-i18n-placeholder="partner_form_message_placeholder" data-i18n-orig-placeholder="请简要描述您的合作意向和需求"></textarea>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+          <button type="submit" class="form-submit" data-i18n="partner_form_submit">提交合作申请</button>
+        </div>
+      </form>
+      <div class="form-success" id="formSuccess" data-i18n="partner_form_success">提交成功！我们将在3个工作日内与您联系。</div>
+    </div>
+  </section>
+
+  <!-- ==================== Footer ==================== -->
+  <div class="footer-note" data-i18n="partner_footer">© 2026 AILOS Education Ecosystem. All rights reserved. 让AI赋能每一位教育者。</div>
+
+  <!-- ==================== Compliance Note ==================== -->
+  <div style="text-align:center; padding: 12px 20px; color: var(--text-muted); font-size: 11px; line-height:1.6; max-width:720px; margin:0 auto 20px;" data-i18n="partner_compliance_note">
+    平台分佣合规声明：平台自然注册用户佣金归入平台官方账户，机构仅从自有渠道推广订单中获取分佣。平台自主注册用户自动归属平台主账户，按标准两级规则结算。
+  </div>
+
+</div>
+
+<!-- ==================== i18n Script ==================== -->
+<script>
+// ==================== GLOI i18n Data ====================
+const I18N = {
+  zh: {
+    // Hero
+    partner_hero_badge: '面向教育机构',
+    partner_hero_title: 'AILOS教育生态合作伙伴计划',
+    partner_hero_sub: '为教育机构提供一站式AI赋能解决方案。以AI增强教师能力，而非替代教师，助力机构降本增效、拓展收入，共同构建智慧教育新生态。',
+    partner_hero_cta: '申请成为合作伙伴',
+    // Pain Points
+    partner_pain_title: '传统教培行业痛点 vs AILOS解决方案',
+    partner_pain_sub: 'AILOS以AI技术赋能教育机构，系统性解决传统教培行业的核心痛点',
+    partner_pain_col_traditional: '传统痛点',
+    partner_pain_col_ailos: 'AILOS解决方案',
+    partner_pain_1_label: '痛点一',
+    partner_pain_1_desc: '老师重复性工作量大，无法专注教学设计',
+    partner_pain_1_sol_label: 'AI解决方案',
+    partner_pain_1_sol: 'AI批量生成课程教案、习题和测评，释放教师创造力，让教师专注于核心教学设计和个性化辅导',
+    partner_pain_2_label: '痛点二',
+    partner_pain_2_desc: '教材更新困难，跟不上变化',
+    partner_pain_2_sol_label: 'AI解决方案',
+    partner_pain_2_sol: 'AI实时同步最新知识库，自动生成与时俱进的课程内容，教学材料始终保持新鲜度和竞争力',
+    partner_pain_3_label: '痛点三',
+    partner_pain_3_desc: '学生课程结束容易流失，续费率低',
+    partner_pain_3_sol_label: 'AI解决方案',
+    partner_pain_3_sol: '智能学员管理系统，AI预测流失风险并自动推送个性化学习计划和续费激励，显著提升续费率',
+    partner_pain_4_label: '痛点四',
+    partner_pain_4_desc: '无新的收入增长渠道',
+    partner_pain_4_sol_label: 'AI解决方案',
+    partner_pain_4_sol: '通过平台合作模式，机构可获得课程分发、AI工具授权、品牌联名等多重新型收入来源',
+    // Solutions
+    partner_solution_title: 'AILOS AI机构全套解决方案',
+    partner_solution_sub: 'AI增强教师，而非替代教师 —— 我们相信技术的力量在于赋能，而非取代',
+    partner_solution_1_title: 'AI批量生成课程',
+    partner_solution_1_desc: '基于机构教学目标，AI一键生成完整课程体系：教案、课件、习题、考试卷，大幅降低教研成本，提升课程产出效率300%以上。',
+    partner_solution_2_title: '自动学情分析',
+    partner_solution_2_desc: 'AI实时追踪每位学员的学习数据，自动生成可视化学习报告，精准定位薄弱知识点，为教师提供数据驱动的教学决策支持。',
+    partner_solution_3_title: '个性化AI辅导',
+    partner_solution_3_desc: '每位学员配备专属AI学习伙伴，24小时多语言答疑辅导、口语对话练习、作文批改，让每个学生都能获得个性化关注。',
+    partner_solution_4_title: '智能学员管理',
+    partner_solution_4_desc: 'AI驱动学员全生命周期管理：智能分班、学习进度监控、流失预警、续费推荐，帮助机构实现精细化运营和高效转化。',
+    // Revenue Model
+    partner_revenue_title: '合作收益模式',
+    partner_revenue_sub: '多元化收益渠道，让合作伙伴共享平台增长红利',
+    partner_revenue_1_title: '课程分发收益',
+    partner_revenue_1_desc: '机构课程上架AILOS平台，面向全球学员销售，按销售额获得持续分成收益。',
+    partner_revenue_1_highlight: '最高分成70%',
+    partner_revenue_2_title: 'AI工具授权',
+    partner_revenue_2_desc: '向机构提供AILOS AI工具白标授权，机构可自主定价向学员提供AI辅导服务，获取工具差价收益。',
+    partner_revenue_2_highlight: '灵活定价权',
+    partner_revenue_3_title: '品牌联名合作',
+    partner_revenue_3_desc: '优质合作伙伴可参与AILOS品牌联名计划，获得官方认证背书、联合市场推广和专属流量扶持。',
+    partner_revenue_3_highlight: '品牌增值赋能',
+    partner_revenue_4_title: '平台生态流量分成',
+    partner_revenue_4_desc: '平台自然注册用户产生的课程订单，机构可获得额外5%生态流量分成。无需额外推广投入，即可享受平台自然增长带来的持续收益。',
+    partner_revenue_4_highlight: '额外5%分成',
+    // Tiered Partnership
+    partner_tier_title: '合作分级权益',
+    partner_tier_sub: '三种合作等级，满足不同规模机构的需求，灵活选择最适合的方案',
+    partner_tier_basic_title: '小型工作室',
+    partner_tier_basic_price: '免费',
+    partner_tier_basic_price_sub: '基础合作',
+    partner_tier_basic_f1: 'AI课程生成（每月50课时）',
+    partner_tier_basic_f2: '基础学情分析报告',
+    partner_tier_basic_f3: '标准学员管理系统',
+    partner_tier_basic_f4: '平台课程分发（10%分成）',
+    partner_tier_basic_f5: '在线客服支持',
+    partner_tier_basic_btn: '立即申请',
+    partner_tier_medium_badge: '推荐',
+    partner_tier_medium_title: '中型校区',
+    partner_tier_medium_price: '¥2,999/月',
+    partner_tier_medium_price_sub: '专业合作',
+    partner_tier_medium_f1: 'AI课程生成（每月300课时）',
+    partner_tier_medium_f2: '高级学情分析与预警',
+    partner_tier_medium_f3: '智能学员管理 + 流失预警',
+    partner_tier_medium_f4: '平台课程分发（30%分成）',
+    partner_tier_medium_f5: 'AI工具白标授权',
+    partner_tier_medium_f6: '专属客户经理',
+    partner_tier_medium_f7: 'API接口对接',
+    partner_tier_medium_f8: '平台生态流量分成（额外5%）',
+    partner_tier_medium_btn: '立即申请',
+    partner_tier_premium_title: '连锁品牌',
+    partner_tier_premium_price: '定制报价',
+    partner_tier_premium_price_sub: '战略合作',
+    partner_tier_premium_f1: 'AI课程生成（不限量）',
+    partner_tier_premium_f2: '全量学情分析 + 定制仪表盘',
+    partner_tier_premium_f3: '全功能学员管理系统',
+    partner_tier_premium_f4: '平台课程分发（70%分成）',
+    partner_tier_premium_f5: '品牌联名 + 官方认证',
+    partner_tier_premium_f6: '联合市场推广',
+    partner_tier_premium_f7: '专属技术团队支持',
+    partner_tier_premium_f8: '定制化功能开发',
+    partner_tier_premium_f9: '平台生态流量分成（额外5%）',
+    partner_tier_premium_btn: '联系我们',
+    // Form
+    partner_form_title: '合作申请入口',
+    partner_form_sub: '填写以下信息，我们的合作团队将在3个工作日内与您联系',
+    partner_form_name: '姓名',
+    partner_form_name_placeholder: '请输入您的姓名',
+    partner_form_institution: '机构名称',
+    partner_form_institution_placeholder: '请输入机构名称',
+    partner_form_email: '电子邮箱',
+    partner_form_email_placeholder: '请输入电子邮箱',
+    partner_form_phone: '联系电话',
+    partner_form_phone_placeholder: '请输入联系电话',
+    partner_form_message: '留言（选填）',
+    partner_form_message_placeholder: '请简要描述您的合作意向和需求',
+    partner_form_submit: '提交合作申请',
+    partner_form_success: '提交成功！我们将在3个工作日内与您联系。',
+    partner_footer: '© 2026 AILOS Education Ecosystem. All rights reserved. 让AI赋能每一位教育者。',
+    partner_compliance_note: '平台分佣合规声明：平台自然注册用户佣金归入平台官方账户，机构仅从自有渠道推广订单中获取分佣。平台自主注册用户自动归属平台主账户，按标准两级规则结算。',
+  },
+
+  en: {
+    partner_hero_badge: 'For Educational Institutions',
+    partner_hero_title: 'AILOS Education Ecosystem Partner Program',
+    partner_hero_sub: 'A one-stop AI-powered solution for educational institutions. We enhance teachers with AI, not replace them — helping institutions reduce costs, increase efficiency, and expand revenue streams in the new era of smart education.',
+    partner_hero_cta: 'Apply to Become a Partner',
+    partner_pain_title: 'Traditional EdTech Pain Points vs AILOS Solutions',
+    partner_pain_sub: 'AILOS empowers educational institutions with AI technology, systematically solving the core pain points of the traditional education and training industry',
+    partner_pain_col_traditional: 'Traditional Pain Points',
+    partner_pain_col_ailos: 'AILOS Solution',
+    partner_pain_1_label: 'Pain Point 1',
+    partner_pain_1_desc: 'Teachers overwhelmed by repetitive tasks, unable to focus on instructional design',
+    partner_pain_1_sol_label: 'AI Solution',
+    partner_pain_1_sol: 'AI generates course plans, exercises, and assessments in bulk, freeing teachers to focus on core instructional design and personalized coaching',
+    partner_pain_2_label: 'Pain Point 2',
+    partner_pain_2_desc: 'Difficulty updating teaching materials to keep pace with change',
+    partner_pain_2_sol_label: 'AI Solution',
+    partner_pain_2_sol: 'AI synchronizes the latest knowledge base in real time, automatically generating up-to-date course content that keeps materials fresh and competitive',
+    partner_pain_3_label: 'Pain Point 3',
+    partner_pain_3_desc: 'High student dropout rates after course completion, low renewal rates',
+    partner_pain_3_sol_label: 'AI Solution',
+    partner_pain_3_sol: 'Intelligent student management system with AI-powered churn prediction, automatically pushing personalized learning plans and renewal incentives to significantly boost retention',
+    partner_pain_4_label: 'Pain Point 4',
+    partner_pain_4_desc: 'No new revenue growth channels',
+    partner_pain_4_sol_label: 'AI Solution',
+    partner_pain_4_sol: 'Through the platform partnership model, institutions gain access to course distribution, AI tool licensing, co-branding, and other new revenue streams',
+    partner_solution_title: 'AILOS AI Complete Institutional Solution Suite',
+    partner_solution_sub: 'AI empowers teachers, never replaces them — we believe the power of technology lies in empowerment, not substitution',
+    partner_solution_1_title: 'AI-Powered Bulk Course Generation',
+    partner_solution_1_desc: 'Based on institutional teaching objectives, AI generates complete course systems in one click: lesson plans, slides, exercises, and exams — dramatically reducing curriculum development costs and boosting output efficiency by over 300%.',
+    partner_solution_2_title: 'Automated Learning Analytics',
+    partner_solution_2_desc: 'AI tracks every student\'s learning data in real time, automatically generates visual learning reports, pinpoints weak knowledge areas, and provides data-driven teaching decision support for educators.',
+    partner_solution_3_title: 'Personalized AI Tutoring',
+    partner_solution_3_desc: 'Every student gets a dedicated AI learning partner for 24/7 multilingual Q&A tutoring, speaking practice, and writing correction — ensuring every student receives personalized attention.',
+    partner_solution_4_title: 'Intelligent Student Management',
+    partner_solution_4_desc: 'AI-driven full lifecycle student management: smart class placement, learning progress monitoring, churn early warning, and renewal recommendations — helping institutions achieve refined operations and efficient conversion.',
+    partner_revenue_title: 'Partnership Revenue Model',
+    partner_revenue_sub: 'Diversified revenue channels enabling partners to share in platform growth',
+    partner_revenue_1_title: 'Course Distribution Revenue',
+    partner_revenue_1_desc: 'Institutional courses listed on the AILOS platform for global student sales, earning continuous commission-based revenue.',
+    partner_revenue_1_highlight: 'Up to 70% Commission',
+    partner_revenue_2_title: 'AI Tool Licensing',
+    partner_revenue_2_desc: 'White-label AI tool licensing for institutions, allowing them to independently price and offer AI tutoring services to students for margin-based revenue.',
+    partner_revenue_2_highlight: 'Flexible Pricing',
+    partner_revenue_3_title: 'Co-Branding Partnership',
+    partner_revenue_3_desc: 'Qualified partners can join the AILOS co-branding program, receiving official certification endorsement, joint marketing campaigns, and exclusive traffic support.',
+    partner_revenue_3_highlight: 'Brand Value Enhancement',
+    partner_revenue_4_title: 'Platform Ecosystem Traffic Share',
+    partner_revenue_4_desc: 'Institutions receive an additional 5% ecosystem traffic share on course orders generated by platform natural registered users. Enjoy sustainable revenue from platform organic growth without additional promotion investment.',
+    partner_revenue_4_highlight: 'Extra 5% Share',
+    partner_tier_title: 'Tiered Partnership Benefits',
+    partner_tier_sub: 'Three partnership tiers to meet the needs of institutions of all sizes — choose the plan that fits you best',
+    partner_tier_basic_title: 'Small Studio',
+    partner_tier_basic_price: 'Free',
+    partner_tier_basic_price_sub: 'Basic Partnership',
+    partner_tier_basic_f1: 'AI Course Generation (50 lessons/month)',
+    partner_tier_basic_f2: 'Basic Learning Analytics',
+    partner_tier_basic_f3: 'Standard Student Management',
+    partner_tier_basic_f4: 'Platform Course Distribution (10% commission)',
+    partner_tier_basic_f5: 'Online Customer Support',
+    partner_tier_basic_btn: 'Apply Now',
+    partner_tier_medium_badge: 'Recommended',
+    partner_tier_medium_title: 'Medium Campus',
+    partner_tier_medium_price: '¥2,999/month',
+    partner_tier_medium_price_sub: 'Professional Partnership',
+    partner_tier_medium_f1: 'AI Course Generation (300 lessons/month)',
+    partner_tier_medium_f2: 'Advanced Analytics & Early Warning',
+    partner_tier_medium_f3: 'Smart Management + Churn Prediction',
+    partner_tier_medium_f4: 'Platform Course Distribution (30% commission)',
+    partner_tier_medium_f5: 'AI Tool White-Label Licensing',
+    partner_tier_medium_f6: 'Dedicated Account Manager',
+    partner_tier_medium_f7: 'API Integration',
+    partner_tier_medium_f8: 'Platform Ecosystem Traffic Share (Extra 5%)',
+    partner_tier_medium_btn: 'Apply Now',
+    partner_tier_premium_title: 'Chain Brand',
+    partner_tier_premium_price: 'Custom Quote',
+    partner_tier_premium_price_sub: 'Strategic Partnership',
+    partner_tier_premium_f1: 'AI Course Generation (Unlimited)',
+    partner_tier_premium_f2: 'Full Analytics + Custom Dashboard',
+    partner_tier_premium_f3: 'Full-Featured Student Management',
+    partner_tier_premium_f4: 'Platform Course Distribution (70% commission)',
+    partner_tier_premium_f5: 'Co-Branding + Official Certification',
+    partner_tier_premium_f6: 'Joint Marketing Campaigns',
+    partner_tier_premium_f7: 'Dedicated Tech Team Support',
+    partner_tier_premium_f8: 'Custom Feature Development',
+    partner_tier_premium_f9: 'Platform Ecosystem Traffic Share (Extra 5%)',
+    partner_tier_premium_btn: 'Contact Us',
+    partner_form_title: 'Partnership Application',
+    partner_form_sub: 'Fill in the information below and our partnership team will contact you within 3 business days',
+    partner_form_name: 'Name',
+    partner_form_name_placeholder: 'Please enter your name',
+    partner_form_institution: 'Institution Name',
+    partner_form_institution_placeholder: 'Please enter your institution name',
+    partner_form_email: 'Email',
+    partner_form_email_placeholder: 'Please enter your email',
+    partner_form_phone: 'Phone',
+    partner_form_phone_placeholder: 'Please enter your phone number',
+    partner_form_message: 'Message (Optional)',
+    partner_form_message_placeholder: 'Briefly describe your partnership interests and needs',
+    partner_form_submit: 'Submit Application',
+    partner_form_success: 'Submitted successfully! We will contact you within 3 business days.',
+    partner_footer: '© 2026 AILOS Education Ecosystem. All rights reserved. Empowering every educator with AI.',
+    partner_compliance_note: 'Platform Commission Compliance Statement: Commissions from platform natural registered users are attributed to the platform official account. Institutions only receive commissions from orders generated through their own channel promotions. Platform self-registered users are automatically attributed to the platform master account, settled under standard two-tier rules.',
+  },
+
+  ja: {
+    partner_hero_badge: '教育機関向け',
+    partner_hero_title: 'AILOS教育エコシステムパートナープログラム',
+    partner_hero_sub: '教育機関向けのワンストップAIソリューション。教師をAIで代替するのではなく強化し、コスト削減と効率化、収益拡大を実現し、スマート教育の新たなエコシステムを共に構築します。',
+    partner_hero_cta: 'パートナーに申し込む',
+    partner_pain_title: '従来の教育業界の課題 vs AILOSソリューション',
+    partner_pain_sub: 'AILOSはAI技術で教育機関を支援し、従来の教育研修業界の核心的課題を体系的に解決します',
+    partner_pain_col_traditional: '従来の課題',
+    partner_pain_col_ailos: 'AILOSソリューション',
+    partner_pain_1_label: '課題1',
+    partner_pain_1_desc: '教師の反復作業が多く、授業設計に集中できない',
+    partner_pain_1_sol_label: 'AIソリューション',
+    partner_pain_1_sol: 'AIが教案、演習問題、評価を一括生成し、教師の創造性を解放。教師は中核的な授業設計と個別指導に専念できます',
+    partner_pain_2_label: '課題2',
+    partner_pain_2_desc: '教材の更新が難しく、変化に対応できない',
+    partner_pain_2_sol_label: 'AIソリューション',
+    partner_pain_2_sol: 'AIが最新のナレッジベースをリアルタイム同期し、時代に合ったコースコンテンツを自動生成。教材の新鮮さと競争力を維持します',
+    partner_pain_3_label: '課題3',
+    partner_pain_3_desc: 'コース終了後に学生が離脱しやすく、継続率が低い',
+    partner_pain_3_sol_label: 'AIソリューション',
+    partner_pain_3_sol: 'AIが離脱リスクを予測し、パーソナライズされた学習計画と継続インセンティブを自動配信。継続率を大幅に向上させます',
+    partner_pain_4_label: '課題4',
+    partner_pain_4_desc: '新たな収益チャネルがない',
+    partner_pain_4_sol_label: 'AIソリューション',
+    partner_pain_4_sol: 'プラットフォームパートナーシップモデルを通じて、コース配信、AIツールライセンス、共同ブランディングなど複数の新たな収益源を獲得できます',
+    partner_solution_title: 'AILOS AI機関向けトータルソリューション',
+    partner_solution_sub: 'AIは教師を強化し、決して代替しない —— テクノロジーの力は代替ではなく、エンパワーメントにあると信じています',
+    partner_solution_1_title: 'AI一括コース生成',
+    partner_solution_1_desc: '機関の教育目標に基づき、AIが完全なコース体系をワンクリックで生成：教案、スライド、演習、試験問題。教材開発コストを大幅に削減し、生産効率を300%以上向上させます。',
+    partner_solution_2_title: '自動学習分析',
+    partner_solution_2_desc: 'AIが各学生の学習データをリアルタイムで追跡し、可視化された学習レポートを自動生成。弱点を正確に特定し、データ駆動型の教育判断をサポートします。',
+    partner_solution_3_title: 'パーソナライズAI指導',
+    partner_solution_3_desc: '各学生に専用のAI学習パートナーを提供。24時間多言語での質疑応答、会話練習、作文添削により、すべての学生が個別の注目を得られます。',
+    partner_solution_4_title: 'スマート学生管理',
+    partner_solution_4_desc: 'AI駆動の学生ライフサイクル管理：スマートクラス分け、学習進捗監視、離脱予測、継続推奨により、機関の精緻な運営と効率的なコンバージョンを実現します。',
+    partner_revenue_title: 'パートナーシップ収益モデル',
+    partner_revenue_sub: '多様な収益チャネルで、パートナーがプラットフォーム成長の果実を共有',
+    partner_revenue_1_title: 'コース配信収益',
+    partner_revenue_1_desc: '機関のコースをAILOSプラットフォームに掲載し、世界中の学生に販売。売上に応じた継続的なコミッション収益を得られます。',
+    partner_revenue_1_highlight: '最大70%コミッション',
+    partner_revenue_2_title: 'AIツールライセンス',
+    partner_revenue_2_desc: 'AILOS AIツールのホワイトラベルライセンスを機関に提供。機関が独自に価格設定し、学生にAI指導サービスを提供してマージン収益を得られます。',
+    partner_revenue_2_highlight: '柔軟な価格設定',
+    partner_revenue_3_title: '共同ブランディング',
+    partner_revenue_3_desc: '優良パートナーはAILOS共同ブランディングプログラムに参加可能。公式認証、共同マーケティング、専用トラフィック支援を受けられます。',
+    partner_revenue_3_highlight: 'ブランド価値向上',
+    partner_revenue_4_title: 'プラットフォームエコシステムトラフィック分配',
+    partner_revenue_4_desc: 'プラットフォーム自然登録ユーザーによるコース注文に対し、機関は追加5%のエコシステムトラフィック分配を獲得できます。追加のプロモーション投資なしで、プラットフォームの有機的成長による持続的な収益を享受できます。',
+    partner_revenue_4_highlight: '追加5%分配',
+    partner_tier_title: 'パートナーシップ等級別特典',
+    partner_tier_sub: '3つのパートナーシップ等級で、あらゆる規模の機関のニーズに対応。最適なプランを柔軟に選択できます',
+    partner_tier_basic_title: '小規模スタジオ',
+    partner_tier_basic_price: '無料',
+    partner_tier_basic_price_sub: 'ベーシックパートナーシップ',
+    partner_tier_basic_f1: 'AIコース生成（月50レッスン）',
+    partner_tier_basic_f2: '基本学習分析レポート',
+    partner_tier_basic_f3: '標準学生管理システム',
+    partner_tier_basic_f4: 'プラットフォームコース配信（10%コミッション）',
+    partner_tier_basic_f5: 'オンラインカスタマーサポート',
+    partner_tier_basic_btn: '今すぐ申し込む',
+    partner_tier_medium_badge: 'おすすめ',
+    partner_tier_medium_title: '中規模キャンパス',
+    partner_tier_medium_price: '¥2,999/月',
+    partner_tier_medium_price_sub: 'プロフェッショナルパートナーシップ',
+    partner_tier_medium_f1: 'AIコース生成（月300レッスン）',
+    partner_tier_medium_f2: '高度な学習分析と早期警告',
+    partner_tier_medium_f3: 'スマート管理 + 離脱予測',
+    partner_tier_medium_f4: 'プラットフォームコース配信（30%コミッション）',
+    partner_tier_medium_f5: 'AIツールホワイトラベルライセンス',
+    partner_tier_medium_f6: '専任アカウントマネージャー',
+    partner_tier_medium_f7: 'API連携',
+    partner_tier_medium_f8: 'プラットフォームエコシステムトラフィック分配（追加5%）',
+    partner_tier_medium_btn: '今すぐ申し込む',
+    partner_tier_premium_title: 'チェーンブランド',
+    partner_tier_premium_price: 'カスタム見積もり',
+    partner_tier_premium_price_sub: '戦略的パートナーシップ',
+    partner_tier_premium_f1: 'AIコース生成（無制限）',
+    partner_tier_premium_f2: 'フル分析 + カスタムダッシュボード',
+    partner_tier_premium_f3: 'フル機能学生管理システム',
+    partner_tier_premium_f4: 'プラットフォームコース配信（70%コミッション）',
+    partner_tier_premium_f5: '共同ブランディング + 公式認証',
+    partner_tier_premium_f6: '共同マーケティングキャンペーン',
+    partner_tier_premium_f7: '専任技術チームサポート',
+    partner_tier_premium_f8: 'カスタム機能開発',
+    partner_tier_premium_f9: 'プラットフォームエコシステムトラフィック分配（追加5%）',
+    partner_tier_premium_btn: 'お問い合わせ',
+    partner_form_title: 'パートナーシップ申込',
+    partner_form_sub: '以下の情報を入力してください。パートナーシップチームが3営業日以内にご連絡します',
+    partner_form_name: 'お名前',
+    partner_form_name_placeholder: 'お名前を入力してください',
+    partner_form_institution: '機関名',
+    partner_form_institution_placeholder: '機関名を入力してください',
+    partner_form_email: 'メールアドレス',
+    partner_form_email_placeholder: 'メールアドレスを入力してください',
+    partner_form_phone: '電話番号',
+    partner_form_phone_placeholder: '電話番号を入力してください',
+    partner_form_message: 'メッセージ（任意）',
+    partner_form_message_placeholder: 'パートナーシップの意向やニーズを簡単に説明してください',
+    partner_form_submit: '申し込みを送信',
+    partner_form_success: '送信が完了しました！3営業日以内にご連絡いたします。',
+    partner_footer: '© 2026 AILOS Education Ecosystem. All rights reserved. AIですべての教育者をエンパワーメント。',
+    partner_compliance_note: 'プラットフォームコミッションコンプライアンス声明：プラットフォーム自然登録ユーザーのコミッションはプラットフォーム公式アカウントに帰属します。機関は自社チャネルプロモーションを通じて発生した注文からのみコミッションを取得します。プラットフォーム自主登録ユーザーは自動的にプラットフォームマスターアカウントに帰属し、標準の二段階ルールで決済されます。',
+  },
+
+  ko: {
+    partner_hero_badge: '교육 기관 대상',
+    partner_hero_title: 'AILOS 교육 생태계 파트너 프로그램',
+    partner_hero_sub: '교육 기관을 위한 원스톱 AI 솔루션. AI로 교사를 대체하는 것이 아니라 역량을 강화하여 비용 절감, 효율성 증대, 수익 확장을 실현하고 스마트 교육의 새로운 생태계를 함께 구축합니다.',
+    partner_hero_cta: '파트너 신청하기',
+    partner_pain_title: '전통 교육 산업의 문제점 vs AILOS 솔루션',
+    partner_pain_sub: 'AILOS는 AI 기술로 교육 기관을 지원하여 전통 교육 훈련 산업의 핵심 문제점을 체계적으로 해결합니다',
+    partner_pain_col_traditional: '전통적 문제점',
+    partner_pain_col_ailos: 'AILOS 솔루션',
+    partner_pain_1_label: '문제점 1',
+    partner_pain_1_desc: '교사의 반복 작업 과다로 수업 설계에 집중할 수 없음',
+    partner_pain_1_sol_label: 'AI 솔루션',
+    partner_pain_1_sol: 'AI가 수업 계획, 연습 문제, 평가를 대량 생성하여 교사의 창의성을 해방하고 핵심 수업 설계와 개인별 지도에 집중할 수 있게 합니다',
+    partner_pain_2_label: '문제점 2',
+    partner_pain_2_desc: '교재 업데이트가 어려워 변화에 대응하지 못함',
+    partner_pain_2_sol_label: 'AI 솔루션',
+    partner_pain_2_sol: 'AI가 최신 지식 베이스를 실시간 동기화하여 시대에 맞는 코스 콘텐츠를 자동 생성. 교재의 신선도와 경쟁력을 유지합니다',
+    partner_pain_3_label: '문제점 3',
+    partner_pain_3_desc: '코스 종료 후 학생 이탈이 쉽고 재등록률이 낮음',
+    partner_pain_3_sol_label: 'AI 솔루션',
+    partner_pain_3_sol: 'AI가 이탈 위험을 예측하고 개인화된 학습 계획과 재등록 인센티브를 자동 푸시하여 재등록률을 크게 향상시킵니다',
+    partner_pain_4_label: '문제점 4',
+    partner_pain_4_desc: '새로운 수익 창출 채널 부재',
+    partner_pain_4_sol_label: 'AI 솔루션',
+    partner_pain_4_sol: '플랫폼 파트너십 모델을 통해 코스 유통, AI 도구 라이선스, 공동 브랜딩 등 다양한 새로운 수익원을 확보할 수 있습니다',
+    partner_solution_title: 'AILOS AI 기관 종합 솔루션',
+    partner_solution_sub: 'AI는 교사를 대체하는 것이 아니라 강화합니다 — 기술의 힘은 대체가 아닌 역량 강화에 있다고 믿습니다',
+    partner_solution_1_title: 'AI 대량 코스 생성',
+    partner_solution_1_desc: '기관의 교육 목표에 기반하여 AI가 완전한 코스 체계를 원클릭으로 생성: 수업 계획, 슬라이드, 연습 문제, 시험지. 교재 개발 비용을 대폭 줄이고 생산 효율을 300% 이상 향상시킵니다.',
+    partner_solution_2_title: '자동 학습 분석',
+    partner_solution_2_desc: 'AI가 각 학생의 학습 데이터를 실시간 추적하고 시각화된 학습 보고서를 자동 생성. 취약 지식 포인트를 정확히 파악하여 데이터 기반 교육 의사 결정을 지원합니다.',
+    partner_solution_3_title: '개인화 AI 튜터링',
+    partner_solution_3_desc: '각 학생에게 전용 AI 학습 파트너를 제공. 24시간 다국어 질의응답, 회화 연습, 작문 첨삭을 통해 모든 학생이 개인별 관심을 받을 수 있습니다.',
+    partner_solution_4_title: '스마트 학생 관리',
+    partner_solution_4_desc: 'AI 기반 학생 생애주기 관리: 스마트 반 배정, 학습 진도 모니터링, 이탈 조기 경보, 재등록 추천을 통해 기관의 정밀 운영과 효율적 전환을 실현합니다.',
+    partner_revenue_title: '파트너십 수익 모델',
+    partner_revenue_sub: '다양한 수익 채널로 파트너가 플랫폼 성장의 혜택을 공유',
+    partner_revenue_1_title: '코스 유통 수익',
+    partner_revenue_1_desc: '기관의 코스를 AILOS 플랫폼에 등록하여 전 세계 학생에게 판매. 판매액에 따른 지속적인 수수료 수익을 얻을 수 있습니다.',
+    partner_revenue_1_highlight: '최대 70% 수수료',
+    partner_revenue_2_title: 'AI 도구 라이선스',
+    partner_revenue_2_desc: 'AILOS AI 도구의 화이트 라벨 라이선스를 기관에 제공. 기관이 자체 가격을 책정하여 학생에게 AI 튜터링 서비스를 제공하고 마진 수익을 얻을 수 있습니다.',
+    partner_revenue_2_highlight: '유연한 가격 책정',
+    partner_revenue_3_title: '공동 브랜딩 파트너십',
+    partner_revenue_3_desc: '우수 파트너는 AILOS 공동 브랜딩 프로그램에 참여 가능. 공식 인증, 공동 마케팅, 전용 트래픽 지원을 받을 수 있습니다.',
+    partner_revenue_3_highlight: '브랜드 가치 향상',
+    partner_revenue_4_title: '플랫폼 생태계 트래픽 공유',
+    partner_revenue_4_desc: '플랫폼 자연 등록 사용자가 생성한 코스 주문에 대해 기관은 추가 5% 생태계 트래픽 공유를 받습니다. 추가 프로모션 투자 없이 플랫폼 유기적 성장에 따른 지속적인 수익을 누릴 수 있습니다.',
+    partner_revenue_4_highlight: '추가 5% 공유',
+    partner_tier_title: '파트너십 등급별 혜택',
+    partner_tier_sub: '3가지 파트너십 등급으로 모든 규모의 기관 니즈에 대응. 가장 적합한 플랜을 유연하게 선택하세요',
+    partner_tier_basic_title: '소규모 스튜디오',
+    partner_tier_basic_price: '무료',
+    partner_tier_basic_price_sub: '기본 파트너십',
+    partner_tier_basic_f1: 'AI 코스 생성 (월 50레슨)',
+    partner_tier_basic_f2: '기본 학습 분석 보고서',
+    partner_tier_basic_f3: '표준 학생 관리 시스템',
+    partner_tier_basic_f4: '플랫폼 코스 유통 (10% 수수료)',
+    partner_tier_basic_f5: '온라인 고객 지원',
+    partner_tier_basic_btn: '지금 신청',
+    partner_tier_medium_badge: '추천',
+    partner_tier_medium_title: '중형 캠퍼스',
+    partner_tier_medium_price: '¥2,999/월',
+    partner_tier_medium_price_sub: '전문 파트너십',
+    partner_tier_medium_f1: 'AI 코스 생성 (월 300레슨)',
+    partner_tier_medium_f2: '고급 분석 및 조기 경보',
+    partner_tier_medium_f3: '스마트 관리 + 이탈 예측',
+    partner_tier_medium_f4: '플랫폼 코스 유통 (30% 수수료)',
+    partner_tier_medium_f5: 'AI 도구 화이트 라벨 라이선스',
+    partner_tier_medium_f6: '전담 계정 관리자',
+    partner_tier_medium_f7: 'API 연동',
+    partner_tier_medium_f8: '플랫폼 생태계 트래픽 공유 (추가 5%)',
+    partner_tier_medium_btn: '지금 신청',
+    partner_tier_premium_title: '체인 브랜드',
+    partner_tier_premium_price: '맞춤 견적',
+    partner_tier_premium_price_sub: '전략적 파트너십',
+    partner_tier_premium_f1: 'AI 코스 생성 (무제한)',
+    partner_tier_premium_f2: '전체 분석 + 맞춤 대시보드',
+    partner_tier_premium_f3: '풀 기능 학생 관리 시스템',
+    partner_tier_premium_f4: '플랫폼 코스 유통 (70% 수수료)',
+    partner_tier_premium_f5: '공동 브랜딩 + 공식 인증',
+    partner_tier_premium_f6: '공동 마케팅 캠페인',
+    partner_tier_premium_f7: '전담 기술팀 지원',
+    partner_tier_premium_f8: '맞춤형 기능 개발',
+    partner_tier_premium_f9: '플랫폼 생태계 트래픽 공유 (추가 5%)',
+    partner_tier_premium_btn: '문의하기',
+    partner_form_title: '파트너십 신청',
+    partner_form_sub: '아래 정보를 입력하세요. 파트너십 팀이 영업일 기준 3일 이내에 연락드립니다',
+    partner_form_name: '이름',
+    partner_form_name_placeholder: '이름을 입력하세요',
+    partner_form_institution: '기관명',
+    partner_form_institution_placeholder: '기관명을 입력하세요',
+    partner_form_email: '이메일',
+    partner_form_email_placeholder: '이메일을 입력하세요',
+    partner_form_phone: '전화번호',
+    partner_form_phone_placeholder: '전화번호를 입력하세요',
+    partner_form_message: '메시지 (선택사항)',
+    partner_form_message_placeholder: '파트너십 의향과 필요사항을 간략히 설명해 주세요',
+    partner_form_submit: '신청서 제출',
+    partner_form_success: '제출이 완료되었습니다! 영업일 기준 3일 이내에 연락드리겠습니다.',
+    partner_footer: '© 2026 AILOS Education Ecosystem. All rights reserved. AI로 모든 교육자를 강화합니다.',
+    partner_compliance_note: '플랫폼 수수료 준수 선언: 플랫폼 자연 등록 사용자의 수수료는 플랫폼 공식 계정에 귀속됩니다. 기관은 자체 채널 프로모션을 통해 발생한 주문에서만 수수료를 받습니다. 플랫폼 자체 등록 사용자는 자동으로 플랫폼 마스터 계정에 귀속되며, 표준 2단계 규칙에 따라 정산됩니다.',
+  },
+
+  fr: {
+    partner_hero_badge: 'Pour les établissements d\'enseignement',
+    partner_hero_title: 'Programme Partenaire de l\'Écosystème Éducatif AILOS',
+    partner_hero_sub: 'Une solution IA tout-en-un pour les établissements d\'enseignement. Nous renforçons les enseignants avec l\'IA, sans les remplacer — aidant les établissements à réduire les coûts, augmenter l\'efficacité et développer leurs revenus dans la nouvelle ère de l\'éducation intelligente.',
+    partner_hero_cta: 'Devenir partenaire',
+    partner_pain_title: 'Points faibles de l\'enseignement traditionnel vs Solutions AILOS',
+    partner_pain_sub: 'AILOS donne aux établissements les moyens de l\'IA pour résoudre systématiquement les problèmes fondamentaux du secteur éducatif traditionnel',
+    partner_pain_col_traditional: 'Points faibles traditionnels',
+    partner_pain_col_ailos: 'Solution AILOS',
+    partner_pain_1_label: 'Problème 1',
+    partner_pain_1_desc: 'Enseignants submergés par les tâches répétitives, incapables de se concentrer sur la conception pédagogique',
+    partner_pain_1_sol_label: 'Solution IA',
+    partner_pain_1_sol: 'L\'IA génère en masse des plans de cours, exercices et évaluations, libérant la créativité des enseignants pour qu\'ils se concentrent sur la conception pédagogique et le coaching personnalisé',
+    partner_pain_2_label: 'Problème 2',
+    partner_pain_2_desc: 'Difficulté à mettre à jour les supports pédagogiques pour suivre le rythme des changements',
+    partner_pain_2_sol_label: 'Solution IA',
+    partner_pain_2_sol: 'L\'IA synchronise la base de connaissances en temps réel, générant automatiquement un contenu de cours actualisé qui maintient la fraîcheur et la compétitivité des supports',
+    partner_pain_3_label: 'Problème 3',
+    partner_pain_3_desc: 'Taux élevé d\'abandon des étudiants après les cours, faible taux de renouvellement',
+    partner_pain_3_sol_label: 'Solution IA',
+    partner_pain_3_sol: 'Système intelligent de gestion des étudiants avec prédiction des abandons par IA, envoyant automatiquement des plans d\'apprentissage personnalisés et des incitations au renouvellement pour augmenter significativement la rétention',
+    partner_pain_4_label: 'Problème 4',
+    partner_pain_4_desc: 'Aucun nouveau canal de croissance des revenus',
+    partner_pain_4_sol_label: 'Solution IA',
+    partner_pain_4_sol: 'Grâce au modèle de partenariat de la plateforme, les établissements accèdent à la distribution de cours, aux licences d\'outils IA, au co-branding et à d\'autres nouvelles sources de revenus',
+    partner_solution_title: 'Suite complète de solutions institutionnelles AILOS',
+    partner_solution_sub: 'L\'IA renforce les enseignants, ne les remplace jamais — nous croyons que la puissance de la technologie réside dans l\'autonomisation, non la substitution',
+    partner_solution_1_title: 'Génération de cours en masse par IA',
+    partner_solution_1_desc: 'Basé sur les objectifs pédagogiques de l\'établissement, l\'IA génère des systèmes de cours complets en un clic : plans de cours, diapositives, exercices et examens — réduisant considérablement les coûts de développement et augmentant l\'efficacité de plus de 300%.',
+    partner_solution_2_title: 'Analyse automatisée de l\'apprentissage',
+    partner_solution_2_desc: 'L\'IA suit en temps réel les données de chaque étudiant, génère automatiquement des rapports visuels, identifie précisément les lacunes et fournit un support décisionnel basé sur les données pour les enseignants.',
+    partner_solution_3_title: 'Tutorat IA personnalisé',
+    partner_solution_3_desc: 'Chaque étudiant bénéficie d\'un partenaire d\'apprentissage IA dédié pour un tutorat multilingue 24h/24, une pratique de la conversation et une correction d\'écriture — garantissant une attention personnalisée pour chaque étudiant.',
+    partner_solution_4_title: 'Gestion intelligente des étudiants',
+    partner_solution_4_desc: 'Gestion du cycle de vie complet des étudiants pilotée par l\'IA : placement intelligent, suivi des progrès, alerte précoce d\'abandon et recommandations de renouvellement — pour une exploitation raffinée et une conversion efficace.',
+    partner_revenue_title: 'Modèle de revenus du partenariat',
+    partner_revenue_sub: 'Des canaux de revenus diversifiés permettant aux partenaires de partager la croissance de la plateforme',
+    partner_revenue_1_title: 'Revenus de distribution de cours',
+    partner_revenue_1_desc: 'Les cours des établissements sont listés sur la plateforme AILOS pour une vente mondiale, générant des commissions continues basées sur les ventes.',
+    partner_revenue_1_highlight: 'Jusqu\'à 70% de commission',
+    partner_revenue_2_title: 'Licence d\'outils IA',
+    partner_revenue_2_desc: 'Licence en marque blanche des outils IA AILOS pour les établissements, leur permettant de fixer leurs propres prix et d\'offrir des services de tutorat IA aux étudiants.',
+    partner_revenue_2_highlight: 'Tarification flexible',
+    partner_revenue_3_title: 'Partenariat de co-branding',
+    partner_revenue_3_desc: 'Les partenaires qualifiés peuvent rejoindre le programme de co-branding AILOS, bénéficiant d\'une certification officielle, de campagnes marketing conjointes et d\'un soutien de trafic exclusif.',
+    partner_revenue_3_highlight: 'Valorisation de la marque',
+    partner_revenue_4_title: 'Partage du trafic de l\'écosystème',
+    partner_revenue_4_desc: 'Les établissements reçoivent un partage supplémentaire de 5% du trafic écosystémique sur les commandes de cours générées par les utilisateurs inscrits naturellement sur la plateforme. Profitez de revenus durables issus de la croissance organique de la plateforme sans investissement promotionnel supplémentaire.',
+    partner_revenue_4_highlight: '5% supplémentaire',
+    partner_tier_title: 'Avantages du partenariat par niveau',
+    partner_tier_sub: 'Trois niveaux de partenariat pour répondre aux besoins des établissements de toutes tailles — choisissez le plan qui vous convient le mieux',
+    partner_tier_basic_title: 'Petit Studio',
+    partner_tier_basic_price: 'Gratuit',
+    partner_tier_basic_price_sub: 'Partenariat de base',
+    partner_tier_basic_f1: 'Génération IA de cours (50 leçons/mois)',
+    partner_tier_basic_f2: 'Analyse d\'apprentissage de base',
+    partner_tier_basic_f3: 'Gestion standard des étudiants',
+    partner_tier_basic_f4: 'Distribution de cours (10% de commission)',
+    partner_tier_basic_f5: 'Support client en ligne',
+    partner_tier_basic_btn: 'Postuler',
+    partner_tier_medium_badge: 'Recommandé',
+    partner_tier_medium_title: 'Campus Moyen',
+    partner_tier_medium_price: '¥2,999/mois',
+    partner_tier_medium_price_sub: 'Partenariat professionnel',
+    partner_tier_medium_f1: 'Génération IA de cours (300 leçons/mois)',
+    partner_tier_medium_f2: 'Analyse avancée et alerte précoce',
+    partner_tier_medium_f3: 'Gestion intelligente + prédiction d\'abandon',
+    partner_tier_medium_f4: 'Distribution de cours (30% de commission)',
+    partner_tier_medium_f5: 'Licence en marque blanche des outils IA',
+    partner_tier_medium_f6: 'Gestionnaire de compte dédié',
+    partner_tier_medium_f7: 'Intégration API',
+    partner_tier_medium_f8: 'Partage du trafic écosystémique (5% supplémentaire)',
+    partner_tier_medium_btn: 'Postuler',
+    partner_tier_premium_title: 'Marque en Réseau',
+    partner_tier_premium_price: 'Devis personnalisé',
+    partner_tier_premium_price_sub: 'Partenariat stratégique',
+    partner_tier_premium_f1: 'Génération IA de cours (Illimitée)',
+    partner_tier_premium_f2: 'Analyse complète + tableau de bord personnalisé',
+    partner_tier_premium_f3: 'Gestion complète des étudiants',
+    partner_tier_premium_f4: 'Distribution de cours (70% de commission)',
+    partner_tier_premium_f5: 'Co-branding + Certification officielle',
+    partner_tier_premium_f6: 'Campagnes marketing conjointes',
+    partner_tier_premium_f7: 'Support technique dédié',
+    partner_tier_premium_f8: 'Développement de fonctionnalités sur mesure',
+    partner_tier_premium_f9: 'Partage du trafic écosystémique (5% supplémentaire)',
+    partner_tier_premium_btn: 'Nous contacter',
+    partner_form_title: 'Demande de partenariat',
+    partner_form_sub: 'Remplissez les informations ci-dessous et notre équipe partenariat vous contactera sous 3 jours ouvrés',
+    partner_form_name: 'Nom',
+    partner_form_name_placeholder: 'Veuillez entrer votre nom',
+    partner_form_institution: 'Nom de l\'établissement',
+    partner_form_institution_placeholder: 'Veuillez entrer le nom de votre établissement',
+    partner_form_email: 'E-mail',
+    partner_form_email_placeholder: 'Veuillez entrer votre e-mail',
+    partner_form_phone: 'Téléphone',
+    partner_form_phone_placeholder: 'Veuillez entrer votre numéro de téléphone',
+    partner_form_message: 'Message (Optionnel)',
+    partner_form_message_placeholder: 'Décrivez brièvement vos intérêts et besoins de partenariat',
+    partner_form_submit: 'Soumettre la demande',
+    partner_form_success: 'Soumis avec succès ! Nous vous contacterons sous 3 jours ouvrés.',
+    partner_footer: '© 2026 AILOS Education Ecosystem. Tous droits réservés. Donner à chaque éducateur le pouvoir de l\'IA.',
+    partner_compliance_note: 'Déclaration de conformité des commissions de la plateforme : Les commissions des utilisateurs inscrits naturellement sur la plateforme sont attribuées au compte officiel de la plateforme. Les établissements ne reçoivent des commissions que sur les commandes générées par leurs propres promotions de canal. Les utilisateurs auto-inscrits sont automatiquement attribués au compte maître de la plateforme, réglés selon les règles standard à deux niveaux.',
+  },
+
+  es: {
+    partner_hero_badge: 'Para instituciones educativas',
+    partner_hero_title: 'Programa de Socios del Ecosistema Educativo AILOS',
+    partner_hero_sub: 'Una solución integral de IA para instituciones educativas. Potenciamos a los docentes con IA, sin reemplazarlos — ayudando a las instituciones a reducir costos, aumentar la eficiencia y expandir sus ingresos en la nueva era de la educación inteligente.',
+    partner_hero_cta: 'Solicitar ser socio',
+    partner_pain_title: 'Problemas de la educación tradicional vs Soluciones AILOS',
+    partner_pain_sub: 'AILOS potencia a las instituciones educativas con tecnología IA, resolviendo sistemáticamente los problemas centrales de la industria educativa tradicional',
+    partner_pain_col_traditional: 'Problemas tradicionales',
+    partner_pain_col_ailos: 'Solución AILOS',
+    partner_pain_1_label: 'Problema 1',
+    partner_pain_1_desc: 'Docentes abrumados por tareas repetitivas, sin poder enfocarse en el diseño instruccional',
+    partner_pain_1_sol_label: 'Solución IA',
+    partner_pain_1_sol: 'La IA genera planes de clase, ejercicios y evaluaciones en masa, liberando la creatividad docente para que se concentren en el diseño instruccional y la tutoría personalizada',
+    partner_pain_2_label: 'Problema 2',
+    partner_pain_2_desc: 'Dificultad para actualizar materiales didácticos al ritmo del cambio',
+    partner_pain_2_sol_label: 'Solución IA',
+    partner_pain_2_sol: 'La IA sincroniza la base de conocimientos en tiempo real, generando automáticamente contenido actualizado que mantiene los materiales frescos y competitivos',
+    partner_pain_3_label: 'Problema 3',
+    partner_pain_3_desc: 'Alta tasa de abandono estudiantil tras finalizar cursos, baja tasa de renovación',
+    partner_pain_3_sol_label: 'Solución IA',
+    partner_pain_3_sol: 'Sistema inteligente de gestión de estudiantes con predicción de abandono por IA, enviando automáticamente planes de aprendizaje personalizados e incentivos de renovación para aumentar significativamente la retención',
+    partner_pain_4_label: 'Problema 4',
+    partner_pain_4_desc: 'Sin nuevos canales de crecimiento de ingresos',
+    partner_pain_4_sol_label: 'Solución IA',
+    partner_pain_4_sol: 'A través del modelo de asociación de la plataforma, las instituciones acceden a distribución de cursos, licencias de herramientas IA, co-branding y otras nuevas fuentes de ingresos',
+    partner_solution_title: 'Suite completa de soluciones institucionales AILOS',
+    partner_solution_sub: 'La IA potencia a los docentes, nunca los reemplaza — creemos que el poder de la tecnología está en el empoderamiento, no en la sustitución',
+    partner_solution_1_title: 'Generación masiva de cursos con IA',
+    partner_solution_1_desc: 'Basado en los objetivos de enseñanza institucional, la IA genera sistemas completos de cursos en un clic: planes de clase, diapositivas, ejercicios y exámenes — reduciendo drásticamente los costos de desarrollo curricular y aumentando la eficiencia en más del 300%.',
+    partner_solution_2_title: 'Análisis automatizado del aprendizaje',
+    partner_solution_2_desc: 'La IA rastrea en tiempo real los datos de cada estudiante, genera automáticamente informes visuales de aprendizaje, identifica con precisión las áreas débiles y proporciona soporte para decisiones docentes basadas en datos.',
+    partner_solution_3_title: 'Tutoría personalizada con IA',
+    partner_solution_3_desc: 'Cada estudiante recibe un compañero de aprendizaje IA dedicado para tutoría multilingüe 24/7, práctica de conversación y corrección de escritura — garantizando atención personalizada para cada estudiante.',
+    partner_solution_4_title: 'Gestión inteligente de estudiantes',
+    partner_solution_4_desc: 'Gestión del ciclo de vida completo del estudiante impulsada por IA: colocación inteligente, monitoreo de progreso, alerta temprana de abandono y recomendaciones de renovación — para una operación refinada y conversión eficiente.',
+    partner_revenue_title: 'Modelo de ingresos de la asociación',
+    partner_revenue_sub: 'Canales de ingresos diversificados para que los socios compartan el crecimiento de la plataforma',
+    partner_revenue_1_title: 'Ingresos por distribución de cursos',
+    partner_revenue_1_desc: 'Los cursos de la institución se listan en la plataforma AILOS para venta global, generando comisiones continuas basadas en las ventas.',
+    partner_revenue_1_highlight: 'Hasta 70% de comisión',
+    partner_revenue_2_title: 'Licencia de herramientas IA',
+    partner_revenue_2_desc: 'Licencia de marca blanca de herramientas IA AILOS para instituciones, permitiéndoles fijar sus propios precios y ofrecer servicios de tutoría IA a los estudiantes.',
+    partner_revenue_2_highlight: 'Precios flexibles',
+    partner_revenue_3_title: 'Asociación de co-branding',
+    partner_revenue_3_desc: 'Los socios calificados pueden unirse al programa de co-branding AILOS, recibiendo certificación oficial, campañas de marketing conjuntas y soporte de tráfico exclusivo.',
+    partner_revenue_3_highlight: 'Valorización de marca',
+    partner_revenue_4_title: 'Participación en el tráfico del ecosistema',
+    partner_revenue_4_desc: 'Las instituciones reciben un 5% adicional de participación en el tráfico del ecosistema sobre los pedidos de cursos generados por usuarios registrados naturalmente en la plataforma. Disfrute de ingresos sostenibles del crecimiento orgánico de la plataforma sin inversión promocional adicional.',
+    partner_revenue_4_highlight: '5% adicional',
+    partner_tier_title: 'Beneficios de asociación por niveles',
+    partner_tier_sub: 'Tres niveles de asociación para satisfacer las necesidades de instituciones de todos los tamaños — elija el plan que mejor se adapte a usted',
+    partner_tier_basic_title: 'Pequeño Estudio',
+    partner_tier_basic_price: 'Gratis',
+    partner_tier_basic_price_sub: 'Asociación básica',
+    partner_tier_basic_f1: 'Generación IA de cursos (50 lecciones/mes)',
+    partner_tier_basic_f2: 'Análisis de aprendizaje básico',
+    partner_tier_basic_f3: 'Gestión estándar de estudiantes',
+    partner_tier_basic_f4: 'Distribución de cursos (10% de comisión)',
+    partner_tier_basic_f5: 'Soporte al cliente en línea',
+    partner_tier_basic_btn: 'Solicitar ahora',
+    partner_tier_medium_badge: 'Recomendado',
+    partner_tier_medium_title: 'Campus Mediano',
+    partner_tier_medium_price: '¥2,999/mes',
+    partner_tier_medium_price_sub: 'Asociación profesional',
+    partner_tier_medium_f1: 'Generación IA de cursos (300 lecciones/mes)',
+    partner_tier_medium_f2: 'Análisis avanzado y alerta temprana',
+    partner_tier_medium_f3: 'Gestión inteligente + predicción de abandono',
+    partner_tier_medium_f4: 'Distribución de cursos (30% de comisión)',
+    partner_tier_medium_f5: 'Licencia de marca blanca de herramientas IA',
+    partner_tier_medium_f6: 'Gerente de cuenta dedicado',
+    partner_tier_medium_f7: 'Integración API',
+    partner_tier_medium_f8: 'Participación tráfico ecosistema (5% adicional)',
+    partner_tier_medium_btn: 'Solicitar ahora',
+    partner_tier_premium_title: 'Marca en Cadena',
+    partner_tier_premium_price: 'Cotización personalizada',
+    partner_tier_premium_price_sub: 'Asociación estratégica',
+    partner_tier_premium_f1: 'Generación IA de cursos (Ilimitada)',
+    partner_tier_premium_f2: 'Análisis completo + panel personalizado',
+    partner_tier_premium_f3: 'Gestión completa de estudiantes',
+    partner_tier_premium_f4: 'Distribución de cursos (70% de comisión)',
+    partner_tier_premium_f5: 'Co-branding + Certificación oficial',
+    partner_tier_premium_f6: 'Campañas de marketing conjuntas',
+    partner_tier_premium_f7: 'Soporte técnico dedicado',
+    partner_tier_premium_f8: 'Desarrollo de funciones personalizadas',
+    partner_tier_premium_f9: 'Participación tráfico ecosistema (5% adicional)',
+    partner_tier_premium_btn: 'Contáctenos',
+    partner_form_title: 'Solicitud de asociación',
+    partner_form_sub: 'Complete la información a continuación y nuestro equipo de asociaciones se pondrá en contacto con usted en un plazo de 3 días hábiles',
+    partner_form_name: 'Nombre',
+    partner_form_name_placeholder: 'Ingrese su nombre',
+    partner_form_institution: 'Nombre de la institución',
+    partner_form_institution_placeholder: 'Ingrese el nombre de su institución',
+    partner_form_email: 'Correo electrónico',
+    partner_form_email_placeholder: 'Ingrese su correo electrónico',
+    partner_form_phone: 'Teléfono',
+    partner_form_phone_placeholder: 'Ingrese su número de teléfono',
+    partner_form_message: 'Mensaje (Opcional)',
+    partner_form_message_placeholder: 'Describa brevemente sus intereses y necesidades de asociación',
+    partner_form_submit: 'Enviar solicitud',
+    partner_form_success: 'Enviado con éxito. Nos pondremos en contacto en un plazo de 3 días hábiles.',
+    partner_footer: '© 2026 AILOS Education Ecosystem. Todos los derechos reservados. Potenciando a cada educador con IA.',
+    partner_compliance_note: 'Declaración de cumplimiento de comisiones de la plataforma: Las comisiones de los usuarios registrados naturalmente en la plataforma se atribuyen a la cuenta oficial de la plataforma. Las instituciones solo reciben comisiones de los pedidos generados a través de sus propias promociones de canal. Los usuarios auto-registrados en la plataforma se atribuyen automáticamente a la cuenta maestra de la plataforma, liquidándose según las reglas estándar de dos niveles.',
+  },
+
+  de: {
+    partner_hero_badge: 'Für Bildungseinrichtungen',
+    partner_hero_title: 'AILOS Bildungspartnerprogramm',
+    partner_hero_sub: 'Eine umfassende KI-gestützte Lösung für Bildungseinrichtungen. Wir stärken Lehrkräfte mit KI, ohne sie zu ersetzen — wir helfen Einrichtungen, Kosten zu senken, Effizienz zu steigern und Einnahmen in der neuen Ära der intelligenten Bildung zu erweitern.',
+    partner_hero_cta: 'Jetzt Partner werden',
+    partner_pain_title: 'Herausforderungen der traditionellen Bildung vs AILOS-Lösungen',
+    partner_pain_sub: 'AILOS befähigt Bildungseinrichtungen mit KI-Technologie, um die Kernprobleme der traditionellen Bildungsbranche systematisch zu lösen',
+    partner_pain_col_traditional: 'Traditionelle Herausforderungen',
+    partner_pain_col_ailos: 'AILOS-Lösung',
+    partner_pain_1_label: 'Herausforderung 1',
+    partner_pain_1_desc: 'Lehrkräfte sind mit repetitiven Aufgaben überlastet und können sich nicht auf die Unterrichtsgestaltung konzentrieren',
+    partner_pain_1_sol_label: 'KI-Lösung',
+    partner_pain_1_sol: 'KI generiert massenhaft Unterrichtspläne, Übungen und Bewertungen und befreit die Kreativität der Lehrkräfte, damit sie sich auf die Kernunterrichtsgestaltung und persönliches Coaching konzentrieren können',
+    partner_pain_2_label: 'Herausforderung 2',
+    partner_pain_2_desc: 'Schwierigkeiten bei der Aktualisierung von Lehrmaterialien, um mit Veränderungen Schritt zu halten',
+    partner_pain_2_sol_label: 'KI-Lösung',
+    partner_pain_2_sol: 'KI synchronisiert die neueste Wissensbasis in Echtzeit und generiert automatisch aktuelle Kursinhalte, die Materialien frisch und wettbewerbsfähig halten',
+    partner_pain_3_label: 'Herausforderung 3',
+    partner_pain_3_desc: 'Hohe Abbrecherquoten nach Kursende, niedrige Verlängerungsraten',
+    partner_pain_3_sol_label: 'KI-Lösung',
+    partner_pain_3_sol: 'Intelligentes Studentenmanagementsystem mit KI-gestützter Abwanderungsvorhersage, das automatisch personalisierte Lernpläne und Verlängerungsanreize sendet, um die Bindung signifikant zu erhöhen',
+    partner_pain_4_label: 'Herausforderung 4',
+    partner_pain_4_desc: 'Keine neuen Einnahmekanäle',
+    partner_pain_4_sol_label: 'KI-Lösung',
+    partner_pain_4_sol: 'Durch das Plattformpartnerschaftsmodell erhalten Einrichtungen Zugang zu Kursvertrieb, KI-Tool-Lizenzierung, Co-Branding und anderen neuen Einnahmequellen',
+    partner_solution_title: 'AILOS KI-Komplettlösung für Institutionen',
+    partner_solution_sub: 'KI stärkt Lehrkräfte, ersetzt sie niemals — wir glauben, dass die Kraft der Technologie in der Befähigung liegt, nicht im Ersatz',
+    partner_solution_1_title: 'KI-gestützte Massenkurserstellung',
+    partner_solution_1_desc: 'Basierend auf den Lehrzielen der Einrichtung generiert KI vollständige Kurssysteme mit einem Klick: Unterrichtspläne, Folien, Übungen und Prüfungen — drastische Reduzierung der Lehrplanentwicklungskosten und Steigerung der Effizienz um über 300%.',
+    partner_solution_2_title: 'Automatisierte Lernanalyse',
+    partner_solution_2_desc: 'KI verfolgt die Lerndaten jedes Studenten in Echtzeit, generiert automatisch visuelle Lernberichte, identifiziert präzise Wissenslücken und bietet datengestützte Entscheidungsunterstützung für Lehrkräfte.',
+    partner_solution_3_title: 'Personalisierte KI-Nachhilfe',
+    partner_solution_3_desc: 'Jeder Student erhält einen eigenen KI-Lernpartner für mehrsprachige Nachhilfe rund um die Uhr, Konversationspraxis und Schreibkorrektur — so erhält jeder Student persönliche Aufmerksamkeit.',
+    partner_solution_4_title: 'Intelligentes Studentenmanagement',
+    partner_solution_4_desc: 'KI-gesteuertes Lebenszyklus-Management: intelligente Klasseneinteilung, Lernfortschrittsüberwachung, Abwanderungsfrühwarnung und Verlängerungsempfehlungen — für verfeinerten Betrieb und effiziente Konversion.',
+    partner_revenue_title: 'Partnerschafts-Ertragsmodell',
+    partner_revenue_sub: 'Diversifizierte Einnahmekanäle, damit Partner am Plattformwachstum teilhaben',
+    partner_revenue_1_title: 'Kursvertriebserträge',
+    partner_revenue_1_desc: 'Kurse der Einrichtung werden auf der AILOS-Plattform für den weltweiten Verkauf gelistet und generieren fortlaufende provisionsbasierte Einnahmen.',
+    partner_revenue_1_highlight: 'Bis zu 70% Provision',
+    partner_revenue_2_title: 'KI-Tool-Lizenzierung',
+    partner_revenue_2_desc: 'White-Label-Lizenzierung von AILOS-KI-Tools für Einrichtungen, die eigene Preise festlegen und KI-Nachhilfedienste für Studenten anbieten können.',
+    partner_revenue_2_highlight: 'Flexible Preisgestaltung',
+    partner_revenue_3_title: 'Co-Branding-Partnerschaft',
+    partner_revenue_3_desc: 'Qualifizierte Partner können am AILOS-Co-Branding-Programm teilnehmen und erhalten offizielle Zertifizierung, gemeinsame Marketingkampagnen und exklusive Traffic-Unterstützung.',
+    partner_revenue_3_highlight: 'Markenwertsteigerung',
+    partner_revenue_4_title: 'Plattform-Ökosystem-Traffic-Beteiligung',
+    partner_revenue_4_desc: 'Einrichtungen erhalten eine zusätzliche 5%ige Ökosystem-Traffic-Beteiligung auf Kursbestellungen, die von natürlich registrierten Plattformnutzern generiert werden. Profitieren Sie von nachhaltigen Einnahmen aus dem organischen Plattformwachstum ohne zusätzliche Werbeinvestitionen.',
+    partner_revenue_4_highlight: 'Zusätzliche 5%',
+    partner_tier_title: 'Abgestufte Partnerschaftsvorteile',
+    partner_tier_sub: 'Drei Partnerschaftsstufen für die Bedürfnisse von Einrichtungen jeder Größe — wählen Sie den Plan, der am besten zu Ihnen passt',
+    partner_tier_basic_title: 'Kleines Studio',
+    partner_tier_basic_price: 'Kostenlos',
+    partner_tier_basic_price_sub: 'Basis-Partnerschaft',
+    partner_tier_basic_f1: 'KI-Kurserstellung (50 Lektionen/Monat)',
+    partner_tier_basic_f2: 'Basis-Lernanalyse',
+    partner_tier_basic_f3: 'Standard-Studentenmanagement',
+    partner_tier_basic_f4: 'Kursvertrieb (10% Provision)',
+    partner_tier_basic_f5: 'Online-Kundensupport',
+    partner_tier_basic_btn: 'Jetzt bewerben',
+    partner_tier_medium_badge: 'Empfohlen',
+    partner_tier_medium_title: 'Mittlerer Campus',
+    partner_tier_medium_price: '¥2.999/Monat',
+    partner_tier_medium_price_sub: 'Professionelle Partnerschaft',
+    partner_tier_medium_f1: 'KI-Kurserstellung (300 Lektionen/Monat)',
+    partner_tier_medium_f2: 'Erweiterte Analyse & Frühwarnung',
+    partner_tier_medium_f3: 'Intelligentes Management + Abwanderungsvorhersage',
+    partner_tier_medium_f4: 'Kursvertrieb (30% Provision)',
+    partner_tier_medium_f5: 'KI-Tool-White-Label-Lizenzierung',
+    partner_tier_medium_f6: 'Dedizierter Account-Manager',
+    partner_tier_medium_f7: 'API-Integration',
+    partner_tier_medium_f8: 'Ökosystem-Traffic-Beteiligung (zusätzliche 5%)',
+    partner_tier_medium_btn: 'Jetzt bewerben',
+    partner_tier_premium_title: 'Kettenmarke',
+    partner_tier_premium_price: 'Individuelles Angebot',
+    partner_tier_premium_price_sub: 'Strategische Partnerschaft',
+    partner_tier_premium_f1: 'KI-Kurserstellung (Unbegrenzt)',
+    partner_tier_premium_f2: 'Vollanalyse + benutzerdefiniertes Dashboard',
+    partner_tier_premium_f3: 'Vollständiges Studentenmanagement',
+    partner_tier_premium_f4: 'Kursvertrieb (70% Provision)',
+    partner_tier_premium_f5: 'Co-Branding + offizielle Zertifizierung',
+    partner_tier_premium_f6: 'Gemeinsame Marketingkampagnen',
+    partner_tier_premium_f7: 'Dediziertes Tech-Team',
+    partner_tier_premium_f8: 'Maßgeschneiderte Funktionsentwicklung',
+    partner_tier_premium_f9: 'Ökosystem-Traffic-Beteiligung (zusätzliche 5%)',
+    partner_tier_premium_btn: 'Kontaktieren Sie uns',
+    partner_form_title: 'Partnerschaftsanfrage',
+    partner_form_sub: 'Füllen Sie die folgenden Informationen aus und unser Partnerschaftsteam wird Sie innerhalb von 3 Werktagen kontaktieren',
+    partner_form_name: 'Name',
+    partner_form_name_placeholder: 'Bitte geben Sie Ihren Namen ein',
+    partner_form_institution: 'Einrichtungsname',
+    partner_form_institution_placeholder: 'Bitte geben Sie den Namen Ihrer Einrichtung ein',
+    partner_form_email: 'E-Mail',
+    partner_form_email_placeholder: 'Bitte geben Sie Ihre E-Mail ein',
+    partner_form_phone: 'Telefon',
+    partner_form_phone_placeholder: 'Bitte geben Sie Ihre Telefonnummer ein',
+    partner_form_message: 'Nachricht (Optional)',
+    partner_form_message_placeholder: 'Beschreiben Sie kurz Ihre Partnerschaftsinteressen und -anforderungen',
+    partner_form_submit: 'Anfrage senden',
+    partner_form_success: 'Erfolgreich gesendet! Wir werden Sie innerhalb von 3 Werktagen kontaktieren.',
+    partner_footer: '© 2026 AILOS Education Ecosystem. Alle Rechte vorbehalten. Jeden Pädagogen mit KI befähigen.',
+    partner_compliance_note: 'Plattform-Provision-Compliance-Erklärung: Provisionen von natürlich registrierten Plattformnutzern werden dem offiziellen Plattformkonto zugewiesen. Einrichtungen erhalten nur Provisionen aus Bestellungen, die über ihre eigenen Kanalpromotionen generiert wurden. Plattform-selbstregistrierte Nutzer werden automatisch dem Plattform-Masterkonto zugewiesen und nach den Standard-Zwei-Stufen-Regeln abgerechnet.',
+  },
+};
+
+// ==================== i18n Engine ====================
+const LANG_MAP = {
+  'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh',
+  'en':'en','en-us':'en','en-gb':'en',
+  'ja':'ja','jp':'ja',
+  'ko':'ko','kr':'ko',
+  'fr':'fr',
+  'es':'es',
+  'de':'de'
+};
+const LANG_NAMES = {
+  zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch'
+};
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh && I18N.zh[key]) || key; }
+
+function renderLangBar() {
+  document.getElementById('langBar').innerHTML = Object.keys(LANG_NAMES).map(function(code) {
+    return '<span class="lang-btn' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>';
+  }).join('');
+}
+
+function switchLang(code) {
+  currentLang = code;
+  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
+  updateI18n();
+  renderLangBar();
+}
+
+function updateI18n() {
+  // Update text content
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var text = t(el.getAttribute('data-i18n'));
+    if (text !== undefined) el.textContent = text;
+  });
+  // Update placeholder attributes
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    var text = t(key);
+    if (text !== undefined) el.setAttribute('placeholder', text);
+    else {
+      // Fallback to original placeholder stored in data attribute
+      var orig = el.getAttribute('data-i18n-orig-placeholder');
+      if (orig) el.setAttribute('placeholder', orig);
+    }
+  });
+}
+
+// ==================== Form Handling ====================
+function handleSubmit(e) {
+  e.preventDefault();
+  var form = document.getElementById('partnerForm');
+  var success = document.getElementById('formSuccess');
+  form.style.display = 'none';
+  success.style.display = 'block';
+  return false;
+}
+
+// ==================== Init ====================
+renderLangBar();
+updateI18n();
+</script>
+</body>
+</html>

@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AILOS - 创建我的专属AI语言伴读</title>
+    <style>
+        /* ========== CSS Reset & Variables ========== */
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #0f0f2a;
+            --bg-card: #151530;
+            --bg-input: #1a1a3e;
+            --purple-primary: #8B5CF6;
+            --purple-dark: #6D28D9;
+            --purple-light: #A78BFA;
+            --purple-glow: rgba(139, 92, 246, 0.3);
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0c0;
+            --text-muted: #6a6a8a;
+            --border-color: #2a2a4a;
+            --success: #34D399;
+            --danger: #F87171;
+            --warning: #FBBF24;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: 0.3s ease;
+            --font-sans: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans JP', 'Apple SD Gothic Neo', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(109, 40, 217, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
+        }
+
+        /* ========== Navigation ========== */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .nav-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color var(--transition);
+            cursor: pointer;
+        }
+
+        .nav-back:hover {
+            color: var(--purple-light);
+        }
+
+        .nav-back svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .lang-switcher {
+            position: relative;
+        }
+
+        .lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+        }
+
+        .lang-btn:hover {
+            border-color: var(--purple-primary);
+            color: var(--purple-light);
+        }
+
+        .lang-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 6px;
+            min-width: 140px;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+        }
+
+        .lang-dropdown.show {
+            display: block;
+        }
+
+        .lang-option {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            text-align: left;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+        }
+
+        .lang-option:hover {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--text-primary);
+        }
+
+        .lang-option.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--purple-light);
+        }
+
+        /* ========== Main Layout ========== */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* ========== Step Indicator ========== */
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 40px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all var(--transition);
+        }
+
+        .step-dot.active {
+            background: var(--purple-primary);
+            box-shadow: 0 0 12px var(--purple-glow);
+            width: 14px;
+            height: 14px;
+        }
+
+        .step-dot.done {
+            background: var(--success);
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: var(--border-color);
+            border-radius: 1px;
+            transition: all var(--transition);
+        }
+
+        .step-line.done {
+            background: var(--success);
+        }
+
+        .step-line.active {
+            background: var(--purple-primary);
+        }
+
+        /* ========== Section Titles ========== */
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary), var(--purple-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 15px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 32px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ========== Step 1: Textarea ========== */
+        .input-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color var(--transition);
+        }
+
+        .input-card:focus-within {
+            border-color: var(--purple-primary);
+            box-shadow: 0 0 24px var(--purple-glow);
+        }
+
+        .input-card-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-card-label svg {
+            width: 16px;
+            height: 16px;
+            color: var(--purple-light);
+        }
+
+        .dream-input {
+            width: 100%;
+            min-height: 160px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: var(--font-sans);
+            resize: vertical;
+            line-height: 1.7;
+            transition: all var(--transition);
+            outline: none;
+        }
+
+        .dream-input::placeholder {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .dream-input:focus {
+            border-color: var(--purple-primary);
+            box-shadow: 0 0 16px rgba(139, 92, 246, 0.15);
+        }
+
+        /* ========== Preset Tags ========== */
+        .preset-section {
+            margin-bottom: 28px;
+        }
+
+        .preset-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .preset-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .preset-tag {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            white-space: nowrap;
+        }
+
+        .preset-tag:hover {
+            border-color: var(--purple-primary);
+            color: var(--purple-light);
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .preset-tag:active {
+            transform: scale(0.96);
+        }
+
+        .preset-tag.used {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--purple-primary);
+            color: var(--purple-light);
+        }
+
+        /* ========== Generate Button ========== */
+        .btn-generate-wrap {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-generate {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-generate::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--purple-light), var(--purple-primary));
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .btn-generate:hover::before {
+            opacity: 1;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--purple-glow);
+        }
+
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+
+        .btn-generate span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-generate svg {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-generate:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-generate:disabled::before {
+            opacity: 0;
+        }
+
+        /* ========== Loading Animation ========== */
+        .loading-section {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .loading-section.visible {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 20px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--purple-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            min-height: 24px;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 18px;
+            background: var(--purple-primary);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.7s steps(1) infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ========== Result Card (Step 2) ========== */
+        .result-section {
+            display: none;
+            margin-bottom: 32px;
+        }
+
+        .result-section.visible {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2px;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark), var(--purple-light));
+        }
+
+        .result-card-inner {
+            background: var(--bg-card);
+            border-radius: calc(var(--radius-lg) - 2px);
+            padding: 32px;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .result-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 30px var(--purple-glow);
+        }
+
+        .result-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .result-fields {
+            display: grid;
+            gap: 16px;
+        }
+
+        .result-field {
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-field-label {
+            font-size: 12px;
+            color: var(--purple-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .result-field-value {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* ========== Step 3: CTA ========== */
+        .cta-section {
+            display: none;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .cta-section.visible {
+            display: block;
+            animation: fadeInUp 0.5s ease 0.2s both;
+        }
+
+        .cta-guest {
+            background: var(--bg-card);
+            border: 1px solid var(--purple-primary);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+        }
+
+        .cta-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .cta-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .cta-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 36px;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            text-decoration: none;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--purple-glow);
+        }
+
+        .btn-cta-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            margin-left: 12px;
+        }
+
+        .btn-cta-secondary:hover {
+            border-color: var(--purple-primary);
+            color: var(--purple-light);
+            box-shadow: none;
+        }
+
+        .cta-user {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+        }
+
+        .cta-user .cta-title {
+            color: var(--success);
+        }
+
+        /* ========== Modal ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 36px;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .modal-benefits {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .modal-benefits li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-benefits li:last-child {
+            border-bottom: none;
+        }
+
+        .modal-benefit-icon {
+            color: var(--success);
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .btn-modal-primary {
+            display: block;
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            text-align: center;
+            text-decoration: none;
+            margin-bottom: 12px;
+        }
+
+        .btn-modal-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--purple-glow);
+        }
+
+        .btn-modal-secondary {
+            display: block;
+            width: 100%;
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+            text-align: center;
+        }
+
+        .btn-modal-secondary:hover {
+            border-color: var(--purple-primary);
+            color: var(--purple-light);
+        }
+
+        /* ========== Footer ========== */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color var(--transition);
+        }
+
+        .footer a:hover {
+            color: var(--purple-light);
+        }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            color: var(--text-primary);
+            font-size: 14px;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ========== Responsive: Tablet (768px) ========== */
+        @media (max-width: 768px) {
+            .main {
+                padding: 24px 16px 60px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .section-subtitle {
+                font-size: 14px;
+            }
+
+            .input-card {
+                padding: 20px;
+            }
+
+            .dream-input {
+                min-height: 140px;
+                font-size: 14px;
+            }
+
+            .result-card-inner {
+                padding: 24px;
+            }
+
+            .result-name {
+                font-size: 20px;
+            }
+
+            .modal {
+                padding: 24px;
+                margin: 16px;
+            }
+
+            .btn-generate {
+                padding: 14px 36px;
+                font-size: 16px;
+            }
+
+            .btn-cta {
+                padding: 12px 28px;
+                font-size: 15px;
+            }
+        }
+
+        /* ========== Responsive: Mobile (375px) ========== */
+        @media (max-width: 480px) {
+            .nav-inner {
+                height: 52px;
+            }
+
+            .nav-logo {
+                font-size: 15px;
+            }
+
+            .nav-back {
+                font-size: 12px;
+            }
+
+            .lang-btn {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .main {
+                padding: 16px 12px 48px;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            .section-subtitle {
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+
+            .steps {
+                margin-bottom: 24px;
+            }
+
+            .input-card {
+                padding: 16px;
+                border-radius: var(--radius-md);
+            }
+
+            .dream-input {
+                min-height: 120px;
+                font-size: 13px;
+                padding: 12px;
+            }
+
+            .dream-input::placeholder {
+                font-size: 12px;
+            }
+
+            .preset-tags {
+                gap: 6px;
+            }
+
+            .preset-tag {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .btn-generate {
+                padding: 12px 32px;
+                font-size: 15px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .result-card-inner {
+                padding: 16px;
+            }
+
+            .result-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .result-name {
+                font-size: 18px;
+            }
+
+            .result-field {
+                padding: 12px 16px;
+            }
+
+            .result-field-value {
+                font-size: 13px;
+            }
+
+            .cta-guest,
+            .cta-user {
+                padding: 20px;
+            }
+
+            .btn-cta {
+                padding: 12px 24px;
+                font-size: 14px;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .btn-cta-secondary {
+                margin-left: 0;
+            }
+
+            .modal {
+                padding: 20px;
+                border-radius: var(--radius-lg);
+            }
+
+            .modal-title {
+                font-size: 18px;
+            }
+
+            .btn-modal-primary {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+
+            .btn-modal-secondary {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== Navigation ==================== -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-back" data-i18n="nav.back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span data-i18n="nav.back">返回首页</span>
+            </a>
+            <span class="nav-logo">AILOS</span>
+            <div class="lang-switcher">
+                <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                    <span id="currentLangLabel">中文</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-option active" data-lang="zh" onclick="switchLang('zh')">中文</button>
+                    <button class="lang-option" data-lang="en" onclick="switchLang('en')">English</button>
+                    <button class="lang-option" data-lang="ja" onclick="switchLang('ja')">日本語</button>
+                    <button class="lang-option" data-lang="ko" onclick="switchLang('ko')">한국어</button>
+                    <button class="lang-option" data-lang="fr" onclick="switchLang('fr')">Français</button>
+                    <button class="lang-option" data-lang="es" onclick="switchLang('es')">Español</button>
+                    <button class="lang-option" data-lang="de" onclick="switchLang('de')">Deutsch</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== Main Content ==================== -->
+    <main class="main">
+
+        <!-- Step Indicator -->
+        <div class="steps">
+            <div class="step-dot active" id="stepDot0"></div>
+            <div class="step-line" id="stepLine0"></div>
+            <div class="step-dot" id="stepDot1"></div>
+            <div class="step-line" id="stepLine1"></div>
+            <div class="step-dot" id="stepDot2"></div>
+            <div class="step-line" id="stepLine2"></div>
+            <div class="step-dot" id="stepDot3"></div>
+        </div>
+
+        <!-- Step 1: Input Section -->
+        <section id="step1Section">
+            <h1 class="section-title" data-i18n="step1.title">用文字描述你理想的语言学习伙伴</h1>
+            <p class="section-subtitle" data-i18n="step1.subtitle">描述你想要的性格、声线、教学风格、擅长语种、学习目标</p>
+
+            <div class="input-card">
+                <div class="input-card-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span data-i18n="step1.textarea.label">描述你的理想AI伴读</span>
+                </div>
+                <textarea
+                    class="dream-input"
+                    id="dreamInput"
+                    data-i18n-placeholder="step1.textarea.placeholder"
+                    placeholder="我需要一名温柔的英式口语教练，擅长日常旅行对话，多鼓励少批评，每天提醒我完成口语练习"
+                    maxlength="500"
+                ></textarea>
+                <div style="text-align:right;font-size:12px;color:var(--text-muted);margin-top:8px;">
+                    <span id="charCount">0</span>/500
+                </div>
+            </div>
+
+            <!-- Preset Tags -->
+            <div class="preset-section">
+                <p class="preset-label" data-i18n="step1.presets.label">快速添加描述标签：</p>
+                <div class="preset-tags" id="presetTags">
+                    <button class="preset-tag" data-tag="英式发音" onclick="addPreset('英式发音', this)">英式发音</button>
+                    <button class="preset-tag" data-tag="美式发音" onclick="addPreset('美式发音', this)">美式发音</button>
+                    <button class="preset-tag" data-tag="温柔耐心" onclick="addPreset('温柔耐心', this)">温柔耐心</button>
+                    <button class="preset-tag" data-tag="严格督学" onclick="addPreset('严格督学', this)">严格督学</button>
+                    <button class="preset-tag" data-tag="商务英语" onclick="addPreset('商务英语', this)">商务英语</button>
+                    <button class="preset-tag" data-tag="旅行口语" onclick="addPreset('旅行口语', this)">旅行口语</button>
+                    <button class="preset-tag" data-tag="日常对话" onclick="addPreset('日常对话', this)">日常对话</button>
+                    <button class="preset-tag" data-tag="考级冲刺" onclick="addPreset('考级冲刺', this)">考级冲刺</button>
+                    <button class="preset-tag" data-tag="少儿英语" onclick="addPreset('少儿英语', this)">少儿英语</button>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="btn-generate-wrap">
+                <button class="btn-generate" id="btnGenerate" onclick="generateCompanion()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span data-i18n="step1.generate">生成我的AI伴读</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading Section -->
+        <section class="loading-section" id="loadingSection">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loadingText">
+                <span data-i18n="loading.thinking">AI正在理解你的需求...</span><span class="typing-cursor"></span>
+            </p>
+        </section>
+
+        <!-- Step 2: Result Section -->
+        <section class="result-section" id="resultSection">
+            <div class="result-card">
+                <div class="result-card-inner">
+                    <div class="result-header">
+                        <div class="result-avatar" id="resultAvatar">✨</div>
+                        <div class="result-name" id="resultName"></div>
+                    </div>
+                    <div class="result-fields">
+                        <div class="result-field">
+                            <div class="result-field-label" data-i18n="result.persona">教学人设</div>
+                            <div class="result-field-value" id="resultPersona"></div>
+                        </div>
+                        <div class="result-field">
+                            <div class="result-field-label" data-i18n="result.voice">匹配声线</div>
+                            <div class="result-field-value" id="resultVoice"></div>
+                        </div>
+                        <div class="result-field">
+                            <div class="result-field-label" data-i18n="result.scenarios">专长场景</div>
+                            <div class="result-field-value" id="resultScenarios"></div>
+                        </div>
+                        <div class="result-field">
+                            <div class="result-field-label" data-i18n="result.greeting">每日学习引导话术</div>
+                            <div class="result-field-value" id="resultGreeting" style="font-style:italic;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: CTA Section -->
+        <section class="cta-section" id="ctaSection">
+            <!-- Guest CTA -->
+            <div class="cta-guest" id="ctaGuest">
+                <div class="cta-icon">🎉</div>
+                <div class="cta-title" data-i18n="cta.guest.title">你的专属AI伴读已生成！注册即可保存并领取3天免费试用</div>
+                <div class="cta-desc" data-i18n="cta.guest.desc">创建账号，永久保存你的专属学习人设和对话记忆</div>
+                <button class="btn-cta" onclick="openTrialModal()" data-i18n="cta.guest.btn">免费注册，领取3天试用</button>
+                <button class="btn-cta btn-cta-secondary" onclick="scrollToResult()" data-i18n="cta.guest.preview">先预览体验</button>
+            </div>
+            <!-- User CTA (hidden by default) -->
+            <div class="cta-user" id="ctaUser" style="display:none;">
+                <div class="cta-icon">✅</div>
+                <div class="cta-title" data-i18n="cta.user.title">AI伴读已保存到你的学习档案</div>
+                <div class="cta-desc" data-i18n="cta.user.desc">你的专属语言学习伙伴已就绪，随时可以开始对话</div>
+                <button class="btn-cta" onclick="startChat()" data-i18n="cta.user.btn">开始对话</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <div class="footer">
+        <a href="index.html" data-i18n="footer.home">返回首页</a>
+    </div>
+
+    <!-- ==================== Trial Modal ==================== -->
+    <div class="modal-overlay" id="trialModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeTrialModal()">&times;</button>
+            <div class="modal-icon">🚀</div>
+            <h2 class="modal-title" data-i18n="modal.title">你的专属AI语言伴读已创建</h2>
+            <ul class="modal-benefits">
+                <li>
+                    <span class="modal-benefit-icon">&#10003;</span>
+                    <span data-i18n="modal.benefit1">注册即可领取3天完整试用时长</span>
+                </li>
+                <li>
+                    <span class="modal-benefit-icon">&#10003;</span>
+                    <span data-i18n="modal.benefit2">解锁每日不限基础交互额度</span>
+                </li>
+                <li>
+                    <span class="modal-benefit-icon">&#10003;</span>
+                    <span data-i18n="modal.benefit3">永久保存学习人设和对话记忆</span>
+                </li>
+            </ul>
+            <a href="register.html" class="btn-modal-primary" data-i18n="modal.cta">免费注册，领取3天试用</a>
+            <button class="btn-modal-secondary" onclick="closeTrialModal()" data-i18n="modal.preview">先预览体验</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ==================== I18N System ==================== */
+        const I18N = {
+            current: 'zh',
+            data: {
+                zh: {
+                    'nav.back': '返回首页',
+                    'step1.title': '用文字描述你理想的语言学习伙伴',
+                    'step1.subtitle': '描述你想要的性格、声线、教学风格、擅长语种、学习目标',
+                    'step1.textarea.label': '描述你的理想AI伴读',
+                    'step1.textarea.placeholder': '我需要一名温柔的英式口语教练，擅长日常旅行对话，多鼓励少批评，每天提醒我完成口语练习',
+                    'step1.presets.label': '快速添加描述标签：',
+                    'step1.generate': '生成我的AI伴读',
+                    'loading.thinking': 'AI正在理解你的需求...',
+                    'loading.analyzing': '正在分析关键词...',
+                    'loading.matching': '正在匹配合适的声线...',
+                    'loading.creating': '正在生成专属伴读档案...',
+                    'result.persona': '教学人设',
+                    'result.voice': '匹配声线',
+                    'result.scenarios': '专长场景',
+                    'result.greeting': '每日学习引导话术',
+                    'cta.guest.title': '你的专属AI伴读已生成！注册即可保存并领取3天免费试用',
+                    'cta.guest.desc': '创建账号，永久保存你的专属学习人设和对话记忆',
+                    'cta.guest.btn': '免费注册，领取3天试用',
+                    'cta.guest.preview': '先预览体验',
+                    'cta.user.title': 'AI伴读已保存到你的学习档案',
+                    'cta.user.desc': '你的专属语言学习伙伴已就绪，随时可以开始对话',
+                    'cta.user.btn': '开始对话',
+                    'modal.title': '你的专属AI语言伴读已创建',
+                    'modal.benefit1': '注册即可领取3天完整试用时长',
+                    'modal.benefit2': '解锁每日不限基础交互额度',
+                    'modal.benefit3': '永久保存学习人设和对话记忆',
+                    'modal.cta': '免费注册，领取3天试用',
+                    'modal.preview': '先预览体验',
+                    'footer.home': '返回首页',
+                    'toast.empty': '请先描述你理想的语言学习伙伴',
+                    'toast.tooShort': '描述内容太短，请至少输入10个字符',
+                    'toast.tagAdded': '已添加标签',
+                    'result.defaultName': '专属AI语言伴读',
+                    'result.defaultPersona': '根据你的描述，为你量身定制的AI语言学习伙伴，结合你的学习目标和偏好，提供个性化的语言学习体验',
+                    'result.defaultVoice': '自然标准语音',
+                    'result.defaultScenarios': '日常对话、语言学习',
+                    'result.defaultGreeting': 'Hi! 准备好了吗？让我们开始今天的学习吧！'
+                },
+                en: {
+                    'nav.back': 'Back to Home',
+                    'step1.title': 'Describe Your Ideal Language Learning Companion',
+                    'step1.subtitle': 'Describe the personality, voice, teaching style, preferred languages, and learning goals',
+                    'step1.textarea.label': 'Describe your ideal AI companion',
+                    'step1.textarea.placeholder': 'I need a gentle British English speaking coach, skilled in daily travel conversations, encouraging rather than critical, reminds me to practice speaking every day',
+                    'step1.presets.label': 'Quick description tags:',
+                    'step1.generate': 'Generate My AI Companion',
+                    'loading.thinking': 'AI is understanding your needs...',
+                    'loading.analyzing': 'Analyzing keywords...',
+                    'loading.matching': 'Matching suitable voice...',
+                    'loading.creating': 'Creating your companion profile...',
+                    'result.persona': 'Teaching Persona',
+                    'result.voice': 'Matched Voice',
+                    'result.scenarios': 'Specialty Scenarios',
+                    'result.greeting': 'Daily Learning Greeting',
+                    'cta.guest.title': 'Your AI companion is ready! Sign up to save and claim 3-day free trial',
+                    'cta.guest.desc': 'Create an account to permanently save your learning persona and conversation memory',
+                    'cta.guest.btn': 'Sign Up Free - 3-Day Trial',
+                    'cta.guest.preview': 'Preview First',
+                    'cta.user.title': 'AI Companion saved to your learning profile',
+                    'cta.user.desc': 'Your personalized language learning partner is ready, start chatting anytime',
+                    'cta.user.btn': 'Start Chat',
+                    'modal.title': 'Your AI Language Companion is Created',
+                    'modal.benefit1': 'Sign up to claim 3-day full trial',
+                    'modal.benefit2': 'Unlock unlimited daily basic interactions',
+                    'modal.benefit3': 'Permanently save learning persona and conversation memory',
+                    'modal.cta': 'Sign Up Free - 3-Day Trial',
+                    'modal.preview': 'Preview First',
+                    'footer.home': 'Back to Home',
+                    'toast.empty': 'Please describe your ideal language learning companion first',
+                    'toast.tooShort': 'Description is too short, please enter at least 10 characters',
+                    'toast.tagAdded': 'Tag added',
+                    'result.defaultName': 'Your AI Language Companion',
+                    'result.defaultPersona': 'A personalized AI language learning companion tailored to your description, combining your learning goals and preferences',
+                    'result.defaultVoice': 'Natural Standard Voice',
+                    'result.defaultScenarios': 'Daily conversation, Language learning',
+                    'result.defaultGreeting': 'Hi! Ready? Let\'s start today\'s learning!'
+                },
+                ja: {
+                    'nav.back': 'ホームに戻る',
+                    'step1.title': '理想の言語学習パートナーを言葉で表現しよう',
+                    'step1.subtitle': '性格、声質、指導スタイル、得意言語、学習目標を説明してください',
+                    'step1.textarea.label': '理想のAIパートナーを説明',
+                    'step1.textarea.placeholder': '優しいイギリス英語のコーチが必要です。日常の旅行会話が得意で、励まし中心、毎日スピーキング練習をリマインドしてくれます',
+                    'step1.presets.label': 'クイック説明タグ：',
+                    'step1.generate': 'AIパートナーを生成',
+                    'loading.thinking': 'AIがあなたのニーズを理解しています...',
+                    'loading.analyzing': 'キーワードを分析中...',
+                    'loading.matching': '適切な声質をマッチング中...',
+                    'loading.creating': '専用パートナープロフィールを作成中...',
+                    'result.persona': '指導ペルソナ',
+                    'result.voice': 'マッチした声質',
+                    'result.scenarios': '得意シーン',
+                    'result.greeting': '毎日の学習あいさつ',
+                    'cta.guest.title': 'AIパートナーが作成されました！登録して3日間無料トライアルを入手',
+                    'cta.guest.desc': 'アカウントを作成して、学習ペルソナと会話履歴を永久保存',
+                    'cta.guest.btn': '無料登録 - 3日間トライアル',
+                    'cta.guest.preview': 'まずはプレビュー',
+                    'cta.user.title': 'AIパートナーが学習プロフィールに保存されました',
+                    'cta.user.desc': 'あなた専用の言語学習パートナーの準備ができました。いつでも会話を始められます',
+                    'cta.user.btn': '会話を始める',
+                    'modal.title': 'AI言語パートナーが作成されました',
+                    'modal.benefit1': '登録して3日間の完全トライアルを入手',
+                    'modal.benefit2': '毎日の無制限基本インタラクションを解放',
+                    'modal.benefit3': '学習ペルソナと会話履歴を永久保存',
+                    'modal.cta': '無料登録 - 3日間トライアル',
+                    'modal.preview': 'まずはプレビュー',
+                    'footer.home': 'ホームに戻る',
+                    'toast.empty': 'まず理想の言語学習パートナーを説明してください',
+                    'toast.tooShort': '説明が短すぎます。10文字以上入力してください',
+                    'toast.tagAdded': 'タグを追加しました',
+                    'result.defaultName': 'あなた専用AI言語パートナー',
+                    'result.defaultPersona': 'あなたの説明に基づいてカスタマイズされたAI言語学習パートナー',
+                    'result.defaultVoice': 'ナチュラル標準音声',
+                    'result.defaultScenarios': '日常会話、言語学習',
+                    'result.defaultGreeting': 'こんにちは！準備はいいですか？今日の学習を始めましょう！'
+                },
+                ko: {
+                    'nav.back': '홈으로 돌아가기',
+                    'step1.title': '이상적인 언어 학습 파트너를 말로 표현해 보세요',
+                    'step1.subtitle': '성격, 음성, 교육 스타일, 전문 언어, 학습 목표를 설명하세요',
+                    'step1.textarea.label': '이상적인 AI 동반자 설명',
+                    'step1.textarea.placeholder': '다정한 영국식 영어 코치가 필요해요. 일상 여행 대화에 능숙하고, 비판보다는 격려를, 매일 말하기 연습을 상기시켜 줍니다',
+                    'step1.presets.label': '빠른 설명 태그:',
+                    'step1.generate': 'AI 동반자 생성하기',
+                    'loading.thinking': 'AI가 요구사항을 이해하고 있습니다...',
+                    'loading.analyzing': '키워드 분석 중...',
+                    'loading.matching': '적합한 음성 매칭 중...',
+                    'loading.creating': '전용 동반자 프로필 생성 중...',
+                    'result.persona': '교육 페르소나',
+                    'result.voice': '매칭된 음성',
+                    'result.scenarios': '전문 시나리오',
+                    'result.greeting': '일일 학습 인사말',
+                    'cta.guest.title': 'AI 동반자가 생성되었습니다! 가입하여 3일 무료 체험을 받으세요',
+                    'cta.guest.desc': '계정을 만들어 학습 페르소나와 대화 기억을 영구 저장하세요',
+                    'cta.guest.btn': '무료 가입 - 3일 체험',
+                    'cta.guest.preview': '먼저 미리보기',
+                    'cta.user.title': 'AI 동반자가 학습 프로필에 저장되었습니다',
+                    'cta.user.desc': '맞춤형 언어 학습 파트너가 준비되었습니다. 언제든지 대화를 시작하세요',
+                    'cta.user.btn': '대화 시작하기',
+                    'modal.title': 'AI 언어 동반자가 생성되었습니다',
+                    'modal.benefit1': '가입하여 3일 전체 체험을 받으세요',
+                    'modal.benefit2': '매일 무제한 기본 상호작용 잠금 해제',
+                    'modal.benefit3': '학습 페르소나와 대화 기억 영구 저장',
+                    'modal.cta': '무료 가입 - 3일 체험',
+                    'modal.preview': '먼저 미리보기',
+                    'footer.home': '홈으로 돌아가기',
+                    'toast.empty': '먼저 이상적인 언어 학습 파트너를 설명해 주세요',
+                    'toast.tooShort': '설명이 너무 짧습니다. 10자 이상 입력하세요',
+                    'toast.tagAdded': '태그 추가됨',
+                    'result.defaultName': '나만의 AI 언어 동반자',
+                    'result.defaultPersona': '설명에 기반한 맞춤형 AI 언어 학습 파트너',
+                    'result.defaultVoice': '자연스러운 표준 음성',
+                    'result.defaultScenarios': '일상 대화, 언어 학습',
+                    'result.defaultGreeting': '안녕하세요! 준비되셨나요? 오늘의 학습을 시작해 볼까요!'
+                },
+                fr: {
+                    'nav.back': 'Retour à l\'accueil',
+                    'step1.title': 'Décrivez votre compagnon d\'apprentissage linguistique idéal',
+                    'step1.subtitle': 'Décrivez la personnalité, la voix, le style d\'enseignement, les langues et les objectifs',
+                    'step1.textarea.label': 'Décrivez votre compagnon IA idéal',
+                    'step1.textarea.placeholder': 'J\'ai besoin d\'un coach d\'anglais britannique doux, spécialisé dans les conversations de voyage, encourageant, qui me rappelle de pratiquer chaque jour',
+                    'step1.presets.label': 'Tags de description rapide :',
+                    'step1.generate': 'Générer mon compagnon IA',
+                    'loading.thinking': 'L\'IA comprend vos besoins...',
+                    'loading.analyzing': 'Analyse des mots-clés...',
+                    'loading.matching': 'Correspondance de la voix...',
+                    'loading.creating': 'Création du profil du compagnon...',
+                    'result.persona': 'Persona d\'enseignement',
+                    'result.voice': 'Voix correspondante',
+                    'result.scenarios': 'Scénarios de spécialité',
+                    'result.greeting': 'Message d\'accueil quotidien',
+                    'cta.guest.title': 'Votre compagnon IA est prêt ! Inscrivez-vous pour sauvegarder et obtenir 3 jours d\'essai gratuit',
+                    'cta.guest.desc': 'Créez un compte pour sauvegarder votre persona et mémoire de conversation',
+                    'cta.guest.btn': 'Inscription gratuite - Essai 3 jours',
+                    'cta.guest.preview': 'Aperçu d\'abord',
+                    'cta.user.title': 'Compagnon IA enregistré dans votre profil',
+                    'cta.user.desc': 'Votre partenaire linguistique personnalisé est prêt, commencez à discuter',
+                    'cta.user.btn': 'Commencer la conversation',
+                    'modal.title': 'Votre compagnon linguistique IA est créé',
+                    'modal.benefit1': 'Inscrivez-vous pour obtenir 3 jours d\'essai complet',
+                    'modal.benefit2': 'Débloquez des interactions de base illimitées',
+                    'modal.benefit3': 'Sauvegarde permanente du persona et de la mémoire',
+                    'modal.cta': 'Inscription gratuite - Essai 3 jours',
+                    'modal.preview': 'Aperçu d\'abord',
+                    'footer.home': 'Retour à l\'accueil',
+                    'toast.empty': 'Veuillez d\'abord décrire votre compagnon idéal',
+                    'toast.tooShort': 'Description trop courte, au moins 10 caractères',
+                    'toast.tagAdded': 'Tag ajouté',
+                    'result.defaultName': 'Votre compagnon linguistique IA',
+                    'result.defaultPersona': 'Un partenaire d\'apprentissage IA personnalisé selon votre description',
+                    'result.defaultVoice': 'Voix standard naturelle',
+                    'result.defaultScenarios': 'Conversation quotidienne, Apprentissage des langues',
+                    'result.defaultGreeting': 'Salut ! Prêt ? Commençons l\'apprentissage d\'aujourd\'hui !'
+                },
+                es: {
+                    'nav.back': 'Volver al inicio',
+                    'step1.title': 'Describe a tu compañero de aprendizaje de idiomas ideal',
+                    'step1.subtitle': 'Describe la personalidad, voz, estilo de enseñanza, idiomas y objetivos de aprendizaje',
+                    'step1.textarea.label': 'Describe tu compañero IA ideal',
+                    'step1.textarea.placeholder': 'Necesito un entrenador de inglés británico amable, experto en conversaciones de viaje, que anime más que critique, y me recuerde practicar cada día',
+                    'step1.presets.label': 'Etiquetas rápidas:',
+                    'step1.generate': 'Generar mi compañero IA',
+                    'loading.thinking': 'La IA está entendiendo tus necesidades...',
+                    'loading.analyzing': 'Analizando palabras clave...',
+                    'loading.matching': 'Buscando voz adecuada...',
+                    'loading.creating': 'Creando perfil del compañero...',
+                    'result.persona': 'Personalidad docente',
+                    'result.voice': 'Voz emparejada',
+                    'result.scenarios': 'Escenarios especializados',
+                    'result.greeting': 'Saludo diario de aprendizaje',
+                    'cta.guest.title': 'Tu compañero IA está listo. Regístrate para guardar y obtener 3 días de prueba gratis',
+                    'cta.guest.desc': 'Crea una cuenta para guardar permanentemente tu persona y memoria de conversación',
+                    'cta.guest.btn': 'Registro gratis - 3 días de prueba',
+                    'cta.guest.preview': 'Vista previa',
+                    'cta.user.title': 'Compañero IA guardado en tu perfil de aprendizaje',
+                    'cta.user.desc': 'Tu compañero de idiomas personalizado está listo, comienza a chatear',
+                    'cta.user.btn': 'Comenzar conversación',
+                    'modal.title': 'Tu compañero de idiomas IA está creado',
+                    'modal.benefit1': 'Regístrate para obtener 3 días de prueba completa',
+                    'modal.benefit2': 'Desbloquea interacciones básicas ilimitadas diarias',
+                    'modal.benefit3': 'Guarda permanentemente la persona y la memoria de conversación',
+                    'modal.cta': 'Registro gratis - 3 días de prueba',
+                    'modal.preview': 'Vista previa',
+                    'footer.home': 'Volver al inicio',
+                    'toast.empty': 'Por favor, describe primero a tu compañero ideal',
+                    'toast.tooShort': 'Descripción demasiado corta, al menos 10 caracteres',
+                    'toast.tagAdded': 'Etiqueta añadida',
+                    'result.defaultName': 'Tu compañero de idiomas IA',
+                    'result.defaultPersona': 'Un compañero de aprendizaje IA personalizado según tu descripción',
+                    'result.defaultVoice': 'Voz estándar natural',
+                    'result.defaultScenarios': 'Conversación diaria, Aprendizaje de idiomas',
+                    'result.defaultGreeting': 'Hola! Listo? Comencemos el aprendizaje de hoy!'
+                },
+                de: {
+                    'nav.back': 'Zurück zur Startseite',
+                    'step1.title': 'Beschreibe deinen idealen Sprachlernbegleiter',
+                    'step1.subtitle': 'Beschreibe Persönlichkeit, Stimme, Unterrichtsstil, Sprachen und Lernziele',
+                    'step1.textarea.label': 'Beschreibe deinen idealen KI-Begleiter',
+                    'step1.textarea.placeholder': 'Ich brauche einen sanften britischen Englisch-Coach, spezialisiert auf Reisegespräche, ermutigend statt kritisierend, erinnert mich täglich an die Sprechübung',
+                    'step1.presets.label': 'Schnelle Beschreibungs-Tags:',
+                    'step1.generate': 'Meinen KI-Begleiter erstellen',
+                    'loading.thinking': 'KI versteht deine Bedürfnisse...',
+                    'loading.analyzing': 'Analysiere Schlüsselwörter...',
+                    'loading.matching': 'Passe passende Stimme an...',
+                    'loading.creating': 'Erstelle Begleiterprofil...',
+                    'result.persona': 'Lehr-Persona',
+                    'result.voice': 'Passende Stimme',
+                    'result.scenarios': 'Fachgebiete',
+                    'result.greeting': 'Täglicher Lerngruß',
+                    'cta.guest.title': 'Dein KI-Begleiter ist bereit! Registriere dich, um zu speichern und 3 Tage kostenlos zu testen',
+                    'cta.guest.desc': 'Erstelle ein Konto, um deine Lern-Persona und Gesprächserinnerungen dauerhaft zu speichern',
+                    'cta.guest.btn': 'Kostenlos registrieren - 3 Tage Test',
+                    'cta.guest.preview': 'Erst Vorschau',
+                    'cta.user.title': 'KI-Begleiter in deinem Lernprofil gespeichert',
+                    'cta.user.desc': 'Dein persönlicher Sprachlernpartner ist bereit, beginne jetzt zu chatten',
+                    'cta.user.btn': 'Chat starten',
+                    'modal.title': 'Dein KI-Sprachbegleiter wurde erstellt',
+                    'modal.benefit1': 'Registriere dich für 3 Tage vollständigen Testzugang',
+                    'modal.benefit2': 'Schalte unbegrenzte tägliche Basis-Interaktionen frei',
+                    'modal.benefit3': 'Dauerhafte Speicherung von Lern-Persona und Gesprächserinnerungen',
+                    'modal.cta': 'Kostenlos registrieren - 3 Tage Test',
+                    'modal.preview': 'Erst Vorschau',
+                    'footer.home': 'Zurück zur Startseite',
+                    'toast.empty': 'Bitte beschreibe zuerst deinen idealen Lernbegleiter',
+                    'toast.tooShort': 'Beschreibung zu kurz, mindestens 10 Zeichen',
+                    'toast.tagAdded': 'Tag hinzugefügt',
+                    'result.defaultName': 'Dein KI-Sprachbegleiter',
+                    'result.defaultPersona': 'Ein personalisierter KI-Sprachlernpartner basierend auf deiner Beschreibung',
+                    'result.defaultVoice': 'Natürliche Standardstimme',
+                    'result.defaultScenarios': 'Tägliche Gespräche, Sprachenlernen',
+                    'result.defaultGreeting': 'Hallo! Bereit? Lass uns mit dem heutigen Lernen beginnen!'
+                }
+            }
+        };
+
+        /* ==================== I18N Functions ==================== */
+        function t(key) {
+            return I18N.data[I18N.current][key] || I18N.data['zh'][key] || key;
+        }
+
+        function applyI18N() {
+            // Update data-i18n elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key) {
+                    el.textContent = t(key);
+                }
+            });
+
+            // Update placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (key) {
+                    el.placeholder = t(key);
+                }
+            });
+
+            // Update language label
+            const langNames = { zh: '中文', en: 'English', ja: '日本語', ko: '한국어', fr: 'Français', es: 'Español', de: 'Deutsch' };
+            document.getElementById('currentLangLabel').textContent = langNames[I18N.current] || '中文';
+
+            // Update dropdown active state
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.toggle('active', opt.getAttribute('data-lang') === I18N.current);
+            });
+
+            // Update document lang attribute
+            document.documentElement.lang = I18N.current;
+
+            // Update preset tags
+            updatePresetTags();
+        }
+
+        function switchLang(lang) {
+            I18N.current = lang;
+            applyI18N();
+            closeLangDropdown();
+            // Save preference
+            try { localStorage.setItem('ailos_lang', lang); } catch (e) { /* ignore */ }
+        }
+
+        function updatePresetTags() {
+            const presetTagsMap = {
+                zh: ['英式发音', '美式发音', '温柔耐心', '严格督学', '商务英语', '旅行口语', '日常对话', '考级冲刺', '少儿英语'],
+                en: ['British Accent', 'American Accent', 'Gentle & Patient', 'Strict Coach', 'Business English', 'Travel Talk', 'Daily Chat', 'Exam Prep', 'Kids English'],
+                ja: ['イギリス発音', 'アメリカ発音', '優しく忍耐強い', '厳しい指導', 'ビジネス英語', '旅行会話', '日常会話', '試験対策', '子供英語'],
+                ko: ['영국식 발음', '미국식 발음', '부드럽고 인내심', '엄격한 지도', '비즈니스 영어', '여행 회화', '일상 대화', '시험 대비', '어린이 영어'],
+                fr: ['Accent britannique', 'Accent américain', 'Doux et patient', 'Coach strict', 'Anglais des affaires', 'Conversation voyage', 'Dialogue quotidien', 'Préparation examen', 'Anglais enfant'],
+                es: ['Acento británico', 'Acento americano', 'Amable y paciente', 'Entrenador estricto', 'Inglés de negocios', 'Conversación de viaje', 'Diálogo diario', 'Preparación examen', 'Inglés infantil'],
+                de: ['Britischer Akzent', 'Amerikanischer Akzent', 'Sanft und geduldig', 'Strenger Coach', 'Business-Englisch', 'Reisegespräche', 'Alltagsdialog', 'Prüfungsvorbereitung', 'Kinder-Englisch']
+            };
+            const tags = presetTagsMap[I18N.current] || presetTagsMap['zh'];
+            const container = document.getElementById('presetTags');
+            const tagElements = container.querySelectorAll('.preset-tag');
+            tagElements.forEach((el, i) => {
+                if (tags[i]) {
+                    el.textContent = tags[i];
+                    el.setAttribute('data-tag', tags[i]);
+                }
+            });
+        }
+
+        function toggleLangDropdown() {
+            document.getElementById('langDropdown').classList.toggle('show');
+        }
+
+        function closeLangDropdown() {
+            document.getElementById('langDropdown').classList.remove('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const switcher = document.querySelector('.lang-switcher');
+            if (switcher && !switcher.contains(e.target)) {
+                closeLangDropdown();
+            }
+        });
+
+        /* ==================== Toast ==================== */
+        let toastTimer;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2500);
+        }
+
+        /* ==================== Character Counter ==================== */
+        const dreamInput = document.getElementById('dreamInput');
+        const charCount = document.getElementById('charCount');
+
+        dreamInput.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+
+        /* ==================== Preset Tags ==================== */
+        function addPreset(tag, btn) {
+            const input = document.getElementById('dreamInput');
+            const currentText = input.value.trim();
+
+            if (currentText.includes(tag)) {
+                showToast(t('toast.tagAdded') + ': ' + tag);
+                return;
+            }
+
+            let newText;
+            if (currentText.length === 0) {
+                newText = tag;
+            } else {
+                newText = currentText + '、' + tag;
+            }
+
+            input.value = newText;
+            charCount.textContent = newText.length;
+            input.focus();
+
+            // Visual feedback
+            btn.classList.add('used');
+            setTimeout(() => btn.classList.remove('used'), 1000);
+
+            showToast(t('toast.tagAdded') + ': ' + tag);
+        }
+
+        /* ==================== AI Generation Logic ==================== */
+        const companionNames = {
+            'gentleBritish': ['温柔英伦导师Emily', 'Gentle British Tutor Emily', '優しい英国教師エミリー', '다정한 영국 튜터 Emily', 'Douce tutrice britannique Emily', 'Amable tutora británica Emily', 'Sanfte britische Tutorin Emily'],
+            'strictAmerican': ['严格美式教练Alex', 'Strict American Coach Alex', '厳格なアメリカンコーチ アレックス', '엄격한 미국 코치 Alex', 'Coach américain strict Alex', 'Entrenador americano estricto Alex', 'Strenger amerikanischer Coach Alex'],
+            'business': ['商务英语专家Victoria', 'Business English Expert Victoria', 'ビジネス英語専門家 ヴィクトリア', '비즈니스 영어 전문가 Victoria', 'Experte en anglais des affaires Victoria', 'Experta en inglés de negocios Victoria', 'Business-Englisch-Expertin Victoria'],
+            'travel': ['旅行口语达人Oliver', 'Travel Talk Pro Oliver', '旅行会話マスター オリバー', '여행 회화 마스터 Oliver', 'Expert en conversation voyage Oliver', 'Experto en conversación de viaje Oliver', 'Reisegesprächs-Profi Oliver'],
+            'exam': ['考级冲刺导师Sophia', 'Exam Prep Mentor Sophia', '試験対策メンター ソフィア', '시험 대비 멘토 Sophia', 'Mentor préparation examen Sophia', 'Mentora de preparación de examen Sophia', 'Prüfungsvorbereitungs-Mentorin Sophia'],
+            'kids': ['少儿英语伙伴Lily', 'Kids English Buddy Lily', '子供英語パートナー リリー', '어린이 영어 친구 Lily', 'Amie anglais enfant Lily', 'Amiga de inglés infantil Lily', 'Kinder-Englisch-Freundin Lily'],
+            'default': ['专属AI语言伴读', 'Your AI Language Companion', 'あなた専用AI言語パートナー', '나만의 AI 언어 동반자', 'Votre compagnon linguistique IA', 'Tu compañero de idiomas IA', 'Dein KI-Sprachbegleiter']
+        };
+
+        const langIndex = { zh: 0, en: 1, ja: 2, ko: 3, fr: 4, es: 5, de: 6 };
+
+        function getLocalized(arr) {
+            const idx = langIndex[I18N.current] || 0;
+            return arr[idx] || arr[0];
+        }
+
+        function analyzeInput(text) {
+            const lower = text.toLowerCase();
+            const profile = {
+                type: 'default',
+                keywords: []
+            };
+
+            // Detect accent
+            if (lower.includes('英式') || lower.includes('british') || lower.includes('イギリス') || lower.includes('영국') || lower.includes('britannique') || lower.includes('británico') || lower.includes('britisch')) {
+                profile.accent = 'british';
+                profile.keywords.push('british');
+            } else if (lower.includes('美式') || lower.includes('american') || lower.includes('アメリカ') || lower.includes('미국') || lower.includes('américain') || lower.includes('americano') || lower.includes('amerikanisch')) {
+                profile.accent = 'american';
+                profile.keywords.push('american');
+            }
+
+            // Detect personality
+            if (lower.includes('温柔') || lower.includes('耐心') || lower.includes('優しい') || lower.includes('부드러운') || lower.includes('doux') || lower.includes('gentle') || lower.includes('patient') || lower.includes('sanft') || lower.includes('geduldig')) {
+                profile.personality = 'gentle';
+                profile.keywords.push('gentle');
+            } else if (lower.includes('严格') || lower.includes('厳しい') || lower.includes('엄격한') || lower.includes('strict') || lower.includes('rigoureux') || lower.includes('estricto') || lower.includes('streng')) {
+                profile.personality = 'strict';
+                profile.keywords.push('strict');
+            }
+
+            // Detect scenario
+            if (lower.includes('商务') || lower.includes('ビジネス') || lower.includes('비즈니스') || lower.includes('business') || lower.includes('affaires') || lower.includes('negocios')) {
+                profile.scenario = 'business';
+                profile.keywords.push('business');
+            } else if (lower.includes('旅行') || lower.includes('travel') || lower.includes('voyage') || lower.includes('viaje') || lower.includes('reise')) {
+                profile.scenario = 'travel';
+                profile.keywords.push('travel');
+            } else if (lower.includes('考级') || lower.includes('考试') || lower.includes('試験') || lower.includes('시험') || lower.includes('exam') || lower.includes('prüfung')) {
+                profile.scenario = 'exam';
+                profile.keywords.push('exam');
+            } else if (lower.includes('少儿') || lower.includes('孩子') || lower.includes('子供') || lower.includes('어린이') || lower.includes('kids') || lower.includes('enfant') || lower.includes('kind')) {
+                profile.scenario = 'kids';
+                profile.keywords.push('kids');
+            } else if (lower.includes('日常') || lower.includes('daily') || lower.includes('quotidien') || lower.includes('diario') || lower.includes('alltag')) {
+                profile.scenario = 'daily';
+                profile.keywords.push('daily');
+            }
+
+            // Determine primary type for name
+            if (profile.scenario === 'business') profile.type = 'business';
+            else if (profile.scenario === 'travel') profile.type = 'travel';
+            else if (profile.scenario === 'exam') profile.type = 'exam';
+            else if (profile.scenario === 'kids') profile.type = 'kids';
+            else if (profile.personality === 'gentle' && profile.accent === 'british') profile.type = 'gentleBritish';
+            else if (profile.personality === 'strict' && profile.accent === 'american') profile.type = 'strictAmerican';
+            else if (profile.accent === 'british') profile.type = 'gentleBritish';
+            else if (profile.accent === 'american') profile.type = 'strictAmerican';
+
+            return profile;
+        }
+
+        function buildCompanionProfile(profile) {
+            const idx = langIndex[I18N.current] || 0;
+
+            // Voice descriptions
+            const voices = {
+                british: ['优雅英伦女声', 'Elegant British Female Voice', 'エレガントな英国女性の声', '우아한 영국 여성 음성', 'Élégante voix féminine britannique', 'Elegante voz femenina británica', 'Elegante britische Frauenstimme'],
+                american: ['地道美式女声', 'Authentic American Female Voice', '本格的なアメリカ女性の声', '정통 미국 여성 음성', 'Voix féminine américaine authentique', 'Auténtica voz femenina americana', 'Authentische amerikanische Frauenstimme'],
+                default: ['自然标准语音', 'Natural Standard Voice', 'ナチュラル標準音声', '자연스러운 표준 음성', 'Voix standard naturelle', 'Voz estándar natural', 'Natürliche Standardstimme']
+            };
+
+            // Persona descriptions
+            const personas = {
+                gentle: ['温和耐心的语言教练，擅长引导式教学，多鼓励少批评，让学习过程轻松愉快', 'A gentle and patient language coach, skilled in guided teaching, encouraging rather than critical, making learning enjoyable', '優しく忍耐強い言語コーチ、ガイド式指導が得意で、励まし中心、学習を楽しくします', '부드럽고 인내심 있는 언어 코치, 가이드식 교육에 능숙하고 격려 중심으로 학습을 즐겁게 만듭니다', 'Un coach linguistique doux et patient, spécialisé dans l\'enseignement guidé, encourageant, rendant l\'apprentissage agréable', 'Un entrenador de idiomas amable y paciente, hábil en enseñanza guiada, alentador, haciendo el aprendizaje agradable', 'Ein sanfter und geduldiger Sprachcoach, spezialisiert auf geführtes Lehren, ermutigend statt kritisierend, macht das Lernen angenehm'],
+                strict: ['严格高效的督学教练，注重学习效果，制定系统化学习计划，推动你不断进步', 'A strict and efficient coach, focused on learning outcomes, creating systematic study plans, pushing you to continuously improve', '厳格で効率的な指導コーチ、学習効果を重視し、体系的な学習計画を立て、継続的な進歩を促します', '엄격하고 효율적인 지도 코치, 학습 효과를 중시하고 체계적인 학습 계획을 수립하여 지속적인 발전을 촉진합니다', 'Un coach strict et efficace, axé sur les résultats, créant des plans d\'étude systématiques, vous poussant à progresser', 'Un entrenador estricto y eficiente, enfocado en resultados, creando planes de estudio sistemáticos, impulsándote a mejorar', 'Ein strenger und effizienter Coach, fokussiert auf Lernergebnisse, erstellt systematische Lernpläne, treibt dich zur Verbesserung an'],
+                default: ['根据你的描述，为你量身定制的AI语言学习伙伴，结合你的学习目标和偏好，提供个性化的语言学习体验', 'A personalized AI language learning companion tailored to your description, combining your learning goals and preferences', 'あなたの説明に基づいてカスタマイズされたAI言語学習パートナー、学習目標と好みを組み合わせています', '설명에 기반한 맞춤형 AI 언어 학습 파트너, 학습 목표와 선호도를 결합합니다', 'Un compagnon d\'apprentissage IA personnalisé selon votre description, combinant vos objectifs et préférences', 'Un compañero de aprendizaje de idiomas IA personalizado según tu descripción, combinando tus objetivos y preferencias', 'Ein personalisierter KI-Sprachlernpartner basierend auf deiner Beschreibung, kombiniert deine Lernziele und Präferenzen']
+            };
+
+            // Scenario descriptions
+            const scenarios = {
+                business: ['商务会议、邮件撰写、商务谈判、职场沟通', 'Business meetings, Email writing, Business negotiation, Workplace communication', 'ビジネス会議、メール作成、ビジネス交渉、職場コミュニケーション', '비즈니스 미팅, 이메일 작성, 비즈니스 협상, 직장 커뮤니케이션', 'Réunions d\'affaires, Rédaction d\'emails, Négociation, Communication professionnelle', 'Reuniones de negocios, Redacción de correos, Negociación, Comunicación laboral', 'Geschäftstreffen, E-Mail-Verfassen, Verhandlung, Berufliche Kommunikation'],
+                travel: ['旅行对话、酒店预订、餐厅点餐、问路导航', 'Travel conversations, Hotel booking, Restaurant ordering, Navigation', '旅行会話、ホテル予約、レストラン注文、道案内', '여행 대화, 호텔 예약, 레스토랑 주문, 길 찾기', 'Conversations de voyage, Réservation d\'hôtel, Commande au restaurant, Navigation', 'Conversaciones de viaje, Reserva de hotel, Pedidos en restaurante, Navegación', 'Reisegespräche, Hotelbuchung, Restaurantbestellung, Navigation'],
+                exam: ['考级真题训练、模拟考试、听力强化、写作批改', 'Exam practice, Mock tests, Listening training, Writing correction', '試験対策、模擬試験、リスニング強化、作文添削', '시험 기출문제, 모의고사, 듣기 강화, 작문 첨삭', 'Exercices d\'examen, Tests blancs, Entraînement auditif, Correction d\'écriture', 'Práctica de examen, Simulacros, Entrenamiento auditivo, Corrección de escritura', 'Prüfungsübungen, Probetests, Hörverständnis-Training, Schreibkorrektur'],
+                kids: ['趣味互动游戏、儿歌学唱、绘本阅读、基础词汇', 'Fun interactive games, Nursery rhymes, Picture book reading, Basic vocabulary', '楽しいインタラクティブゲーム、童謡、絵本読み聞かせ、基礎語彙', '재미있는 인터랙티브 게임, 동요, 그림책 읽기, 기초 어휘', 'Jeux interactifs amusants, Comptines, Lecture de livres illustrés, Vocabulaire de base', 'Juegos interactivos divertidos, Canciones infantiles, Lectura de cuentos, Vocabulario básico', 'Spaßige interaktive Spiele, Kinderlieder, Bilderbücher lesen, Grundwortschatz'],
+                daily: ['日常对话、社交闲聊、文化话题、生活场景', 'Daily conversations, Social chat, Cultural topics, Life scenarios', '日常会話、社交雑談、文化トピック、生活シーン', '일상 대화, 사교 잡담, 문화 토픽, 생활 장면', 'Conversations quotidiennes, Bavardage social, Sujets culturels, Scènes de vie', 'Conversaciones diarias, Charla social, Temas culturales, Escenas de la vida', 'Tägliche Gespräche, Soziale Plauderei, Kulturelle Themen, Lebensszenen'],
+                default: ['日常对话、语言学习', 'Daily conversation, Language learning', '日常会話、言語学習', '일상 대화, 언어 학습', 'Conversation quotidienne, Apprentissage des langues', 'Conversación diaria, Aprendizaje de idiomas', 'Tägliche Gespräche, Sprachenlernen']
+            };
+
+            // Greetings
+            const greetings = {
+                gentle: ['Hey, ready for today\'s chat? Let\'s talk about something interesting!', 'Hey, ready for today\'s chat? Let\'s talk about something interesting!', 'さあ、今日の会話の準備はいい？面白い話をしよう！', '오늘 대화 준비됐나요? 재미있는 이야기를 나눠봐요!', 'Hey, prêt pour la discussion d\'aujourd\'hui ? Parlons de quelque chose d\'intéressant !', 'Hey, listo para la charla de hoy? Hablemos de algo interesante!', 'Hey, bereit für das heutige Gespräch? Lass uns über etwas Interessantes reden!'],
+                strict: ['Time for today\'s practice! Have you completed your daily goals yet? Let\'s push harder!', 'Time for today\'s practice! Have you completed your daily goals yet? Let\'s push harder!', '今日の練習の時間です！今日の目標は達成しましたか？もっと頑張りましょう！', '오늘의 연습 시간입니다! 오늘 목표를 달성했나요? 더 열심히 해봐요!', 'C\'est l\'heure de l\'entraînement ! Avez-vous atteint vos objectifs du jour ? Poussons plus fort !', 'Hora de practicar! Has completado tus objetivos diarios? Vamos más fuerte!', 'Zeit für das heutige Training! Hast du deine täglichen Ziele erreicht? Lass uns härter arbeiten!'],
+                business: ['Good morning! Ready for today\'s business English session? Let\'s polish your professional communication.', 'Good morning! Ready for today\'s business English session? Let\'s polish your professional communication.', 'おはようございます！今日のビジネス英語セッションの準備はいいですか？プロのコミュニケーション力を磨きましょう。', '좋은 아침입니다! 오늘의 비즈니스 영어 세션 준비되셨나요? 전문 커뮤니케이션을 다듬어 봐요.', 'Bonjour ! Prêt pour la séance d\'anglais des affaires ? Perfectionnons votre communication professionnelle.', 'Buenos días! Listo para la sesión de inglés de negocios? Perfeccionemos tu comunicación profesional.', 'Guten Morgen! Bereit für die heutige Business-Englisch-Sitzung? Lass uns deine professionelle Kommunikation verbessern.'],
+                travel: ['Hey, ready for today\'s chat? Let\'s talk about your last trip!', 'Hey, ready for today\'s chat? Let\'s talk about your last trip!', 'やあ、今日の会話の準備はいい？前回の旅行について話そう！', '오늘 대화 준비됐나요? 지난 여행에 대해 이야기해 봐요!', 'Hey, prêt pour la discussion ? Parlons de ton dernier voyage !', 'Hey, listo para la charla? Hablemos de tu último viaje!', 'Hey, bereit fürs Gespräch? Lass uns über deine letzte Reise reden!'],
+                exam: ['Focus time! Let\'s tackle today\'s exam practice. Remember, every question counts!', 'Focus time! Let\'s tackle today\'s exam practice. Remember, every question counts!', '集中タイム！今日の試験対策に取り組みましょう。すべての問題が重要です！', '집중 시간! 오늘의 시험 연습을 시작해요. 모든 문제가 중요합니다!', 'Temps de concentration ! Attaquons la pratique d\'examen. Chaque question compte !', 'Hora de concentrarse! Abordemos la práctica de examen. Cada pregunta cuenta!', 'Konzentrationszeit! Lass uns die heutige Prüfungsübung angehen. Jede Frage zählt!'],
+                kids: ['Hello little friend! Ready for today\'s fun English adventure? Let\'s sing and play!', 'Hello little friend! Ready for today\'s fun English adventure? Let\'s sing and play!', 'こんにちは、小さなお友達！今日の楽しい英語の冒険の準備はいい？歌って遊ぼう！', '안녕, 작은 친구! 오늘의 재미있는 영어 모험 준비됐니? 노래하고 놀자!', 'Bonjour petit ami ! Prêt pour l\'aventure anglaise amusante ? Chantons et jouons !', 'Hola amiguito! Listo para la divertida aventura de inglés? Cantemos y juguemos!', 'Hallo kleiner Freund! Bereit für das lustige Englisch-Abenteuer? Lass uns singen und spielen!'],
+                default: ['Hi! Ready? Let\'s start today\'s learning!', 'Hi! Ready? Let\'s start today\'s learning!', 'こんにちは！準備はいい？今日の学習を始めましょう！', '안녕하세요! 준비됐나요? 오늘의 학습을 시작해요!', 'Salut ! Prêt ? Commençons l\'apprentissage !', 'Hola! Listo? Empecemos el aprendizaje!', 'Hallo! Bereit? Lass uns mit dem Lernen beginnen!']
+            };
+
+            const avatarEmojis = {
+                gentle: '👩‍🏫',
+                strict: '🎯',
+                business: '💼',
+                travel: '✈️',
+                exam: '📚',
+                kids: '🧸',
+                daily: '💬',
+                default: '✨'
+            };
+
+            const name = companionNames[profile.type] ? getLocalized(companionNames[profile.type]) : getLocalized(companionNames['default']);
+            const personaKey = profile.personality || 'default';
+            const scenarioKey = profile.scenario || 'default';
+            const accentKey = profile.accent || 'default';
+            const greetingKey = profile.scenario || profile.personality || 'default';
+
+            return {
+                name: name,
+                persona: getLocalized(personas[personaKey] || personas['default']),
+                voice: getLocalized(voices[accentKey] || voices['default']),
+                scenarios: getLocalized(scenarios[scenarioKey] || scenarios['default']),
+                greeting: getLocalized(greetings[greetingKey] || greetings['default']),
+                avatar: avatarEmojis[profile.scenario] || avatarEmojis[profile.personality] || avatarEmojis['default']
+            };
+        }
+
+        /* ==================== Typewriter Effect ==================== */
+        function typewriterEffect(element, text, speed, callback) {
+            let i = 0;
+            element.textContent = '';
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    if (callback) callback();
+                }
+            }, speed);
+            return timer;
+        }
+
+        /* ==================== Loading Animation ==================== */
+        async function simulateLoading() {
+            const loadingSection = document.getElementById('loadingSection');
+            const loadingText = document.getElementById('loadingText');
+            loadingSection.classList.add('visible');
+
+            const loadingMessages = [
+                t('loading.thinking'),
+                t('loading.analyzing'),
+                t('loading.matching'),
+                t('loading.creating')
+            ];
+
+            for (let i = 0; i < loadingMessages.length; i++) {
+                loadingText.innerHTML = '<span>' + loadingMessages[i] + '</span><span class="typing-cursor"></span>';
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 400));
+            }
+
+            loadingSection.classList.remove('visible');
+        }
+
+        /* ==================== Main Generation Function ==================== */
+        async function generateCompanion() {
+            const input = document.getElementById('dreamInput').value.trim();
+
+            // Validation
+            if (!input) {
+                showToast(t('toast.empty'));
+                dreamInput.focus();
+                return;
+            }
+
+            if (input.length < 10) {
+                showToast(t('toast.tooShort'));
+                dreamInput.focus();
+                return;
+            }
+
+            // Disable button
+            const btnGenerate = document.getElementById('btnGenerate');
+            btnGenerate.disabled = true;
+
+            // Hide previous results
+            document.getElementById('resultSection').classList.remove('visible');
+            document.getElementById('ctaSection').classList.remove('visible');
+
+            // Update step indicators
+            updateSteps(1);
+
+            // Scroll to top of loading
+            document.getElementById('loadingSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Show loading animation
+            await simulateLoading();
+
+            // Analyze input
+            const profile = analyzeInput(input);
+            const companion = buildCompanionProfile(profile);
+
+            // Update step indicators
+            updateSteps(2);
+
+            // Populate result
+            document.getElementById('resultAvatar').textContent = companion.avatar;
+            document.getElementById('resultName').textContent = companion.name;
+            document.getElementById('resultPersona').textContent = companion.persona;
+            document.getElementById('resultVoice').textContent = companion.voice;
+            document.getElementById('resultScenarios').textContent = companion.scenarios;
+            document.getElementById('resultGreeting').textContent = companion.greeting;
+
+            // Show result
+            const resultSection = document.getElementById('resultSection');
+            resultSection.classList.add('visible');
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Update step indicators
+            updateSteps(3);
+
+            // Determine user state (simulated: default guest)
+            const isGuest = true; // Simulated guest state
+            const ctaSection = document.getElementById('ctaSection');
+            document.getElementById('ctaGuest').style.display = isGuest ? 'block' : 'none';
+            document.getElementById('ctaUser').style.display = isGuest ? 'none' : 'block';
+            ctaSection.classList.add('visible');
+
+            // Re-enable button
+            btnGenerate.disabled = false;
+
+            // Auto-open trial modal after a short delay for guests
+            if (isGuest) {
+                setTimeout(() => {
+                    openTrialModal();
+                }, 1500);
+            }
+        }
+
+        /* ==================== Step Indicator ==================== */
+        function updateSteps(activeStep) {
+            const dots = [
+                document.getElementById('stepDot0'),
+                document.getElementById('stepDot1'),
+                document.getElementById('stepDot2'),
+                document.getElementById('stepDot3')
+            ];
+            const lines = [
+                document.getElementById('stepLine0'),
+                document.getElementById('stepLine1'),
+                document.getElementById('stepLine2')
+            ];
+
+            dots.forEach((dot, i) => {
+                dot.classList.remove('active', 'done');
+                if (i < activeStep) dot.classList.add('done');
+                if (i === activeStep) dot.classList.add('active');
+            });
+
+            lines.forEach((line, i) => {
+                line.classList.remove('active', 'done');
+                if (i < activeStep) line.classList.add('done');
+                if (i === activeStep) line.classList.add('active');
+            });
+        }
+
+        /* ==================== Modal Functions ==================== */
+        function openTrialModal() {
+            document.getElementById('trialModal').classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTrialModal() {
+            document.getElementById('trialModal').classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on overlay click
+        document.getElementById('trialModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTrialModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTrialModal();
+            }
+        });
+
+        /* ==================== CTA Functions ==================== */
+        function startChat() {
+            // Simulated: redirect to chat page
+            showToast('即将跳转到对话页面...');
+            // window.location.href = 'chat.html';
+        }
+
+        function scrollToResult() {
+            closeTrialModal();
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ==================== Initialization ==================== */
+        function init() {
+            // Load saved language preference
+            try {
+                const savedLang = localStorage.getItem('ailos_lang');
+                if (savedLang && I18N.data[savedLang]) {
+                    I18N.current = savedLang;
+                }
+            } catch (e) { /* ignore */ }
+
+            applyI18N();
+            updateSteps(0);
+        }
+
+        // Run on DOM ready
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Allow Enter key in textarea (but not submit)
+        dreamInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                generateCompanion();
+            }
+        });
+
+        console.log('AILOS - AI Companion Builder initialized successfully.');
+        console.log('Current language:', I18N.current);
+        console.log('7 languages supported: zh, en, ja, ko, fr, es, de');
+    </script>
+</body>
+</html>

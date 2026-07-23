@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AILOS Growth Promotion Center</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-start: #fdf2e9;
+  --bg-end: #fef9f3;
+  --card-bg: #ffffff;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a5a7a;
+  --text-muted: #8e8ea0;
+  --accent: #059669;
+  --accent-light: #d1fae5;
+  --accent-dark: #047857;
+  --accent-gradient: linear-gradient(135deg, #059669, #10b981);
+  --gold: #d97706;
+  --gold-light: #fef3c7;
+  --gold-gradient: linear-gradient(135deg, #d97706, #f59e0b);
+  --lv1-color: #6366f1;
+  --lv2-color: #8b5cf6;
+  --lv3-color: #ec4899;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --transition: 0.2s ease;
+}
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  min-height: 100vh;
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Language Bar ===== */
+.lang-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.lang-btn {
+  padding: 4px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+.lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ===== Container ===== */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+/* ===== Header ===== */
+.header {
+  text-align: center;
+  padding: 24px 0 16px;
+}
+.header-greeting {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ===== Login Prompt ===== */
+.login-prompt {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+.login-prompt.show { display: flex; }
+.login-prompt-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: var(--accent);
+  margin-bottom: 16px;
+}
+.login-prompt h2 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
+.login-prompt p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+.login-btn {
+  padding: 10px 28px;
+  border: none; border-radius: var(--radius-sm);
+  background: var(--accent-gradient);
+  color: #fff; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  font-family: var(--font);
+}
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+
+/* ===== Main Content ===== */
+.main-content { display: none; }
+.main-content.show { display: block; }
+
+/* ===== Section ===== */
+.section {
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+/* ===== Stats Cards ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--card-shadow);
+  transition: transform var(--transition);
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card.full-width { grid-column: 1 / -1; }
+.stat-card-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.stat-card-value.accent { color: var(--accent); }
+.stat-card-value.gold { color: var(--gold); }
+.stat-card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Level Badge */
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.level-badge.lv1 { background: #eef2ff; color: var(--lv1-color); }
+.level-badge.lv2 { background: #f3e8ff; color: var(--lv2-color); }
+.level-badge.lv3 { background: #fce7f3; color: var(--lv3-color); }
+
+/* ===== Invite Code ===== */
+.invite-code-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.invite-code {
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: #f3f4f6;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+.copy-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.copy-btn:hover { background: var(--accent); color: #fff; }
+.copy-btn.copied { background: var(--accent); color: #fff; }
+
+/* ===== Team List ===== */
+.team-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.team-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  font-size: 14px;
+}
+.team-item-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--accent);
+  font-weight: 600;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.team-item-info { flex: 1; }
+.team-item-name { font-weight: 600; color: var(--text-primary); }
+.team-item-progress {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.progress-bar {
+  width: 60px; height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.team-item-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ===== Tier Cards ===== */
+.tier-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tier-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--card-shadow);
+  border-left: 4px solid var(--accent);
+  transition: transform var(--transition);
+}
+.tier-card:hover { transform: translateY(-2px); }
+.tier-card.lv1 { border-left-color: var(--lv1-color); }
+.tier-card.lv2 { border-left-color: var(--lv2-color); }
+.tier-card.lv3 { border-left-color: var(--lv3-color); }
+.tier-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.tier-card-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.tier-card-icon.lv1 { background: #eef2ff; color: var(--lv1-color); }
+.tier-card-icon.lv2 { background: #f3e8ff; color: var(--lv2-color); }
+.tier-card-icon.lv3 { background: #fce7f3; color: var(--lv3-color); }
+.tier-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.tier-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.tier-card-cond {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+
+/* ===== Earnings List ===== */
+.earnings-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.earnings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  font-size: 14px;
+}
+.earnings-item-left { display: flex; align-items: center; gap: 10px; }
+.earnings-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.earnings-desc { color: var(--text-primary); font-weight: 500; }
+.earnings-date { font-size: 12px; color: var(--text-muted); }
+.earnings-amount {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+/* ===== Withdraw Button ===== */
+.withdraw-section {
+  text-align: center;
+  padding: 8px 0;
+}
+.withdraw-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 40px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--gold-gradient);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: 0 4px 14px rgba(217,119,6,0.3);
+  font-family: var(--font);
+}
+.withdraw-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217,119,6,0.4);
+}
+.withdraw-btn:active { transform: translateY(0); }
+
+/* ===== Promo Materials ===== */
+.promo-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.promo-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--card-shadow);
+  text-align: center;
+}
+.promo-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+.promo-link {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border: 1px dashed #d1d5db;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  margin-bottom: 8px;
+  font-family: 'Courier New', monospace;
+}
+.promo-btn {
+  padding: 8px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.promo-btn:hover { background: var(--accent); color: #fff; }
+.qr-placeholder {
+  width: 100px; height: 100px;
+  margin: 0 auto 10px;
+  background: repeating-linear-gradient(45deg, #f3f4f6, #f3f4f6 4px, #e5e7eb 4px, #e5e7eb 8px);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-muted);
+}
+.banner-placeholder {
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(135deg, var(--accent), #6ee7b7);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 600; font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.toast.show { opacity: 1; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.modal h3 { font-size: 17px; margin-bottom: 8px; }
+.modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
+.modal input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-family: var(--font);
+  outline: none;
+}
+.modal input:focus { border-color: var(--accent); }
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.modal-btn {
+  padding: 8px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.modal-btn.primary { background: var(--accent-gradient); color: #fff; }
+.modal-btn.primary:hover { box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
+.modal-btn.secondary { background: #f3f4f6; color: var(--text-secondary); }
+.modal-btn.secondary:hover { background: #e5e7eb; }
+
+/* ===== Responsive: Tablet 768px+ ===== */
+@media (min-width: 768px) {
+  .container { padding: 28px 24px 48px; }
+  .header h1 { font-size: 28px; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .stat-card.full-width { grid-column: 1 / -1; }
+  .tier-cards { flex-direction: row; }
+  .tier-card { flex: 1; }
+  .promo-cards { grid-template-columns: repeat(3, 1fr); }
+  .section-title { font-size: 18px; }
+  .lang-bar { padding: 8px 24px; }
+  .lang-btn { padding: 4px 12px; font-size: 14px; }
+}
+
+/* ===== Team Tabs ===== */
+.team-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+.team-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: #f9fafb;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+  text-align: center;
+}
+.team-tab.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.team-tab:hover:not(.active) {
+  background: #f3f4f6;
+  color: var(--text-secondary);
+}
+.team-tab-content { display: none; }
+.team-tab-content.active { display: block; }
+
+/* ===== Platform Order Item ===== */
+.platform-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* ===== Revenue Breakdown ===== */
+.revenue-breakdown {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--card-shadow);
+}
+.revenue-breakdown h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+.revenue-bar-wrap {
+  margin-bottom: 10px;
+}
+.revenue-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.revenue-bar {
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.revenue-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s;
+}
+.revenue-bar-fill.personal { background: var(--accent-gradient); }
+.revenue-bar-fill.platform { background: var(--gold-gradient); }
+.revenue-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  justify-content: center;
+}
+.revenue-legend span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.revenue-legend .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.revenue-legend .dot.personal { background: var(--accent); }
+.revenue-legend .dot.platform { background: var(--gold); }
+
+/* ===== Platform Notice ===== */
+.platform-notice {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+.platform-notice strong {
+  color: var(--gold);
+}
+
+/* ===== Responsive: Desktop 1024px+ ===== */
+@media (min-width: 1024px) {
+  .container { padding: 32px 32px 56px; }
+  .stats-grid { grid-template-columns: repeat(5, 1fr); }
+  .header h1 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Language Bar ===== -->
+<div class="lang-bar" id="langBar">
+  <button class="lang-btn active" data-lang="zh">中文</button>
+  <button class="lang-btn" data-lang="en">English</button>
+  <button class="lang-btn" data-lang="ja">日本語</button>
+  <button class="lang-btn" data-lang="ko">한국어</button>
+  <button class="lang-btn" data-lang="fr">Français</button>
+  <button class="lang-btn" data-lang="es">Español</button>
+  <button class="lang-btn" data-lang="de">Deutsch</button>
+</div>
+
+<!-- ===== Container ===== -->
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-greeting" data-i18n="greeting">你好，欢迎回来</div>
+    <h1 data-i18n="title">AILOS成长推广中心</h1>
+    <div class="header-subtitle" data-i18n="subtitle">分享知识，共创价值</div>
+  </div>
+
+  <!-- Login Prompt -->
+  <div class="login-prompt show" id="loginPrompt">
+    <div class="login-prompt-icon">&#128274;</div>
+    <h2 data-i18n="login_prompt_title">请先登录</h2>
+    <p data-i18n="login_prompt_desc">登录后即可查看您的专属成长后台，管理推广与收益</p>
+    <button class="login-btn" id="mockLoginBtn" data-i18n="login_btn">一键登录（演示）</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Section: User Stats -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_stats">我的数据中心</div>
+      <div class="stats-grid">
+        <div class="stat-card full-width">
+          <div class="stat-card-label" data-i18n="stat_level">我的成长等级</div>
+          <span class="level-badge lv1" id="levelBadge" data-i18n="level_lv1">Lv.1 AI学习用户</span>
+          <div class="stat-card-sub" data-i18n="stat_level_next">再邀请 2 位好友即可升级</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label" data-i18n="stat_code">我的邀请码</div>
+          <div class="invite-code-wrap">
+            <span class="invite-code" id="inviteCode">AILOS2025</span>
+            <button class="copy-btn" id="copyBtn" data-i18n="copy_btn">复制</button>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label" data-i18n="stat_invites">我的邀请人数</div>
+          <div class="stat-card-value accent">38<span data-i18n="stat_people">人</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label" data-i18n="stat_rewards">我的累计奖励</div>
+          <div class="stat-card-value gold">¥1280</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: My Team -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_team">我的团队</div>
+      <div class="team-tabs" id="teamTabs">
+        <button class="team-tab active" data-tab="personal" data-i18n="tab_personal">个人拉新订单</button>
+        <button class="team-tab" data-tab="platform" data-i18n="tab_platform">平台自主注册订单</button>
+      </div>
+      <!-- Tab: Personal Orders -->
+      <div class="team-tab-content active" id="tabPersonal">
+        <ul class="team-list">
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar">李</div>
+              <div class="team-item-info">
+                <div class="team-item-name">李小明</div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:78%"></div></div>
+                  <span>78%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date">2025-07-18</div>
+          </li>
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar">王</div>
+              <div class="team-item-info">
+                <div class="team-item-name">王芳</div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:55%"></div></div>
+                  <span>55%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date">2025-07-15</div>
+          </li>
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar">张</div>
+              <div class="team-item-info">
+                <div class="team-item-name">张伟</div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:92%"></div></div>
+                  <span>92%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date">2025-07-12</div>
+          </li>
+        </ul>
+      </div>
+      <!-- Tab: Platform Orders -->
+      <div class="team-tab-content" id="tabPlatform">
+        <ul class="team-list">
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar" style="background:#fef3c7;color:#d97706;">系</div>
+              <div class="team-item-info">
+                <div class="team-item-name">系统用户 #1001<span class="platform-tag" data-i18n="platform_tag">平台收益</span></div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:65%"></div></div>
+                  <span>65%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date" data-i18n="platform_date_1">2025-07-19</div>
+          </li>
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar" style="background:#fef3c7;color:#d97706;">系</div>
+              <div class="team-item-info">
+                <div class="team-item-name">系统用户 #1023<span class="platform-tag" data-i18n="platform_tag">平台收益</span></div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:41%"></div></div>
+                  <span>41%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date" data-i18n="platform_date_2">2025-07-16</div>
+          </li>
+          <li class="team-item">
+            <div style="display:flex;align-items:center;">
+              <div class="team-item-avatar" style="background:#fef3c7;color:#d97706;">系</div>
+              <div class="team-item-info">
+                <div class="team-item-name">系统用户 #1056<span class="platform-tag" data-i18n="platform_tag">平台收益</span></div>
+                <div class="team-item-progress">
+                  <span data-i18n="team_progress">学习进度</span>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:88%"></div></div>
+                  <span>88%</span>
+                </div>
+              </div>
+            </div>
+            <div class="team-item-date" data-i18n="platform_date_3">2025-07-14</div>
+          </li>
+        </ul>
+        <div class="platform-notice" style="margin-top:12px;text-align:left;">
+          <p data-i18n="platform_order_note">平台自然注册用户订单佣金归属平台官方账户，您仅可查看个人直接推广产生的收益。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Three-Tier Growth System -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_tiers">三级成长体系</div>
+      <div class="tier-cards">
+        <div class="tier-card lv1">
+          <div class="tier-card-header">
+            <div class="tier-card-icon lv1">&#9733;</div>
+            <div class="tier-card-title" data-i18n="tier1_title">Lv.1 AI学习用户</div>
+          </div>
+          <div class="tier-card-desc" data-i18n="tier1_desc">注册即可享受AI私人伴读、学习积分累积、分享基础奖励</div>
+          <div class="tier-card-cond" data-i18n="tier1_cond">注册即享</div>
+        </div>
+        <div class="tier-card lv2">
+          <div class="tier-card-header">
+            <div class="tier-card-icon lv2">&#9733;&#9733;</div>
+            <div class="tier-card-title" data-i18n="tier2_title">Lv.2 AILOS成长伙伴</div>
+          </div>
+          <div class="tier-card-desc" data-i18n="tier2_desc">邀请3位以上好友或完成学习任务，获得专属推广码，分享收益升级</div>
+          <div class="tier-card-cond" data-i18n="tier2_cond">邀请 ≥ 3位好友</div>
+        </div>
+        <div class="tier-card lv3">
+          <div class="tier-card-header">
+            <div class="tier-card-icon lv3">&#9733;&#9733;&#9733;</div>
+            <div class="tier-card-title" data-i18n="tier3_title">Lv.3 AILOS生态合伙人</div>
+          </div>
+          <div class="tier-card-desc" data-i18n="tier3_desc">邀请10位以上好友或通过机构认证，享受课程分成、机构后台管理权限</div>
+          <div class="tier-card-cond" data-i18n="tier3_cond">邀请 ≥ 10位好友</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Earnings Breakdown -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_earnings">分享收益明细</div>
+      <ul class="earnings-list" id="earningsList">
+        <li class="earnings-item">
+          <div class="earnings-item-left">
+            <div class="earnings-icon">&#128176;</div>
+            <div>
+              <div class="earnings-desc" data-i18n="earning_invite">好友注册奖励</div>
+              <div class="earnings-date">2025-07-20</div>
+            </div>
+          </div>
+          <div class="earnings-amount">+¥30</div>
+        </li>
+        <li class="earnings-item">
+          <div class="earnings-item-left">
+            <div class="earnings-icon">&#128176;</div>
+            <div>
+              <div class="earnings-desc" data-i18n="earning_course">课程购买分成</div>
+              <div class="earnings-date">2025-07-18</div>
+            </div>
+          </div>
+          <div class="earnings-amount">+¥120</div>
+        </li>
+        <li class="earnings-item">
+          <div class="earnings-item-left">
+            <div class="earnings-icon">&#128176;</div>
+            <div>
+              <div class="earnings-desc" data-i18n="earning_active">活跃用户奖励</div>
+              <div class="earnings-date">2025-07-15</div>
+            </div>
+          </div>
+          <div class="earnings-amount">+¥50</div>
+        </li>
+        <li class="earnings-item">
+          <div class="earnings-item-left">
+            <div class="earnings-icon">&#128176;</div>
+            <div>
+              <div class="earnings-desc" data-i18n="earning_share">分享推广奖励</div>
+              <div class="earnings-date">2025-07-10</div>
+            </div>
+          </div>
+          <div class="earnings-amount">+¥80</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Section: Withdrawal -->
+    <div class="section withdraw-section">
+      <button class="withdraw-btn" id="withdrawBtn">
+        <span>&#128184;</span>
+        <span data-i18n="withdraw_btn">申请提现</span>
+      </button>
+    </div>
+
+    <!-- Section: Promotion Materials -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_promo">推广素材</div>
+      <div class="promo-cards">
+        <div class="promo-card">
+          <div class="promo-card-title" data-i18n="promo_link">专属推广链接</div>
+          <div class="promo-link" id="promoLink">https://ailos.app/invite/AILOS2025</div>
+          <button class="promo-btn" id="copyPromoBtn" data-i18n="copy_link_btn">复制链接</button>
+        </div>
+        <div class="promo-card">
+          <div class="promo-card-title" data-i18n="promo_qr">推广二维码</div>
+          <div class="qr-placeholder" data-i18n="promo_qr_placeholder">二维码</div>
+          <button class="promo-btn" id="downloadQrBtn" data-i18n="download_qr_btn">下载二维码</button>
+        </div>
+        <div class="promo-card">
+          <div class="promo-card-title" data-i18n="promo_banner">推广海报</div>
+          <div class="banner-placeholder" data-i18n="promo_banner_placeholder">AILOS推广海报</div>
+          <button class="promo-btn" id="downloadBannerBtn" data-i18n="download_banner_btn">下载海报</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Revenue Breakdown -->
+    <div class="section">
+      <div class="section-title" data-i18n="section_revenue">收益来源构成</div>
+      <div class="revenue-breakdown">
+        <div class="revenue-bar-wrap">
+          <div class="revenue-bar-label">
+            <span data-i18n="revenue_personal">个人推广佣金</span>
+            <span data-i18n="revenue_personal_val">&#165; 8,520.00 (68%)</span>
+          </div>
+          <div class="revenue-bar">
+            <div class="revenue-bar-fill personal" style="width:68%"></div>
+          </div>
+        </div>
+        <div class="revenue-bar-wrap">
+          <div class="revenue-bar-label">
+            <span data-i18n="revenue_platform">平台注册佣金（仅后台可见）</span>
+            <span data-i18n="revenue_platform_val">&#165; 4,010.00 (32%)</span>
+          </div>
+          <div class="revenue-bar">
+            <div class="revenue-bar-fill platform" style="width:32%"></div>
+          </div>
+        </div>
+        <div class="revenue-legend">
+          <span><span class="dot personal"></span><span data-i18n="revenue_personal_legend">个人推广佣金</span></span>
+          <span><span class="dot platform"></span><span data-i18n="revenue_platform_legend">平台注册佣金</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Notice -->
+    <div class="platform-notice">
+      <p data-i18n="bottom_notice">平台自然注册用户订单佣金归属平台官方账户，您仅可查看个人直接推广产生的收益。</p>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /container -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay" id="withdrawModal">
+  <div class="modal">
+    <h3 data-i18n="withdraw_modal_title">申请提现</h3>
+    <p data-i18n="withdraw_modal_desc">请输入提现金额（最低¥10）</p>
+    <input type="number" id="withdrawAmount" placeholder="0" min="10" max="1280" data-i18n-placeholder="withdraw_placeholder">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="withdrawCancel" data-i18n="modal_cancel">取消</button>
+      <button class="modal-btn primary" id="withdrawConfirm" data-i18n="modal_confirm">确认提现</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== I18N Data =====
+const I18N = {
+  zh: {
+    greeting: '你好，欢迎回来',
+    title: 'AILOS成长推广中心',
+    subtitle: '分享知识，共创价值',
+    login_prompt_title: '请先登录',
+    login_prompt_desc: '登录后即可查看您的专属成长后台，管理推广与收益',
+    login_btn: '一键登录（演示）',
+    section_stats: '我的数据中心',
+    stat_level: '我的成长等级',
+    level_lv1: 'Lv.1 AI学习用户',
+    level_lv2: 'Lv.2 成长伙伴',
+    level_lv3: 'Lv.3 生态合伙人',
+    stat_level_next: '再邀请 2 位好友即可升级',
+    stat_code: '我的邀请码',
+    copy_btn: '复制',
+    stat_invites: '我的邀请人数',
+    stat_people: '人',
+    stat_rewards: '我的累计奖励',
+    section_team: '我的团队',
+    team_progress: '学习进度',
+    section_tiers: '三级成长体系',
+    tier1_title: 'Lv.1 AI学习用户',
+    tier1_desc: '注册即可享受AI私人伴读、学习积分累积、分享基础奖励',
+    tier1_cond: '注册即享',
+    tier2_title: 'Lv.2 AILOS成长伙伴',
+    tier2_desc: '邀请3位以上好友或完成学习任务，获得专属推广码，分享收益升级',
+    tier2_cond: '邀请 ≥ 3位好友',
+    tier3_title: 'Lv.3 AILOS生态合伙人',
+    tier3_desc: '邀请10位以上好友或通过机构认证，享受课程分成、机构后台管理权限',
+    tier3_cond: '邀请 ≥ 10位好友',
+    section_earnings: '分享收益明细',
+    earning_invite: '好友注册奖励',
+    earning_course: '课程购买分成',
+    earning_active: '活跃用户奖励',
+    earning_share: '分享推广奖励',
+    withdraw_btn: '申请提现',
+    withdraw_modal_title: '申请提现',
+    withdraw_modal_desc: '请输入提现金额（最低¥10）',
+    withdraw_placeholder: '请输入金额',
+    modal_cancel: '取消',
+    modal_confirm: '确认提现',
+    section_promo: '推广素材',
+    promo_link: '专属推广链接',
+    copy_link_btn: '复制链接',
+    promo_qr: '推广二维码',
+    promo_qr_placeholder: '二维码',
+    download_qr_btn: '下载二维码',
+    promo_banner: '推广海报',
+    promo_banner_placeholder: 'AILOS推广海报',
+    download_banner_btn: '下载海报',
+    toast_copied: '已复制到剪贴板',
+    toast_withdraw: '提现申请已提交，预计3个工作日内到账',
+    tab_personal: '个人拉新订单',
+    tab_platform: '平台自主注册订单',
+    platform_tag: '平台收益',
+    platform_order_note: '平台自然注册用户订单佣金归属平台官方账户，您仅可查看个人直接推广产生的收益。',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: '收益来源构成',
+    revenue_personal: '个人推广佣金',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: '平台注册佣金（仅后台可见）',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: '个人推广佣金',
+    revenue_platform_legend: '平台注册佣金',
+    bottom_notice: '平台自然注册用户订单佣金归属平台官方账户，您仅可查看个人直接推广产生的收益。',
+    toast_download: '下载功能即将上线',
+    toast_login: '登录成功！欢迎回来',
+    modal_amount_invalid: '请输入有效金额（最低¥10）',
+    modal_amount_exceed: '提现金额不能超过可用余额',
+    modal_success: '提现申请成功！'
+  },
+  en: {
+    greeting: 'Hello, welcome back',
+    title: 'AILOS Growth Promotion Center',
+    subtitle: 'Share knowledge, create value together',
+    login_prompt_title: 'Please log in first',
+    login_prompt_desc: 'Log in to view your exclusive growth dashboard, manage promotions and earnings',
+    login_btn: 'One-Click Login (Demo)',
+    section_stats: 'My Data Center',
+    stat_level: 'My Growth Level',
+    level_lv1: 'Lv.1 AI Learner',
+    level_lv2: 'Lv.2 Growth Partner',
+    level_lv3: 'Lv.3 Ecosystem Partner',
+    stat_level_next: 'Invite 2 more friends to level up',
+    stat_code: 'My Invitation Code',
+    copy_btn: 'Copy',
+    stat_invites: 'My Invitations',
+    stat_people: 'people',
+    stat_rewards: 'My Total Rewards',
+    section_team: 'My Team',
+    team_progress: 'Learning Progress',
+    section_tiers: 'Three-Tier Growth System',
+    tier1_title: 'Lv.1 AI Learner',
+    tier1_desc: 'Register to enjoy AI private tutoring, learning points accumulation, and basic sharing rewards',
+    tier1_cond: 'Available upon registration',
+    tier2_title: 'Lv.2 AILOS Growth Partner',
+    tier2_desc: 'Invite 3+ friends or complete learning tasks to get an exclusive promo code and upgraded sharing rewards',
+    tier2_cond: 'Invite 3+ friends',
+    tier3_title: 'Lv.3 AILOS Ecosystem Partner',
+    tier3_desc: 'Invite 10+ friends or pass institutional certification to enjoy course revenue sharing and institutional backend access',
+    tier3_cond: 'Invite 10+ friends',
+    section_earnings: 'Earnings Breakdown',
+    earning_invite: 'Friend Registration Bonus',
+    earning_course: 'Course Purchase Commission',
+    earning_active: 'Active User Bonus',
+    earning_share: 'Sharing Promotion Bonus',
+    withdraw_btn: 'Apply for Withdrawal',
+    withdraw_modal_title: 'Apply for Withdrawal',
+    withdraw_modal_desc: 'Please enter withdrawal amount (min. ¥10)',
+    withdraw_placeholder: 'Enter amount',
+    modal_cancel: 'Cancel',
+    modal_confirm: 'Confirm Withdrawal',
+    section_promo: 'Promotion Materials',
+    promo_link: 'Exclusive Promo Link',
+    copy_link_btn: 'Copy Link',
+    promo_qr: 'Promo QR Code',
+    promo_qr_placeholder: 'QR Code',
+    download_qr_btn: 'Download QR Code',
+    promo_banner: 'Promo Banner',
+    promo_banner_placeholder: 'AILOS Promo Banner',
+    download_banner_btn: 'Download Banner',
+    toast_copied: 'Copied to clipboard',
+    toast_withdraw: 'Withdrawal request submitted. Expected within 3 business days.',
+    tab_personal: 'Personal Referral Orders',
+    tab_platform: 'Platform Registration Orders',
+    platform_tag: 'Platform Revenue',
+    platform_order_note: 'Commissions from platform natural registration orders belong to the platform official account. You can only view earnings from your personal direct referrals.',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: 'Revenue Breakdown',
+    revenue_personal: 'Personal Promotion Commission',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: 'Platform Reg. Commission (Backend Only)',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: 'Personal Commission',
+    revenue_platform_legend: 'Platform Commission',
+    bottom_notice: 'Commissions from platform natural registration orders belong to the platform official account. You can only view earnings from your personal direct referrals.',
+    toast_download: 'Download feature coming soon',
+    toast_login: 'Login successful! Welcome back',
+    modal_amount_invalid: 'Please enter a valid amount (min. ¥10)',
+    modal_amount_exceed: 'Withdrawal amount cannot exceed available balance',
+    modal_success: 'Withdrawal application successful!'
+  },
+  ja: {
+    greeting: 'こんにちは、お帰りなさい',
+    title: 'AILOS成長推進センター',
+    subtitle: '知識を共有し、価値を共創する',
+    login_prompt_title: 'まずログインしてください',
+    login_prompt_desc: 'ログインすると、専用の成長ダッシュボード、プロモーションと収益の管理が可能です',
+    login_btn: 'ワンクリックログイン（デモ）',
+    section_stats: 'マイデータセンター',
+    stat_level: '成長レベル',
+    level_lv1: 'Lv.1 AI学習ユーザー',
+    level_lv2: 'Lv.2 成長パートナー',
+    level_lv3: 'Lv.3 エコシステムパートナー',
+    stat_level_next: 'あと2人の友達を招待してレベルアップ',
+    stat_code: '招待コード',
+    copy_btn: 'コピー',
+    stat_invites: '招待人数',
+    stat_people: '人',
+    stat_rewards: '累計報酬',
+    section_team: 'マイチーム',
+    team_progress: '学習進捗',
+    section_tiers: '三段階成長システム',
+    tier1_title: 'Lv.1 AI学習ユーザー',
+    tier1_desc: '登録するだけでAIプライベートチューター、学習ポイントの蓄積、基本共有報酬を利用可能',
+    tier1_cond: '登録後すぐ利用可能',
+    tier2_title: 'Lv.2 AILOS成長パートナー',
+    tier2_desc: '3人以上の友達を招待するか学習タスクを完了して、専用プロモーションコードとアップグレードされた共有報酬を獲得',
+    tier2_cond: '3人以上の友達を招待',
+    tier3_title: 'Lv.3 AILOSエコシステムパートナー',
+    tier3_desc: '10人以上の友達を招待するか機関認証を通過して、コース収益分配と機関バックエンド管理を利用可能',
+    tier3_cond: '10人以上の友達を招待',
+    section_earnings: '収益明細',
+    earning_invite: '友達登録ボーナス',
+    earning_course: 'コース購入コミッション',
+    earning_active: 'アクティブユーザーボーナス',
+    earning_share: '共有プロモーションボーナス',
+    withdraw_btn: '出金申請',
+    withdraw_modal_title: '出金申請',
+    withdraw_modal_desc: '出金額を入力してください（最低¥10）',
+    withdraw_placeholder: '金額を入力',
+    modal_cancel: 'キャンセル',
+    modal_confirm: '出金を確定',
+    section_promo: 'プロモーション素材',
+    promo_link: '専用プロモーションリンク',
+    copy_link_btn: 'リンクをコピー',
+    promo_qr: 'プロモーションQRコード',
+    promo_qr_placeholder: 'QRコード',
+    download_qr_btn: 'QRコードをダウンロード',
+    promo_banner: 'プロモーションバナー',
+    promo_banner_placeholder: 'AILOSプロモバナー',
+    download_banner_btn: 'バナーをダウンロード',
+    toast_copied: 'クリップボードにコピーしました',
+    toast_withdraw: '出金申請が送信されました。3営業日以内に処理されます。',
+    tab_personal: '個人招待注文',
+    tab_platform: 'プラットフォーム登録注文',
+    platform_tag: 'プラットフォーム収益',
+    platform_order_note: 'プラットフォーム自然登録ユーザー注文のコミッションはプラットフォーム公式アカウントに帰属します。個人の直接招待による収益のみ表示されます。',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: '収益内訳',
+    revenue_personal: '個人プロモーションコミッション',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: 'プラットフォーム登録コミッション（バックエンドのみ）',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: '個人コミッション',
+    revenue_platform_legend: 'プラットフォームコミッション',
+    bottom_notice: 'プラットフォーム自然登録ユーザー注文のコミッションはプラットフォーム公式アカウントに帰属します。',
+    toast_download: 'ダウンロード機能は近日公開予定です',
+    toast_login: 'ログイン成功！お帰りなさい',
+    modal_amount_invalid: '有効な金額を入力してください（最低¥10）',
+    modal_amount_exceed: '出金額が利用可能な残高を超えています',
+    modal_success: '出金申請が完了しました！'
+  },
+  ko: {
+    greeting: '안녕하세요, 다시 오신 것을 환영합니다',
+    title: 'AILOS 성장 프로모션 센터',
+    subtitle: '지식을 공유하고 가치를 함께 창조하세요',
+    login_prompt_title: '먼저 로그인해 주세요',
+    login_prompt_desc: '로그인하여 전용 성장 대시보드, 프로모션 및 수익을 관리하세요',
+    login_btn: '원클릭 로그인 (데모)',
+    section_stats: '내 데이터 센터',
+    stat_level: '내 성장 레벨',
+    level_lv1: 'Lv.1 AI 학습 사용자',
+    level_lv2: 'Lv.2 성장 파트너',
+    level_lv3: 'Lv.3 에코시스템 파트너',
+    stat_level_next: '2명 더 초대하면 레벨 업',
+    stat_code: '내 초대 코드',
+    copy_btn: '복사',
+    stat_invites: '내 초대 수',
+    stat_people: '명',
+    stat_rewards: '내 누적 보상',
+    section_team: '내 팀',
+    team_progress: '학습 진행률',
+    section_tiers: '3단계 성장 시스템',
+    tier1_title: 'Lv.1 AI 학습 사용자',
+    tier1_desc: '등록만으로 AI 개인 교사, 학습 포인트 적립, 기본 공유 보상을 누리세요',
+    tier1_cond: '등록 즉시 이용 가능',
+    tier2_title: 'Lv.2 AILOS 성장 파트너',
+    tier2_desc: '3명 이상의 친구를 초대하거나 학습 과제를 완료하여 전용 프로모션 코드와 업그레이드된 공유 보상을 받으세요',
+    tier2_cond: '3명 이상 초대',
+    tier3_title: 'Lv.3 AILOS 에코시스템 파트너',
+    tier3_desc: '10명 이상의 친구를 초대하거나 기관 인증을 통과하여 코스 수익 공유 및 기관 백엔드 관리를 이용하세요',
+    tier3_cond: '10명 이상 초대',
+    section_earnings: '수익 내역',
+    earning_invite: '친구 등록 보너스',
+    earning_course: '코스 구매 수수료',
+    earning_active: '활성 사용자 보너스',
+    earning_share: '공유 프로모션 보너스',
+    withdraw_btn: '출금 신청',
+    withdraw_modal_title: '출금 신청',
+    withdraw_modal_desc: '출금 금액을 입력하세요 (최소 ¥10)',
+    withdraw_placeholder: '금액 입력',
+    modal_cancel: '취소',
+    modal_confirm: '출금 확인',
+    section_promo: '프로모션 자료',
+    promo_link: '전용 프로모션 링크',
+    copy_link_btn: '링크 복사',
+    promo_qr: '프로모션 QR 코드',
+    promo_qr_placeholder: 'QR 코드',
+    download_qr_btn: 'QR 코드 다운로드',
+    promo_banner: '프로모션 배너',
+    promo_banner_placeholder: 'AILOS 프로모션 배너',
+    download_banner_btn: '배너 다운로드',
+    toast_copied: '클립보드에 복사되었습니다',
+    toast_withdraw: '출금 신청이 제출되었습니다. 영업일 기준 3일 이내에 처리됩니다.',
+    tab_personal: '개인 추천 주문',
+    tab_platform: '플랫폼 등록 주문',
+    platform_tag: '플랫폼 수익',
+    platform_order_note: '플랫폼 자연 등록 사용자 주문의 커미션은 플랫폼 공식 계정에 귀속됩니다. 개인 직접 추천 수익만 볼 수 있습니다.',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: '수익 분석',
+    revenue_personal: '개인 프로모션 커미션',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: '플랫폼 등록 커미션 (백엔드 전용)',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: '개인 커미션',
+    revenue_platform_legend: '플랫폼 커미션',
+    bottom_notice: '플랫폼 자연 등록 사용자 주문의 커미션은 플랫폼 공식 계정에 귀속됩니다.',
+    toast_download: '다운로드 기능이 곧 제공됩니다',
+    toast_login: '로그인 성공! 다시 오신 것을 환영합니다',
+    modal_amount_invalid: '유효한 금액을 입력하세요 (최소 ¥10)',
+    modal_amount_exceed: '출금 금액이 사용 가능한 잔액을 초과합니다',
+    modal_success: '출금 신청이 완료되었습니다!'
+  },
+  fr: {
+    greeting: 'Bonjour, bon retour parmi nous',
+    title: 'Centre de Promotion de Croissance AILOS',
+    subtitle: 'Partagez vos connaissances, créez de la valeur ensemble',
+    login_prompt_title: 'Veuillez vous connecter',
+    login_prompt_desc: 'Connectez-vous pour accéder à votre tableau de bord de croissance exclusif et gérer vos promotions et revenus',
+    login_btn: 'Connexion en un clic (Démo)',
+    section_stats: 'Mon Centre de Données',
+    stat_level: 'Mon Niveau de Croissance',
+    level_lv1: 'Lv.1 Apprenant IA',
+    level_lv2: 'Lv.2 Partenaire de Croissance',
+    level_lv3: 'Lv.3 Partenaire Écosystème',
+    stat_level_next: 'Invitez 2 amis de plus pour passer au niveau supérieur',
+    stat_code: 'Mon Code d\'Invitation',
+    copy_btn: 'Copier',
+    stat_invites: 'Mes Invitations',
+    stat_people: 'personnes',
+    stat_rewards: 'Mes Récompenses Totales',
+    section_team: 'Mon Équipe',
+    team_progress: 'Progression d\'Apprentissage',
+    section_tiers: 'Système de Croissance à Trois Niveaux',
+    tier1_title: 'Lv.1 Apprenant IA',
+    tier1_desc: 'Inscrivez-vous pour profiter du tutorat privé IA, de l\'accumulation de points d\'apprentissage et des récompenses de partage de base',
+    tier1_cond: 'Disponible dès l\'inscription',
+    tier2_title: 'Lv.2 Partenaire de Croissance AILOS',
+    tier2_desc: 'Invitez 3+ amis ou terminez des tâches d\'apprentissage pour obtenir un code promo exclusif et des récompenses de partage améliorées',
+    tier2_cond: 'Invitez 3+ amis',
+    tier3_title: 'Lv.3 Partenaire Écosystème AILOS',
+    tier3_desc: 'Invitez 10+ amis ou passez la certification institutionnelle pour bénéficier du partage des revenus des cours et de l\'accès au backend institutionnel',
+    tier3_cond: 'Invitez 10+ amis',
+    section_earnings: 'Détail des Revenus',
+    earning_invite: 'Bonus d\'Inscription d\'Ami',
+    earning_course: 'Commission sur Achat de Cours',
+    earning_active: 'Bonus d\'Utilisateur Actif',
+    earning_share: 'Bonus de Promotion de Partage',
+    withdraw_btn: 'Demander un Retrait',
+    withdraw_modal_title: 'Demander un Retrait',
+    withdraw_modal_desc: 'Veuillez entrer le montant du retrait (min. ¥10)',
+    withdraw_placeholder: 'Entrez le montant',
+    modal_cancel: 'Annuler',
+    modal_confirm: 'Confirmer le Retrait',
+    section_promo: 'Matériel Promotionnel',
+    promo_link: 'Lien Promotionnel Exclusif',
+    copy_link_btn: 'Copier le Lien',
+    promo_qr: 'QR Code Promotionnel',
+    promo_qr_placeholder: 'QR Code',
+    download_qr_btn: 'Télécharger le QR Code',
+    promo_banner: 'Bannière Promotionnelle',
+    promo_banner_placeholder: 'Bannière Promo AILOS',
+    download_banner_btn: 'Télécharger la Bannière',
+    toast_copied: 'Copié dans le presse-papiers',
+    toast_withdraw: 'Demande de retrait soumise. Délai prévu : 3 jours ouvrés.',
+    tab_personal: 'Commandes de parrainage personnel',
+    tab_platform: 'Commandes d\'inscription plateforme',
+    platform_tag: 'Revenu plateforme',
+    platform_order_note: 'Les commissions des commandes d\'inscription naturelle appartiennent au compte officiel de la plateforme. Vous ne pouvez voir que les revenus de vos parrainages directs.',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: 'Répartition des revenus',
+    revenue_personal: 'Commission de promotion personnelle',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: 'Commission d\'inscription plateforme (Backend)',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: 'Commission personnelle',
+    revenue_platform_legend: 'Commission plateforme',
+    bottom_notice: 'Les commissions des commandes d\'inscription naturelle appartiennent au compte officiel de la plateforme.',
+    toast_download: 'Fonction de téléchargement bientôt disponible',
+    toast_login: 'Connexion réussie ! Bon retour',
+    modal_amount_invalid: 'Veuillez entrer un montant valide (min. ¥10)',
+    modal_amount_exceed: 'Le montant du retrait ne peut pas dépasser le solde disponible',
+    modal_success: 'Demande de retrait réussie !'
+  },
+  es: {
+    greeting: 'Hola, bienvenido de nuevo',
+    title: 'Centro de Promoción de Crecimiento AILOS',
+    subtitle: 'Comparte conocimiento, crea valor juntos',
+    login_prompt_title: 'Por favor, inicia sesión',
+    login_prompt_desc: 'Inicia sesión para ver tu panel de crecimiento exclusivo y gestionar promociones y ganancias',
+    login_btn: 'Inicio de Sesión en un Clic (Demo)',
+    section_stats: 'Mi Centro de Datos',
+    stat_level: 'Mi Nivel de Crecimiento',
+    level_lv1: 'Lv.1 Aprendiz de IA',
+    level_lv2: 'Lv.2 Socio de Crecimiento',
+    level_lv3: 'Lv.3 Socio del Ecosistema',
+    stat_level_next: 'Invita a 2 amigos más para subir de nivel',
+    stat_code: 'Mi Código de Invitación',
+    copy_btn: 'Copiar',
+    stat_invites: 'Mis Invitaciones',
+    stat_people: 'personas',
+    stat_rewards: 'Mis Recompensas Totales',
+    section_team: 'Mi Equipo',
+    team_progress: 'Progreso de Aprendizaje',
+    section_tiers: 'Sistema de Crecimiento de Tres Niveles',
+    tier1_title: 'Lv.1 Aprendiz de IA',
+    tier1_desc: 'Regístrate para disfrutar de tutoría privada de IA, acumulación de puntos de aprendizaje y recompensas básicas por compartir',
+    tier1_cond: 'Disponible al registrarse',
+    tier2_title: 'Lv.2 Socio de Crecimiento AILOS',
+    tier2_desc: 'Invita a 3+ amigos o completa tareas de aprendizaje para obtener un código promocional exclusivo y recompensas mejoradas por compartir',
+    tier2_cond: 'Invita a 3+ amigos',
+    tier3_title: 'Lv.3 Socio del Ecosistema AILOS',
+    tier3_desc: 'Invita a 10+ amigos o pasa la certificación institucional para disfrutar de reparto de ingresos de cursos y acceso al backend institucional',
+    tier3_cond: 'Invita a 10+ amigos',
+    section_earnings: 'Desglose de Ganancias',
+    earning_invite: 'Bono por Registro de Amigo',
+    earning_course: 'Comisión por Compra de Curso',
+    earning_active: 'Bono por Usuario Activo',
+    earning_share: 'Bono por Promoción Compartida',
+    withdraw_btn: 'Solicitar Retiro',
+    withdraw_modal_title: 'Solicitar Retiro',
+    withdraw_modal_desc: 'Ingrese el monto del retiro (mín. ¥10)',
+    withdraw_placeholder: 'Ingrese el monto',
+    modal_cancel: 'Cancelar',
+    modal_confirm: 'Confirmar Retiro',
+    section_promo: 'Materiales de Promoción',
+    promo_link: 'Enlace Promocional Exclusivo',
+    copy_link_btn: 'Copiar Enlace',
+    promo_qr: 'Código QR Promocional',
+    promo_qr_placeholder: 'Código QR',
+    download_qr_btn: 'Descargar Código QR',
+    promo_banner: 'Banner Promocional',
+    promo_banner_placeholder: 'Banner Promo AILOS',
+    download_banner_btn: 'Descargar Banner',
+    toast_copied: 'Copiado al portapapeles',
+    toast_withdraw: 'Solicitud de retiro enviada. Se espera en 3 días hábiles.',
+    tab_personal: 'Pedidos de referidos personales',
+    tab_platform: 'Pedidos de registro en plataforma',
+    platform_tag: 'Ingreso de plataforma',
+    platform_order_note: 'Las comisiones de pedidos de registro natural pertenecen a la cuenta oficial de la plataforma. Solo puede ver los ingresos de sus referidos directos.',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: 'Desglose de ingresos',
+    revenue_personal: 'Comisión de promoción personal',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: 'Comisión de registro en plataforma (Backend)',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: 'Comisión personal',
+    revenue_platform_legend: 'Comisión plataforma',
+    bottom_notice: 'Las comisiones de pedidos de registro natural pertenecen a la cuenta oficial de la plataforma.',
+    toast_download: 'Función de descarga próximamente',
+    toast_login: '¡Inicio de sesión exitoso! Bienvenido de nuevo',
+    modal_amount_invalid: 'Ingrese un monto válido (mín. ¥10)',
+    modal_amount_exceed: 'El monto del retiro no puede exceder el saldo disponible',
+    modal_success: '¡Solicitud de retiro exitosa!'
+  },
+  de: {
+    greeting: 'Hallo, willkommen zurück',
+    title: 'AILOS Wachstums-Förderzentrum',
+    subtitle: 'Wissen teilen, gemeinsam Werte schaffen',
+    login_prompt_title: 'Bitte zuerst anmelden',
+    login_prompt_desc: 'Melden Sie sich an, um Ihr exklusives Wachstums-Dashboard einzusehen und Promotionen sowie Einnahmen zu verwalten',
+    login_btn: 'Ein-Klick-Anmeldung (Demo)',
+    section_stats: 'Mein Datencenter',
+    stat_level: 'Mein Wachstumslevel',
+    level_lv1: 'Lv.1 KI-Lerner',
+    level_lv2: 'Lv.2 Wachstumspartner',
+    level_lv3: 'Lv.3 Ökosystem-Partner',
+    stat_level_next: 'Laden Sie 2 weitere Freunde ein, um aufzusteigen',
+    stat_code: 'Mein Einladungscode',
+    copy_btn: 'Kopieren',
+    stat_invites: 'Meine Einladungen',
+    stat_people: 'Personen',
+    stat_rewards: 'Meine Gesamtbelohnungen',
+    section_team: 'Mein Team',
+    team_progress: 'Lernfortschritt',
+    section_tiers: 'Drei-Stufen-Wachstumssystem',
+    tier1_title: 'Lv.1 KI-Lerner',
+    tier1_desc: 'Registrieren Sie sich für KI-Privatunterricht, Lernpunkte-Sammlung und grundlegende Teilungsbelohnungen',
+    tier1_cond: 'Verfügbar bei Registrierung',
+    tier2_title: 'Lv.2 AILOS Wachstumspartner',
+    tier2_desc: 'Laden Sie 3+ Freunde ein oder schließen Sie Lernaufgaben ab, um einen exklusiven Promo-Code und verbesserte Teilungsbelohnungen zu erhalten',
+    tier2_cond: '3+ Freunde einladen',
+    tier3_title: 'Lv.3 AILOS Ökosystem-Partner',
+    tier3_desc: 'Laden Sie 10+ Freunde ein oder bestehen Sie die institutionelle Zertifizierung für Kurs-Umsatzbeteiligung und institutionellen Backend-Zugang',
+    tier3_cond: '10+ Freunde einladen',
+    section_earnings: 'Einnahmenaufschlüsselung',
+    earning_invite: 'Freund-Registrierungsbonus',
+    earning_course: 'Kurskauf-Provision',
+    earning_active: 'Aktiver-Nutzer-Bonus',
+    earning_share: 'Teilungs-Promotion-Bonus',
+    withdraw_btn: 'Auszahlung beantragen',
+    withdraw_modal_title: 'Auszahlung beantragen',
+    withdraw_modal_desc: 'Bitte geben Sie den Auszahlungsbetrag ein (mind. ¥10)',
+    withdraw_placeholder: 'Betrag eingeben',
+    modal_cancel: 'Abbrechen',
+    modal_confirm: 'Auszahlung bestätigen',
+    section_promo: 'Werbematerialien',
+    promo_link: 'Exklusiver Promo-Link',
+    copy_link_btn: 'Link kopieren',
+    promo_qr: 'Promo-QR-Code',
+    promo_qr_placeholder: 'QR-Code',
+    download_qr_btn: 'QR-Code herunterladen',
+    promo_banner: 'Promo-Banner',
+    promo_banner_placeholder: 'AILOS Promo-Banner',
+    download_banner_btn: 'Banner herunterladen',
+    toast_copied: 'In die Zwischenablage kopiert',
+    toast_withdraw: 'Auszahlungsantrag eingereicht. Voraussichtlich innerhalb von 3 Werktagen.',
+    tab_personal: 'Persönliche Empfehlungsbestellungen',
+    tab_platform: 'Plattform-Registrierungsbestellungen',
+    platform_tag: 'Plattform-Einnahmen',
+    platform_order_note: 'Provisionen aus natürlichen Plattform-Registrierungen gehören dem offiziellen Plattform-Konto. Sie können nur Einnahmen aus Ihren direkten Empfehlungen einsehen.',
+    platform_date_1: '2025-07-19',
+    platform_date_2: '2025-07-16',
+    platform_date_3: '2025-07-14',
+    section_revenue: 'Einnahmenaufschlüsselung',
+    revenue_personal: 'Persönliche Promotionsprovision',
+    revenue_personal_val: '&#165; 8,520.00 (68%)',
+    revenue_platform: 'Plattform-Registrierungsprovision (Backend)',
+    revenue_platform_val: '&#165; 4,010.00 (32%)',
+    revenue_personal_legend: 'Persönliche Provision',
+    revenue_platform_legend: 'Plattform-Provision',
+    bottom_notice: 'Provisionen aus natürlichen Plattform-Registrierungen gehören dem offiziellen Plattform-Konto.',
+    toast_download: 'Download-Funktion demnächst verfügbar',
+    toast_login: 'Anmeldung erfolgreich! Willkommen zurück',
+    modal_amount_invalid: 'Bitte geben Sie einen gültigen Betrag ein (mind. ¥10)',
+    modal_amount_exceed: 'Auszahlungsbetrag darf das verfügbare Guthaben nicht überschreiten',
+    modal_success: 'Auszahlungsantrag erfolgreich!'
+  }
+};
+
+// ===== State =====
+let currentLang = 'zh';
+let isLoggedIn = false;
+
+// ===== DOM References =====
+const langBar = document.getElementById('langBar');
+const loginPrompt = document.getElementById('loginPrompt');
+const mainContent = document.getElementById('mainContent');
+const toast = document.getElementById('toast');
+const withdrawModal = document.getElementById('withdrawModal');
+const levelBadge = document.getElementById('levelBadge');
+
+// ===== i18n Functions =====
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('data-lang', lang);
+
+  // Update lang buttons
+  langBar.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  // Update all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (I18N[lang] && I18N[lang][key]) {
+      el.textContent = I18N[lang][key];
+    } else if (I18N.zh[key]) {
+      el.textContent = I18N.zh[key];
+    }
+  });
+
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (I18N[lang] && I18N[lang][key]) {
+      el.placeholder = I18N[lang][key];
+    } else if (I18N.zh[key]) {
+      el.placeholder = I18N.zh[key];
+    }
+  });
+
+  // Update level badge based on current state
+  updateLevelBadge();
+
+  // Save preference
+  try { localStorage.setItem('ailos_lang', lang); } catch(e) {}
+}
+
+function updateLevelBadge() {
+  // For demo, always show Lv.1; could be dynamic based on invite count
+  const lv = 1;
+  levelBadge.className = 'level-badge lv' + lv;
+  const key = 'level_lv' + lv;
+  if (I18N[currentLang] && I18N[currentLang][key]) {
+    levelBadge.textContent = I18N[currentLang][key];
+  } else if (I18N.zh[key]) {
+    levelBadge.textContent = I18N.zh[key];
+  }
+}
+
+// ===== Toast =====
+let toastTimer = null;
+function showToast(msg) {
+  if (toastTimer) clearTimeout(toastTimer);
+  toast.textContent = msg;
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2500);
+}
+
+// ===== Copy Functions =====
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(I18N[currentLang].toast_copied || I18N.zh.toast_copied);
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast(I18N[currentLang].toast_copied || I18N.zh.toast_copied);
+  } catch(e) {
+    showToast('Copy failed');
+  }
+  document.body.removeChild(ta);
+}
+
+// ===== Mock Login =====
+function doLogin() {
+  isLoggedIn = true;
+  loginPrompt.classList.remove('show');
+  mainContent.classList.add('show');
+  showToast(I18N[currentLang].toast_login || I18N.zh.toast_login);
+  try { localStorage.setItem('ailos_logged_in', '1'); } catch(e) {}
+}
+
+function doLogout() {
+  isLoggedIn = false;
+  loginPrompt.classList.add('show');
+  mainContent.classList.remove('show');
+  try { localStorage.removeItem('ailos_logged_in'); } catch(e) {}
+}
+
+// ===== Event Listeners =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore saved language
+  try {
+    const saved = localStorage.getItem('ailos_lang');
+    if (saved && I18N[saved]) currentLang = saved;
+  } catch(e) {}
+
+  // Initial render
+  setLang(currentLang);
+
+  // Auth check: show login prompt by default, but check if previously logged in
+  try {
+    if (localStorage.getItem('ailos_logged_in') === '1') {
+      doLogin();
+    }
+  } catch(e) {}
+
+  // Language buttons
+  langBar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lang-btn');
+    if (!btn) return;
+    const lang = btn.dataset.lang;
+    if (lang && I18N[lang]) setLang(lang);
+  });
+
+  // Mock login button
+  document.getElementById('mockLoginBtn').addEventListener('click', doLogin);
+
+  // Copy invite code
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const code = document.getElementById('inviteCode').textContent;
+    copyToClipboard(code);
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = I18N[currentLang].copy_btn || I18N.zh.copy_btn;
+    }, 2000);
+  });
+
+  // Withdraw button
+  document.getElementById('withdrawBtn').addEventListener('click', () => {
+    withdrawModal.classList.add('show');
+    document.getElementById('withdrawAmount').value = '';
+    document.getElementById('withdrawAmount').focus();
+  });
+
+  // Withdraw modal cancel
+  document.getElementById('withdrawCancel').addEventListener('click', () => {
+    withdrawModal.classList.remove('show');
+  });
+
+  // Withdraw modal confirm
+  document.getElementById('withdrawConfirm').addEventListener('click', () => {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    if (isNaN(amount) || amount < 10) {
+      showToast(I18N[currentLang].modal_amount_invalid || I18N.zh.modal_amount_invalid);
+      return;
+    }
+    if (amount > 1280) {
+      showToast(I18N[currentLang].modal_amount_exceed || I18N.zh.modal_amount_exceed);
+      return;
+    }
+    withdrawModal.classList.remove('show');
+    showToast(I18N[currentLang].modal_success || I18N.zh.modal_success);
+  });
+
+  // Close modal on overlay click
+  withdrawModal.addEventListener('click', (e) => {
+    if (e.target === withdrawModal) withdrawModal.classList.remove('show');
+  });
+
+  // Copy promo link
+  document.getElementById('copyPromoBtn').addEventListener('click', () => {
+    copyToClipboard(document.getElementById('promoLink').textContent);
+  });
+
+  // Download QR
+  document.getElementById('downloadQrBtn').addEventListener('click', () => {
+    showToast(I18N[currentLang].toast_download || I18N.zh.toast_download);
+  });
+
+  // Download banner
+  document.getElementById('downloadBannerBtn').addEventListener('click', () => {
+    showToast(I18N[currentLang].toast_download || I18N.zh.toast_download);
+  });
+
+  // Keyboard: ESC to close modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && withdrawModal.classList.contains('show')) {
+      withdrawModal.classList.remove('show');
+    }
+  });
+
+  // Team tabs switching
+  const teamTabs = document.getElementById('teamTabs');
+  if (teamTabs) {
+    teamTabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('.team-tab');
+      if (!tab) return;
+      const tabName = tab.getAttribute('data-tab');
+      // Update tab buttons
+      teamTabs.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      // Update tab content
+      document.querySelectorAll('.team-tab-content').forEach(c => c.classList.remove('active'));
+      const target = document.getElementById(tabName === 'personal' ? 'tabPersonal' : 'tabPlatform');
+      if (target) target.classList.add('active');
+    });
+  }
+});
+</script>
+
+</body>
+</html>

@@ -92,3 +92,22 @@ docker-compose.override.yml
 _legacy_assets/
 
 .expo-shared
+
+# === TRAE 工作区 ===
+.trae-html-share-packages/
+Trash/
+
+# === 临时构建/部署产物 ===
+build_out.txt
+build_out2.txt
+deploy_b64.txt
+test_*.txt
+test_*.out
+fix_*.py
+fix_*.sh
+
+# === 大型报告文件 ===
+ailos-*.html
+rc-*.html
+event-bus-design/
+permission-manager-verify/
