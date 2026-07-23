@@ -3,10 +3,12 @@
 > Project Version：V7.1
 > Document Version：V7.1 Enterprise Freeze
 > Git Repository：https://github.com/wzmpa18/AILOS (唯一代码仓库，禁止使用其他仓库)
-> Current Sprint：Sprint V6.2
-> Current Phase：Phase2
-> Current Epic：Epic1
+> Current Sprint：MVP Launch Mode V1.0
+> Current Phase：Module 01 - 用户系统
+> Current Epic：用户系统完善
 > Active Environment：PRODUCTION
+> Deployment Mode：TRAE写代码→GitHub推送→CodeBuddy SSH部署验收（角色分离，TRAE不操作服务器）
+> PM2模式：pm2 start ecosystem.config.js --env production（加载.env.production）
 > Governance Standard：企业级AI项目全生命周期ITIL治理规范
 > 文档定位：AI原生项目唯一总账，项目运行核心操作系统
 > 使用对象：TRAE / Claude Code / Cursor / GPT / Codex
