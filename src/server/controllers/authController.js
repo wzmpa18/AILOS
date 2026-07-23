@@ -73,6 +73,18 @@ const authController = {
   async register(req, res, next) {
     try {
       const { phone, email, password, code, nickname, uiLanguage, browserLanguage } = req.body;
+
+      // 必填字段校验
+      if (!phone && !email) {
+        return res.status(400).json({ success: false, error: 'Phone or email is required' });
+      }
+      if (!password || password.length < 6) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+      }
+      if (!code) {
+        return res.status(400).json({ success: false, error: 'Verification code is required' });
+      }
+
       const result = await authService.registerWithPassword(
         phone, email, password, code, nickname,
         { uiLanguage, browserLanguage, ipAddress: req.ip, userAgent: req.headers['user-agent'] }

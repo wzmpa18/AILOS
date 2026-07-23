@@ -363,6 +363,46 @@ class AuthService {
       logger.warn('Failed to create language preference:', e.message);
     }
 
+    // 初始化签到记录（新用户 streak=0，等待首次签到）
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      await prisma.checkin.create({
+        data: {
+          userId: user.id,
+          checkinDate: today,
+          streak: 0,
+          xpAwarded: 0,
+        },
+      });
+      logger.info(`Checkin record initialized for user ${user.id}`);
+    } catch (e) {
+      if (e.code === 'P2002') {
+        logger.info(`Checkin record already exists for user ${user.id}`);
+      } else {
+        logger.warn(`Failed to initialize checkin for user ${user.id}:`, e.message);
+      }
+    }
+
+    // 初始化免费额度（free 用户每日5次对话+3次纠错）
+    try {
+      await prisma.userQuota.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          dailyConversation: 0,
+          dailyCorrection: 0,
+          maxConversation: 5,
+          maxCorrection: 3,
+          resetAt: new Date(new Date().setHours(24, 0, 0, 0)),
+        },
+        update: {},
+      });
+      logger.info(`Quota initialized for user ${user.id}`);
+    } catch (e) {
+      logger.warn(`Failed to initialize quota for user ${user.id}:`, e.message);
+    }
+
     logger.info(`New user registered: ${user.id} (${phone || email || wechatOpenId})`);
     return user;
   }
