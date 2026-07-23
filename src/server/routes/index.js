@@ -7,15 +7,15 @@ router.get('/health', (req, res) => {
 });
 
 // Dashboard
-router.use('/api/dashboard', require('./dashboard'));
+router.use('/dashboard', require('./dashboard'));
 
 // Checkin
-router.use('/api/checkin', require('./checkin'));
+router.use('/checkin', require('./checkin'));
 
 // Auth
-router.use('/api/auth', require('./auth'));
+router.use('/auth', require('./auth'));
 
 // Language
-router.use('/api/language', require('./language'));
+router.use('/language', require('./language'));
 
 module.exports = router;
