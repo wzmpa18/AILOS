@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - SRS复习</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --error: #EF4444;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: calc(var(--nav-height) + 20px);
+  }
+
+  /* Header */
+  .header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header-title { font-size: 18px; font-weight: 700; flex: 1; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px; }
+
+  /* Stats Cards */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 16px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Review Queue */
+  .card {
+    background: var(--card-bg); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+
+  .review-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-item:hover { background: var(--primary-light); margin: 0 -12px; padding: 14px 12px; border-radius: var(--radius-sm); }
+  .review-status {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .review-status.due { background: #FEF3C7; color: var(--warning); }
+  .review-status.overdue { background: #FEE2E2; color: var(--error); }
+  .review-status.done { background: #D1FAE5; color: var(--success); }
+  .review-info { flex: 1; min-width: 0; }
+  .review-word { font-size: 16px; font-weight: 600; }
+  .review-meaning { font-size: 13px; color: var(--text-secondary); }
+  .review-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .review-score {
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .review-score.high { color: var(--success); }
+  .review-score.medium { color: var(--warning); }
+  .review-score.low { color: var(--error); }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-muted);
+  }
+  .empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+  .empty-state .empty-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+  .empty-state .empty-desc { font-size: 13px; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Guest Banner */
+  .guest-banner {
+    background: linear-gradient(135deg, var(--primary-light), #E0E7FF);
+    border-radius: var(--radius); padding: 28px 20px; text-align: center;
+    margin-bottom: 20px;
+  }
+  .guest-banner h3 { font-size: 16px; margin-bottom: 6px; }
+  .guest-banner p { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+  .guest-banner button {
+    padding: 10px 28px; border-radius: 20px; border: none;
+    background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-height); background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex;
+    justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); transition: all 0.2s; font-size: 11px;
+    font-weight: 500; border: none; background: none; min-width: 56px;
+    position: relative; padding-top: 10px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+  .bottom-nav .nav-item.active::before {
+    content: ''; position: absolute; top: 0; width: 24px; height: 3px;
+    background: var(--primary); border-radius: 0 0 3px 3px;
+  }
+
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-value { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">SRS 间隔复习</span>
+</div>
+
+<div class="container" id="app">
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>正在加载复习队列...</p>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="/xuewaiyu/home">
+    <span class="nav-icon">🏠</span>
+    <span>首页</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/learn.html">
+    <span class="nav-icon">📚</span>
+    <span>学习</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/chat.html">
+    <span class="nav-icon">💬</span>
+    <span>AI对话</span>
+  </a>
+  <a class="nav-item active" href="/xuewaiyu/review.html">
+    <span class="nav-icon">🔄</span>
+    <span>复习</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/profile.html">
+    <span class="nav-icon">👤</span>
+    <span>我的</span>
+  </a>
+</nav>
+
+<script>
+// ============ Token Helpers ============
+function getToken() {
+  try {
+    var stored = localStorage.getItem('auth_tokens');
+    if (stored) {
+      var tokens = JSON.parse(stored);
+      if (tokens.accessToken) return tokens.accessToken;
+    }
+  } catch(e) {}
+  return localStorage.getItem('yandao_token_v1') || '';
+}
+
+// ============ Load Reviews ============
+async function loadReviews() {
+  var app = document.getElementById('app');
+  var token = getToken();
+
+  if (!token) {
+    app.innerHTML = '<div class="guest-banner"><h3>请先登录</h3><p>登录后查看你的SRS复习队列</p><button onclick="window.location.href=\'/xuewaiyu/login.html\'">去登录</button></div>';
+    return;
+  }
+
+  try {
+    var resp = await fetch('/api/reviews/due', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (resp.status === 401) {
+      app.innerHTML = '<div class="guest-banner"><h3>请先登录</h3><p>登录后查看你的SRS复习队列</p><button onclick="window.location.href=\'/xuewaiyu/login.html\'">去登录</button></div>';
+      return;
+    }
+
+    var data = await resp.json();
+    if (data.success && data.data) {
+      renderReviews(data.data);
+    } else {
+      renderEmpty();
+    }
+  } catch(e) {
+    console.error('Load reviews error:', e);
+    renderEmpty();
+  }
+}
+
+function renderReviews(reviewData) {
+  var app = document.getElementById('app');
+  var items = reviewData.items || reviewData.reviews || [];
+  var stats = reviewData.stats || {};
+
+  var html = '';
+
+  // Stats
+  html += '<div class="stats-row">' +
+    '<div class="stat-card"><div class="stat-value">' + (stats.due || items.length || 0) + '</div><div class="stat-label">待复习</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + (stats.completed || 0) + '</div><div class="stat-label">已完成</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + (stats.accuracy || 0) + '%</div><div class="stat-label">正确率</div></div>' +
+  '</div>';
+
+  if (items.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">暂无待复习内容</div><div class="empty-desc">完成学习后，这里会显示需要复习的内容</div></div>';
+  } else {
+    html += '<div class="card"><div class="card-title"><span class="dot"></span>复习队列</div>';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var statusClass = item.overdue ? 'overdue' : 'due';
+      var statusIcon = item.overdue ? '⚠️' : '📝';
+      var scoreClass = item.accuracy >= 80 ? 'high' : (item.accuracy >= 50 ? 'medium' : 'low');
+      var scoreText = item.accuracy !== undefined ? item.accuracy + '%' : '新';
+      html += '<div class="review-item">' +
+        '<div class="review-status ' + statusClass + '">' + statusIcon + '</div>' +
+        '<div class="review-info">' +
+          '<div class="review-word">' + escapeHtml(item.word || item.front || '') + '</div>' +
+          '<div class="review-meaning">' + escapeHtml(item.meaning || item.back || '') + '</div>' +
+          '<div class="review-meta">间隔: ' + (item.interval || 1) + '天 · 下次: ' + (item.nextReview || '今天') + '</div>' +
+        '</div>' +
+        '<div class="review-score ' + scoreClass + '">' + scoreText + '</div>' +
+      '</div>';
+    }
+    html += '</div>';
+  }
+
+  app.innerHTML = html;
+}
+
+function renderEmpty() {
+  var app = document.getElementById('app');
+  app.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">暂无复习内容</div><div class="empty-desc">开始学习后，系统会自动为你安排间隔复习</div></div>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ Init ============
+loadReviews();
+</script>
+</body>
+</html>
