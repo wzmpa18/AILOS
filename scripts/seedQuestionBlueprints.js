@@ -11,6 +11,7 @@ const prisma = new PrismaClient();
 
 // 默认种子内容（当 LearningContent 为空时填充）
 const DEFAULT_CONTENTS = [
+  // ===== 英语 (English) =====
   {
     contentType: 'vocabulary',
     sourceLanguage: 'zh-CN',
@@ -59,6 +60,110 @@ const DEFAULT_CONTENTS = [
         { title: 'Greeting', dialogue: 'A: Hello! How are you?\nB: I\'m fine, thank you. And you?' },
         { title: 'Ordering Food', dialogue: 'A: Can I have a coffee, please?\nB: Sure. Anything else?' },
         { title: 'Asking Directions', dialogue: 'A: Excuse me, where is the station?\nB: Go straight and turn left.' },
+      ],
+    },
+  },
+  // ===== 日语 (Japanese) =====
+  {
+    contentType: 'vocabulary',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ja',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      words: [
+        { word: 'こんにちは', translation: '你好', partOfSpeech: '问候' },
+        { word: 'ありがとう', translation: '谢谢', partOfSpeech: '短语' },
+        { word: 'すみません', translation: '对不起/打扰了', partOfSpeech: '短语' },
+        { word: 'おはよう', translation: '早上好', partOfSpeech: '问候' },
+        { word: 'こんばんは', translation: '晚上好', partOfSpeech: '问候' },
+        { word: 'さようなら', translation: '再见', partOfSpeech: '问候' },
+        { word: 'はい', translation: '是', partOfSpeech: '副词' },
+        { word: 'いいえ', translation: '不是', partOfSpeech: '副词' },
+        { word: 'おいしい', translation: '好吃', partOfSpeech: '形容词' },
+        { word: 'たのしい', translation: '快乐', partOfSpeech: '形容词' },
+      ],
+    },
+  },
+  {
+    contentType: 'grammar',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ja',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      topics: [
+        { title: 'です/ます体', rule: '名词 + です / 动词ます形', example: '私は学生です。' },
+        { title: 'て形', rule: '动词て形 + ください', example: '見てください。' },
+        { title: 'た形（过去形）', rule: '动词た形', example: '昨日勉強しました。' },
+        { title: '助詞 は/が', rule: 'は提示主题，が提示主语', example: '私は猫が好きです。' },
+        { title: 'い形容詞/な形容詞', rule: 'い形容詞直接+名詞，な形容詞+な+名詞', example: 'おいしい料理 / 静かな部屋' },
+      ],
+    },
+  },
+  {
+    contentType: 'dialogue',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ja',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      scenes: [
+        { title: '初対面', dialogue: 'A: はじめまして、田中です。\nB: はじめまして、鈴木です。よろしくお願いします。' },
+        { title: 'レストランで', dialogue: 'A: 注文してもいいですか？\nB: はい、何になさいますか？\nA: ラーメンをください。' },
+        { title: '道を尋ねる', dialogue: 'A: すみません、駅はどこですか？\nB: まっすぐ行って、左に曲がってください。' },
+      ],
+    },
+  },
+  // ===== 韩语 (Korean) =====
+  {
+    contentType: 'vocabulary',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ko',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      words: [
+        { word: '안녕하세요', translation: '你好', partOfSpeech: '问候' },
+        { word: '감사합니다', translation: '谢谢', partOfSpeech: '短语' },
+        { word: '죄송합니다', translation: '对不起', partOfSpeech: '短语' },
+        { word: '네', translation: '是', partOfSpeech: '副词' },
+        { word: '아니요', translation: '不是', partOfSpeech: '副词' },
+        { word: '맛있다', translation: '好吃', partOfSpeech: '形容词' },
+        { word: '예쁘다', translation: '漂亮', partOfSpeech: '形容词' },
+        { word: '재미있다', translation: '有趣', partOfSpeech: '形容词' },
+        { word: '친구', translation: '朋友', partOfSpeech: '名词' },
+        { word: '물', translation: '水', partOfSpeech: '名词' },
+      ],
+    },
+  },
+  {
+    contentType: 'grammar',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ko',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      topics: [
+        { title: '입니다/입니까', rule: '名词 + 입니다(是) / 입니까(是吗)', example: '학생입니다.' },
+        { title: '은/는 主题助词', rule: '辅音结尾+은，元音结尾+는', example: '저는 학생입니다.' },
+        { title: '이/가 主语助词', rule: '辅音结尾+이，元音结尾+가', example: '이것이 책입니다.' },
+        { title: '을/를 宾语助词', rule: '辅音结尾+을，元音结尾+를', example: '밥을 먹습니다.' },
+        { title: '아/어요 体', rule: '动词/形容词 + 아/어요', example: '먹어요 / 예뻐요' },
+      ],
+    },
+  },
+  {
+    contentType: 'dialogue',
+    sourceLanguage: 'zh-CN',
+    targetLanguage: 'ko',
+    explanationLanguage: 'zh-CN',
+    difficultyLevel: 'beginner',
+    contentData: {
+      scenes: [
+        { title: '첫인사', dialogue: 'A: 안녕하세요? 저는 김민수입니다.\nB: 안녕하세요? 저는 이영희입니다. 만나서 반갑습니다.' },
+        { title: '식당에서', dialogue: 'A: 메뉴 좀 주세요.\nB: 여기 있습니다. 무엇을 드시겠어요?\nA: 비빔밥 주세요.' },
+        { title: '길 묻기', dialogue: 'A: 실례합니다, 지하철역이 어디예요?\nB: 저쪽으로 가다가 오른쪽으로 도세요.' },
       ],
     },
   },
