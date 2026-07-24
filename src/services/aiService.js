@@ -57,8 +57,10 @@ class AiService {
       max_tokens: opts.maxTokens,
       temperature: opts.temperature,
     }, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       timeout: REQUEST_TIMEOUT,
+      responseType: 'json',
+      responseEncoding: 'utf8',
     });
 
     const data = resp.data;
@@ -87,10 +89,12 @@ class AiService {
       temperature: opts.temperature,
     }, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'Authorization': `Bearer ${HUNYUAN_API_KEY}`,
       },
       timeout: REQUEST_TIMEOUT,
+      responseType: 'json',
+      responseEncoding: 'utf8',
     });
 
     const data = resp.data;
