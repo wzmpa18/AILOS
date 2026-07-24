@@ -264,6 +264,8 @@
   </style>
 </head>
 <body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
   <div class="ai-quota-card" id="aiQuotaCard">
     <div class="ai-quota-header"><span class="ai-quota-title">今日AI额度</span><span class="ai-quota-icon">🤖</span></div>
     <div class="ai-quota-numbers"><span class="ai-quota-remaining" id="homeQuotaRemaining">-</span><span class="ai-quota-total" id="homeQuotaTotal">/ - 次对话</span></div>
@@ -271,6 +273,16 @@
     <div class="ai-quota-reset" id="homeQuotaReset">00:00 自动重置</div>
     <div class="ai-quota-upgrade" id="homeQuotaUpgrade" style="display:none" onclick="window.location.href='/xuewaiyu/growth-center.html'">升级会员获取更多额度</div>
   </div>
+
+  <!-- 水平测试入口 (F3) -->
+  <div class="card" style="margin-bottom:20px;border-left:4px solid var(--primary)">
+    <div class="card-header"><span class="icon">🎯</span><span>水平测试</span></div>
+    <p style="font-size:13px;color:var(--text-secondary);margin:6px 0 12px">测一测你当前的学习语言能力，获得定制学习建议与等级。<span id="homeStudyLang" style="font-weight:600;color:var(--primary)"></span></p>
+    <button onclick="location.href='/xuewaiyu/placement.html'" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">开始水平测试</button>
+  </div>
+  <script>
+    try { var _sl = (window.AILOS ? AILOS.getStudyLang() : 'en'); var _nm = (window.AILOS ? AILOS.LANG_NAMES[_sl] : _sl); var _el = document.getElementById('homeStudyLang'); if (_el && _nm) _el.textContent = '（当前学习语言：' + _nm + '）'; } catch(e){}
+  </script>
 
   <div class="container" id="app">
     <div class="loading">

@@ -241,6 +241,8 @@
 </style>
 </head>
 <body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
 
 <div class="header">
   <div class="header-top">
@@ -544,6 +546,13 @@ const TARGET_LANG_KEY = 'yandao_target_lang_v1';
 const DEFAULT_TARGET_LANG = 'en';
 
 function getTargetLang() {
+  // 统一学习语言：优先 common.js 全局真值源（避免与 chat/profile/language 串语）
+  try {
+    if (window.AILOS) {
+      const s = window.AILOS.getStudyLang();
+      if (s) return s;
+    }
+  } catch(e) {}
   try {
     const s = localStorage.getItem(TARGET_LANG_KEY);
     if (s && I18N[currentLang] && I18N[currentLang]['lang_' + s]) return s;
@@ -552,7 +561,10 @@ function getTargetLang() {
 }
 
 function setTargetLang(code) {
-  try { localStorage.setItem(TARGET_LANG_KEY, code); } catch(e) {}
+  try {
+    if (window.AILOS) { window.AILOS.setStudyLang(code); }
+    localStorage.setItem(TARGET_LANG_KEY, code);
+  } catch(e) {}
   updateTargetLangTag();
 }
 

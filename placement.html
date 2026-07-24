@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>水平测试 · AILOS</title>
+  <style>
+    :root { --primary:#6366f1; --primary-light:#eef2ff; --bg:#f5f6fa; --text:#1f2937; --text-secondary:#6b7280; --border:#e5e7eb; --radius:16px; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:640px; margin:0 auto; padding:20px 16px 90px; }
+    .p-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .p-header .back { font-size:22px; cursor:pointer; text-decoration:none; color:var(--text); }
+    .p-header h1 { font-size:20px; margin:0; }
+    .card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:16px; }
+    .lang-pill { display:inline-block; background:var(--primary-light); color:var(--primary); font-weight:600; padding:4px 12px; border-radius:20px; font-size:13px; margin-bottom:12px; }
+    .q-num { color:var(--text-secondary); font-size:13px; margin-bottom:6px; }
+    .q-text { font-size:16px; font-weight:600; margin-bottom:14px; line-height:1.5; }
+    .opt { display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:10px; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:15px; cursor:pointer; transition:all .15s; }
+    .opt:hover { border-color:var(--primary); }
+    .opt.sel { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .progress { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+    .progress > i { display:block; height:100%; background:var(--primary); transition:width .3s; }
+    .btn-primary { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:16px; font-weight:600; cursor:pointer; }
+    .btn-primary:disabled { opacity:.5; }
+    .result-level { font-size:48px; font-weight:800; color:var(--primary); text-align:center; margin:8px 0; }
+    .result-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+    .hidden { display:none; }
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:640px; margin:0 auto; display:flex; background:#fff; border-top:1px solid var(--border); box-shadow:0 -2px 10px rgba(0,0,0,0.05); z-index:100; }
+    .bottom-nav .nav-item { flex:1; text-align:center; padding:8px 0; color:var(--text-secondary); text-decoration:none; font-size:11px; }
+    .bottom-nav .nav-item .nav-icon { display:block; font-size:22px; line-height:1; margin-bottom:2px; }
+    .bottom-nav .nav-item.active { color:var(--primary); font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="p-header">
+      <a class="back" href="/xuewaiyu/home">‹</a>
+      <h1>🎯 水平测试</h1>
+    </div>
+
+    <div class="card" id="introCard">
+      <span class="lang-pill" id="testLangPill">当前学习语言</span>
+      <p style="font-size:14px;color:var(--text-secondary);line-height:1.6">
+        本测试将评估你的<strong>词汇 / 语法 / 阅读理解</strong>能力，约 1 分钟。
+        完成后会给出近似 CEFR 等级（A1–B2），并可一键设为你的学习语言。
+      </p>
+      <button class="btn-primary" id="startBtn" style="margin-top:14px">开始测试</button>
+    </div>
+
+    <div class="card hidden" id="quizCard">
+      <div class="progress"><i id="progBar" style="width:0%"></i></div>
+      <div class="q-num" id="qNum"></div>
+      <div class="q-text" id="qText"></div>
+      <div id="optBox"></div>
+    </div>
+
+    <div class="card hidden" id="resultCard">
+      <div style="text-align:center;font-size:13px;color:var(--text-secondary)">你的近似等级</div>
+      <div class="result-level" id="resLevel">A1</div>
+      <div class="result-desc" id="resDesc"></div>
+      <button class="btn-primary" id="applyBtn" style="margin-top:16px">设为当前学习语言并去练习</button>
+      <button class="btn-primary" id="retryBtn" style="margin-top:10px;background:#fff;color:var(--primary);border:1px solid var(--primary)">重新测试</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+  <script src="/xuewaiyu/assets/common.js"></script>
+  <script>
+    (function () {
+      var lang = (window.AILOS ? AILOS.getStudyLang() : 'en');
+      var langName = (window.AILOS ? AILOS.LANG_NAMES[lang] : lang);
+      document.getElementById('testLangPill').textContent = '测试语言：' + langName;
+
+      // 题库（按语言可扩展；当前以通用能力题评估）
+      var QUESTIONS = [
+        { q: '请选择“学习”对应的正确英文单词：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+        { q: '“He ___ to school every day.” 正确填词：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+        { q: '“I have ___ apple.” 正确冠词：', opts: ['a', 'an', 'the', '/'], a: 1 },
+        { q: '“他们正在吃饭”的英文是：', opts: ['They eat food.', 'They are eating.', 'They ate.', 'They will eat.'], a: 1 },
+        { q: '“book” 的复数形式是：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+        { q: '阅读理解：The sun rises in the east. 太阳从哪边升起？', opts: ['西', '东', '南', '北'], a: 1 }
+      ];
+
+      var idx = 0, score = 0;
+      var intro = document.getElementById('introCard');
+      var quiz = document.getElementById('quizCard');
+      var result = document.getElementById('resultCard');
+
+      document.getElementById('startBtn').onclick = function () {
+        intro.classList.add('hidden'); quiz.classList.remove('hidden');
+        render();
+      };
+      document.getElementById('retryBtn').onclick = function () {
+        idx = 0; score = 0; result.classList.add('hidden'); intro.classList.remove('hidden');
+      };
+      document.getElementById('applyBtn').onclick = function () {
+        try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
+        location.href = '/xuewaiyu/learn.html';
+      };
+
+      function render() {
+        var item = QUESTIONS[idx];
+        document.getElementById('qNum').textContent = '第 ' + (idx + 1) + ' / ' + QUESTIONS.length + ' 题';
+        document.getElementById('qText').textContent = item.q;
+        document.getElementById('progBar').style.width = (idx / QUESTIONS.length * 100) + '%';
+        var box = document.getElementById('optBox'); box.innerHTML = '';
+        item.opts.forEach(function (opt, i) {
+          var b = document.createElement('button');
+          b.className = 'opt'; b.textContent = opt;
+          b.onclick = function () {
+            if (i === item.a) score++;
+            idx++;
+            if (idx < QUESTIONS.length) render(); else finish();
+          };
+          box.appendChild(b);
+        });
+      }
+
+      function finish() {
+        document.getElementById('progBar').style.width = '100%';
+        quiz.classList.add('hidden'); result.classList.remove('hidden');
+        var ratio = score / QUESTIONS.length;
+        var level, desc;
+        if (ratio >= 0.85) { level = 'B2'; desc = '你已具备较强的日常与学术表达能力，可挑战进阶材料。'; }
+        else if (ratio >= 0.65) { level = 'B1'; desc = '你能应对熟悉场景的要点交流，建议加强输出练习。'; }
+        else if (ratio >= 0.4) { level = 'A2'; desc = '你具备基础交流能力，继续积累词汇与句型即可。'; }
+        else { level = 'A1'; desc = '你处于起步阶段，建议从核心词汇与简单句型开始。'; }
+        document.getElementById('resLevel').textContent = level;
+        document.getElementById('resDesc').textContent = desc + '（答对 ' + score + '/' + QUESTIONS.length + '）';
+        try { localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: lang, level: level, score: score, at: Date.now() })); } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>

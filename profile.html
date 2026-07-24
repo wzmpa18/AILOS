@@ -336,6 +336,8 @@
 </style>
 </head>
 <body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -430,6 +432,7 @@
         </div>
         <select class="pref-select" id="targetLangSelect" onchange="onTargetLangChange()"></select>
       </div>
+      <div style="margin-top:10px"><a href="/xuewaiyu/placement.html" style="color:var(--primary);font-size:13px;font-weight:600">🎯 去水平测试，评估你的当前等级</a></div>
     </div>
 
     <!-- Learning Stats Card -->
@@ -1325,7 +1328,10 @@ function renderLanguageSelects() {
 
   if (userData) {
     if (userData.nativeLanguage) nativeLangSelect.value = userData.nativeLanguage;
-    if (userData.targetLanguage) targetLangSelect.value = userData.targetLanguage;
+    if (userData.targetLanguage) {
+      targetLangSelect.value = userData.targetLanguage;
+      try { if (window.AILOS) window.AILOS.setStudyLang(userData.targetLanguage); } catch (e) {}
+    }
   }
 
   // Set UI lang to current
@@ -1360,6 +1366,7 @@ async function saveLanguagePrefs() {
       userData.nativeLanguage = nativeLang;
       userData.targetLanguage = targetLang;
     }
+    try { if (window.AILOS) window.AILOS.setStudyLang(targetLang); } catch (e) {}
     showToast(t('toast_lang_saved'), 'success');
   } catch (e) {
     showToast(e.message || t('toast_operation_failed'), 'error');

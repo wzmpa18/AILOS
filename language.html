@@ -658,6 +658,8 @@ body {
 </style>
 </head>
 <body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
 
 <div class="container" id="appContainer">
   <!-- Loading Overlay -->
@@ -1448,6 +1450,13 @@ body {
 
       hideLoading();
       showToast(t('toast_configured'), 'info');
+
+      // 将首选目标语言写入全局统一学习语言源（learn/chat/profile 共享，杜绝串语）
+      try {
+        const firstLang = (state.targetLanguages && state.targetLanguages[0] && state.targetLanguages[0].code) || 'en';
+        if (window.AILOS) window.AILOS.setStudyLang(firstLang);
+        else localStorage.setItem('yandao_study_lang', firstLang);
+      } catch (e) {}
 
       // Redirect after short delay
       setTimeout(() => {

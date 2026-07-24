@@ -182,6 +182,12 @@
   <div class="guest-entry">
     <a href="javascript:void(0)" onclick="startGuestMode()" data-i18n="guest_entry">先体验一下，游客模式</a>
   </div>
+  <div class="explore-links">
+    <span class="explore-title">先看看这些功能：</span>
+    <a href="/xuewaiyu/discover.html">🌐 社交中心</a>
+    <a href="/xuewaiyu/ai-companion-builder.html">🤝 定制伴读</a>
+    <a href="/xuewaiyu/placement.html">🎯 水平测试</a>
+  </div>
 </div>
 
 <script>
@@ -675,9 +681,14 @@ async function handleSubmit() {
   try {
     let result;
     if (isLogin) {
-      const method = currentMethod === 'phone' ? 'phone' : 'email';
+      // BUG-017 fix: 密码登录统一走 /api/auth/password（/phone 为短信验证码登录，需 code）
       const identifier = currentMethod === 'phone' ? phone : email;
-      result = await apiCall('/' + method, { [currentMethod]: identifier, password, method });
+      result = await apiCall('/password', {
+        account: identifier,
+        phone: currentMethod === 'phone' ? phone : undefined,
+        email: currentMethod === 'email' ? email : undefined,
+        password,
+      });
     } else if (isRegister) {
       result = await apiCall('/register', {
         phone: currentMethod === 'phone' ? phone : undefined,
@@ -692,11 +703,14 @@ async function handleSubmit() {
       });
     }
 
-    if (result.token) {
-      try { localStorage.setItem('yandao_token_v1', result.token); localStorage.setItem('auth_tokens', JSON.stringify({accessToken:result.token})); } catch(e) {}
+    // BUG-018 fix: 后端 token 返回在 result.tokens.{accessToken,refreshToken}，兼容旧 result.token
+    const accessToken = result.token || (result.tokens && result.tokens.accessToken);
+    const refreshTok = result.refreshToken || (result.tokens && result.tokens.refreshToken);
+    if (accessToken) {
+      try { localStorage.setItem('yandao_token_v1', accessToken); localStorage.setItem('auth_tokens', JSON.stringify({accessToken:accessToken})); } catch(e) {}
     }
-    if (result.refreshToken) {
-      try { localStorage.setItem('yandao_refresh_token_v1', result.refreshToken); } catch(e) {}
+    if (refreshTok) {
+      try { localStorage.setItem('yandao_refresh_token_v1', refreshTok); } catch(e) {}
     }
 
     const successMsg = isLogin ? t('msg_login_success') : (isRegister ? t('msg_register_success') : t('msg_reset_success'));
