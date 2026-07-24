@@ -18,4 +18,25 @@ router.use('/auth', require('./auth'));
 // Language
 router.use('/language', require('./language'));
 
+// Courses
+router.use('/courses', require('./courses'));
+
+// AI
+router.use('/ai', require('./ai'));
+
+// SRS
+router.use('/srs', require('./srs'));
+
+// Reports
+router.use('/reports', require('./reports'));
+
+// Membership
+router.use('/membership', require('./membership'));
+
+// Stamina
+router.use('/stamina', require('./stamina'));
+
+// Invite
+router.use('/invite', require('./invite'));
+
 module.exports = router;
