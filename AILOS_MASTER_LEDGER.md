@@ -296,13 +296,15 @@ BUG-001｜2026-07-21｜Auth认证｜登录Request Failed｜确权代码侵入登
 BUG-009｜2026-07-22｜Auth认证｜手机号密码登录提示操作失败，请重试｜login.html密码登录错误路由到/api/auth/phone短信验证码端点，字段phone/code不匹配account/password｜修改提交路径为/api/auth/password+account字段，修复token保存路径为result.tokens.accessToken｜curl四重核验全部PASS｜TRAE｜Regression
 BUG-010｜2026-07-22｜Auth认证+数据渲染｜登录成功API返回token但页面跳转到/login?redirect=而非目标页面(home/learn/chat/profile)，且home/profile的AI额度显示为-/-而非实际数值｜根因1：home.html getToken()仅读auth_tokens，但login.html密码登录存yandao_token_v1，key不匹配导致401→重定向/login；根因2：home.html和profile.html的fetchQuota读取d.data.quotas.conversation但API返回d.data.usage.conversation，路径不匹配导致DOM不更新｜修复1：home.html getToken()增加yandao_token_v1回退读取；修复2：login.html密码登录同步写auth_tokens；修复3：home.html+profile.html的quotas→usage路径修正；修复4：login.html重定向加.html后缀避免页面竞争ERR_ABORTED｜curl+浏览器+数据库四重核验全部PASS｜TRAE｜Regression
 
-BUG-011｜2026-07-24｜签到打卡｜GET /api/checkin/status 返回404，签到功能不可用｜服务器代码版本落后，checkin.js路由文件未部署到服务器｜需部署最新代码到服务器：git pull + prisma db push + pm2 restart｜TRAE｜Confirmed
-BUG-012｜2026-07-24｜Auth认证｜POST /api/auth/password 直接API调用返回500空响应，但浏览器页面登录成功｜服务器代码版本落后，authController.passwordAuth可能缺少account参数校验或prisma查询失败｜需部署最新代码到服务器验证｜TRAE｜Confirmed
-BUG-013｜2026-07-24｜AI伴读｜POST /api/ai/tutor/chat 中文消息被接收为"???????????????"，但AI仍返回中文回复｜PowerShell Invoke-WebRequest或服务器端编码处理问题，中文UTF-8内容在传输过程中损坏｜server/index.js全局添加UTF-8响应头，aiService.js HTTP请求设置Content-Type charset=utf-8｜TRAE｜Fixed（待部署验证）
+BUG-011｜2026-07-24｜签到打卡｜GET /api/checkin/status 返回404｜服务器代码版本落后，checkin.js路由文件未部署｜4e743f9已修复（SUP-04：/status别名），监理SSH验收通过｜TRAE→CodeBuddy｜Closed（4e743f9）
+BUG-012｜2026-07-24｜Auth认证｜POST /api/auth/password 返回500｜authController.passwordAuth缺参数校验｜4e743f9已修复（SUP-02/03：account/phone/email兼容+401），监理SSH验收通过｜TRAE→CodeBuddy｜Closed（4e743f9）
+BUG-013｜2026-07-24｜AI伴读｜中文消息乱码｜UTF-8编码问题｜4e743f9修复+监理字节级UTF-8校验不可复现；bf31c19补充全局UTF-8头+aiService charset｜TRAE→CodeBuddy｜Closed（4e743f9+bf31c19）
 
-BUG-014｜2026-07-24｜UI导航｜P0阻断：登录进入Home首页，缺少底部全局导航栏，无法跳转Learn/AI对话/个人资料任何页面，应用功能完全锁死｜learn.html/chat.html/profile.html均缺少底部导航栏组件，仅home.html有｜为learn.html/chat.html/profile.html添加底部导航栏，新建review.html SRS复习页面，5个页面统一导航结构｜TRAE｜Fixed（commit 4494aaa，待部署验证）
+BUG-014｜2026-07-24｜UI导航｜P0阻断：登录后页面缺少底部全局导航栏，无法切换页面｜learn.html/chat.html/profile.html均缺少底部导航栏组件｜commit 4494aaa：为learn/chat/profile添加底部导航，新建review.html，5页面统一导航（首页/学习/AI对话/复习/我的）｜TRAE｜Fixed（commit 4494aaa on main，待监理部署前端rsync）
 
-BUG-015｜2026-07-24｜UI数据｜P1阻断：首页AI额度卡片显示NaN/0，数值计算出现非数字｜后端/api/ai/quota返回数值格式不统一，前端fetchHomeQuota未做NaN兜底｜home.html fetchHomeQuota增加三种API返回格式兼容+NaN兜底保护，renderAIQuotaStat同样处理｜TRAE｜Fixed（待部署验证）
+BUG-015｜2026-07-24｜UI数据｜P1阻断：首页AI额度卡片显示NaN/0｜后端/api/ai/quota返回dailyTotal/used/remaining，前端fetchHomeQuota兼容三种格式+NaN兜底｜commit 4494aaa+2f4635b：home.html fetchHomeQuota支持dailyTotal/usage.conversation/quotas.conversation三种格式，NaN→0兜底｜TRAE｜Fixed（commit 4494aaa on main，待监理部署验证）
+
+BUG-016｜2026-07-24｜学习进度｜P1阻断：Learn页面调用/api/user/progress/{lang}返回404，进度加载失败｜路由未挂载，userController.js存在但未注册到routes/index.js｜commit bf31c19：新增src/server/routes/user.js + 挂载到routes/index.js，GET /api/user/progress/:lang返回LearningProgress分层数据（词汇/语法/听力/阅读/口语+学习时长）｜TRAE｜Fixed（commit bf31c19 on main，待监理部署验证）
 
 ### 12.1 Incident Register【独立事件台账｜ITIL标准，仅保留未闭环事件】
 > 区分Bug/Incident/Risk：Incident为已发生的服务中断、性能降级等运营事件，按ITIL标准管理
@@ -338,6 +340,7 @@ CHANGE-002｜2026-07-22｜修复｜home.html, login.html, profile.html｜BUG-010
 CHANGE-003｜2026-07-22｜审计｜无（只读）｜Phase0.2上市就绪审计：扫描全部API端点(50+)、前端页面(8个)、安全配置、蓝图合规，输出6项ENV-DRIFT风险+功能实现矩阵+上市阻塞清单｜全平台｜不适用（未修改代码）｜DEC-20260722-LAUNCH-01｜TRAE｜Closed
 CHANGE-004｜2026-07-23｜修复｜chat.html, login.html, learn.html, profile.html, deploy/fix_nginx.sh, deploy/fix_p0_server.sh｜P0环境修复：chat.html(3处Token双兼容)+login.html(双写auth_tokens)+learn.html(2处Token)+profile.html(1处Token)+Nginx安全头脚本+服务器端quota修复脚本｜用户域+AI学习域｜备份文件恢复(.bak)+nginx配置回滚｜ENV-DRIFT-001/003/006｜TRAE｜Closed
 CHANGE-005｜2026-07-24｜修复｜learn.html, chat.html, profile.html, review.html(新建), home.html, server/index.js, server/controllers/authController.js, server/controllers/dashboardController.js, prisma/schema.prisma｜BUG-011~015批量修复：底部导航栏全局添加(BUG-014)、AI额度NaN修复(BUG-015)、密码认证入参校验(BUG-012)、UTF-8编码修复(BUG-013)、checkin路由+签到业务逻辑(BUG-011)、Dashboard xp字段+level从LearningProgress获取修复｜全平台｜git revert + 备份文件恢复｜BUG-011/012/013/014/015｜TRAE｜Fixed（待部署验证）
+CHANGE-006｜2026-07-24｜修复+新增｜src/server/controllers/userController.js(新建), src/server/routes/user.js(新建), src/server/routes/index.js, src/server/index.js, src/services/aiService.js, deploy/deploy_frontend_rsync.sh(新建), deploy/deploy_p1.sh(新建)｜BUG-016修复：新增/api/user/progress/:lang路由，返回LearningProgress分层学习数据；BUG-013补充UTF-8编码修复；产出前端rsync同步脚本+后端deploy_p1.sh部署脚本（含pg_dump备份+prisma db push+pm2重启+nginx重载+一键回滚）｜全平台｜git revert + 备份文件恢复｜BUG-013/016｜TRAE｜Fixed（commits bf31c19+a7b9fab on main，已推送GitHub）
 
 =============================================================
 ## 第14章 数据库迁移流水台账【活跃迁移记录，批量闭环后归档】
@@ -566,35 +569,32 @@ Phase2 Epic1 AI核心模块：实现分级额度管控、统一错误降级、Ga
 > Active Environment：PRODUCTION
 > Governance：企业级AI项目全生命周期ITIL治理规范
 文档版本：V7.1 Enterprise Freeze
-最后更新时间：2026-07-24 17:30
+最后更新时间：2026-07-24 22:00
 负责人：TRAE
-当前全局状态：IN PROGRESS（验收测试完成，RC_READY_ACCEPTANCE，等待服务器部署+人工验收）
+当前全局状态：RC_READY_BUG_FIX（3个阻断Bug全部修复，待监理线上部署+四层验收）
 当前Sprint：Sprint V6.2
-当前Phase：验收测试 → 服务器部署修复
+当前Phase：Bug修复 → 等待监理部署验收
 当前状态：
-  Development：✅ 修复完成（commit c1f3406：User模型新增xp字段+dashboardController修复level/xp查询）
-  Deployment：PENDING（需手动SSH：git pull + prisma db push + pm2 restart）
-  Acceptance：RC_READY_ACCEPTANCE（7接口测试完成，5/7正常，2异常）
-  BUG-010：Regression（Token双兼容全页面修复）
-  BUG-011：Confirmed（checkin路由404，需部署）
-  BUG-012：Confirmed（密码登录API 500，需部署验证）
-  BUG-013：Confirmed（中文编码问题，P2）
+  Development：✅ 修复完成（BUG-014/015/016全部修复并推送GitHub main）
+  Deployment：PENDING（需监理执行：deploy_p1.sh后端部署 + deploy_frontend_rsync.sh前端同步）
+  Acceptance：RC_READY_BUG_FIX（待监理线上四层验收）
+  BUG-011：Closed（4e743f9 SUP-04修复）
+  BUG-012：Closed（4e743f9 SUP-02/03修复）
+  BUG-013：Closed（4e743f9修复+bf31c19补充UTF-8，监理字节级校验不可复现）
+  BUG-014：Fixed（commit 4494aaa on main，底部导航5页面统一，待部署前端rsync）
+  BUG-015：Fixed（commit 4494aaa on main，fetchHomeQuota三格式兼容+NaN兜底，待部署验证）
+  BUG-016：Fixed（commit bf31c19 on main，/api/user/progress/:lang路由已挂载，待部署验证）
 当前阻断：
-  P0：BUG-012（密码登录API 500）- 阻塞API直接调用
-  P1：BUG-011（checkin路由404）- 阻塞签到功能
-  P2：BUG-013（中文编码问题）- 不影响核心功能
+  无P0阻断（BUG-014/015/016已本地修复，待监理线上部署）
+  P0上市阻塞：ENV-DRIFT-001(Mitigated)、ENV-DRIFT-002(30+API未实现)
 活跃高优先级风险：
-  P0上市阻塞：ENV-DRIFT-001(Mitigated-脚本就绪)、ENV-DRIFT-002(30+API未实现)
-  P1：ENV-DRIFT-003(chat路由Mitigated/companion待P2)、ENV-DRIFT-004(学习内容全部Mock)
-  P2：ENV-DRIFT-005(I18N硬编码)、ENV-DRIFT-006(Mitigated-Token全页面修复)
-现存Open Bug：BUG-009(Regression)、BUG-010(Regression)、BUG-011(Confirmed)、BUG-012(Confirmed)、BUG-013(Confirmed)
+  P1：ENV-DRIFT-004(学习内容全部Mock)、ENV-DRIFT-003(companion路由待P2)
+  P2：ENV-DRIFT-005(I18N硬编码)、ENV-DRIFT-006(Mitigated)
+现存Open Bug：BUG-009(Regression)、BUG-010(Regression)
 现存Open Incident：无（INC-001已Closed）
-未清偿技术债：ENV-DRIFT-005
-今日目标：✅ 验收测试完成 → 等待服务器部署 → 全链路回归复测
-下一允许动作：服务器部署（git pull + prisma db push + pm2 restart）→ 全链路回归复测
-下一里程碑：P1学习闭环 = 6张数据库表+20+API+SRS复习引擎+AI Tutor+报表+Learn去Mock
-功能实现矩阵：production=5, partial=4, not-built=30+, dead=1(/api/chat已修复)
-验收测试结果：5/7正常，2异常（checkin 404, 中文编码）
+今日目标：✅ 3个阻断Bug修复完成 → 监理线上部署 → 四层验收
+下一允许动作：监理执行deploy_p1.sh + deploy_frontend_rsync.sh → 全链路回归复测 → RC_READY_WEB_ACCEPTANCE
+下一里程碑：30天口语速成P1开发（需RC_READY_BUG_FIX线上验收通过后启动）
 
 =============================================================
 ## 第19章 Product Roadmap 产品长期路线图【永久宪章章节】
