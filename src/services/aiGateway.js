@@ -19,7 +19,6 @@ const prisma = require('../config/database');
 const redis = require('../config/redis');
 const logger = require('../utils/logger');
 const axios = require('axios');
-const config = require('../../config');
 const config = require('../config');
 const { getSystemConfigService } = require('./systemConfigService');
 const { getLanguageGuard } = require('./languageGuard');

@@ -1,42 +1,37 @@
-const axios = require('axios');
+// ============================================================
+// src/server/controllers/aiController.js
+// Module 03 — AI 对话引擎控制器
+// 通过 aiService 统一调用混元（ai-proxy 优先，回退直连）
+// ============================================================
+const aiService = require('../../services/aiService');
+const aiQuotaService = require('../../services/aiQuotaService');
 const logger = require('../../utils/logger');
 const prisma = require('../../config/database');
-const aiQuotaService = require('../../services/aiQuotaService');
-
-const config = require('../../config');
-const HUNYUAN_CONFIG = {
-  endpoint: (config.hunyuan.apiUrl || 'https://tokenhub.tencentmaas.com/v1') + '/chat/completions',
-  model: config.hunyuan.model || 'hy3',
-  apiKey: config.hunyuan.apiKey || process.env.HUNYUAN_API_KEY,
-  maxTokens: 500,
-  temperature: 0.7,
-};
 
 const AI_REQUEST_LOG = [];
 
+// ============================================================
+// POST /api/ai/chat
+// ============================================================
 async function chat(req, res) {
   try {
     const { userInput, languageContext, conversationId } = req.body;
 
-    // Guest mode blocking
     if (!req.user || !req.userId) {
-      return res.json({
-        success: false,
-        error: 'GUEST_BLOCKED',
-        message: '请先登录以使用AI对话功能',
-        message_en: 'Please login to use AI chat',
-      });
+      return res.status(401).json({ success: false, error: 'GUEST_BLOCKED', message: '请先登录' });
     }
 
-    // AI 额度检查
+    if (!userInput || !userInput.trim()) {
+      return res.status(400).json({ success: false, error: 'Empty input' });
+    }
+
+    // 额度检查
     const quotaCheck = await aiQuotaService.checkQuota(req.userId, 'conversation');
     if (!quotaCheck.allowed) {
-      return res.json({
+      return res.status(429).json({
         success: false,
-        error: 'AI-CONNECTION-PENDING',
-        errorType: 'QUOTA_EXHAUSTED',
+        error: 'QUOTA_EXHAUSTED',
         message: '今日AI对话次数已用完，请明天再试',
-        message_en: 'Daily AI conversation quota exhausted, please try again tomorrow',
         quota: {
           remaining: quotaCheck.remaining,
           dailyTotal: quotaCheck.dailyTotal,
@@ -45,18 +40,12 @@ async function chat(req, res) {
       });
     }
 
-    if (!userInput || !userInput.trim()) {
-      return res.status(400).json({ success: false, error: 'Empty input' });
-    }
-
     const ctx = languageContext || {};
     const nativeLang = ctx.nativeLang || '中文';
     const targetLang = ctx.targetLang || '英语';
     const userLevel = ctx.userLevel || 'beginner';
 
-    // Build system prompt
     const systemPrompt = `你是一位专业的语言教师，名叫AILOS。你的母语是${nativeLang}，你要教用户学习${targetLang}。
-
 请严格遵守以下规则：
 1. 所有解释、说明、语法讲解必须使用${nativeLang}
 2. 例句使用${targetLang}
@@ -70,87 +59,64 @@ async function chat(req, res) {
 }`;
 
     const startTime = Date.now();
-    
-    const resp = await axios.post(HUNYUAN_CONFIG.endpoint, {
-      model: HUNYUAN_CONFIG.model,
-      messages: [
+    const result = await aiService.callHunyuan(
+      [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userInput }
+        { role: 'user', content: userInput },
       ],
-      max_tokens: HUNYUAN_CONFIG.maxTokens,
-      temperature: HUNYUAN_CONFIG.temperature,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': HUNYUAN_CONFIG.apiKey,
-      },
-      timeout: 30000,
-    });
+      { userId: req.userId, temperature: 0.7, maxTokens: 500 }
+    );
 
     const latency = Date.now() - startTime;
-    const aiMsg = resp.data.choices?.[0]?.message?.content || '';
-    const usage = resp.data.usage || {};
+    const aiMsg = result.content;
 
-    // Parse AI response as JSON
+    // 解析 AI 响应
     let parsed;
     try {
       parsed = JSON.parse(aiMsg);
     } catch (e) {
-      // Fallback: wrap plain text
-      parsed = {
-        response: aiMsg,
-        example: '',
-        translation: ''
-      };
+      parsed = { response: aiMsg, example: '', translation: '' };
     }
 
-    const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-
-    // Log request
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      userId: req.userId,
-      nativeLang,
-      targetLang,
-      userLevel,
-      inputLength: userInput.length,
-      promptTokens: usage.prompt_tokens || 0,
-      completionTokens: usage.completion_tokens || 0,
-      totalTokens: usage.total_tokens || 0,
-      latency_ms: latency,
-      conversationId: convId,
-    };
-    AI_REQUEST_LOG.push(logEntry);
-    if (AI_REQUEST_LOG.length > 1000) AI_REQUEST_LOG.shift();
-    logger.info('AI Chat', logEntry);
-
-    // 记录AI用量到额度服务
-    const totalTokens = (usage.prompt_tokens || 0) + (usage.completion_tokens || 0);
+    // 记录额度
+    const totalTokens = result.usage.totalTokens;
     await aiQuotaService.recordUsage(req.userId, 'conversation', totalTokens).catch(e => {
       logger.error('AI Chat: recordUsage failed', e.message);
     });
 
-    // 持久化AI请求日志到 Prisma AiRequestLog
+    // 持久化日志
+    const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     await prisma.aiRequestLog.create({
       data: {
         userId: req.userId,
         scene: 'conversation',
         requestType: 'conversation',
-        model: HUNYUAN_CONFIG.model,
-        inputTokens: usage.prompt_tokens || 0,
-        outputTokens: usage.completion_tokens || 0,
+        model: result.model,
+        inputTokens: result.usage.promptTokens,
+        outputTokens: result.usage.completionTokens,
         latencyMs: latency,
-        languageContext: {
-          nativeLang,
-          targetLang,
-          userLevel,
-        },
+        languageContext: { nativeLang, targetLang, userLevel },
         assetHit: false,
         success: true,
       },
     }).catch(e => {
       logger.error('AI Chat: AiRequestLog create failed', e.message);
     });
+
+    // 内存日志
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      userId: req.userId,
+      nativeLang, targetLang, userLevel,
+      inputLength: userInput.length,
+      promptTokens: result.usage.promptTokens,
+      completionTokens: result.usage.completionTokens,
+      totalTokens: result.usage.totalTokens,
+      latency_ms: latency,
+      conversationId: convId,
+    };
+    AI_REQUEST_LOG.push(logEntry);
+    if (AI_REQUEST_LOG.length > 1000) AI_REQUEST_LOG.shift();
 
     res.json({
       success: true,
@@ -159,53 +125,24 @@ async function chat(req, res) {
       translation: parsed.translation,
       conversationId: convId,
       usage: {
-        promptTokens: usage.prompt_tokens || 0,
-        completionTokens: usage.completion_tokens || 0,
-        totalTokens: usage.total_tokens || 0,
+        promptTokens: result.usage.promptTokens,
+        completionTokens: result.usage.completionTokens,
+        totalTokens: result.usage.totalTokens,
       },
+      source: result.source,
     });
   } catch (err) {
     logger.error('AI Chat Error:', err.message);
+    const errorType = _classifyError(err);
+    const message = _errorMessage(errorType);
 
-    let errorType = 'UPSTREAM_ERROR';
-    let errorMessage = 'AI服务暂时不可用，请稍后重试';
-    let errorMessageEn = 'AI service is temporarily unavailable';
-
-    if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT' || err.code === 'ETIME') {
-      errorType = 'TIMEOUT';
-      errorMessage = 'AI响应超时，请稍后重试';
-      errorMessageEn = 'AI response timeout, please try again later';
-      logger.error('AI Timeout:', err.code);
-    } else if (err.response && err.response.status === 429) {
-      errorType = 'RATE_LIMITED';
-      errorMessage = 'AI请求过于频繁，请稍后重试';
-      errorMessageEn = 'Too many AI requests, please try again later';
-      logger.error('AI Rate Limited:', err.response.status);
-    } else if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      errorType = 'UPSTREAM_ERROR';
-      errorMessage = 'AI服务认证失败，请联系管理员';
-      errorMessageEn = 'AI service authentication failed, please contact administrator';
-      logger.error('AI Auth Failed:', err.response.status);
-    } else if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET' || err.code === 'ENETUNREACH') {
-      errorType = 'UPSTREAM_ERROR';
-      errorMessage = 'AI服务网络连接失败，请稍后重试';
-      errorMessageEn = 'AI service network error, please try again later';
-      logger.error('AI Network Error:', err.code);
-    } else if (err.response) {
-      errorType = 'UPSTREAM_ERROR';
-      errorMessage = 'AI上游服务异常，请稍后重试';
-      errorMessageEn = 'AI upstream service error, please try again later';
-      const respData = typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data);
-      logger.error('Hunyuan API Error:', err.response.status, respData.substring(0, 200));
-    }
-
-    // 持久化失败日志到 Prisma AiRequestLog
+    // 持久化失败日志
     await prisma.aiRequestLog.create({
       data: {
         userId: req.userId || null,
         scene: 'conversation',
         requestType: 'conversation',
-        model: HUNYUAN_CONFIG.model,
+        model: 'hunyuan',
         inputTokens: 0,
         outputTokens: 0,
         latencyMs: 0,
@@ -214,15 +151,161 @@ async function chat(req, res) {
       },
     }).catch(() => {});
 
-    res.json({
+    res.status(errorType === 'QUOTA_EXHAUSTED' ? 429 : 502).json({
       success: false,
       error: 'AI-CONNECTION-PENDING',
-      errorType: errorType,
-      message: errorMessage,
-      message_en: errorMessageEn,
+      errorType,
+      message: message.zh,
+      message_en: message.en,
     });
   }
 }
+
+// ============================================================
+// POST /api/ai/translate
+// ============================================================
+async function translate(req, res) {
+  try {
+    const { text, sourceLang, targetLang } = req.body;
+
+    if (!req.userId) {
+      return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
+    }
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, error: 'Text is required' });
+    }
+
+    const src = sourceLang || 'auto';
+    const tgt = targetLang || 'zh-CN';
+
+    const systemPrompt = `你是一个专业翻译引擎。将用户输入的文本翻译成${tgt}。只返回翻译结果，不要添加任何解释。`;
+
+    const result = await aiService.callHunyuan(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ],
+      { userId: req.userId, temperature: 0.3, maxTokens: 300 }
+    );
+
+    res.json({
+      success: true,
+      translation: result.content.trim(),
+      sourceLang: src,
+      targetLang: tgt,
+      usage: result.usage,
+      source: result.source,
+    });
+  } catch (err) {
+    logger.error('AI Translate Error:', err.message);
+    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '翻译服务暂不可用' });
+  }
+}
+
+// ============================================================
+// POST /api/ai/grammar-check
+// ============================================================
+async function grammarCheck(req, res) {
+  try {
+    const { text, language } = req.body;
+
+    if (!req.userId) {
+      return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
+    }
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, error: 'Text is required' });
+    }
+
+    const lang = language || 'auto';
+    const systemPrompt = `你是一个语法检查器。检查用户输入的${lang}文本，找出语法错误并给出修改建议。返回JSON格式：
+{
+  "corrected": "修正后的完整文本",
+  "errors": [{"original": "原文", "correction": "修正", "explanation": "解释"}],
+  "summary": "总体评价"
+}`;
+
+    const result = await aiService.callHunyuan(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ],
+      { userId: req.userId, temperature: 0.3, maxTokens: 400 }
+    );
+
+    let parsed;
+    try {
+      parsed = JSON.parse(result.content);
+    } catch (e) {
+      parsed = { corrected: result.content, errors: [], summary: '' };
+    }
+
+    res.json({
+      success: true,
+      ...parsed,
+      usage: result.usage,
+      source: result.source,
+    });
+  } catch (err) {
+    logger.error('AI Grammar Check Error:', err.message);
+    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '语法检查服务暂不可用' });
+  }
+}
+
+// ============================================================
+// POST /api/ai/generate-exercise
+// ============================================================
+async function generateExercise(req, res) {
+  try {
+    const { language, level, type, count } = req.body;
+
+    if (!req.userId) {
+      return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
+    }
+    if (!language) {
+      return res.status(400).json({ success: false, error: 'Language is required' });
+    }
+
+    const lang = language;
+    const lvl = level || 'beginner';
+    const exType = type || 'vocabulary';
+    const cnt = Math.min(count || 5, 10);
+
+    const systemPrompt = `你是一个语言学习出题引擎。生成${cnt}道${lang}的${exType}练习题，难度为${lvl}。返回JSON数组格式：
+[{"question": "题目", "options": ["A", "B", "C", "D"], "answer": "正确答案", "explanation": "解释"}]`;
+
+    const result = await aiService.callHunyuan(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `生成${cnt}道${exType}练习题` },
+      ],
+      { userId: req.userId, temperature: 0.7, maxTokens: 800 }
+    );
+
+    let exercises;
+    try {
+      exercises = JSON.parse(result.content);
+    } catch (e) {
+      exercises = [{ question: result.content, options: [], answer: '', explanation: '' }];
+    }
+
+    res.json({
+      success: true,
+      exercises: Array.isArray(exercises) ? exercises : [exercises],
+      language: lang,
+      level: lvl,
+      type: exType,
+      usage: result.usage,
+      source: result.source,
+    });
+  } catch (err) {
+    logger.error('AI Generate Exercise Error:', err.message);
+    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '出题服务暂不可用' });
+  }
+}
+
+// ============================================================
+// GET /api/ai/stats
+// ============================================================
 function getStats(req, res) {
   const totalRequests = AI_REQUEST_LOG.length;
   const totalTokens = AI_REQUEST_LOG.reduce((sum, e) => sum + e.totalTokens, 0);
@@ -230,44 +313,46 @@ function getStats(req, res) {
 
   res.json({
     success: true,
-    data: {
-      totalRequests,
-      totalTokens,
-      recentLogs,
-    },
+    data: { totalRequests, totalTokens, recentLogs },
   });
 }
 
-/**
- * GET /api/ai/quota
- * 获取用户AI额度信息
- */
+// ============================================================
+// GET /api/ai/quota
+// ============================================================
 async function getQuota(req, res) {
   try {
-    if (!req.user || !req.userId) {
-      return res.json({
-        success: false,
-        error: 'GUEST_BLOCKED',
-        message: '请先登录以查看AI额度',
-        message_en: 'Please login to view AI quota',
-      });
+    if (!req.userId) {
+      return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
     }
-
     const quota = await aiQuotaService.getQuota(req.userId);
-    res.json({
-      success: true,
-      data: quota,
-    });
+    res.json({ success: true, data: quota });
   } catch (err) {
     logger.error('AI Quota Error:', err.message);
-    res.json({
-      success: false,
-      error: 'AI-CONNECTION-PENDING',
-      errorType: 'UPSTREAM_ERROR',
-      message: '获取额度信息失败',
-      message_en: 'Failed to get quota information',
-    });
+    res.status(502).json({ success: false, error: 'UPSTREAM_ERROR', message: '获取额度信息失败' });
   }
 }
 
-module.exports = { chat, getStats, getQuota };
+// ============================================================
+// Helpers
+// ============================================================
+function _classifyError(err) {
+  if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') return 'TIMEOUT';
+  if (err.response?.status === 429) return 'RATE_LIMITED';
+  if (err.response?.status === 401 || err.response?.status === 403) return 'AUTH_FAILED';
+  if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') return 'NETWORK_ERROR';
+  return 'UPSTREAM_ERROR';
+}
+
+function _errorMessage(type) {
+  const messages = {
+    TIMEOUT: { zh: 'AI响应超时，请稍后重试', en: 'AI response timeout' },
+    RATE_LIMITED: { zh: 'AI请求过于频繁，请稍后重试', en: 'Too many AI requests' },
+    AUTH_FAILED: { zh: 'AI服务认证失败，请联系管理员', en: 'AI auth failed' },
+    NETWORK_ERROR: { zh: 'AI服务网络连接失败', en: 'AI network error' },
+    UPSTREAM_ERROR: { zh: 'AI服务暂时不可用，请稍后重试', en: 'AI service unavailable' },
+  };
+  return messages[type] || messages.UPSTREAM_ERROR;
+}
+
+module.exports = { chat, translate, grammarCheck, generateExercise, getStats, getQuota };
