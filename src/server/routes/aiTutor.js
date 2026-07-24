@@ -12,4 +12,7 @@ router.use(authenticate);
 router.get('/dialogue', aiTutorController.getDialogue);
 router.post('/dialogue', aiTutorController.saveDialogue);
 
+// Module 03 Step 4 — AI 导师对话（接通混元）
+router.post('/chat', aiTutorController.chat);
+
 module.exports = router;

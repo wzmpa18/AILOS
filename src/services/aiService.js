@@ -9,7 +9,8 @@ const logger = require('../utils/logger');
 const prisma = require('../config/database');
 
 const AI_PROXY_URL = process.env.AI_PROXY_URL || 'http://localhost:8787/v1/chat';
-const HUNYUAN_API_URL = config.hunyuan?.apiUrl || 'https://tokenhub.tencentmaas.com/v1/chat/completions';
+const HUNYUAN_BASE_URL = config.hunyuan?.apiUrl || 'https://tokenhub.tencentmaas.com/v1';
+const HUNYUAN_API_URL = HUNYUAN_BASE_URL.replace(/\/+$/, '') + '/chat/completions';
 const HUNYUAN_API_KEY = config.hunyuan?.apiKey || process.env.HUNYUAN_API_KEY;
 const HUNYUAN_MODEL = config.hunyuan?.model || 'hunyuan-lite';
 const DEFAULT_MAX_TOKENS = 500;

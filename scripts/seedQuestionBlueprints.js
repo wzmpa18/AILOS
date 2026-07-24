@@ -125,8 +125,44 @@ function generateQuestions(content) {
       }
       break;
     }
-    default:
+    case 'pronunciation':
+    case 'quiz': {
+      const items = data.items || data.questions || [];
+      for (const item of items) {
+        const q = item.question || item.prompt || item.word || '';
+        const a = item.answer || item.correctAnswer || item.correct || '';
+        if (q && a) {
+          questions.push({ contentId: content.id, question: q, answer: a, options: item.options ? JSON.stringify(item.options) : null, difficulty: 2 });
+        }
+      }
       break;
+    }
+    default: {
+      // Fallback: 从 contentData 中提取任何可用的问答对
+      const dataStr = JSON.stringify(data);
+      // Try to extract common patterns
+      if (data.title || data.topic || data.name) {
+        const title = data.title || data.topic || data.name || '';
+        questions.push({
+          contentId: content.id,
+          question: `关于 "${title}" 的主要内容是？`,
+          answer: dataStr.substring(0, 200),
+          options: null,
+          difficulty: 1,
+        });
+      }
+      if (questions.length === 0) {
+        // Last resort: create a generic question
+        questions.push({
+          contentId: content.id,
+          question: `请回顾 "${content.contentType}" 类型的内容要点`,
+          answer: dataStr.substring(0, 200),
+          options: null,
+          difficulty: 1,
+        });
+      }
+      break;
+    }
   }
 
   return questions;
