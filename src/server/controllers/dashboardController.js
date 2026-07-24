@@ -27,13 +27,26 @@ const dashboardController = {
           avatar: true,
           phone: true,
           xp: true,
-          level: true,
+          membershipLevel: true,
           createdAt: true,
         },
       });
 
       if (!user) {
         return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      // 获取用户学习等级（从 LearningProgress 中取最高等级）
+      let userLevel = 'beginner';
+      try {
+        const progress = await prisma.learningProgress.findFirst({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          select: { level: true },
+        }).catch(() => null);
+        if (progress?.level) userLevel = progress.level;
+      } catch (e) {
+        // 忽略
       }
 
       // 2. 签到状态
@@ -126,7 +139,8 @@ const dashboardController = {
             avatar: user.avatar,
             phone: user.phone,
             xp: user.xp || 0,
-            level: user.level || 1,
+            level: userLevel,
+            membershipLevel: user.membershipLevel || 'free',
           },
           checkin: {
             todayCheckedIn,

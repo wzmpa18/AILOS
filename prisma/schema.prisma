@@ -27,6 +27,9 @@ model User {
   membershipLevel  String    @default("free") // free, basic, premium
   membershipExpiry DateTime?
 
+  // Gamification
+  xp  Int  @default(0) // Experience points
+
   // P0-1 Asset Ownership fields
   ownerType      String  @default("PLATFORM") // PLATFORM, USER
   ownerId        String? // Founder UID for PLATFORM traffic, inviter UID for USER
