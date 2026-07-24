@@ -251,7 +251,7 @@ class AIGateway {
       return { success: true, content: data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content || '' : '' , model: data.model || model, usage: { promptTokens: usage.prompt_tokens || 0, completionTokens: usage.completion_tokens || 0, totalTokens: usage.total_tokens || 0 }, raw: data };
     } catch (error) {
       if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') throw new Error('AI-CONNECTION-PENDING: Request timeout');
-      if (error.response) throw new Error('AI-CONNECTION-PENDING: Upstream ' + str(error.response.status));
+      if (error.response) throw new Error('AI-CONNECTION-PENDING: Upstream ' + String(error.response.status));
       throw new Error('AI-CONNECTION-PENDING: ' + error.message);
     }
   }

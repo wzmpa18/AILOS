@@ -30,6 +30,9 @@ router.use('/ai/tutor', require('./aiTutor'));
 // Reports (Module 02 Step 5 — 学习报表 + XP)
 router.use('/reports', require('./reports'));
 
+// Membership
+router.use('/membership', require('./membership'));
+
 // AI (Module 03 — AI 对话引擎)
 router.use('/ai', require('./ai'));
 

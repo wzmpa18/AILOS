@@ -688,12 +688,14 @@ model AiLanguageViolationLog {
 }
 
 model Checkin {
-  id          Int      @id @default(autoincrement())
-  userId      Int
+  id          String   @id @default(uuid())
+  userId      String
   checkinDate DateTime @default(now())
   streak      Int      @default(1)
   xpAwarded   Int      @default(0)
   createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, checkinDate])
   @@index([userId])

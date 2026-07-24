@@ -384,24 +384,9 @@ class AuthService {
       }
     }
 
-    // 初始化免费额度（free 用户每日5次对话+3次纠错）
-    try {
-      await prisma.userQuota.upsert({
-        where: { userId: user.id },
-        create: {
-          userId: user.id,
-          dailyConversation: 0,
-          dailyCorrection: 0,
-          maxConversation: 5,
-          maxCorrection: 3,
-          resetAt: new Date(new Date().setHours(24, 0, 0, 0)),
-        },
-        update: {},
-      });
-      logger.info(`Quota initialized for user ${user.id}`);
-    } catch (e) {
-      logger.warn(`Failed to initialize quota for user ${user.id}:`, e.message);
-    }
+    // 初始化免费额度（通过 aiQuotaService 管理）
+    // 使用每日统计表记录额度使用情况，首次注册不创建记录，由 aiQuotaService 自动按需创建
+    logger.info(`Quota tracking available for user ${user.id} via aiQuotaService`);
 
     logger.info(`New user registered: ${user.id} (${phone || email || wechatOpenId})`);
     return user;
