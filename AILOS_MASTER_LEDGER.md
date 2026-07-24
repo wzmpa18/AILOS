@@ -298,7 +298,11 @@ BUG-010｜2026-07-22｜Auth认证+数据渲染｜登录成功API返回token但�
 
 BUG-011｜2026-07-24｜签到打卡｜GET /api/checkin/status 返回404，签到功能不可用｜服务器代码版本落后，checkin.js路由文件未部署到服务器｜需部署最新代码到服务器：git pull + prisma db push + pm2 restart｜TRAE｜Confirmed
 BUG-012｜2026-07-24｜Auth认证｜POST /api/auth/password 直接API调用返回500空响应，但浏览器页面登录成功｜服务器代码版本落后，authController.passwordAuth可能缺少account参数校验或prisma查询失败｜需部署最新代码到服务器验证｜TRAE｜Confirmed
-BUG-013｜2026-07-24｜AI伴读｜POST /api/ai/tutor/chat 中文消息被接收为"???????????????"，但AI仍返回中文回复｜PowerShell Invoke-WebRequest或服务器端编码处理问题，中文UTF-8内容在传输过程中损坏｜需排查编码链路：PowerShell→Nginx→Express→混元API｜TRAE｜Confirmed
+BUG-013｜2026-07-24｜AI伴读｜POST /api/ai/tutor/chat 中文消息被接收为"???????????????"，但AI仍返回中文回复｜PowerShell Invoke-WebRequest或服务器端编码处理问题，中文UTF-8内容在传输过程中损坏｜server/index.js全局添加UTF-8响应头，aiService.js HTTP请求设置Content-Type charset=utf-8｜TRAE｜Fixed（待部署验证）
+
+BUG-014｜2026-07-24｜UI导航｜P0阻断：登录进入Home首页，缺少底部全局导航栏，无法跳转Learn/AI对话/个人资料任何页面，应用功能完全锁死｜learn.html/chat.html/profile.html均缺少底部导航栏组件，仅home.html有｜为learn.html/chat.html/profile.html添加底部导航栏，新建review.html SRS复习页面，5个页面统一导航结构｜TRAE｜Fixed（commit 4494aaa，待部署验证）
+
+BUG-015｜2026-07-24｜UI数据｜P1阻断：首页AI额度卡片显示NaN/0，数值计算出现非数字｜后端/api/ai/quota返回数值格式不统一，前端fetchHomeQuota未做NaN兜底｜home.html fetchHomeQuota增加三种API返回格式兼容+NaN兜底保护，renderAIQuotaStat同样处理｜TRAE｜Fixed（待部署验证）
 
 ### 12.1 Incident Register【独立事件台账｜ITIL标准，仅保留未闭环事件】
 > 区分Bug/Incident/Risk：Incident为已发生的服务中断、性能降级等运营事件，按ITIL标准管理
@@ -333,6 +337,7 @@ CHANGE-001｜2026-07-22｜修改｜aiController.js, aiGateway.js, ai.js, aiQuota
 CHANGE-002｜2026-07-22｜修复｜home.html, login.html, profile.html｜BUG-010修复：home.html getToken()增加yandao_token_v1回退+quotas→usage路径修正；login.html密码登录同步写auth_tokens+重定向加.html后缀；profile.html quotas→usage路径修正｜用户域+AI学习域｜备份文件恢复(.bak.BUG010/.bak.BUG010B)｜BUG-010｜TRAE｜Closed
 CHANGE-003｜2026-07-22｜审计｜无（只读）｜Phase0.2上市就绪审计：扫描全部API端点(50+)、前端页面(8个)、安全配置、蓝图合规，输出6项ENV-DRIFT风险+功能实现矩阵+上市阻塞清单｜全平台｜不适用（未修改代码）｜DEC-20260722-LAUNCH-01｜TRAE｜Closed
 CHANGE-004｜2026-07-23｜修复｜chat.html, login.html, learn.html, profile.html, deploy/fix_nginx.sh, deploy/fix_p0_server.sh｜P0环境修复：chat.html(3处Token双兼容)+login.html(双写auth_tokens)+learn.html(2处Token)+profile.html(1处Token)+Nginx安全头脚本+服务器端quota修复脚本｜用户域+AI学习域｜备份文件恢复(.bak)+nginx配置回滚｜ENV-DRIFT-001/003/006｜TRAE｜Closed
+CHANGE-005｜2026-07-24｜修复｜learn.html, chat.html, profile.html, review.html(新建), home.html, server/index.js, server/controllers/authController.js, server/controllers/dashboardController.js, prisma/schema.prisma｜BUG-011~015批量修复：底部导航栏全局添加(BUG-014)、AI额度NaN修复(BUG-015)、密码认证入参校验(BUG-012)、UTF-8编码修复(BUG-013)、checkin路由+签到业务逻辑(BUG-011)、Dashboard xp字段+level从LearningProgress获取修复｜全平台｜git revert + 备份文件恢复｜BUG-011/012/013/014/015｜TRAE｜Fixed（待部署验证）
 
 =============================================================
 ## 第14章 数据库迁移流水台账【活跃迁移记录，批量闭环后归档】
