@@ -1,25 +1,23 @@
-// ============================================================
-// src/config/database.js
-// Prisma 客户端单例 — 全局唯一数据库连接
-// ============================================================
-const { PrismaClient } = require('./generated');
-const logger = require('../utils/logger');
+const { PrismaClient } = require('@prisma/client');
+const config = require('./index');
 
-let prisma;
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: config.database.url,
+    },
+  },
+  log: config.env === 'development' ? ['query', 'error', 'warn'] : ['error'],
+});
 
-function getPrismaClient() {
-  if (!prisma) {
-    prisma = new PrismaClient({
-      log: process.env.NODE_ENV === 'development'
-        ? ['query', 'info', 'warn', 'error']
-        : ['error'],
-    });
+// Handle connection errors
+prisma.$on('error', (error) => {
+  console.error('Database connection error:', error);
+});
 
-    prisma.$connect()
-      .then(() => logger.info('Prisma connected to database'))
-      .catch((err) => logger.error('Prisma connection failed:', err));
-  }
-  return prisma;
-}
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
 
-module.exports = getPrismaClient();
+module.exports = prisma;

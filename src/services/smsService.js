@@ -1,94 +1,150 @@
-// ============================================================
-// src/services/smsService.js
-// 短信服务 — 多供应商支持（阿里云/腾讯云），开发环境Mock
-// ============================================================
+/**
+ * SMS & Email Service — Tencent Cloud SDK v4
+ * 集成腾讯云短信(SMS)和邮件(SES)服务
+ * 
+ * SDK v4.x API: 使用纯对象参数，无需 Model 类
+ * 配置位置：.env.production (TENCENT_SECRET_ID / TENCENT_SECRET_KEY / SMS_APP_ID / SMS_TEMPLATE_ID / ...)
+ */
+const crypto = require('crypto');
 const config = require('../config');
 const logger = require('../utils/logger');
 
-class SmsService {
-  /**
-   * 发送验证码短信
-   * @param {string} phone - 手机号
-   * @param {string} code - 验证码
-   * @param {string} type - 类型（login/register/reset）
-   */
+let SmsClient, SesClient;
+
+class SmsEmailService {
+  constructor() {
+    this.secretId = process.env.TENCENT_SECRET_ID || '';
+    this.secretKey = process.env.TENCENT_SECRET_KEY || '';
+    this.smsAppId = process.env.SMS_APP_ID || '';
+    this.smsTemplateId = process.env.SMS_TEMPLATE_ID || '';
+    this.smsSignName = process.env.SMS_SIGN_NAME || 'AILOS';
+    this.smsRegion = process.env.SMS_REGION || 'ap-guangzhou';
+    this.sesFromEmail = process.env.SES_FROM_EMAIL || '';
+    this.sesTemplateId = process.env.SES_TEMPLATE_ID || '';
+    this.sesRegion = process.env.SES_REGION || 'ap-hongkong';
+    this.isConfigured = !!(this.secretId && this.secretKey);
+    this._initSdk();
+  }
+
+  _initSdk() {
+    try {
+      const smsSdk = require('tencentcloud-sdk-nodejs-sms');
+      SmsClient = smsSdk.sms.v20210111.Client;
+      
+      const sesSdk = require('tencentcloud-sdk-nodejs-ses');
+      SesClient = sesSdk.ses.v20201002.Client;
+      
+      logger.info('Tencent Cloud SDK v4 loaded successfully');
+    } catch (e) {
+      logger.error(`Tencent Cloud SDK load failed: ${e.message}`, { stack: e.stack });
+    }
+  }
+
+  _genCode(len = 6) {
+    return crypto.randomInt(Math.pow(10, len - 1), Math.pow(10, len) - 1).toString();
+  }
+
   async sendVerificationCode(phone, code, type = 'login') {
-    const typeMap = {
-      login: '登录验证',
-      register: '注册验证',
-      reset: '重置密码',
-    };
-    const purpose = typeMap[type] || '验证';
+    if (!this.isConfigured) {
+      logger.warn('SMS not configured');
+      if (config.env !== 'production') {
+        logger.info(`SMS mock — code for ${phone}: ${code}`);
+        return { success: true, requestId: 'MOCK_DEV', provider: 'tencent' };
+      }
+      throw new Error('SMS service not configured');
+    }
 
-    // 开发环境：控制台输出验证码
-    if (config.env !== 'production') {
-      logger.info(`[DEV SMS] To: ${phone}, Code: ${code}, Purpose: ${purpose}`);
-      return {
-        success: true,
-        provider: 'dev-mock',
-        requestId: 'dev_' + Date.now(),
+    if (!SmsClient) {
+      logger.error('SmsClient is not initialized');
+      if (config.env !== 'production') {
+        logger.info(`SMS mock (no SDK) — code for ${phone}: ${code}`);
+        return { success: true, requestId: 'MOCK_NO_SDK', provider: 'tencent' };
+      }
+      throw new Error('SMS SDK not initialized');
+    }
+
+    const expireMinutes = 5;
+    // Strip any existing +86 prefix to avoid double prefix
+    const cleanPhone = phone.replace(/^\+86/, '');
+    try {
+      const client = new SmsClient({
+        credential: { secretId: this.secretId, secretKey: this.secretKey },
+        region: this.smsRegion,
+      });
+
+      const params = {
+        SmsSdkAppId: this.smsAppId,
+        SignName: this.smsSignName,
+        TemplateId: this.smsTemplateId,
+        TemplateParamSet: [code, String(expireMinutes)],
+        PhoneNumberSet: [`+86${cleanPhone}`],
       };
-    }
 
-    // 生产环境：调用真实短信服务
-    switch (config.sms.provider) {
-      case 'aliyun':
-        return this._sendViaAliyun(phone, code, purpose);
-      case 'tencent':
-        return this._sendViaTencent(phone, code, purpose);
-      default:
-        logger.warn(`Unknown SMS provider: ${config.sms.provider}, using mock`);
-        return { success: true, provider: 'unknown-mock', requestId: 'unknown_' + Date.now() };
+      const resp = await client.SendSms(params);
+      const [status] = resp.SendStatusSet;
+      if (status.Code !== 'Ok') {
+        logger.error(`SMS API failed for ${phone}: ${status.Code} — ${status.Message}`);
+        const err = new Error(status.Message || status.Code);
+          err.code = status.Code;
+          err.tencentError = status;
+          throw err;
+      }
+
+      logger.info(`SMS sent to ${phone} — RequestId: ${resp.RequestId}`);
+      return { success: true, requestId: resp.RequestId, provider: 'tencent' };
+    } catch (e) {
+      logger.error(`SMS send error for ${phone}: ${e.message}`, { code: e.code, stack: e.stack });
+      // Preserve Tencent error code for upstream handling
+      if (e.code) {
+        const err = new Error(e.message);
+        err.code = e.code;
+        throw err;
+      }
+      throw e;
     }
   }
 
-  async _sendViaAliyun(phone, code, purpose) {
-    // 阿里云短信服务接入
-    // 实际部署时替换为真实SDK调用
-    const Core = require('@alicloud/pop-core');
-    const client = new Core({
-      accessKeyId: config.sms.accessKeyId,
-      accessKeySecret: config.sms.accessKeySecret,
-      endpoint: 'https://dysmsapi.aliyuncs.com',
-      apiVersion: '2017-05-25',
-    });
+  async sendEmailCode(email, code) {
+    if (!this.isConfigured) {
+      if (config.env !== 'production') {
+        logger.info(`Email mock — code for ${email}: ${code}`);
+        return { success: true, requestId: 'MOCK_DEV', provider: 'tencent' };
+      }
+      throw new Error('Email service not configured');
+    }
 
-    const params = {
-      RegionId: 'cn-hangzhou',
-      PhoneNumbers: phone,
-      SignName: config.sms.signName,
-      TemplateCode: config.sms.templateCode,
-      TemplateParam: JSON.stringify({ code }),
-    };
+    if (!SesClient) {
+      if (config.env !== 'production') {
+        return { success: true, requestId: 'MOCK_NO_SDK', provider: 'tencent' };
+      }
+      throw new Error('Email SDK not initialized');
+    }
 
-    const result = await client.request('SendSms', params);
-    return { success: true, provider: 'aliyun', requestId: result.RequestId };
-  }
+    try {
+      const client = new SesClient({
+        credential: { secretId: this.secretId, secretKey: this.secretKey },
+        region: this.sesRegion,
+      });
 
-  async _sendViaTencent(phone, code, purpose) {
-    // 腾讯云短信服务接入
-    // 实际部署时替换为真实SDK调用
-    const tencentcloud = require('tencentcloud-sdk-nodejs-sms');
-    const SmsClient = tencentcloud.sms.v20210111.Client;
+      const params = {
+        FromEmailAddress: this.sesFromEmail,
+        Destination: [email],
+        Subject: 'Your Verification Code',
+        Template: {
+          TemplateID: Number(this.sesTemplateId),
+          TemplateData: JSON.stringify({ code }),
+        },
+      };
 
-    const client = new SmsClient({
-      credential: {
-        secretId: config.sms.accessKeyId,
-        secretKey: config.sms.accessKeySecret,
-      },
-      region: 'ap-guangzhou',
-    });
-
-    const result = await client.SendSms({
-      PhoneNumberSet: ['+86' + phone],
-      SmsSdkAppId: config.sms.sdkAppId,
-      SignName: config.sms.signName,
-      TemplateId: config.sms.templateCode,
-      TemplateParamSet: [code],
-    });
-
-    return { success: true, provider: 'tencent', requestId: result.RequestId };
+      const resp = await client.SendEmail(params);
+      logger.info(`Email sent to ${email} — RequestId: ${resp.RequestId}`);
+      return { success: true, requestId: resp.RequestId, provider: 'tencent' };
+    } catch (e) {
+      logger.error(`Email send error for ${email}: ${e.message}`, { code: e.code, stack: e.stack });
+      throw e;
+    }
   }
 }
 
-module.exports = new SmsService();
+const smsEmailService = new SmsEmailService();
+module.exports = smsEmailService;

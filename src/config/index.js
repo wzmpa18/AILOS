@@ -1,64 +1,77 @@
-// ============================================================
-// src/config/index.js
-// 全局配置中心 — 所有环境变量统一入口
-// ============================================================
-require('dotenv').config();
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables based on NODE_ENV
+const env = process.env.NODE_ENV || 'development';
+const envFile = `.env.${env}`;
+
+dotenv.config({ path: path.join(__dirname, `../../${envFile}`), override: true });
 
 const config = {
   env: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-
-  jwt: {
-    secret: process.env.JWT_SECRET || 'ailos-dev-secret-change-in-production',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  },
-
+  port: parseInt(process.env.PORT) || 3000,
+  apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
+  
   database: {
-    url: process.env.DATABASE_URL || 'mysql://root:password@localhost:3306/ailos',
+    url: process.env.DATABASE_URL,
   },
-
+  
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: parseInt(process.env.REDIS_DB || '0', 10),
+    port: parseInt(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD || '',
   },
-
+  
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
+  
+  hunyuan: {
+    apiKey: process.env.HUNYUAN_API_KEY,
+    apiUrl: process.env.HUNYUAN_API_URL,
+    apiUrlBackup: process.env.HUNYUAN_API_URL_BACKUP,
+    model: process.env.HUNYUAN_MODEL,
+    modelBackup: process.env.HUNYUAN_MODEL_BACKUP,
+  },
+  
   sms: {
-    provider: process.env.SMS_PROVIDER || 'aliyun',
-    accessKeyId: process.env.SMS_ACCESS_KEY_ID || '',
-    accessKeySecret: process.env.SMS_ACCESS_KEY_SECRET || '',
-    signName: process.env.SMS_SIGN_NAME || 'AILOS',
-    templateCode: process.env.SMS_TEMPLATE_CODE || '',
+    apiKey: process.env.SMS_API_KEY,
+    apiSecret: process.env.SMS_API_SECRET,
+    templateId: process.env.SMS_TEMPLATE_ID,
   },
-
-  email: {
-    host: process.env.EMAIL_HOST || 'smtp.example.com',
-    port: parseInt(process.env.EMAIL_PORT || '587', 10),
-    user: process.env.EMAIL_USER || '',
-    pass: process.env.EMAIL_PASS || '',
-  },
-
+  
   wechat: {
-    appId: process.env.WECHAT_APP_ID || '',
-    appSecret: process.env.WECHAT_APP_SECRET || '',
+    appId: process.env.WECHAT_APP_ID,
+    appSecret: process.env.WECHAT_APP_SECRET,
   },
-
-  ai: {
-    provider: process.env.AI_PROVIDER || 'hunyuan',
-    apiKey: process.env.AI_API_KEY || '',
-    apiEndpoint: process.env.AI_API_ENDPOINT || '',
-    model: process.env.AI_MODEL || 'hunyuan-lite',
+  
+  upload: {
+    path: process.env.UPLOAD_PATH || './uploads',
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760,
   },
-
-  cors: {
-    origin: process.env.CORS_ORIGIN || '*',
-  },
-
+  
   rateLimit: {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
-    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 900000,
+    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  },
+  
+  cache: {
+    ttl: parseInt(process.env.CACHE_TTL) || 3600,
+  },
+  
+  logging: {
+    level: process.env.LOG_LEVEL || 'info',
+    filePath: process.env.LOG_FILE_PATH || './logs',
   },
 };
+
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'HUNYUAN_API_KEY'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0 && env === 'production') {
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+}
 
 module.exports = config;

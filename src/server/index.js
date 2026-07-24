@@ -1,54 +1,100 @@
-// ============================================================
-// src/server/index.js
-// 服务启动入口 — 监听端口 + 优雅关闭
-// ============================================================
-const app = require('./app');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { apiLimiter } = require('./middleware/rateLimit');
+const routes = require('./routes');
 
-const server = app.listen(config.port, () => {
-  logger.info(`AILOS Server running on port ${config.port} [${config.env}]`);
-  logger.info(`Health check: http://localhost:${config.port}/api/health`);
+const app = express();
+
+// Trust proxy for rate limiter (X-Forwarded-For)
+app.set('trust proxy', 1); // 1 = single proxy (Nginx)
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: config.env === 'production' ? undefined : false,
+}));
+
+// CORS
+app.use(cors({
+  origin: config.env === 'production' 
+    ? ['https://yandao.vip'] 
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+}));
+
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Compression
+app.use(compression());
+
+// Request logging
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  next();
 });
 
-// ============================================================
-// 优雅关闭
-// ============================================================
-function gracefulShutdown(signal) {
-  logger.info(`${signal} received, shutting down gracefully...`);
+// Rate limiting
+app.use('/api', apiLimiter);
+
+// API routes
+app.use('/api', routes);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    name: '言道学外语APP API',
+    version: '1.0.0',
+    environment: config.env,
+    status: 'running',
+  });
+});
+
+// Error handling
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// Start server
+const PORT = config.port;
+const server = app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT} in ${config.env} mode`);
+});
+
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  logger.info(`${signal} received. Starting graceful shutdown...`);
+  
   server.close(() => {
     logger.info('HTTP server closed');
-
-    // 关闭 Prisma 连接
-    try {
-      const prisma = require('../config/database');
-      prisma.$disconnect().then(() => {
-        logger.info('Prisma disconnected');
-        process.exit(0);
-      });
-    } catch (e) {
-      process.exit(0);
-    }
+    process.exit(0);
   });
 
-  // 强制退出超时
+  // Force shutdown after 10 seconds
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, 10000);
-}
+};
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// 未捕获异常
-process.on('uncaughtException', (err) => {
-  logger.error('Uncaught exception:', err);
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason) => {
-  logger.error('Unhandled rejection:', reason);
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
 
-module.exports = server;
+module.exports = app;

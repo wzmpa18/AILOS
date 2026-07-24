@@ -1,145 +1,234 @@
-// ============================================================
-// src/services/membershipService.js
-// 会员服务 — 等级管理 + 额度 + 权益
-// ============================================================
 const prisma = require('../config/database');
 const logger = require('../utils/logger');
-
-const MEMBERSHIP_PLANS = {
-  free: {
-    name: '免费版',
-    dailyConversation: 5,
-    dailyCorrection: 3,
-    maxDecks: 3,
-    maxCardsPerDeck: 50,
-    price: 0,
-  },
-  basic: {
-    name: '基础版',
-    dailyConversation: 30,
-    dailyCorrection: 15,
-    maxDecks: 10,
-    maxCardsPerDeck: 200,
-    price: 29.9,
-  },
-  pro: {
-    name: '专业版',
-    dailyConversation: 100,
-    dailyCorrection: 50,
-    maxDecks: 50,
-    maxCardsPerDeck: 1000,
-    price: 79.9,
-  },
-  enterprise: {
-    name: '企业版',
-    dailyConversation: 999,
-    dailyCorrection: 999,
-    maxDecks: 999,
-    maxCardsPerDeck: 9999,
-    price: 299.9,
-  },
-};
+const { generateRandomString } = require('../utils/crypto');
+const { getSystemConfigService } = require('./systemConfigService');
 
 class MembershipService {
-  getPlans() {
-    return MEMBERSHIP_PLANS;
-  }
-
-  async getUserMembership(userId) {
-    let membership = await prisma.membership.findUnique({
-      where: { userId },
-    });
-
-    if (!membership) {
-      membership = await prisma.membership.create({
-        data: { userId, level: 'free' },
+  // Get user membership status
+  async getMembershipStatus(userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          membershipOrders: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
       });
-    }
 
-    // 检查是否过期
-    if (membership.expiresAt && membership.expiresAt < new Date() && membership.level !== 'free') {
-      membership = await prisma.membership.update({
-        where: { userId },
-        data: { level: 'free', expiresAt: null },
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const isExpired = user.membershipExpiry && user.membershipExpiry < new Date();
+      const effectiveLevel = isExpired ? 'free' : user.membershipLevel;
+
+      return {
+        level: effectiveLevel,
+        expiry: user.membershipExpiry,
+        isActive: !isExpired && user.membershipLevel !== 'free',
+        lastOrder: user.membershipOrders[0] || null,
+      };
+    } catch (error) {
+      logger.error('Get membership status failed:', error);
+      throw error;
+    }
+  }
+
+  // Create membership order
+  async createOrder(userId, membershipLevel, duration, paymentMethod) {
+    try {
+      const orderNo = 'MW' + Date.now() + generateRandomString(8);
+      
+      // Calculate amount based on level and duration — from system_config
+      const amount = this.calculatePrice(membershipLevel, duration);
+
+      const order = await prisma.membershipOrder.create({
+        data: {
+          userId,
+          orderNo,
+          membershipLevel,
+          duration,
+          amount,
+          currency: 'CNY',
+          paymentMethod,
+          status: 'pending',
+        },
       });
-      logger.info(`Membership expired for user ${userId}, downgraded to free`);
+
+      return order;
+    } catch (error) {
+      logger.error('Create order failed:', error);
+      throw error;
     }
-
-    const plan = MEMBERSHIP_PLANS[membership.level] || MEMBERSHIP_PLANS.free;
-
-    return {
-      level: membership.level,
-      plan,
-      startedAt: membership.startedAt,
-      expiresAt: membership.expiresAt,
-      autoRenew: membership.autoRenew,
-      isExpired: membership.expiresAt ? membership.expiresAt < new Date() : false,
-    };
   }
 
-  async upgradeMembership(userId, level, durationMonths = 1) {
-    if (!MEMBERSHIP_PLANS[level]) {
-      throw new Error(`Invalid membership level: ${level}`);
+  // Process payment callback
+  async processPayment(orderNo, paymentId, status) {
+    try {
+      const order = await prisma.membershipOrder.findUnique({
+        where: { orderNo },
+        include: { user: true },
+      });
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (order.status !== 'pending') {
+        throw new Error('Order already processed');
+      }
+
+      const updateData = {
+        paymentId,
+        status,
+      };
+
+      if (status === 'paid') {
+        updateData.paidAt = new Date();
+
+        // Update user membership
+        const currentExpiry = order.user.membershipExpiry || new Date();
+        const newExpiry = new Date(
+          Math.max(currentExpiry.getTime(), Date.now()) + order.duration * 24 * 60 * 60 * 1000
+        );
+
+        await prisma.user.update({
+          where: { id: order.userId },
+          data: {
+            membershipLevel: order.membershipLevel,
+            membershipExpiry: newExpiry,
+          },
+        });
+      }
+
+      await prisma.membershipOrder.update({
+        where: { id: order.id },
+        data: updateData,
+      });
+
+      return { success: true, order };
+    } catch (error) {
+      logger.error('Process payment failed:', error);
+      throw error;
     }
-
-    const plan = MEMBERSHIP_PLANS[level];
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
-
-    const membership = await prisma.membership.upsert({
-      where: { userId },
-      update: {
-        level,
-        startedAt: new Date(),
-        expiresAt,
-        autoRenew: false,
-      },
-      create: {
-        userId,
-        level,
-        startedAt: new Date(),
-        expiresAt,
-      },
-    });
-
-    // 记录交易
-    await prisma.membershipTransaction.create({
-      data: {
-        userId,
-        type: 'upgrade',
-        level,
-        amount: plan.price * durationMonths,
-        currency: 'CNY',
-        status: 'completed',
-        paymentMethod: 'system',
-      },
-    });
-
-    // 更新用户额度
-    await prisma.userQuota.upsert({
-      where: { userId },
-      update: {
-        maxConversation: plan.dailyConversation,
-        maxCorrection: plan.dailyCorrection,
-      },
-      create: {
-        userId,
-        maxConversation: plan.dailyConversation,
-        maxCorrection: plan.dailyCorrection,
-        resetAt: new Date(new Date().setHours(24, 0, 0, 0)),
-      },
-    });
-
-    logger.info(`User ${userId} upgraded to ${level} membership`);
-
-    return { membership, plan };
   }
 
-  async getTransactions(userId) {
-    return prisma.membershipTransaction.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
+  // Check if user has access to premium features
+  async hasPremiumAccess(userId) {
+    try {
+      const membership = await this.getMembershipStatus(userId);
+      return membership.isActive && (membership.level === 'premium' || membership.level === 'basic');
+    } catch (error) {
+      logger.error('Check premium access failed:', error);
+      return false;
+    }
+  }
+
+  // Verify membership (middleware helper)
+  async verifyMembership(userId, requiredLevel = 'basic') {
+    try {
+      const membership = await this.getMembershipStatus(userId);
+      
+      const levelHierarchy = { free: 0, basic: 1, premium: 2 };
+      const userLevel = levelHierarchy[membership.level] || 0;
+      const requiredLevelValue = levelHierarchy[requiredLevel] || 0;
+
+      if (!membership.isActive || userLevel < requiredLevelValue) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('Verify membership failed:', error);
+      return false;
+    }
+  }
+
+  // Get membership plans — 定价从 system_config 动态读取
+  getMembershipPlans() {
+    const sysConfig = getSystemConfigService();
+
+    const basicMonthly = sysConfig.getNumber('membership.pricing.basic.monthly', 28);
+    const basicQuarterly = sysConfig.getNumber('membership.pricing.basic.quarterly', 78);
+    const basicYearly = sysConfig.getNumber('membership.pricing.basic.yearly', 288);
+    const premiumMonthly = sysConfig.getNumber('membership.pricing.premium.monthly', 58);
+    const premiumQuarterly = sysConfig.getNumber('membership.pricing.premium.quarterly', 168);
+    const premiumYearly = sysConfig.getNumber('membership.pricing.premium.yearly', 588);
+
+    return [
+      {
+        level: 'basic',
+        name: '基础会员',
+        price: { monthly: basicMonthly, quarterly: basicQuarterly, yearly: basicYearly },
+        features: [
+          '无限制学习',
+          '离线下载',
+          '去除广告',
+          '基础学习报告',
+        ],
+      },
+      {
+        level: 'premium',
+        name: '高级会员',
+        price: { monthly: premiumMonthly, quarterly: premiumQuarterly, yearly: premiumYearly },
+        features: [
+          '包含基础会员所有权益',
+          'AI智能辅导',
+          '专属学习路径',
+          '优先客服支持',
+          '高级学习报告',
+          '多语种无限切换',
+        ],
+      },
+    ];
+  }
+
+  // Calculate price — 从 system_config 动态读取
+  calculatePrice(level, duration) {
+    const sysConfig = getSystemConfigService();
+    const durationMap = { 30: 'monthly', 90: 'quarterly', 365: 'yearly' };
+    const period = durationMap[duration] || 'monthly';
+
+    const priceKey = `membership.pricing.${level}.${period}`;
+    const price = sysConfig.getNumber(priceKey);
+    if (price > 0) {
+      return price;
+    }
+
+    // Fallback to hardcoded defaults (legacy compatibility)
+    const plans = this.getMembershipPlans();
+    const plan = plans.find(p => p.level === level);
+    if (!plan) {
+      throw new Error('Invalid membership level');
+    }
+    return plan.price[period] || plan.price.monthly;
+  }
+
+  // Expire memberships (cron job)
+  async expireMemberships() {
+    try {
+      const expiredUsers = await prisma.user.findMany({
+        where: {
+          membershipExpiry: { lt: new Date() },
+          membershipLevel: { not: 'free' },
+        },
+      });
+
+      for (const user of expiredUsers) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { membershipLevel: 'free' },
+        });
+      }
+
+      logger.info(`Expired ${expiredUsers.length} memberships`);
+      return expiredUsers.length;
+    } catch (error) {
+      logger.error('Expire memberships failed:', error);
+      throw error;
+    }
   }
 }
 

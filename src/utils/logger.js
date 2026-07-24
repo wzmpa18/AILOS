@@ -1,50 +1,47 @@
-// ============================================================
-// src/utils/logger.js
-// 统一日志模块 — 控制台输出 + 文件按日轮转
-// ============================================================
-const fs = require('fs');
+const winston = require('winston');
 const path = require('path');
+const fs = require('fs');
+const config = require('../config');
 
-const LOG_LEVELS = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  debug: 3,
-};
-
-const currentLevel = LOG_LEVELS[process.env.LOG_LEVEL || 'info'] || 2;
-
-function formatMessage(level, message, ...args) {
-  const timestamp = new Date().toISOString();
-  const extra = args.length > 0 ? ' ' + args.map(a => {
-    if (a instanceof Error) return a.stack || a.message;
-    if (typeof a === 'object') {
-      try { return JSON.stringify(a); } catch { return String(a); }
-    }
-    return String(a);
-  }).join(' ') : '';
-  return `[${timestamp}] [${level.toUpperCase()}] ${message}${extra}`;
+// Ensure logs directory exists
+const logsDir = path.join(__dirname, '../../logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
 }
 
-function log(level, message, ...args) {
-  if (LOG_LEVELS[level] > currentLevel) return;
+const logger = winston.createLogger({
+  level: config.logging.level,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'xuewaiyu' },
+  transports: [
+    // Error log
+    new winston.transports.File({ 
+      filename: path.join(logsDir, 'error.log'), 
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+    // Combined log
+    new winston.transports.File({ 
+      filename: path.join(logsDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+  ],
+});
 
-  const formatted = formatMessage(level, message, ...args);
-
-  if (level === 'error') {
-    console.error(formatted);
-  } else if (level === 'warn') {
-    console.warn(formatted);
-  } else {
-    console.log(formatted);
-  }
+// Console transport for development
+if (config.env !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    ),
+  }));
 }
-
-const logger = {
-  error(message, ...args) { log('error', message, ...args); },
-  warn(message, ...args) { log('warn', message, ...args); },
-  info(message, ...args) { log('info', message, ...args); },
-  debug(message, ...args) { log('debug', message, ...args); },
-};
 
 module.exports = logger;
