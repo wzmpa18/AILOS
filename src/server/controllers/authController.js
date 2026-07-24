@@ -69,14 +69,26 @@ const authController = {
   // Password authentication
   async passwordAuth(req, res, next) {
     try {
-      const { account, password } = req.body;
+      // SUP-03 fix: 兼容 account / phone / email 三种入参格式
+      const { account, phone, email, password } = req.body;
+      const loginAccount = account || phone || email;
+      if (!loginAccount) {
+        return res.status(400).json({ success: false, error: 'Account (phone or email) is required' });
+      }
+      if (!password) {
+        return res.status(400).json({ success: false, error: 'Password is required' });
+      }
       const deviceInfo = {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       };
-      const result = await authService.passwordAuth(account, password, deviceInfo);
+      const result = await authService.passwordAuth(loginAccount, password, deviceInfo);
       res.json({ success: true, ...result });
     } catch (error) {
+      // SUP-03 fix: 无效凭证返回 401（非 500）
+      if (error.message === 'Invalid credentials' || error.message === 'User not found') {
+        return res.status(401).json({ success: false, error: error.message });
+      }
       next(error);
     }
   },

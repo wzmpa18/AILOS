@@ -79,6 +79,7 @@ model User {
   reviewQueues            ReviewQueue[]
   aiTutorRecords          AiTutorRecord[]
   rewardLedgers           RewardLedger[]
+  checkins                Checkin[]
 
   @@index([phone])
   @@index([email])
