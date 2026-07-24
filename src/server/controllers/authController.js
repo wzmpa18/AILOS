@@ -6,6 +6,9 @@ const authController = {
   async sendSmsCode(req, res, next) {
     try {
       const { phone, type } = req.body;
+      if (!phone) {
+        return res.status(400).json({ success: false, error: 'Phone is required' });
+      }
       const result = await authService.sendSmsCode(phone, type || 'login');
       res.json({ success: true, ...result });
     } catch (error) {
@@ -17,6 +20,9 @@ const authController = {
   async sendEmailCode(req, res, next) {
     try {
       const { email, type } = req.body;
+      if (!email) {
+        return res.status(400).json({ success: false, error: 'Email is required' });
+      }
       const result = await authService.sendEmailCode(email, type || 'login');
       res.json({ success: true, ...result });
     } catch (error) {
@@ -28,6 +34,12 @@ const authController = {
   async phoneAuth(req, res, next) {
     try {
       const { phone, code } = req.body;
+      if (!phone) {
+        return res.status(400).json({ success: false, error: 'Phone is required' });
+      }
+      if (!code) {
+        return res.status(400).json({ success: false, error: 'Verification code is required' });
+      }
       const deviceInfo = {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
