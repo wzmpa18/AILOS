@@ -25,21 +25,6 @@ async function chat(req, res) {
       return res.status(400).json({ success: false, error: 'Empty input' });
     }
 
-    // 额度检查
-    const quotaCheck = await aiQuotaService.checkQuota(req.userId, 'conversation');
-    if (!quotaCheck.allowed) {
-      return res.status(429).json({
-        success: false,
-        error: 'QUOTA_EXHAUSTED',
-        message: '今日AI对话次数已用完，请明天再试',
-        quota: {
-          remaining: quotaCheck.remaining,
-          dailyTotal: quotaCheck.dailyTotal,
-          resetTime: quotaCheck.resetTime,
-        },
-      });
-    }
-
     const ctx = languageContext || {};
     const nativeLang = ctx.nativeLang || '中文';
     const targetLang = ctx.targetLang || '英语';
