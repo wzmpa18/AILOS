@@ -1,6 +1,6 @@
 // ============================================================
 // src/server/controllers/aiTutorController.js
-// AI 导师对话控制器 — Module 02 Step 4
+// Module 03 Step 4 — AI 导师对话控制器
 // ============================================================
 const aiTutorService = require('../../services/aiTutorService');
 
@@ -23,6 +23,21 @@ const aiTutorController = {
         role, content, goalId, tokensUsed,
       });
       res.status(201).json({ success: true, data: record });
+    } catch (error) { next(error); }
+  },
+
+  // POST /api/ai/tutor/chat (Module 03 Step 4)
+  async chat(req, res, next) {
+    try {
+      const { message, goalId, languageContext } = req.body;
+      if (!message || !message.trim()) {
+        return res.status(400).json({ success: false, error: 'Message is required' });
+      }
+      const result = await aiTutorService.chat(req.userId, message, {
+        goalId,
+        languageContext,
+      });
+      res.json({ success: true, data: result });
     } catch (error) { next(error); }
   },
 };
