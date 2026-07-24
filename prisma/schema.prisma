@@ -698,3 +698,65 @@ model Checkin {
   @@index([userId])
   @@map("checkins")
 }
+
+// ==================== Module 02: 学习生态闭环 (V3.1) ====================
+
+// ReviewQueue — SRS 间隔复习队列 (SM-2 算法)
+model ReviewQueue {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  contentType String   // word/sentence/grammar
+  interval    Int      @default(0)    // SM-2 interval days
+  easeFactor  Float    @default(2.5)
+  repetitions Int      @default(0)
+  dueDate     DateTime @default(now())
+  lastReview  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dueDate])
+}
+
+// AiTutorRecord — AI 导师对话记录
+model AiTutorRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  goalId      String?
+  role        String   // user/assistant
+  content     String   // 对话内容
+  tokensUsed  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// RewardLedger — XP/积分流水
+model RewardLedger {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // xp/checkin/streak/referral
+  amount      Int
+  balance     Int      // 变动后余额
+  refId       String?  // 关联业务ID
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// QuestionBlueprint — 测验题目模板
+model QuestionBlueprint {
+  id          String   @id @default(uuid())
+  contentId   String
+  question    String
+  answer      String
+  options     String?  // JSON数组，选择题用
+  difficulty  Int      @default(1)
+  createdAt   DateTime @default(now())
+}
