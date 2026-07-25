@@ -111,9 +111,8 @@
           var lvl = document.getElementById('resLevel').textContent || 'A1';
           try {
             fetch('/api/blueprint/course?language=' + encodeURIComponent(lang) + '&level=' + encodeURIComponent(lvl), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-              body: JSON.stringify({ language: lang, level: lvl })
+              method: 'GET',
+              headers: { 'Authorization': 'Bearer ' + token }
             }).catch(function () {});
           } catch (e) {}
         }

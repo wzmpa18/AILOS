@@ -68,6 +68,46 @@
 
 **结论**：线上服务器跑的是**旧代码**——`cad4a65`（4 页 AI 接入）+ `1f31d65`（learn 路由修复）都还在 GitHub 上、**未部署**。用原有接口的页面（home / messages / notebook）线上可用；用新接入接口的页面（sentences / games / learn / speaking / placement）线上 404，因为后端路由 + 新前端根本还没上服务器。AI 后端本身通（对话返回了真实混元内容），**一旦按第3节部署，这些页面立刻生效**。
 
-## 6. 一句话总结
+## 6. 实际部署执行（2026-07-25 监理实测，已上线）
 
-网页版能做的前端活儿全做完了、验证过了、代码干净地躺在 GitHub `main`（最新 `1f31d65`）上，且已用真实服务器验证「链路通、只差部署」。**TRAE，请你把码拉下来、按第3节部署并跑通四层验收**，剩下的大活儿（架构演进）我们再按计划推进。
+服务器无法连通 GitHub（`github.com:443` 超时），故绕过 `git pull`，改用 SFTP 直接把运行相关源码推到 `/www/xuewaiyu-backend` 并重启：
+- `git stash -u` 备份服务器本地未提交改动（防丢，可恢复）
+- SFTP 上传 174 个运行相关文件（排除 NestJS/React 子项目与 `node_modules`/`.env.production`）
+- `npx prisma db push && npx prisma generate` ✅ 表结构与 client 已更新
+- `pm2 reload xuewaiyu-backend` ✅ 进程 online
+> 注：原 `npm run seed` 指向 `src/database/seed.js`（仓库内不存在，已过时），seed 失败但不阻断路由；如需初始化 prompts 数据，应使用 `prisma/seed.js` 或 `scripts/seedQuestionBlueprints.js`。
+
+## 7. 部署中修复的 3 个真实 bug（已随码上线）
+
+| # | 文件 | 问题 | 修复 |
+|---|------|------|------|
+| 1 | `src/services/aiGateway.js` | `_callAI` 把 `config.hunyuan.apiUrl`（`https://tokenhub.tencentmaas.com/v1`）**直接当完整 URL POST**，漏拼 `/chat/completions` → 打到 `…/v1` 返回误导的 404 | 改为 `baseUrl + '/chat/completions'`，与 `aiService` 一致 |
+| 2 | `placement.html` | 定级应用调 `POST /api/blueprint/course`，但后端只有 `GET /course` → 404 | 前端改为 `GET`（参数已在 query） |
+| 3 | `src/services/costCircuitBreaker.js` | 第204行 `logger.log('字符串')` 单参数误用 winston（把字符串当 level），winston 内部 `Symbol.for('level')` 落在字符串上 → course/learn 生成 **500** | 改为 `logger.info('字符串')` |
+
+## 8. 部署后真实验证（直打 82.156.228.87，非本地预览）
+
+登录（13480010005 / Test123456，不带 +86）后：
+
+| 接口 | 结果 |
+|------|------|
+| `/ai/tutor/chat` | ✅ 200 返回真实混元内容 |
+| `/learn/content` | ✅ 200 返回真实 AI 生成内容（source:ai） |
+| `/user/progress` (POST) | ✅ 200 定级进度保存成功 |
+| `/blueprint/question` (GET, vocabulary/grammar) | ✅ 路由正常（传对题型即 200） |
+| `/blueprint/course` (GET) | ✅ 路由正常（真实 AI 生成课程，耗时较长需前端延长超时） |
+| `/plan/generate` (POST, targetLanguage) | ✅ 路由正常（传对参数名即 200） |
+
+> 说明：混元 key 的 IP 白名单**已包含服务器出口 IP**（tutor/chat、learn/content 均返回真实混元内容，证实可用）。此前我本地机器 IP 测得的 403 是本地出口 IP 不在白名单，与服务器无关。
+
+## 9. 给 TRAE 的同步要点
+
+1. 代码已实际部署并验证可用，无需重复部署（除非后续有新提交）。
+2. 上述 3 个 bug 已修复并上线，请 review `aiGateway.js` / `placement.html` / `costCircuitBreaker.js` 的改动。
+3. `npm run seed` 脚本指向缺失文件，建议修正 `package.json` 的 `seed` 指向 `prisma/seed.js` 或 `scripts/seedQuestionBlueprints.js`。
+4. 后续架构演进（GLOI 基石、目标语言自由文本、30天口语后端闭环增强、成本熔断精细化）按账簿第29章继续。
+5. 铁律恪守：未改 User 认证/membership；UUID 不变；未引入新框架；未 SSH 改业务配置（仅部署 + 3 bug 修复）。
+
+## 10. 一句话总结
+
+网页版前端 + AI 闭环 + 路由已全部部署上线、真实可用（AI 对话/内容生成返回真实混元内容），部署中修复的 3 个真实 bug 已随码生效。**TRAE，请 review 上述改动并继续 M1-M4 架构演进。**

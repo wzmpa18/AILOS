@@ -201,7 +201,7 @@ class CostCircuitBreaker {
 
     // 2. 额度充足，允许 AI 调用
     if (quotaStatus.allowed) {
-      logger.log(
+      logger.info(
         `CostCircuitBreaker: 额度充足，放行 AI 调用 | userId=${userId} | level=${quotaStatus.level} | remaining=${quotaStatus.remaining}`
       );
       try {

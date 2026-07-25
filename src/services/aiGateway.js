@@ -360,7 +360,8 @@ class AIGateway {
    * 使用外部 Hunyuan API: https://tokenhub.tencentmaas.com/v1/chat/completions
    */
   async _callAI(messages, options = {}) {
-    const apiUrl = (config.hunyuan && config.hunyuan.apiUrl) || 'https://tokenhub.tencentmaas.com/v1/chat/completions';
+    const baseUrl = (config.hunyuan && config.hunyuan.apiUrl) || 'https://tokenhub.tencentmaas.com/v1';
+    const apiUrl = baseUrl.replace(/\/+$/, '') + '/chat/completions';
     const apiKey = (config.hunyuan && config.hunyuan.apiKey) || process.env.HUNYUAN_API_KEY;
     const model = (config.hunyuan && config.hunyuan.model) || 'hunyuan-lite';
     const { temperature = 0.7, maxTokens = 2048, stream = false } = options;
