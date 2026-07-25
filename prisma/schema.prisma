@@ -82,6 +82,7 @@ model User {
   checkins                Checkin[]
   dailyLearningPlans      DailyLearningPlan[]
   speechEvaluations       SpeechEvaluationRecord[]
+  companionProfile        CompanionProfile?
 
   @@index([phone])
   @@index([email])
@@ -894,6 +895,28 @@ model DailyLearningPlan {
 }
 
 // speech_evaluation_records — 口语评测记录
+// AI 伴读角色（Stage 4 — 用户自定义学习搭子）
+model CompanionProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String  // 角色名字
+  description  String  // 用户原始的几句话描述
+  personality  String? // AI 提炼的性格特征
+  voiceStyle   String? // 声音风格（温柔女声/元气少年等）
+  catchphrase  String? // 口头禅
+  greeting     String? // 见面问候语
+  systemPrompt String? // 用于 AI 对话的角色人设 prompt
+  avatarEmoji  String? @default("🤖") // 头像 emoji
+  metadata     Json?   // 扩展信息
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
 model SpeechEvaluationRecord {
   id              String   @id @default(uuid())
   userId          String

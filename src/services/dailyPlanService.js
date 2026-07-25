@@ -1,14 +1,19 @@
 /**
  * src/services/dailyPlanService.js
- * 30天口语速成服务 — Phase 2
+ * 30天学习计划服务 — Phase 2（已对齐真实 Prisma 模型 DailyLearningPlan）
+ *
+ * 修复说明（SUP-05）：
+ *   原实现引用不存在的 prisma.dailyPlan / prisma.dailyPlanCompletion（schema 中无此模型），
+ *   所有 /api/plan/* 调用必然 TypeError 500。
+ *   现全部改用真实模型 DailyLearningPlan（userId+dayNumber 唯一，逐日一行）。
  *
  * 功能：
- *   - generatePlan(userId, targetLanguage, level, duration) - AI生成30天每日学习计划
+ *   - generatePlan(userId, targetLanguage, level, duration) - 生成30天每日学习计划
  *   - getTodayPlan(userId) - 获取今日计划
  *   - completeDay(userId, dayNumber, score) - 完成当日学习
  *   - getProgress(userId) - 获取30天进度
  *
- * 所有AI调用走 aiGateway
+ * AI 调用走 aiGateway（失败自动回退规则生成）
  */
 
 const prisma = require('../config/database');
@@ -19,12 +24,7 @@ const aiGateway = getAIGateway();
 
 class DailyPlanService {
   /**
-   * AI生成30天每日学习计划
-   * @param {string} userId - 用户ID
-   * @param {string} targetLanguage - 目标语言
-   * @param {string} level - 用户等级 (beginner|intermediate|advanced)
-   * @param {number} duration - 计划天数 (默认30)
-   * @returns {Promise<Object>} 生成的计划对象
+   * 生成30天每日学习计划（幂等：已有未完成计划则直接返回）
    */
   async generatePlan(userId, targetLanguage, level, duration = 30) {
     try {
@@ -32,58 +32,49 @@ class DailyPlanService {
         throw new Error('userId, targetLanguage, and level are required');
       }
 
-      // 检查是否已存在进行中的计划
-      const existingPlan = await prisma.dailyPlan.findFirst({
-        where: { userId, status: 'active' },
+      // 已存在计划且未全部完成 → 返回现有计划
+      const existing = await prisma.dailyLearningPlan.findMany({
+        where: { userId },
+        orderBy: { dayNumber: 'asc' },
       });
-      if (existingPlan) {
-        logger.info('User already has an active plan, returning existing', { userId, planId: existingPlan.id });
-        return existingPlan;
+      if (existing.length > 0 && existing.some((d) => d.status !== 'completed')) {
+        logger.info('User already has an active plan, returning existing', { userId, days: existing.length });
+        return this._summarize(existing);
       }
 
-      const languageContext = {
-        primaryTargetLanguage: targetLanguage,
-        explanationLanguage: 'zh-CN',
-      };
+      // AI 生成（失败回退规则生成）
+      let days = null;
+      try {
+        days = await this._aiGenerateDays(userId, targetLanguage, level, duration);
+      } catch (e) {
+        logger.warn('AI plan generation failed, using fallback', { userId, error: e.message });
+      }
+      if (!days) days = this._generateFallbackDays(targetLanguage, level, duration);
 
-      // 通过 aiGateway 生成30天计划
-      const aiResponse = await aiGateway.call({
-        scene: 'lesson_generate',
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const rows = days.slice(0, duration).map((d, i) => ({
         userId,
-        languageContext,
-        params: {
-          topic: `30-day oral Chinese speaking crash course for ${targetLanguage} learners`,
-          level,
-          duration,
-          language: targetLanguage,
-          type: 'daily_plan',
-        },
+        dayNumber: i + 1,
+        planDate: new Date(today.getTime() + i * 86400000),
+        targetLanguage,
+        focusArea: d.focusArea || 'vocabulary',
+        scene: d.scene || 'social',
+        duration: d.duration || 30,
+        tasks: d.tasks || [],
+        contentSnapshot: { title: d.title || `第${i + 1}天`, phase: d.phase || '', level },
+        status: 'pending',
+      }));
+
+      await prisma.$transaction([
+        prisma.dailyLearningPlan.deleteMany({ where: { userId } }),
+        prisma.dailyLearningPlan.createMany({ data: rows }),
+      ]);
+
+      const created = await prisma.dailyLearningPlan.findMany({
+        where: { userId }, orderBy: { dayNumber: 'asc' },
       });
-
-      // 解析AI返回的计划内容
-      const planContent = this._parsePlanContent(aiResponse.result, duration);
-
-      // 创建计划记录
-      const plan = await prisma.dailyPlan.create({
-        data: {
-          userId,
-          targetLanguage,
-          level,
-          duration,
-          status: 'active',
-          planData: planContent,
-          currentDay: 0,
-          totalDays: duration,
-          progress: 0,
-          metadata: {
-            generatedAt: new Date().toISOString(),
-            aiSource: aiResponse.source,
-          },
-        },
-      });
-
-      logger.info('Daily plan generated successfully', { userId, planId: plan.id, targetLanguage });
-      return plan;
+      logger.info('Daily plan generated successfully', { userId, targetLanguage, days: created.length });
+      return this._summarize(created);
     } catch (error) {
       logger.error('Generate daily plan failed:', error);
       throw error;
@@ -91,52 +82,43 @@ class DailyPlanService {
   }
 
   /**
-   * 获取今日学习计划
-   * @param {string} userId - 用户ID
-   * @returns {Promise<Object>} 今日计划内容
+   * 获取今日学习计划（首个未完成的天，若当日之前有跳过则以日期定位）
    */
   async getTodayPlan(userId) {
     try {
-      if (!userId) {
-        throw new Error('userId is required');
-      }
+      if (!userId) throw new Error('userId is required');
 
-      const plan = await prisma.dailyPlan.findFirst({
-        where: { userId, status: 'active' },
+      const all = await prisma.dailyLearningPlan.findMany({
+        where: { userId }, orderBy: { dayNumber: 'asc' },
       });
-
-      if (!plan) {
+      if (all.length === 0) {
         return { hasPlan: false, message: 'No active plan found. Please generate a plan first.' };
       }
 
-      const currentDay = plan.currentDay + 1;
-      if (currentDay > plan.duration) {
-        return { hasPlan: true, completed: true, message: 'All 30 days completed!', progress: 100 };
+      const next = all.find((d) => d.status !== 'completed');
+      if (!next) {
+        return { hasPlan: true, completed: true, message: 'All days completed!', progress: 100 };
       }
 
-      const dayContent = plan.planData && plan.planData.days
-        ? plan.planData.days.find(d => d.day === currentDay)
-        : null;
-
-      // 检查今日是否已完成
-      const todayCompletion = await prisma.dailyPlanCompletion.findFirst({
-        where: {
-          planId: plan.id,
-          dayNumber: currentDay,
-        },
-      });
-
+      const completedCount = all.filter((d) => d.status === 'completed').length;
       return {
         hasPlan: true,
-        planId: plan.id,
-        targetLanguage: plan.targetLanguage,
-        level: plan.level,
-        currentDay,
-        totalDays: plan.duration,
-        progress: plan.progress,
-        content: dayContent || null,
-        todayCompleted: !!todayCompletion,
-        todayScore: todayCompletion ? todayCompletion.score : null,
+        targetLanguage: next.targetLanguage,
+        level: next.contentSnapshot?.level || null,
+        currentDay: next.dayNumber,
+        totalDays: all.length,
+        progress: Math.round((completedCount / all.length) * 100),
+        content: {
+          day: next.dayNumber,
+          title: next.contentSnapshot?.title || `第${next.dayNumber}天`,
+          phase: next.contentSnapshot?.phase || '',
+          focusArea: next.focusArea,
+          scene: next.scene,
+          duration: next.duration,
+          tasks: next.tasks,
+        },
+        todayCompleted: false,
+        todayScore: null,
       };
     } catch (error) {
       logger.error('Get today plan failed:', error);
@@ -146,85 +128,38 @@ class DailyPlanService {
 
   /**
    * 完成当日学习
-   * @param {string} userId - 用户ID
-   * @param {number} dayNumber - 完成的天数
-   * @param {number} score - 当日得分 (0-100)
-   * @returns {Promise<Object>} 完成结果
    */
   async completeDay(userId, dayNumber, score = 0) {
     try {
-      if (!userId || !dayNumber) {
-        throw new Error('userId and dayNumber are required');
-      }
+      if (!userId || !dayNumber) throw new Error('userId and dayNumber are required');
 
-      const plan = await prisma.dailyPlan.findFirst({
-        where: { userId, status: 'active' },
+      const day = await prisma.dailyLearningPlan.findUnique({
+        where: { userId_dayNumber: { userId, dayNumber: Number(dayNumber) } },
       });
+      if (!day) throw new Error(`Day ${dayNumber} not found in plan`);
 
-      if (!plan) {
-        throw new Error('No active plan found');
-      }
-
-      if (dayNumber > plan.duration) {
-        throw new Error(`Day number ${dayNumber} exceeds plan duration ${plan.duration}`);
-      }
-
-      // 检查是否已完成
-      const existingCompletion = await prisma.dailyPlanCompletion.findFirst({
-        where: { planId: plan.id, dayNumber },
-      });
-
-      if (existingCompletion) {
+      if (day.status === 'completed') {
         return {
-          success: true,
-          alreadyCompleted: true,
-          dayNumber,
-          score: existingCompletion.score,
-          completedAt: existingCompletion.completedAt,
+          success: true, alreadyCompleted: true, dayNumber: day.dayNumber,
+          score: day.score, completedAt: day.completedAt,
         };
       }
 
-      // 记录完成
-      const completion = await prisma.dailyPlanCompletion.create({
-        data: {
-          planId: plan.id,
-          userId,
-          dayNumber,
-          score,
-          completedAt: new Date(),
-        },
+      const updated = await prisma.dailyLearningPlan.update({
+        where: { userId_dayNumber: { userId, dayNumber: Number(dayNumber) } },
+        data: { status: 'completed', score: Math.round(score), completedAt: new Date() },
       });
 
-      // 更新计划进度
-      const completedDays = await prisma.dailyPlanCompletion.count({
-        where: { planId: plan.id },
-      });
-      const newProgress = Math.round((completedDays / plan.duration) * 100);
+      const [total, completed] = await Promise.all([
+        prisma.dailyLearningPlan.count({ where: { userId } }),
+        prisma.dailyLearningPlan.count({ where: { userId, status: 'completed' } }),
+      ]);
+      const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      const updateData = {
-        currentDay: Math.max(plan.currentDay, dayNumber),
-        progress: newProgress,
-      };
-
-      if (newProgress >= 100) {
-        updateData.status = 'completed';
-        updateData.completedAt = new Date();
-      }
-
-      await prisma.dailyPlan.update({
-        where: { id: plan.id },
-        data: updateData,
-      });
-
-      logger.info('Daily plan day completed', { userId, planId: plan.id, dayNumber, score, progress: newProgress });
-
+      logger.info('Daily plan day completed', { userId, dayNumber, score, progress });
       return {
-        success: true,
-        dayNumber,
-        score,
-        progress: newProgress,
-        planCompleted: newProgress >= 100,
-        completedAt: completion.completedAt,
+        success: true, dayNumber: updated.dayNumber, score: updated.score,
+        progress, planCompleted: progress >= 100, completedAt: updated.completedAt,
       };
     } catch (error) {
       logger.error('Complete day failed:', error);
@@ -234,62 +169,42 @@ class DailyPlanService {
 
   /**
    * 获取30天学习进度
-   * @param {string} userId - 用户ID
-   * @returns {Promise<Object>} 进度详情
    */
   async getProgress(userId) {
     try {
-      if (!userId) {
-        throw new Error('userId is required');
-      }
+      if (!userId) throw new Error('userId is required');
 
-      const plan = await prisma.dailyPlan.findFirst({
-        where: { userId, status: 'active' },
+      const all = await prisma.dailyLearningPlan.findMany({
+        where: { userId }, orderBy: { dayNumber: 'asc' },
       });
+      if (all.length === 0) return { hasPlan: false, message: 'No active plan found' };
 
-      if (!plan) {
-        return { hasPlan: false, message: 'No active plan found' };
-      }
-
-      const completions = await prisma.dailyPlanCompletion.findMany({
-        where: { planId: plan.id },
-        orderBy: { dayNumber: 'asc' },
-      });
-
-      const completedDays = completions.map(c => ({
-        dayNumber: c.dayNumber,
-        score: c.score,
-        completedAt: c.completedAt,
+      const completions = all.filter((d) => d.status === 'completed');
+      const completedDays = completions.map((d) => ({
+        dayNumber: d.dayNumber, score: d.score || 0, completedAt: d.completedAt,
       }));
-
-      const totalScore = completions.reduce((sum, c) => sum + c.score, 0);
-      const averageScore = completions.length > 0
-        ? Math.round(totalScore / completions.length)
-        : 0;
-
-      // 计算连续学习天数
-      const streak = this._calculateStreak(completions);
-
-      // 计算剩余天数
-      const remainingDays = plan.duration - plan.currentDay;
+      const totalScore = completedDays.reduce((s, c) => s + (c.score || 0), 0);
+      const averageScore = completedDays.length > 0 ? Math.round(totalScore / completedDays.length) : 0;
+      const progress = Math.round((completions.length / all.length) * 100);
+      const currentDay = (all.find((d) => d.status !== 'completed') || all[all.length - 1]).dayNumber;
+      const remainingDays = all.length - completions.length;
 
       return {
         hasPlan: true,
-        planId: plan.id,
-        targetLanguage: plan.targetLanguage,
-        level: plan.level,
-        duration: plan.duration,
-        currentDay: plan.currentDay,
-        progress: plan.progress,
+        targetLanguage: all[0].targetLanguage,
+        level: all[0].contentSnapshot?.level || null,
+        duration: all.length,
+        currentDay,
+        progress,
         completedDays,
         totalCompletions: completions.length,
         averageScore,
-        streak,
+        streak: this._calculateStreak(completions),
         remainingDays,
-        status: plan.status,
-        startedAt: plan.createdAt,
+        status: progress >= 100 ? 'completed' : 'active',
+        startedAt: all[0].createdAt,
         estimatedCompletion: remainingDays > 0
-          ? this._estimateCompletionDate(new Date(), remainingDays)
+          ? new Date(Date.now() + remainingDays * 86400000).toISOString().split('T')[0]
           : null,
       };
     } catch (error) {
@@ -300,69 +215,71 @@ class DailyPlanService {
 
   // ==================== 内部方法 ====================
 
-  /**
-   * 解析AI返回的计划内容
-   * @param {any} aiResult - AI返回结果
-   * @param {number} duration - 计划天数
-   * @returns {Object} 结构化的计划数据
-   */
-  _parsePlanContent(aiResult, duration) {
+  _summarize(rows) {
+    const completed = rows.filter((d) => d.status === 'completed').length;
+    return {
+      hasPlan: true,
+      targetLanguage: rows[0]?.targetLanguage || null,
+      level: rows[0]?.contentSnapshot?.level || null,
+      totalDays: rows.length,
+      progress: rows.length ? Math.round((completed / rows.length) * 100) : 0,
+      days: rows.map((d) => ({
+        day: d.dayNumber,
+        title: d.contentSnapshot?.title || `第${d.dayNumber}天`,
+        focusArea: d.focusArea,
+        scene: d.scene,
+        duration: d.duration,
+        status: d.status,
+      })),
+    };
+  }
+
+  async _aiGenerateDays(userId, targetLanguage, level, duration) {
+    const prompt = `为水平${level}的${targetLanguage}学习者制定${duration}天学习计划，返回严格JSON数组（不要任何多余文字）：
+[{"day":1,"title":"当日主题","phase":"阶段名","focusArea":"listening|speaking|vocabulary|grammar","scene":"shopping|dining|travel|medical|housing|social","duration":30,"tasks":[{"type":"vocabulary","description":"任务描述","count":10}]}]`;
+    const resp = await aiGateway.chatWithMessages(
+      [{ role: 'user', content: prompt }],
+      { userId, scene: 'chat', temperature: 0.6, maxTokens: 8000 },
+    );
+    const content = resp.content || '';
+    const fence = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const raw = (fence && fence[1]) || content.match(/(\[[\s\S]*\])/)?.[1];
+    if (!raw) return null;
     try {
-      // 如果AI返回的是结构化JSON，直接使用
-      if (typeof aiResult === 'object' && aiResult.days) {
-        return aiResult;
-      }
-
-      // 如果返回的是choices格式
-      const content = aiResult.choices?.[0]?.message?.content || aiResult.content || '';
-      if (!content) {
-        return this._generateFallbackPlan(duration);
-      }
-
-      // 尝试从文本中提取JSON
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[1]);
-          if (parsed.days) return parsed;
-        } catch (e) {
-          logger.debug('Failed to parse AI response as JSON, using fallback');
-        }
-      }
-
-      return this._generateFallbackPlan(duration);
-    } catch (error) {
-      logger.error('Parse plan content failed:', error);
-      return this._generateFallbackPlan(duration);
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length < 10) return null;
+      const days = [];
+      for (let i = 0; i < duration; i++) days.push(parsed[i] || { ...parsed[i % parsed.length], day: i + 1 });
+      return days;
+    } catch (e) {
+      return null;
     }
   }
 
   /**
-   * 生成回退计划（AI不可用时的兜底方案）
+   * 规则回退计划（AI不可用时的兜底方案）
    */
-  _generateFallbackPlan(duration) {
+  _generateFallbackDays(targetLanguage, level, duration) {
+    const focusAreas = ['vocabulary', 'grammar', 'listening', 'speaking'];
+    const scenes = ['social', 'dining', 'shopping', 'travel', 'housing', 'medical'];
     const days = [];
     for (let i = 1; i <= duration; i++) {
-      const phase = i <= 10 ? '基础发音' : i <= 20 ? '日常对话' : '实战演练';
+      const phase = i <= duration / 3 ? '基础巩固' : i <= (duration * 2) / 3 ? '场景应用' : '综合实战';
       days.push({
         day: i,
-        phase,
         title: `第${i}天：${phase}训练`,
-        topics: [
-          `${phase}核心词汇学习`,
-          `${phase}句型练习`,
-          `${phase}情景对话`,
+        phase,
+        focusArea: focusAreas[(i - 1) % focusAreas.length],
+        scene: scenes[(i - 1) % scenes.length],
+        duration: 30,
+        tasks: [
+          { type: 'vocabulary', description: `${level}核心词汇记忆`, count: 10 },
+          { type: 'speaking', description: '口语跟读练习', count: 5 },
+          { type: 'dialogue', description: '情景对话模拟', count: 1 },
         ],
-        exercises: [
-          { type: 'vocabulary', count: 10, description: '核心词汇记忆' },
-          { type: 'speaking', count: 5, description: '口语跟读练习' },
-          { type: 'dialogue', count: 1, description: '情景对话模拟' },
-        ],
-        tips: `坚持每天练习，重点掌握${phase}的基础知识`,
-        estimatedMinutes: 25,
       });
     }
-    return { days, totalDays: duration, generatedBy: 'fallback' };
+    return days;
   }
 
   /**
@@ -372,47 +289,24 @@ class DailyPlanService {
     if (!completions || completions.length === 0) return 0;
 
     const sortedDays = completions
-      .map(c => new Date(c.completedAt).toISOString().split('T')[0])
+      .filter((c) => c.completedAt)
+      .map((c) => new Date(c.completedAt).toISOString().split('T')[0])
       .filter((v, i, a) => a.indexOf(v) === i)
       .sort()
       .reverse();
+    if (sortedDays.length === 0) return 0;
 
-    let streak = 1;
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    if (sortedDays[0] !== today && sortedDays[0] !== yesterday) return 0;
 
-    if (sortedDays[0] !== today && sortedDays[0] !== yesterday) {
-      return 0;
-    }
-
+    let streak = 1;
     for (let i = 0; i < sortedDays.length - 1; i++) {
-      const current = new Date(sortedDays[i]);
-      const previous = new Date(sortedDays[i + 1]);
-      const diffDays = (current - previous) / 86400000;
-      if (diffDays === 1) {
-        streak++;
-      } else {
-        break;
-      }
+      const diffDays = (new Date(sortedDays[i]) - new Date(sortedDays[i + 1])) / 86400000;
+      if (diffDays === 1) streak++;
+      else break;
     }
-
     return streak;
-  }
-
-  /**
-   * 估算完成日期
-   */
-  _estimateCompletionDate(startDate, remainingDays) {
-    const date = new Date(startDate);
-    let daysAdded = 0;
-    while (daysAdded < remainingDays) {
-      date.setDate(date.getDate() + 1);
-      const dayOfWeek = date.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        daysAdded++;
-      }
-    }
-    return date.toISOString().split('T')[0];
   }
 }
 

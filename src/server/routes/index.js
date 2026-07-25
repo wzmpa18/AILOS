@@ -51,4 +51,7 @@ router.use('/blueprint', require('./blueprint'));
 // Learn (Phase 3 — 学习内容动态 API)
 router.use('/learn', require('./learn'));
 
+// Onboarding (蓝图 Stage 2/3/4 — 首次引导：身份/语言/定级/目标/伴读/30天计划)
+router.use('/onboarding', require('./onboarding'));
+
 module.exports = router;

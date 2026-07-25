@@ -51,20 +51,21 @@ class SpeechEvaluateService {
       // 解析评测结果
       const evaluation = this._parseEvaluation(aiResponse.result, transcript, referenceText, targetLanguage);
 
-      // 保存评测记录
-      const record = await prisma.speechEvaluation.create({
+      // 保存评测记录（SUP-06：对齐真实模型 SpeechEvaluationRecord 及其字段）
+      const record = await prisma.speechEvaluationRecord.create({
         data: {
           userId,
-          targetLanguage,
           transcript,
           referenceText,
-          pronunciationScore: evaluation.pronunciationScore,
-          fluencyScore: evaluation.fluencyScore,
-          accuracyScore: evaluation.accuracyScore,
+          pronunciation: evaluation.pronunciationScore,
+          fluency: evaluation.fluencyScore,
+          accuracy: evaluation.accuracyScore,
+          completeness: evaluation.accuracyScore,
           overallScore: evaluation.overallScore,
-          feedback: evaluation.feedback,
-          corrections: evaluation.corrections,
-          metadata: {
+          feedback: {
+            text: evaluation.feedback,
+            corrections: evaluation.corrections,
+            targetLanguage,
             aiSource: aiResponse.source,
             evaluatedAt: new Date().toISOString(),
           },
@@ -109,24 +110,26 @@ class SpeechEvaluateService {
         throw new Error('userId is required');
       }
 
-      const records = await prisma.speechEvaluation.findMany({
+      const rawRecords = await prisma.speechEvaluationRecord.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 100),
-        select: {
-          id: true,
-          targetLanguage: true,
-          transcript: true,
-          referenceText: true,
-          pronunciationScore: true,
-          fluencyScore: true,
-          accuracyScore: true,
-          overallScore: true,
-          feedback: true,
-          corrections: true,
-          createdAt: true,
-        },
       });
+
+      // 映射为对外稳定的字段名（保持旧响应结构不变）
+      const records = rawRecords.map(r => ({
+        id: r.id,
+        targetLanguage: r.feedback?.targetLanguage || 'unknown',
+        transcript: r.transcript,
+        referenceText: r.referenceText,
+        pronunciationScore: r.pronunciation,
+        fluencyScore: r.fluency,
+        accuracyScore: r.accuracy,
+        overallScore: r.overallScore,
+        feedback: r.feedback?.text || '',
+        corrections: r.feedback?.corrections || [],
+        createdAt: r.createdAt,
+      }));
 
       // 计算统计信息
       const totalEvaluations = records.length;

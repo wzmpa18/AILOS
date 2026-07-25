@@ -822,10 +822,9 @@ async function handleSubmit() {
       setTimeout(() => {
         let dest = result.redirect || '/xuewaiyu/home.html';
       try {
-        // REQ-04 引导闸：未定级则先去定级，保证只测一次
-        if (!localStorage.getItem('yandao_level_assessment')) {
-          const studyLang = localStorage.getItem('yandao_study_lang') || 'ja';
-          dest = '/xuewaiyu/placement.html?lang=' + studyLang;
+        // 蓝图 Stage 2 引导闸：未完成首次引导则进入完整引导流程（身份→语言→定级→目标→伴读→计划）
+        if (!localStorage.getItem('yandao_onboarding_done') && !localStorage.getItem('yandao_level_assessment')) {
+          dest = '/xuewaiyu/onboarding.html';
         }
       } catch (e) {}
       window.location.href = dest;
@@ -864,10 +863,9 @@ async function handleSubmit() {
       setTimeout(() => {
         let dest = result.redirect || '/xuewaiyu/home.html';
       try {
-        // REQ-04 引导闸：未定级则先去定级，保证只测一次
-        if (!localStorage.getItem('yandao_level_assessment')) {
-          const studyLang = localStorage.getItem('yandao_study_lang') || 'ja';
-          dest = '/xuewaiyu/placement.html?lang=' + studyLang;
+        // 蓝图 Stage 2 引导闸：未完成首次引导则进入完整引导流程（身份→语言→定级→目标→伴读→计划）
+        if (!localStorage.getItem('yandao_onboarding_done') && !localStorage.getItem('yandao_level_assessment')) {
+          dest = '/xuewaiyu/onboarding.html';
         }
       } catch (e) {}
       window.location.href = dest;
