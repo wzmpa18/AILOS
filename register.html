@@ -815,9 +815,10 @@ async function handleSubmit() {
     const result = await apiCall('/register', body);
     if (result.success) {
       showMsg(t('msg_register_success'), 'success');
-      // Store token
-      if (result.token) {
-        try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
+      // Store token（BUG-018 同修：后端 token 在 result.tokens.accessToken，兼容旧 result.token）
+      const regTok = result.token || (result.tokens && result.tokens.accessToken);
+      if (regTok) {
+        try { localStorage.setItem('yandao_token_v1', regTok); localStorage.setItem('auth_tokens', JSON.stringify({accessToken:regTok})); } catch(e) {}
       }
       setTimeout(() => {
         let dest = result.redirect || '/xuewaiyu/home.html';
@@ -857,8 +858,9 @@ async function handleSubmit() {
     const result = await apiCall('/password', body);
     if (result.success) {
       showMsg(t('msg_login_success'), 'success');
-      if (result.token) {
-        try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
+      const lgTok = result.token || (result.tokens && result.tokens.accessToken);
+      if (lgTok) {
+        try { localStorage.setItem('yandao_token_v1', lgTok); localStorage.setItem('auth_tokens', JSON.stringify({accessToken:lgTok})); } catch(e) {}
       }
       setTimeout(() => {
         let dest = result.redirect || '/xuewaiyu/home.html';
