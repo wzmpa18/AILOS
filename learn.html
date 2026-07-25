@@ -238,6 +238,83 @@
     content: ''; position: absolute; top: 0; width: 24px; height: 3px;
     background: var(--primary); border-radius: 0 0 3px 3px;
   }
+
+  /* Loading States */
+  .loading-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); z-index: 9999; justify-content: center; align-items: center;
+  }
+  .loading-overlay.active { display: flex; }
+  .loading-spinner {
+    background: var(--card-bg); border-radius: var(--radius); padding: 24px 32px;
+    box-shadow: var(--shadow-md); text-align: center; max-width: 300px;
+  }
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;
+  }
+  .loading-sub {
+    font-size: 12px; color: var(--text-muted);
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: #fff; padding: 12px 24px; border-radius: 24px;
+    font-size: 14px; font-weight: 600; z-index: 10000; box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Error State */
+  .error-state {
+    text-align: center; padding: 40px 20px;
+  }
+  .error-state-icon {
+    font-size: 48px; margin-bottom: 12px;
+  }
+  .error-state-msg {
+    font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;
+  }
+  .retry-btn {
+    padding: 10px 24px; border-radius: var(--radius-sm); border: none;
+    background: var(--primary); color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .retry-btn:hover { background: var(--primary-hover); }
+
+  /* Skeleton Loading */
+  .skeleton-item {
+    padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 8px;
+    background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+  }
+  .skeleton-circle {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--border);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .skeleton-lines { flex: 1; }
+  .skeleton-line {
+    height: 14px; border-radius: 4px; background: var(--border); margin-bottom: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .skeleton-line.short { width: 60%; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Degradation banner */
+  .degrade-banner {
+    background: #FFFBEB; border: 1px solid #FCD34D; border-radius: var(--radius-sm);
+    padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: #92400E;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .degrade-banner-icon { font-size: 18px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -304,7 +381,28 @@
   </div>
 </div>
 
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">正在通过AI为您生成学习内容...</div>
+    <div class="loading-sub" id="loadingSub">这可能需要几秒钟</div>
+  </div>
+</div>
+
 <script>
+// ==================== API Configuration ====================
+const API_BASE_URL = (() => {
+  try {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
+    return window.location.origin + '/api/v1';
+  } catch(e) { return '/api/v1'; }
+})();
+
 // ==================== GLOI i18n System ====================
 const I18N = {
   zh: {
@@ -516,8 +614,13 @@ function switchLang(code) {
   updateI18n();
   renderLangSwitch();
   updateTargetLangTag();
+  // 语言切换时清除内容缓存以获取新语言数据
+  clearContentCache();
   renderModuleProgress();
-  if (currentModule) openModule(currentModule);
+  if (currentModule) {
+    // 重新打开当前模块，触发新语言的内容加载
+    openModule(currentModule);
+  }
 }
 
 function updateI18n() {
@@ -561,11 +664,17 @@ function getTargetLang() {
 }
 
 function setTargetLang(code) {
-  try {
+try {
     if (window.AILOS) { window.AILOS.setStudyLang(code); }
     localStorage.setItem(TARGET_LANG_KEY, code);
   } catch(e) {}
+  clearContentCache(); // 切换目标语言时清除缓存
+  renderModuleProgress();
   updateTargetLangTag();
+  // 如果当前打开了模块，重新加载
+  if (currentModule) {
+    openModule(currentModule);
+  }
 }
 
 function updateTargetLangTag() {
@@ -608,65 +717,135 @@ function getCompletedCount(module) {
   return progress[module] ? progress[module].length : 0;
 }
 
-// ==================== Learning Content Data ====================
-const LEARNING_CONTENT = {
-  vocab: {
-    title_key: 'mod_vocab_title',
-    total: 10,
-    items: [
-      { id:'v1', word:'Hello', phonetic:'/həˈloʊ/', meaning:'你好', example:'Hello, how are you today? 你好，今天怎么样？' },
-      { id:'v2', word:'Goodbye', phonetic:'/ɡʊdˈbaɪ/', meaning:'再见', example:'Goodbye, see you tomorrow! 再见，明天见！' },
-      { id:'v3', word:'Thank you', phonetic:'/θæŋk juː/', meaning:'谢谢', example:'Thank you for your help. 谢谢你的帮助。' },
-      { id:'v4', word:'Please', phonetic:'/pliːz/', meaning:'请', example:'Please sit down. 请坐。' },
-      { id:'v5', word:'Sorry', phonetic:'/ˈsɒri/', meaning:'对不起', example:'I\'m sorry for the delay. 抱歉迟到了。' },
-      { id:'v6', word:'Beautiful', phonetic:'/ˈbjuːtɪfəl/', meaning:'美丽的', example:'What a beautiful day! 多么美好的一天！' },
-      { id:'v7', word:'Delicious', phonetic:'/dɪˈlɪʃəs/', meaning:'美味的', example:'This food is delicious! 这个食物真好吃！' },
-      { id:'v8', word:'Wonderful', phonetic:'/ˈwʌndərfəl/', meaning:'精彩的', example:'You did a wonderful job! 你做得很棒！' },
-      { id:'v9', word:'Important', phonetic:'/ɪmˈpɔːrtənt/', meaning:'重要的', example:'This is very important. 这非常重要。' },
-      { id:'v10', word:'Interesting', phonetic:'/ˈɪntrəstɪŋ/', meaning:'有趣的', example:'That\'s an interesting story. 那是个有趣的故事。' },
-    ],
-  },
-  grammar: {
-    title_key: 'mod_grammar_title',
-    total: 8,
-    items: [
-      { id:'g1', word:'Present Simple', phonetic:'I/You/We/They + V', meaning:'一般现在时', example:'I go to school every day. 我每天去上学。' },
-      { id:'g2', word:'Present Continuous', phonetic:'am/is/are + V-ing', meaning:'现在进行时', example:'She is reading a book now. 她正在读一本书。' },
-      { id:'g3', word:'Past Simple', phonetic:'V-ed / irregular', meaning:'一般过去时', example:'I visited Paris last year. 我去年去了巴黎。' },
-      { id:'g4', word:'Future Tense', phonetic:'will + V', meaning:'将来时', example:'I will call you tomorrow. 我明天给你打电话。' },
-      { id:'g5', word:'Articles', phonetic:'a / an / the', meaning:'冠词', example:'I saw a cat. The cat was black. 我看到一只猫。那只猫是黑色的。' },
-      { id:'g6', word:'Prepositions', phonetic:'in / on / at', meaning:'介词', example:'The book is on the table. 书在桌子上。' },
-      { id:'g7', word:'Comparatives', phonetic:'-er / more + adj', meaning:'比较级', example:'She is taller than me. 她比我高。' },
-      { id:'g8', word:'Conditionals', phonetic:'If + present, will + V', meaning:'条件句', example:'If it rains, I will stay home. 如果下雨，我就待在家。' },
-    ],
-  },
-  reading: {
-    title_key: 'mod_reading_title',
-    total: 6,
-    items: [
-      { id:'r1', word:'My Daily Routine', phonetic:'Beginner', meaning:'我的日常生活', example:'Every morning, I wake up at 7 o\'clock. I brush my teeth and have breakfast. Then I go to work by bus. I work from 9 to 5. In the evening, I like to read books and watch TV. I go to bed at 11 o\'clock. 每天早上，我七点起床。我刷牙、吃早餐，然后坐公交车去上班。我从九点工作到五点。晚上我喜欢读书和看电视。我十一点上床睡觉。' },
-      { id:'r2', word:'A Trip to the Park', phonetic:'Beginner', meaning:'公园之旅', example:'Last Sunday, my family and I went to the park. The weather was sunny and warm. We had a picnic on the grass. The children played on the swings. We saw many beautiful flowers and birds. It was a wonderful day! 上周日，我和家人去了公园。天气晴朗温暖。我们在草地上野餐。孩子们在秋千上玩耍。我们看到了许多美丽的花和鸟。这是美好的一天！' },
-      { id:'r3', word:'My Best Friend', phonetic:'Beginner', meaning:'我最好的朋友', example:'My best friend is Tom. We have known each other for ten years. He is tall and has brown hair. He is very kind and always helps others. We like to play basketball together. He is good at math and often helps me with my homework. 我最好的朋友是汤姆。我们认识十年了。他很高，有棕色的头发。他非常善良，总是帮助别人。我们喜欢一起打篮球。他擅长数学，经常帮我做作业。' },
-      { id:'r4', word:'The Weather Report', phonetic:'Intermediate', meaning:'天气预报', example:'Good morning! Here is today\'s weather report. It will be sunny in the morning with temperatures around 25 degrees. In the afternoon, there is a 60% chance of rain. Please take an umbrella if you go out. The temperature will drop to 18 degrees in the evening. 早上好！这是今天的天气预报。上午天气晴朗，气温约25度。下午有60%的降雨概率。外出请带伞。晚上气温将降至18度。' },
-      { id:'r5', word:'Technology Today', phonetic:'Intermediate', meaning:'今日科技', example:'Technology is changing our lives every day. Smartphones allow us to communicate instantly with people around the world. Artificial intelligence is helping doctors diagnose diseases. Electric cars are becoming more popular because they are better for the environment. 科技每天都在改变我们的生活。智能手机让我们能与世界各地的人即时交流。人工智能正在帮助医生诊断疾病。电动汽车越来越受欢迎，因为它们对环境更好。' },
-      { id:'r6', word:'Healthy Eating', phonetic:'Intermediate', meaning:'健康饮食', example:'Eating healthy is important for everyone. We should eat more fruits and vegetables every day. Drink at least eight glasses of water. Try to avoid too much sugar and fast food. Exercise is also important — try to walk for at least 30 minutes every day. 健康饮食对每个人都很重要。我们应该每天多吃水果和蔬菜。每天至少喝八杯水。尽量避免过多的糖和快餐。运动也很重要——试着每天至少步行30分钟。' },
-    ],
-  },
-  listening: {
-    title_key: 'mod_listening_title',
-    total: 8,
-    items: [
-      { id:'l1', word:'Greetings', phonetic:'Beginner - 1 min', meaning:'问候语', example:'[Audio] Hello! Hi! Good morning! Good afternoon! Good evening! How are you? I\'m fine, thank you. And you? Nice to meet you! Nice to meet you too! 你好！嗨！早上好！下午好！晚上好！你好吗？我很好，谢谢。你呢？很高兴认识你！我也很高兴认识你！' },
-      { id:'l2', word:'Numbers 1-20', phonetic:'Beginner - 2 min', meaning:'数字1-20', example:'[Audio] One, two, three, four, five, six, seven, eight, nine, ten. Eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty. 一、二、三、四、五、六、七、八、九、十。十一、十二、十三、十四、十五、十六、十七、十八、十九、二十。' },
-      { id:'l3', word:'Colors', phonetic:'Beginner - 1 min', meaning:'颜色', example:'[Audio] Red, blue, green, yellow, orange, purple, pink, black, white, brown. The sky is blue. The grass is green. The sun is yellow. I like the color red. 红色、蓝色、绿色、黄色、橙色、紫色、粉色、黑色、白色、棕色。天空是蓝色的。草是绿色的。太阳是黄色的。我喜欢红色。' },
-      { id:'l4', word:'Family Members', phonetic:'Beginner - 2 min', meaning:'家庭成员', example:'[Audio] Mother, father, sister, brother, grandmother, grandfather, aunt, uncle, cousin. This is my mother. My father is a doctor. I have one sister and one brother. My grandparents live in the countryside. 妈妈、爸爸、姐妹、兄弟、奶奶、爷爷、阿姨、叔叔、表亲。这是我妈妈。我爸爸是医生。我有一个姐姐和一个弟弟。我的祖父母住在乡下。' },
-      { id:'l5', word:'At the Restaurant', phonetic:'Intermediate - 3 min', meaning:'在餐厅', example:'[Audio] Waiter: Good evening! Table for two? Customer: Yes, please. Waiter: Here is the menu. Would you like something to drink? Customer: I\'d like a glass of water, please. Waiter: Are you ready to order? Customer: Yes, I\'ll have the chicken salad and my friend will have the pasta. 服务员：晚上好！两位吗？顾客：是的。服务员：这是菜单。您想喝点什么？顾客：请给我一杯水。服务员：可以点餐了吗？顾客：是的，我要鸡肉沙拉，我朋友要意大利面。' },
-      { id:'l6', word:'Directions', phonetic:'Intermediate - 3 min', meaning:'问路', example:'[Audio] Excuse me, how do I get to the train station? Go straight ahead for two blocks. Then turn left at the traffic light. The station is on your right. You can\'t miss it. Thank you very much! You\'re welcome! 打扰一下，请问火车站怎么走？一直往前走两个街区。然后在红绿灯处左转。车站就在你的右边。你不会错过的。非常感谢！不客气！' },
-      { id:'l7', word:'Shopping', phonetic:'Intermediate - 3 min', meaning:'购物', example:'[Audio] Customer: How much is this shirt? Shopkeeper: It\'s $25. Customer: Do you have it in blue? Shopkeeper: Yes, here you are. Customer: Can I try it on? Shopkeeper: Of course, the fitting room is over there. Customer: It fits perfectly. I\'ll take it. 顾客：这件衬衫多少钱？店主：25美元。顾客：有蓝色的吗？店主：有，给你。顾客：我可以试穿吗？店主：当然，试衣间在那边。顾客：很合身。我买了。' },
-      { id:'l8', word:'At the Airport', phonetic:'Advanced - 4 min', meaning:'在机场', example:'[Audio] Announcement: Flight CA981 to Beijing is now boarding at Gate 23. Passengers please have your boarding pass and passport ready. We remind you that liquids over 100ml are not allowed in carry-on luggage. Please proceed to the gate in an orderly manner. Thank you for flying with us! 广播：飞往北京的CA981次航班现在在23号登机口登机。请旅客准备好登机牌和护照。我们提醒您，超过100毫升的液体不允许携带上机。请有序前往登机口。感谢您选择我们的航班！' },
-    ],
-  },
-};
+// ==================== Learning Content Cache (API-driven) ====================
+// 内容缓存：{ 'en:vocab:beginner': { items: [...], total: N, source: 'ai'|'asset'|'cache' } }
+const contentCache = {};
+
+/**
+ * 构建缓存 key
+ */
+function buildCacheKey(language, type, level) {
+  return `${language}:${type}:${level || 'beginner'}`;
+}
+
+/**
+ * 从 API 获取学习内容
+ * GET /api/learn/content?language={lang}&type={type}&level={level}
+ */
+async function fetchLearningContent(language, type, level) {
+  const cacheKey = buildCacheKey(language, type, level);
+
+  // 检查缓存（同一会话内不重复请求）
+  if (contentCache[cacheKey] && contentCache[cacheKey].items && contentCache[cacheKey].items.length > 0) {
+    return contentCache[cacheKey];
+  }
+
+  const url = `${API_BASE_URL}/learn/content?language=${encodeURIComponent(language)}&type=${encodeURIComponent(type)}&level=${encodeURIComponent(level || 'beginner')}`;
+
+  let authHeaders = {};
+  try {
+    const token = localStorage.getItem('yandao_token_v1') ||
+      (function() {
+        try {
+          const a = localStorage.getItem('auth_tokens');
+          if (a) {
+            const p = JSON.parse(a);
+            return p.accessToken || p.token || a;
+          }
+          return null;
+        } catch(e) { return null; }
+      })();
+    if (token) {
+      authHeaders['Authorization'] = 'Bearer ' + token;
+    } else {
+      const guestId = localStorage.getItem('yandao_guest_id_v1');
+      if (guestId) {
+        authHeaders['X-Guest-Id'] = guestId;
+      }
+    }
+  } catch(e) {}
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`API error ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.success) {
+    throw new Error(data.error || 'Unknown API error');
+  }
+
+  // 缓存结果
+  contentCache[cacheKey] = {
+    items: data.items || [],
+    total: data.total || 0,
+    source: data.source || 'unknown',
+    degradeMessage: data.degradeMessage || '',
+  };
+
+  return contentCache[cacheKey];
+}
+
+/**
+ * 获取学习内容（优先缓存，fallback 到空数组）
+ */
+function getLearningContent(language, type, level) {
+  const cacheKey = buildCacheKey(language, type, level);
+  return contentCache[cacheKey] || { items: [], total: 0, source: 'loading' };
+}
+
+/**
+ * 清除指定内容缓存（语言切换时用）
+ */
+function clearContentCache(language) {
+  if (language) {
+    Object.keys(contentCache).forEach((key) => {
+      if (key.startsWith(language + ':')) {
+        delete contentCache[key];
+      }
+    });
+  } else {
+    Object.keys(contentCache).forEach((key) => delete contentCache[key]);
+  }
+}
+
+// ==================== Toast Notification ====================
+let toastTimer = null;
+
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+// ==================== Loading Overlay ====================
+function showLoading(text, sub) {
+  const overlay = document.getElementById('loadingOverlay');
+  if (!overlay) return;
+  document.getElementById('loadingText').textContent = text || '正在通过AI为您生成学习内容...';
+  document.getElementById('loadingSub').textContent = sub || '这可能需要几秒钟';
+  overlay.classList.add('active');
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loadingOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+}
 
 // ==================== State ====================
 let currentModule = null;
@@ -674,26 +853,98 @@ let currentDetailIndex = 0;
 
 // ==================== Render Module Progress ====================
 function renderModuleProgress() {
+  const lang = getTargetLang();
+  const level = 'beginner'; // 默认从 beginner 开始
   ['vocab','grammar','reading','listening'].forEach(mod => {
-    const total = LEARNING_CONTENT[mod].total;
+    const content = getLearningContent(lang, mod, level);
+    const total = content.total || 0;
     const completed = getCompletedCount(mod);
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const fillEl = document.getElementById('progress' + mod.charAt(0).toUpperCase() + mod.slice(1));
-    const textEl = document.getElementById('progressText' + mod.charAt(0).toUpperCase() + mod.slice(1));
+    const capName = mod.charAt(0).toUpperCase() + mod.slice(1);
+    const fillEl = document.getElementById('progress' + capName);
+    const textEl = document.getElementById('progressText' + capName);
     if (fillEl) fillEl.style.width = pct + '%';
     if (textEl) textEl.textContent = completed + '/' + total;
   });
 }
 
 // ==================== Open Module ====================
-function openModule(module) {
+async function openModule(module) {
   currentModule = module;
   currentDetailIndex = 0;
-  const titleKey = LEARNING_CONTENT[module].title_key;
-  document.getElementById('contentPanelTitle').textContent = t(titleKey);
+
+  const lang = getTargetLang();
+  const level = 'beginner';
+
+  // 先检查缓存
+  const cached = getLearningContent(lang, module, level);
+
+  if (!cached.items || cached.items.length === 0) {
+    // 需要从 API 加载
+    showLoading('正在通过AI为您生成学习内容...', '正在准备 ' + t('mod_' + module + '_title') + ' 内容');
+    showToast('正在通过AI为您生成学习内容...', 4000);
+
+    const titleKeyMap = { vocab: 'mod_vocab_title', grammar: 'mod_grammar_title', reading: 'mod_reading_title', listening: 'mod_listening_title' };
+    document.getElementById('contentPanelTitle').textContent = t(titleKeyMap[module] || 'mod_vocab_title');
+    document.getElementById('contentPanel').classList.add('active');
+    document.getElementById('moduleGrid').style.display = 'none';
+
+    // 显示骨架屏
+    renderSkeletonLoading();
+
+    try {
+      await fetchLearningContent(lang, module, level);
+      hideLoading();
+      showToast('学习内容已就绪！', 2000);
+    } catch (error) {
+      hideLoading();
+      console.error('Failed to fetch learning content:', error);
+      renderErrorState(module);
+      return;
+    }
+  }
+
+  const content = getLearningContent(lang, module, level);
+  const titleKeyMap = { vocab: 'mod_vocab_title', grammar: 'mod_grammar_title', reading: 'mod_reading_title', listening: 'mod_listening_title' };
+  document.getElementById('contentPanelTitle').textContent = t(titleKeyMap[module] || 'mod_vocab_title');
   document.getElementById('contentPanel').classList.add('active');
   document.getElementById('moduleGrid').style.display = 'none';
+
+  // 显示降级提示
+  if (content.degradeMessage) {
+    const body = document.getElementById('contentPanelBody');
+    const degradeBanner = document.createElement('div');
+    degradeBanner.className = 'degrade-banner';
+    degradeBanner.innerHTML = '<span class="degrade-banner-icon">&#9888;</span><span>' + content.degradeMessage + '</span>';
+    body.innerHTML = '';
+    body.appendChild(degradeBanner);
+  }
+
   renderContentList();
+}
+
+function renderSkeletonLoading() {
+  const body = document.getElementById('contentPanelBody');
+  body.innerHTML = Array.from({ length: 5 }, () => `
+    <div class="skeleton-item">
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-lines">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderErrorState(module) {
+  const body = document.getElementById('contentPanelBody');
+  body.innerHTML = `
+    <div class="error-state">
+      <div class="error-state-icon">&#9888;&#65039;</div>
+      <div class="error-state-msg">内容加载失败，请检查网络后重试</div>
+      <button class="retry-btn" onclick="openModule('${module}')">重试</button>
+    </div>
+  `;
 }
 
 function closeModule() {
@@ -706,13 +957,18 @@ function closeModule() {
 function renderContentList() {
   if (!currentModule) return;
   const module = currentModule;
-  const items = LEARNING_CONTENT[module].items;
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const content = getLearningContent(lang, module, level);
+  const items = content.items || [];
   const completed = getCompletedCount(module);
   const total = items.length;
   document.getElementById('contentPanelStats').textContent = completed + '/' + total + ' ' + t('completed_label');
 
   const body = document.getElementById('contentPanelBody');
-  body.innerHTML = items.map((item, idx) => {
+  // 保留降级横幅（如果有的话）
+  const degradeBanner = body.querySelector('.degrade-banner');
+  const listHtml = items.map((item, idx) => {
     const done = isCompleted(module, item.id);
     const checkContent = done ? '✓' : '';
     const cls = done ? 'completed' : '';
@@ -727,14 +983,27 @@ function renderContentList() {
       </div>
     `;
   }).join('');
+
+  if (degradeBanner) {
+    body.innerHTML = '';
+    body.appendChild(degradeBanner);
+    body.insertAdjacentHTML('beforeend', listHtml);
+  } else {
+    body.innerHTML = listHtml;
+  }
 }
 
 function openDetail(index) {
   if (!currentModule) return;
   currentDetailIndex = index;
-  const item = LEARNING_CONTENT[currentModule].items[index];
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const content = getLearningContent(lang, currentModule, level);
+  const items = content.items || [];
+  if (index >= items.length) return;
+  const item = items[index];
   const done = isCompleted(currentModule, item.id);
-  const total = LEARNING_CONTENT[currentModule].items.length;
+  const total = items.length;
   document.getElementById('contentPanelStats').textContent = (index + 1) + '/' + total;
 
   const body = document.getElementById('contentPanelBody');
@@ -765,13 +1034,22 @@ function prevDetail() {
 
 function nextDetail() {
   if (!currentModule) return;
-  const total = LEARNING_CONTENT[currentModule].items.length;
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const content = getLearningContent(lang, currentModule, level);
+  const items = content.items || [];
+  const total = items.length;
   if (currentDetailIndex < total - 1) openDetail(currentDetailIndex + 1);
 }
 
 function markDone(index) {
   if (!currentModule) return;
-  const item = LEARNING_CONTENT[currentModule].items[index];
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const content = getLearningContent(lang, currentModule, level);
+  const items = content.items || [];
+  if (index >= items.length) return;
+  const item = items[index];
   markCompleted(currentModule, item.id);
   openDetail(index);
   updateContentPanelStats();
@@ -779,8 +1057,12 @@ function markDone(index) {
 
 function updateContentPanelStats() {
   if (!currentModule) return;
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const content = getLearningContent(lang, currentModule, level);
+  const items = content.items || [];
   const completed = getCompletedCount(currentModule);
-  const total = LEARNING_CONTENT[currentModule].items.length;
+  const total = items.length;
   document.getElementById('contentPanelStats').textContent = completed + '/' + total + ' ' + t('completed_label');
 }
 
@@ -804,11 +1086,27 @@ function showGuestTipIfNeeded() {
 }
 
 // ==================== Init ====================
-renderLangSwitch();
-renderModuleProgress();
-updateTargetLangTag();
-updateI18n();
-showGuestTipIfNeeded();
+async function initPage() {
+  renderLangSwitch();
+  updateTargetLangTag();
+  updateI18n();
+  showGuestTipIfNeeded();
+
+  // 预加载当前目标语言的学习内容（后台静默加载）
+  const lang = getTargetLang();
+  const level = 'beginner';
+  const types = ['vocab', 'grammar', 'reading', 'listening'];
+  try {
+    await Promise.allSettled(
+      types.map((type) => fetchLearningContent(lang, type, level))
+    );
+  } catch(e) {
+    // 静默失败，稍后 openModule 时再加载
+  }
+  renderModuleProgress();
+}
+
+initPage();
 </script>
 
 <!-- Bottom Navigation Bar -->

@@ -125,6 +125,126 @@ class AIGateway {
   }
 
   /**
+   * chatWithMessages — 兼容旧版 aiController/aiTutorService 的消息数组调用模式
+   * 这是 M0 接线关键方法：将 messages 数组转换为 aiGateway 标准调用流程
+   * @param {Array} messages - [{role:'system'|'user'|'assistant', content:'...'}]
+   * @param {Object} opts - { temperature, maxTokens, userId, languageContext, scene }
+   * @returns {Promise<{content:string, usage:{promptTokens,completionTokens,totalTokens}, model:string, source:'ai'|'asset'|'cache'}>}
+   */
+  async chatWithMessages(messages, opts = {}) {
+    const startTime = Date.now();
+    const { temperature = 0.7, maxTokens = 2048, userId, languageContext, scene: explicitScene } = opts;
+
+    // 自动检测场景
+    const scene = explicitScene || this._detectScene(messages);
+    const ctx = languageContext || this._extractLanguageContext(messages);
+
+    const logEntry = {
+      userId,
+      scene,
+      requestType: scene,
+      model: 'hunyuan',
+      languageContext: ctx,
+      assetHit: false,
+      success: true,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs: 0,
+    };
+
+    try {
+      // 1. 资产检索
+      const assetResult = await this._searchAsset(scene, { input: this._extractUserInput(messages) }, ctx);
+      if (assetResult) {
+        logEntry.assetHit = true;
+        logEntry.latencyMs = Date.now() - startTime;
+        await this._logRequest(logEntry);
+        return {
+          content: typeof assetResult === 'string' ? assetResult : JSON.stringify(assetResult),
+          model: 'asset',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          source: 'asset',
+        };
+      }
+
+      // 2. Redis 缓存
+      const cacheKey = this._buildCacheKey(scene, userId, { messages: this._extractUserInput(messages).slice(0, 100) }, ctx);
+      const cached = await this._getCache(cacheKey);
+      if (cached) {
+        logEntry.assetHit = false;
+        logEntry.latencyMs = Date.now() - startTime;
+        await this._logRequest(logEntry);
+        return {
+          content: cached.content || cached,
+          model: 'cache',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          source: 'cache',
+        };
+      }
+
+      // 3. Language Guard 输入校验
+      const inputText = this._extractUserInput(messages);
+      const guard = getLanguageGuard();
+      const inputCheck = guard.validateInput(inputText, ctx);
+      if (inputCheck.violationCount > 0) {
+        logger.warn('AIGateway', 'Language Guard 输入违规', { userId, scene, violations: inputCheck.violations });
+      }
+
+      // 4. 构建 Prompt（优先从 aiPromptTemplate 库读取）
+      const systemPrompt = await this._buildPromptFromMessages(messages, scene, ctx);
+
+      // 5. 调用 AI
+      const aiMessages = [{ role: 'system', content: systemPrompt }];
+      // 添加非 system 的消息
+      for (const msg of messages) {
+        if (msg.role !== 'system') {
+          aiMessages.push(msg);
+        }
+      }
+
+      const aiResult = await this._callAI(aiMessages, { temperature, maxTokens });
+
+      // 6. Language Guard 输出校验
+      const outputText = aiResult.content || '';
+      const outputCheck = guard.validateOutput(outputText, ctx);
+      if (!outputCheck.valid && outputCheck.needsRetry) {
+        logger.warn('AIGateway', 'Language Guard 输出违规', { userId, scene, violations: outputCheck.violations });
+      }
+
+      // 7. 缓存结果
+      await this._setCache(cacheKey, { content: outputText }, CACHE_TTL);
+
+      // 8. 记录日志
+      logEntry.inputTokens = aiResult.usage?.promptTokens || 0;
+      logEntry.outputTokens = aiResult.usage?.completionTokens || 0;
+      logEntry.latencyMs = Date.now() - startTime;
+      await this._logRequest(logEntry);
+
+      // 9. 资产落库（异步，不阻塞响应）
+      this._saveToAssets(messages, { content: outputText }, ctx, scene).catch(() => {});
+
+      return {
+        content: outputText,
+        model: aiResult.model || 'hunyuan',
+        usage: {
+          promptTokens: aiResult.usage?.promptTokens || 0,
+          completionTokens: aiResult.usage?.completionTokens || 0,
+          totalTokens: aiResult.usage?.totalTokens || 0,
+        },
+        source: 'ai',
+      };
+
+    } catch (error) {
+      logEntry.success = false;
+      logEntry.errorMessage = error.message;
+      logEntry.latencyMs = Date.now() - startTime;
+      await this._logRequest(logEntry).catch(() => {});
+      logger.error('AIGateway', 'chatWithMessages 失败', { userId, scene, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * 获取每日成本统计
    * @param {string} date - 日期 (YYYY-MM-DD)
    * @param {string} [userId] - 可选用户过滤
@@ -343,8 +463,128 @@ class AIGateway {
       explanation: 'grammar',
       conversation: 'dialogue',
       review: 'lesson',
+      translate: 'vocabulary',
+      grammar_check: 'grammar',
+      exercise_generate: 'quiz',
     };
     return map[scene] || 'lesson';
+  }
+
+  /**
+   * 自动检测场景（从 messages 中的 system prompt 推断）
+   */
+  _detectScene(messages) {
+    const systemMsg = messages.find(m => m.role === 'system');
+    const content = systemMsg ? systemMsg.content : '';
+    if (content.includes('翻译') || content.includes('translate') || content.includes('翻译引擎')) return 'translate';
+    if (content.includes('语法检查') || content.includes('grammar check') || content.includes('语法检查器')) return 'grammar_check';
+    if (content.includes('出题') || content.includes('exercise') || content.includes('练习题') || content.includes('出题引擎')) return 'exercise_generate';
+    if (content.includes('教师') || content.includes('语言教师') || content.includes('teacher')) return 'conversation';
+    if (content.includes('导师') || content.includes('tutor') || content.includes('伴读')) return 'conversation';
+    return 'conversation';
+  }
+
+  /**
+   * 从 messages 中提取语言上下文
+   */
+  _extractLanguageContext(messages) {
+    const systemMsg = messages.find(m => m.role === 'system');
+    const content = systemMsg ? systemMsg.content : '';
+    // 尝试从 Prompt 中提取语言信息
+    const nativeLangMatch = content.match(/母语是([^\s，。]+)/) || content.match(/native.*?is\s+(\w+)/i);
+    const targetLangMatch = content.match(/教用户学习([^\s，。]+)/) || content.match(/target.*?(\w+)/i) || content.match(/翻译成([^\s，。]+)/);
+    return {
+      primaryTargetLanguage: targetLangMatch ? targetLangMatch[1] : 'en',
+      explanationLanguage: nativeLangMatch ? nativeLangMatch[1] : 'zh-CN',
+    };
+  }
+
+  /**
+   * 从 messages 中提取用户输入文本
+   */
+  _extractUserInput(messages) {
+    const userMsgs = messages.filter(m => m.role === 'user');
+    return userMsgs.map(m => m.content).join('\n');
+  }
+
+  /**
+   * 从 messages 构建 System Prompt（优先从 aiPromptTemplate 库读取，回退到原 Prompt）
+   */
+  async _buildPromptFromMessages(messages, scene, languageContext) {
+    // 1. 尝试从 aiPromptTemplate 库中查找匹配的模板
+    const template = await prisma.aiPromptTemplate.findFirst({
+      where: {
+        scene,
+        languageCode: languageContext?.explanationLanguage || 'zh-CN',
+        status: 'active',
+      },
+      orderBy: { version: 'desc' },
+    });
+
+    if (template) {
+      let prompt = template.templateContent;
+      const variables = typeof template.variables === 'string'
+        ? JSON.parse(template.variables)
+        : (template.variables || []);
+
+      const targetLang = languageContext?.primaryTargetLanguage || 'en';
+      const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+
+      // 替换模板变量
+      prompt = prompt.replace(/\{\{target_language\}\}/g, targetLang);
+      prompt = prompt.replace(/\{\{explanation_language\}\}/g, explanationLang);
+      prompt = prompt.replace(/\{\{native_language\}\}/g, explanationLang);
+
+      for (const v of (variables || [])) {
+        const value = languageContext?.[v.name] || languageContext?.[v.key] || v.default || '';
+        prompt = prompt.replace(new RegExp(`\\{\\{${v.name}\\}\\}`, 'g'), String(value));
+      }
+
+      return prompt;
+    }
+
+    // 2. 回退：使用原 messages 中的 system prompt（保留原有硬编码 Prompt 作为过渡）
+    const systemMsg = messages.find(m => m.role === 'system');
+    if (systemMsg && systemMsg.content) {
+      return systemMsg.content;
+    }
+
+    // 3. 最终回退：使用默认 Prompt
+    return this._buildDefaultPrompt(scene, {}, languageContext);
+  }
+
+  /**
+   * 保存 AI 生成内容到资产库（异步落库，不阻塞响应）
+   */
+  async _saveToAssets(messages, aiResponse, languageContext, scene) {
+    try {
+      const targetLang = languageContext?.primaryTargetLanguage || 'en';
+      const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+      const contentType = this._sceneToContentType(scene);
+
+      await prisma.learningContent.create({
+        data: {
+          contentType,
+          sourceType: 'AI_GENERATED',
+          sourceLanguage: explanationLang,
+          targetLanguage: targetLang,
+          explanationLanguage: explanationLang,
+          difficultyLevel: 'beginner',
+          contentVersion: '1.0.0',
+          status: 'draft',
+          contentData: {
+            input: this._extractUserInput(messages),
+            output: aiResponse.content,
+            scene,
+            generatedAt: new Date().toISOString(),
+          },
+          qualityScore: 0,
+          reuseCount: 0,
+        },
+      });
+    } catch (error) {
+      logger.debug('AIGateway', '资产落库失败', { error: error.message });
+    }
   }
 }
 

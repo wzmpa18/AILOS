@@ -723,6 +723,14 @@ body {
       <span id="nativeBadgeText"></span>
     </div>
     <div class="lang-grid" id="step3Grid"></div>
+    <div class="custom-input-section">
+      <div class="custom-input-wrapper">
+        <input type="text" id="customTargetInput" data-i18n-placeholder="custom_target_placeholder" placeholder="Enter target language..." autocomplete="off">
+        <button class="btn-custom" id="btnCustomTarget" data-i18n="btn_custom_target">Add Custom Language</button>
+      </div>
+      <p class="custom-hint" data-i18n="custom_target_hint">e.g. Tibetan, Arabic, Cantonese, Swahili, Vietnamese...</p>
+    </div>
+    <div class="custom-lang-list" id="customTargetList" style="display:none;"></div>
     <div class="btn-row">
       <button class="btn btn-secondary" id="step3Back" data-i18n="btn_back">Back</button>
       <button class="btn btn-success" id="step3Complete" disabled data-i18n="btn_complete">Complete Setup</button>
@@ -774,6 +782,12 @@ body {
       btn_custom_active: '已使用自定义',
       custom_placeholder: '输入您的母语名称...',
       custom_hint: '例如：藏语、阿拉伯语、粤语、维吾尔语...',
+      btn_custom_target: '添加自定义语言',
+      custom_target_placeholder: '输入要学习的语言名称...',
+      custom_target_hint: '例如：藏语、阿拉伯语、粤语、斯瓦希里语、越南语...',
+      custom_target_added: '已添加的自定义语言',
+      custom_target_exists: '该语言已添加',
+      error_required_target_lang: '请输入要学习的语言名称',
       native_label: '母语：',
       level_beginner: '初级',
       level_intermediate: '中级',
@@ -807,6 +821,12 @@ body {
       btn_custom_active: 'Custom Active',
       custom_placeholder: 'Enter your native language...',
       custom_hint: 'e.g. Tibetan, Arabic, Cantonese, Uyghur...',
+      btn_custom_target: 'Add Custom Language',
+      custom_target_placeholder: 'Enter the language name to learn...',
+      custom_target_hint: 'e.g. Tibetan, Arabic, Cantonese, Swahili, Vietnamese...',
+      custom_target_added: 'Custom Languages Added',
+      custom_target_exists: 'This language is already added',
+      error_required_target_lang: 'Please enter the language name to learn',
       native_label: 'Native:',
       level_beginner: 'Beginner',
       level_intermediate: 'Intermediate',
@@ -840,6 +860,12 @@ body {
       btn_custom_active: 'カスタム使用中',
       custom_placeholder: '母国語を入力してください...',
       custom_hint: '例：チベット語、アラビア語、広東語、ウイグル語...',
+      btn_custom_target: 'カスタム言語を追加',
+      custom_target_placeholder: '学習する言語名を入力してください...',
+      custom_target_hint: '例：チベット語、アラビア語、広東語、スワヒリ語、ベトナム語...',
+      custom_target_added: '追加されたカスタム言語',
+      custom_target_exists: 'この言語は既に追加されています',
+      error_required_target_lang: '学習する言語名を入力してください',
       native_label: '母国語：',
       level_beginner: '初級',
       level_intermediate: '中級',
@@ -873,6 +899,12 @@ body {
       btn_custom_active: '사용자 정의 활성화',
       custom_placeholder: '모국어 이름을 입력하세요...',
       custom_hint: '예: 티베트어, 아랍어, 광둥어, 위구르어...',
+      btn_custom_target: '사용자 정의 언어 추가',
+      custom_target_placeholder: '학습할 언어 이름을 입력하세요...',
+      custom_target_hint: '예: 티베트어, 아랍어, 광둥어, 스와힐리어, 베트남어...',
+      custom_target_added: '추가된 사용자 정의 언어',
+      custom_target_exists: '이미 추가된 언어입니다',
+      error_required_target_lang: '학습할 언어 이름을 입력하세요',
       native_label: '모국어:',
       level_beginner: '초급',
       level_intermediate: '중급',
@@ -906,6 +938,12 @@ body {
       btn_custom_active: 'Personnalisé actif',
       custom_placeholder: 'Entrez votre langue maternelle...',
       custom_hint: 'Ex: Tibétain, Arabe, Cantonais, Ouïghour...',
+      btn_custom_target: 'Ajouter une langue personnalisée',
+      custom_target_placeholder: 'Entrez le nom de la langue à apprendre...',
+      custom_target_hint: 'Ex: Tibétain, Arabe, Cantonais, Swahili, Vietnamien...',
+      custom_target_added: 'Langues personnalisées ajoutées',
+      custom_target_exists: 'Cette langue est déjà ajoutée',
+      error_required_target_lang: 'Veuillez entrer le nom de la langue à apprendre',
       native_label: 'Maternelle :',
       level_beginner: 'Débutant',
       level_intermediate: 'Intermédiaire',
@@ -939,6 +977,12 @@ body {
       btn_custom_active: 'Personalizado activo',
       custom_placeholder: 'Ingrese su idioma nativo...',
       custom_hint: 'Ej: Tibetano, Árabe, Cantonés, Uigur...',
+      btn_custom_target: 'Agregar idioma personalizado',
+      custom_target_placeholder: 'Ingrese el nombre del idioma a aprender...',
+      custom_target_hint: 'Ej: Tibetano, Árabe, Cantonés, Suajili, Vietnamita...',
+      custom_target_added: 'Idiomas personalizados agregados',
+      custom_target_exists: 'Este idioma ya está agregado',
+      error_required_target_lang: 'Ingrese el nombre del idioma a aprender',
       native_label: 'Nativo:',
       level_beginner: 'Principiante',
       level_intermediate: 'Intermedio',
@@ -972,6 +1016,12 @@ body {
       btn_custom_active: 'Eigene aktiv',
       custom_placeholder: 'Geben Sie Ihre Muttersprache ein...',
       custom_hint: 'z.B. Tibetisch, Arabisch, Kantonesisch, Uigurisch...',
+      btn_custom_target: 'Eigene Sprache hinzufügen',
+      custom_target_placeholder: 'Geben Sie den Namen der zu lernenden Sprache ein...',
+      custom_target_hint: 'z.B. Tibetisch, Arabisch, Kantonesisch, Swahili, Vietnamesisch...',
+      custom_target_added: 'Hinzugefügte eigene Sprachen',
+      custom_target_exists: 'Diese Sprache wurde bereits hinzugefügt',
+      error_required_target_lang: 'Bitte geben Sie den Namen der zu lernenden Sprache ein',
       native_label: 'Muttersprache:',
       level_beginner: 'Anfänger',
       level_intermediate: 'Mittelstufe',
@@ -1022,6 +1072,9 @@ body {
     step3Complete: $('#step3Complete'),
     customNativeInput: $('#customNativeInput'),
     btnCustomNative: $('#btnCustomNative'),
+    customTargetInput: $('#customTargetInput'),
+    btnCustomTarget: $('#btnCustomTarget'),
+    customTargetList: $('#customTargetList'),
     nativeBadge: $('#nativeBadge'),
     nativeBadgeText: $('#nativeBadgeText'),
     skipLink: $('#skipLink'),
@@ -1347,6 +1400,36 @@ body {
 
       dom.step3Grid.appendChild(card);
     });
+
+    // 渲染自定义目标语言列表
+    renderCustomTargetList();
+  }
+
+  /** 渲染自定义目标语言列表 */
+  function renderCustomTargetList() {
+    const customTargets = state.targetLanguages.filter(t => t.source === 'custom');
+    if (customTargets.length === 0) {
+      dom.customTargetList.style.display = 'none';
+      return;
+    }
+    dom.customTargetList.style.display = 'block';
+    dom.customTargetList.innerHTML = '<h4 style="margin:12px 0 8px;font-size:14px;color:#666;">' + t('custom_target_added') + '</h4>'
+      + customTargets.map((t, i) => ''
+        + '<div class="custom-lang-item" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:#e8f5e9;border-radius:8px;">'
+        + '<span style="font-weight:500;">' + escapeHtml(t.code) + '</span>'
+        + '<div class="level-radio-group" style="display:flex;gap:8px;">'
+        + LEVELS.map(lv => '<label style="font-size:12px;"><input type="radio" name="custom_level_' + i + '" value="' + lv.value + '"'
+          + (t.level === lv.value ? ' checked' : '') + ' onchange="(function(){var tl=window._ailosState.targetLanguages;var ct=tl.find(function(x){return x.code===\'' + escapeHtml(t.code) + '\'&&x.source===\'custom\'});if(ct)ct.level=this.value;})()">'
+          + tLevel(lv.value) + '</label>').join('')
+        + '</div>'
+        + '<button onclick="(function(){window._ailosState.targetLanguages=window._ailosState.targetLanguages.filter(function(x){return !(x.code===\'' + escapeHtml(t.code) + '\'&&x.source===\'custom\')});window._ailosRenderStep3();window._ailosUpdateButtons();})()" style="background:none;border:none;color:#c62828;cursor:pointer;font-size:18px;">&times;</button>'
+        + '</div>'
+      ).join('');
+  }
+
+  /** Escape HTML special characters */
+  function escapeHtml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
   /* ========== API FUNCTIONS ========== */
@@ -1573,6 +1656,42 @@ body {
     }
   });
 
+  // Custom target language button (M1: 目标语言自由输入)
+  dom.btnCustomTarget.addEventListener('click', () => {
+    const inputVal = dom.customTargetInput.value.trim();
+    if (!inputVal) {
+      dom.customTargetInput.focus();
+      showToast(t('error_required_target_lang'), 'warning');
+      return;
+    }
+
+    // Check if already added
+    const exists = state.targetLanguages.find(t => t.code === inputVal && t.source === 'custom');
+    if (exists) {
+      showToast(t('custom_target_exists'), 'warning');
+      return;
+    }
+
+    // Add custom target language
+    state.targetLanguages.push({
+      code: inputVal,
+      level: LEVELS[0].value,
+      source: 'custom',
+    });
+
+    dom.customTargetInput.value = '';
+    dom.customTargetInput.classList.add('has-value');
+    renderStep3();
+    updateStepButtons();
+  });
+
+  dom.customTargetInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      dom.btnCustomTarget.click();
+    }
+  });
+
   // Skip link
   dom.skipLink.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1588,6 +1707,11 @@ body {
 
   /* ========== INITIALIZATION ========== */
   function init() {
+    // M1: 暴露全局函数供 inline onclick 调用
+    window._ailosState = state;
+    window._ailosRenderStep3 = renderStep3;
+    window._ailosUpdateButtons = updateStepButtons;
+
     // Get token
     state.token = getToken();
 

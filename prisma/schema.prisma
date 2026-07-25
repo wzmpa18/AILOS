@@ -80,6 +80,8 @@ model User {
   aiTutorRecords          AiTutorRecord[]
   rewardLedgers           RewardLedger[]
   checkins                Checkin[]
+  dailyLearningPlans      DailyLearningPlan[]
+  speechEvaluations       SpeechEvaluationRecord[]
 
   @@index([phone])
   @@index([email])
@@ -766,4 +768,150 @@ model QuestionBlueprint {
   options    String? // JSON数组，选择题用
   difficulty Int      @default(1)
   createdAt  DateTime @default(now())
+}
+
+// ==================== M0: CourseBlueprint — 课程蓝图 ====================
+
+model CourseBlueprint {
+  id          String   @id @default(uuid())
+  title       String   // 课程标题
+  description String?  // 课程描述
+  languageCode String  // 目标语言代码
+  level       String   @default("beginner") // beginner, intermediate, advanced
+  category    String   @default("general") // general, business, travel, exam
+  duration    Int      @default(30) // 建议学习时长（分钟）
+  modules     Json     @default("[]") // 课程模块结构 JSON
+  status      String   @default("draft") // draft, active, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([languageCode])
+  @@index([level])
+  @@index([status])
+}
+
+// ==================== M1: GLOI Global Language Operating Infrastructure ====================
+
+// language_identities — 语言身份定义（BCP-47 + 扩展元数据）
+model LanguageIdentity {
+  id            String   @id @default(uuid())
+  languageCode  String   @unique // BCP-47 代码，如 zh-CN, ja-JP, en-US
+  displayName   String   // 显示名称
+  nativeName    String   // 本地名称
+  script        String   // 书写系统: Latin, Han, Kana, Hangul, Arabic, Cyrillic
+  direction     String   @default("ltr") // ltr, rtl
+  isCustom      Boolean  @default(false) // 是否为用户自定义语言
+  metadata      Json?    // 扩展元数据（语音、语法特征等）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([script])
+  @@index([isCustom])
+}
+
+// content_language_versions — 内容多语言版本管理
+model ContentLanguageVersion {
+  id                String   @id @default(uuid())
+  contentId         String   // 关联的 LearningContent.id
+  languageCode      String   // 语言代码
+  version           String   @default("1.0.0")
+  translatedContent Json     // 翻译后的内容数据
+  qualityScore      Float    @default(0)
+  reviewedBy        String?  // 审核人（AI或人工）
+  status            String   @default("draft") // draft, reviewed, published
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([contentId, languageCode, version])
+  @@index([contentId])
+  @@index([languageCode])
+  @@index([status])
+}
+
+// translation_memory_entries — 翻译记忆库
+model TranslationMemoryEntry {
+  id              String   @id @default(uuid())
+  sourceLanguage  String   // 源语言
+  targetLanguage  String   // 目标语言
+  sourceText      String   // 源文本
+  targetText      String   // 目标文本
+  context         String?  // 上下文/场景
+  qualityScore    Float    @default(0)
+  reuseCount      Int      @default(0) // 复用次数
+  source          String   @default("AI") // AI, HUMAN, IMPORTED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sourceLanguage, targetLanguage])
+  @@index([sourceText(100)]) // 前缀索引用于模糊匹配
+  @@index([reuseCount])
+}
+
+// terminology_entries — 术语库
+model TerminologyEntry {
+  id              String   @id @default(uuid())
+  languageCode    String   // 语言代码
+  term            String   // 术语
+  definition      String   // 定义
+  partOfSpeech    String?  // 词性
+  domain          String?  // 领域: general, business, medical, tech
+  examples        Json?    // 例句
+  synonyms        Json?    // 同义词
+  status          String   @default("active") // active, deprecated
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([languageCode, term])
+  @@index([languageCode])
+  @@index([domain])
+}
+
+// ==================== M2: 30天口语速成 ====================
+
+// daily_learning_plans — 30天每日学习计划
+model DailyLearningPlan {
+  id              String   @id @default(uuid())
+  userId          String
+  dayNumber       Int      // 第几天 (1-30)
+  planDate        DateTime // 计划日期
+  targetLanguage  String   // 目标语言
+  focusArea       String   // 当日重点: listening, speaking, vocabulary, grammar
+  scene           String   // 场景: shopping, dining, travel, medical, housing, social
+  duration        Int      @default(30) // 建议学习时长（分钟）
+  tasks           Json     @default("[]") // 当日任务列表 JSON
+  contentSnapshot Json?    // 当日生成内容快照
+  status          String   @default("pending") // pending, in_progress, completed, skipped
+  completedAt     DateTime?
+  score           Int?     // 当日得分
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayNumber])
+  @@index([userId, planDate])
+  @@index([status])
+}
+
+// speech_evaluation_records — 口语评测记录
+model SpeechEvaluationRecord {
+  id              String   @id @default(uuid())
+  userId          String
+  planId          String?  // 关联 DailyLearningPlan
+  audioUrl        String?  // 音频文件 URL
+  transcript      String   // 语音转文字内容
+  referenceText   String?  // 参考文本
+  pronunciation   Float    @default(0) // 发音评分 (0-100)
+  fluency         Float    @default(0) // 流利度 (0-100)
+  accuracy        Float    @default(0) // 准确度 (0-100)
+  completeness    Float    @default(0) // 完整度 (0-100)
+  overallScore    Float    @default(0) // 综合评分 (0-100)
+  feedback        Json?    // AI 反馈详情
+  weakWords       Json?    // 薄弱发音词汇
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([planId])
 }

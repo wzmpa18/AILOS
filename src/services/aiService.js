@@ -2,6 +2,7 @@
 // src/services/aiService.js
 // Module 03 Step 1 — AI Gateway 客户端
 // 优先 ai-proxy(:8787)，失败回退直接调混元
+// M0 安全检测：仅允许 aiGateway 调用，业务层直连将触发告警
 // ============================================================
 const axios = require('axios');
 const config = require('../config');
@@ -19,11 +20,22 @@ const REQUEST_TIMEOUT = 30000;
 class AiService {
   /**
    * callHunyuan — 统一 AI 调用入口
+   * M0 安全检测：仅允许 aiGateway 内部调用，业务层直连触发告警
    * @param {Array} messages - [{role:'system'|'user'|'assistant', content:'...'}]
    * @param {Object} opts - { temperature, maxTokens, userId }
    * @returns {Promise<{content:string, usage:{promptTokens,completionTokens,totalTokens}, model:string, source:'proxy'|'direct'}>}
    */
   async callHunyuan(messages, opts = {}) {
+    // M0 安全检测：检查调用来源
+    const stack = new Error().stack || '';
+    const isFromGateway = stack.includes('aiGateway') || stack.includes('AIGateway');
+    if (!isFromGateway) {
+      logger.error('AI_SERVICE_VIOLATION', '检测到非 aiGateway 的直连调用！业务层必须走 aiGateway', {
+        caller: stack.split('\n').slice(1, 4).map(s => s.trim()).join(' | '),
+      });
+      // 生产环境可改为抛出错误阻断：throw new Error('AI_DIRECT_CALL_FORBIDDEN: 必须通过 aiGateway 调用 AI');
+      // 当前阶段仅告警，不阻断，确保兼容性过渡
+    }
     const { temperature = 0.7, maxTokens = DEFAULT_MAX_TOKENS, userId } = opts;
 
     // 1. 优先 ai-proxy

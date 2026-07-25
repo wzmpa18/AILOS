@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30天口语速成 - TRAE</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --green-start: #10b981;
+    --gold-end: #f59e0b;
+    --primary: #3b82f6;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --accent: #8b5cf6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 12px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green-start), var(--gold-end));
+    transition: width 0.5s ease;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: #fff;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-outline:active { transform: scale(0.97); }
+  .task-item {
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .task-item.completed {
+    background: #f0fdf4;
+    border-color: #86efac;
+  }
+  .task-item.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .task-item.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .task-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .score-ring {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+    border: 4px solid;
+    margin: 0 auto;
+  }
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 12px;
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 11px; color: var(--text-secondary); cursor: pointer;
+    padding: 4px 12px; border-radius: 8px; transition: all 0.2s;
+  }
+  .nav-item.active { color: var(--primary); }
+  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+  }
+  .calendar-day {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .calendar-day.today { border-color: var(--primary); background: #eff6ff; }
+  .calendar-day.done { background: #d1fae5; color: #065f46; }
+  .calendar-day.current { background: #fef3c7; }
+  .calendar-day.past { color: #cbd5e1; }
+  .calendar-day.future { color: #94a3b8; }
+  .calendar-day:hover { transform: scale(1.05); }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; color: #fff; padding: 12px 24px;
+    border-radius: 12px; font-size: 14px; z-index: 300;
+    animation: toastIn 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  @keyframes toastIn {
+    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  textarea {
+    width: 100%; border: 2px solid var(--border);
+    border-radius: 12px; padding: 12px;
+    font-size: 15px; resize: vertical; min-height: 80px;
+    font-family: inherit; outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--primary); }
+  .score-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+  }
+  .score-bar {
+    height: 6px; border-radius: 3px; background: #e2e8f0;
+    flex: 1; margin: 0 12px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.5s ease;
+  }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- 确认生成计划弹窗 -->
+<div id="generateModal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div style="font-size:48px;margin-bottom:12px;">&#x1F4DA;</div>
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">生成30天口语学习计划</h3>
+    <p style="color:#64748b;font-size:14px;margin-bottom:20px;">系统将为你自动生成一份为期30天的口语速成计划，包含每日场景、重点训练和SRS复习内容。</p>
+    <div id="modalLoading" style="display:none;margin-bottom:16px;">
+      <div class="spinner"></div>
+      <p style="color:#64748b;font-size:13px;margin-top:8px;">正在生成计划...</p>
+    </div>
+    <div id="modalActions">
+      <button class="btn-primary" onclick="generatePlan()" style="margin-bottom:8px;">立即生成</button>
+      <button class="btn-outline" onclick="closeGenerateModal()" style="width:100%;">稍后再说</button>
+    </div>
+  </div>
+</div>
+
+<!-- 页面主体 -->
+<div id="app">
+  <!-- 加载状态 -->
+  <div id="loadingScreen" style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;">
+    <div class="spinner" style="width:40px;height:40px;border-width:4px;"></div>
+    <p style="color:#64748b;margin-top:16px;font-size:14px;">加载中...</p>
+  </div>
+
+  <!-- 主内容 -->
+  <div id="mainContent" style="display:none;">
+    <!-- 顶部标题栏 -->
+    <div style="padding:20px 16px 12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;">
+      <h1 style="font-size:22px;font-weight:700;">30天口语速成</h1>
+      <p style="font-size:13px;opacity:0.85;margin-top:4px;">每天进步一点点，30天自信开口说英语</p>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="card" style="padding:16px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:600;">学习进度</span>
+        <span style="font-size:14px;font-weight:700;color:#6366f1;" id="progressText">0/30 天</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%;"></div>
+      </div>
+      <p style="font-size:12px;color:#64748b;margin-top:6px;" id="progressSubtext">准备开始你的30天旅程</p>
+    </div>
+
+    <!-- Tab切换标签 -->
+    <div style="display:flex;gap:8px;padding:0 16px;margin-bottom:4px;overflow-x:auto;">
+      <button class="tab-btn active" data-tab="learn" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#3b82f6;color:#fff;white-space:nowrap;">今日学习</button>
+      <button class="tab-btn" data-tab="speak" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#e2e8f0;color:#475569;white-space:nowrap;">口语评测</button>
+      <button class="tab-btn" data-tab="calendar" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#e2e8f0;color:#475569;white-space:nowrap;">30天日历</button>
+    </div>
+
+    <!-- ======== Tab 1: 今日学习 ======== -->
+    <div id="tab-learn" class="tab-content active">
+
+      <!-- 当日学习卡片 -->
+      <div class="card" id="todayCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);display:flex;align-items:center;justify-content:center;font-size:20px;">&#x1F4AC;</div>
+            <div>
+              <span style="font-size:12px;color:#64748b;">第 <b id="currentDay">1</b> 天</span>
+              <h3 id="scenario" style="font-size:16px;font-weight:700;">餐厅点餐</h3>
+            </div>
+          </div>
+          <span id="duration" style="background:#f1f5f9;padding:4px 10px;border-radius:20px;font-size:12px;color:#64748b;">25分钟</span>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;color:#64748b;margin-bottom:4px;">今日重点</div>
+          <p id="focus" style="font-size:14px;font-weight:500;">掌握餐厅点餐常用句型与词汇</p>
+        </div>
+      </div>
+
+      <!-- 任务列表 -->
+      <div class="card" style="padding:16px;">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">今日任务</h3>
+        <div id="taskList">
+          <div class="task-item locked" id="task-1" onclick="startTask(1)">
+            <div class="task-icon" style="background:#eff6ff;">&#x1F3A7;</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">听力练习</div>
+              <div style="font-size:12px;color:#64748b;">场景对话听力训练 · 约10分钟</div>
+            </div>
+            <span id="taskStatus1" style="font-size:12px;color:#94a3b8;">待完成</span>
+          </div>
+          <div class="task-item locked" id="task-2" onclick="startTask(2)">
+            <div class="task-icon" style="background:#fef3c7;">&#x1F916;</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">AI口语对话</div>
+              <div style="font-size:12px;color:#64748b;">AI模拟对话练习 · 约10分钟</div>
+            </div>
+            <span id="taskStatus2" style="font-size:12px;color:#94a3b8;">待完成</span>
+          </div>
+          <div class="task-item locked" id="task-3" onclick="startTask(3)">
+            <div class="task-icon" style="background:#f0fdf4;">&#x1F504;</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">SRS复习</div>
+              <div style="font-size:12px;color:#64748b;">间隔重复记忆复习 · 约5分钟</div>
+            </div>
+            <span id="taskStatus3" style="font-size:12px;color:#94a3b8;">待完成</span>
+          </div>
+        </div>
+        <button class="btn-primary" id="completeBtn" onclick="completeToday()" disabled style="margin-top:16px;">
+          完成当日学习
+        </button>
+      </div>
+    </div>
+
+    <!-- ======== Tab 2: 口语评测 ======== -->
+    <div id="tab-speak" class="tab-content">
+      <div class="card">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:4px;">口语评测</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">输入英文句子，获取发音和流利度评分</p>
+
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#475569;">今日场景例句</div>
+          <div id="sampleSentence" style="background:#f8fafc;border-radius:10px;padding:12px;font-size:15px;color:#1e293b;font-style:italic;border-left:4px solid #3b82f6;">
+            "I'd like to order a coffee and a sandwich, please."
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">输入你的朗读内容</label>
+          <textarea id="speechInput" placeholder="在此输入你朗读的英文句子..."></textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="flex:1;height:44px;background:#f1f5f9;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#94a3b8;">
+            &#x1F3A4; 录音功能开发中...
+          </div>
+        </div>
+
+        <button class="btn-primary" id="evaluateBtn" onclick="submitEvaluation()" style="margin-bottom:8px;">
+          提交评测
+        </button>
+        <p id="evaluateError" style="color:#ef4444;font-size:13px;display:none;"></p>
+      </div>
+
+      <!-- 评分展示 -->
+      <div class="card" id="scoreCard" style="display:none;">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;text-align:center;">评测结果</h3>
+
+        <div style="text-align:center;margin-bottom:20px;">
+          <div class="score-ring" id="overallRing" style="border-color:#6366f1;margin-bottom:8px;">
+            <span id="overallScore">--</span>
+          </div>
+          <span style="font-size:12px;color:#64748b;">综合评分</span>
+        </div>
+
+        <div id="scoreDetails">
+          <div class="score-item">
+            <span style="font-size:13px;width:60px;">&#x1F5E3; 发音</span>
+            <div class="score-bar"><div class="score-bar-fill" id="pronBar" style="width:0%;"></div></div>
+            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="pronScore">--</span>
+          </div>
+          <div class="score-item">
+            <span style="font-size:13px;width:60px;">&#x1F4A8; 流利度</span>
+            <div class="score-bar"><div class="score-bar-fill" id="fluencyBar" style="width:0%;"></div></div>
+            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="fluencyScore">--</span>
+          </div>
+          <div class="score-item">
+            <span style="font-size:13px;width:60px;">&#x1F3AF; 准确度</span>
+            <div class="score-bar"><div class="score-bar-fill" id="accuracyBar" style="width:0%;"></div></div>
+            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="accuracyScore">--</span>
+          </div>
+          <div class="score-item">
+            <span style="font-size:13px;width:60px;">&#x2705; 完整度</span>
+            <div class="score-bar"><div class="score-bar-fill" id="completenessBar" style="width:0%;"></div></div>
+            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="completenessScore">--</span>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-top:16px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">AI反馈</div>
+          <p id="aiFeedback" style="font-size:13px;color:#334155;"></p>
+        </div>
+      </div>
+
+      <!-- 评测历史 -->
+      <div class="card" id="historyCard" style="display:none;">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">评测历史</h3>
+        <div id="historyList" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- ======== Tab 3: 30天日历 ======== -->
+    <div id="tab-calendar" class="tab-content">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <button class="btn-outline" onclick="changeCalendarMonth(-1)" style="padding:6px 14px;font-size:20px;width:auto;border:none;background:transparent;color:#64748b;">&#x25C0;</button>
+          <span id="calendarMonth" style="font-size:15px;font-weight:700;">2026年7月</span>
+          <button class="btn-outline" onclick="changeCalendarMonth(1)" style="padding:6px 14px;font-size:20px;width:auto;border:none;background:transparent;color:#64748b;">&#x25B6;</button>
+        </div>
+        <div class="calendar-grid" style="margin-bottom:8px;">
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">日</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">一</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">二</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">三</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">四</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">五</span>
+          <span style="font-size:11px;color:#94a3b8;font-weight:600;">六</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;font-size:12px;color:#64748b;">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d1fae5;margin-right:4px;"></span>已完成</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fef3c7;margin-right:4px;"></span>进行中</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e2e8f0;margin-right:4px;"></span>未开始</span>
+        </div>
+      </div>
+
+      <!-- 选中日期的详情 -->
+      <div class="card" id="dayDetail" style="display:none;">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;" id="detailDayTitle">第 1 天</h3>
+        <div id="detailContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<nav class="nav-bar" id="bottomNav">
+  <div class="nav-item active" data-page="learn" onclick="switchPage('learn')">
+    <span class="nav-icon">&#x1F3E0;</span>
+    <span>首页</span>
+  </div>
+  <div class="nav-item" data-page="learn" onclick="switchPage('learn')">
+    <span class="nav-icon">&#x1F4D6;</span>
+    <span>学习</span>
+  </div>
+  <div class="nav-item" data-page="speak" onclick="switchPage('speak')">
+    <span class="nav-icon">&#x1F916;</span>
+    <span>AI对话</span>
+  </div>
+  <div class="nav-item" data-page="calendar" onclick="switchPage('calendar')">
+    <span class="nav-icon">&#x1F504;</span>
+    <span>复习</span>
+  </div>
+  <div class="nav-item" data-page="profile" onclick="switchPage('profile')">
+    <span class="nav-icon">&#x1F464;</span>
+    <span>我的</span>
+  </div>
+</nav>
+
+<script>
+// ============ 全局状态 ============
+const STATE = {
+  plan: null,           // 30天计划数据
+  currentDay: 1,        // 当前第几天
+  completedDays: [],    // 已完成的天数
+  taskStatus: {1:false, 2:false, 3:false}, // 当日任务状态
+  speechHistory: [],    // 评测历史
+  todayCompleted: false,
+  calendarMonth: 6,     // 0-indexed: 6=July
+  calendarYear: 2026,
+  currentTab: 'learn',
+  currentPage: 'learn',
+};
+
+const SCENARIOS = [
+  { scenario: '餐厅点餐', focus: '掌握餐厅点餐常用句型与词汇', duration: '25分钟', sample: "I'd like to order a coffee and a sandwich, please." },
+  { scenario: '酒店入住', focus: '学会酒店登记入住的对话流程', duration: '25分钟', sample: "I have a reservation under the name of Smith." },
+  { scenario: '问路指路', focus: '掌握问路和指路的核心表达', duration: '25分钟', sample: "Excuse me, could you tell me how to get to the museum?" },
+  { scenario: '购物交流', focus: '学会购物时的讨价还价和尺码询问', duration: '25分钟', sample: "How much does this sweater cost? Do you have it in a larger size?" },
+  { scenario: '机场登机', focus: '熟悉机场办理登机手续的英语表达', duration: '30分钟', sample: "I'd like to check in for my flight to New York." },
+  { scenario: '电话预约', focus: '掌握电话预约的礼貌用语和流程', duration: '25分钟', sample: "I'd like to make an appointment for next Tuesday, please." },
+  { scenario: '看病就医', focus: '学会描述症状和与医生沟通', duration: '30分钟', sample: "I've been having a headache and a sore throat for three days." },
+  { scenario: '面试英语', focus: '掌握英文面试的自我介绍和常见问题', duration: '30分钟', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
+  { scenario: '商务会议', focus: '学会商务会议中的表达和讨论技巧', duration: '30分钟', sample: "I'd like to propose a new strategy for our marketing campaign." },
+  { scenario: '社交聚会', focus: '掌握社交场合的闲聊和自我介绍', duration: '25分钟', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
+  { scenario: '银行办事', focus: '学会银行开户和办理业务的英语', duration: '25分钟', sample: "I'd like to open a savings account and deposit some money." },
+  { scenario: '租房看房', focus: '掌握租房相关的词汇和对话', duration: '25分钟', sample: "How much is the monthly rent? Are utilities included?" },
+  { scenario: '旅游问讯', focus: '学会在旅游信息中心获取帮助', duration: '25分钟', sample: "Could you recommend some popular tourist attractions in this city?" },
+  { scenario: '公共交通', focus: '掌握乘坐公交地铁的英语表达', duration: '25分钟', sample: "Which bus should I take to get to the city center?" },
+  { scenario: '快递邮寄', focus: '学会寄快递和邮寄包裹的英语', duration: '25分钟', sample: "I'd like to send this package to China by air mail." },
+  { scenario: '理发美发', focus: '掌握理发店与发型师沟通的英语', duration: '25分钟', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
+  { scenario: '电影娱乐', focus: '学会讨论电影和娱乐话题', duration: '25分钟', sample: "What kind of movies do you like? I'm a big fan of action films." },
+  { scenario: '健身运动', focus: '掌握健身和运动相关的英语表达', duration: '25分钟', sample: "I go to the gym three times a week. How about you?" },
+  { scenario: '环保话题', focus: '学会用英语讨论环保和可持续发展', duration: '25分钟', sample: "I think we should all do our part to reduce plastic waste." },
+  { scenario: '科技趋势', focus: '掌握科技相关话题的英语讨论', duration: '30分钟', sample: "Artificial intelligence is changing the way we work and live." },
+  { scenario: '节日庆祝', focus: '学会用英语表达节日祝福和习俗', duration: '25分钟', sample: "How do you usually celebrate the New Year in your country?" },
+  { scenario: '宠物话题', focus: '掌握有关宠物和动物的话题表达', duration: '25分钟', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
+  { scenario: '烹饪美食', focus: '学会用英语描述烹饪步骤和美食', duration: '30分钟', sample: "First, you need to chop the vegetables and then fry them in a pan." },
+  { scenario: '紧急情况', focus: '掌握紧急情况下的英语求助表达', duration: '30分钟', sample: "Help! I need an ambulance. There's been an accident." },
+  { scenario: '自我介绍', focus: '完善自我介绍，提升表达自信', duration: '25分钟', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
+  { scenario: '兴趣爱好', focus: '学会用英语深入讨论兴趣爱好', duration: '25分钟', sample: "In my free time, I enjoy reading books and playing the guitar." },
+  { scenario: '学术讨论', focus: '掌握学术场景下的英语讨论技巧', duration: '30分钟', sample: "According to the research, there is a strong correlation between these two variables." },
+  { scenario: '谈判技巧', focus: '学会商务谈判中的英语表达', duration: '30分钟', sample: "I believe we can find a solution that works for both parties." },
+  { scenario: '文化差异', focus: '学会讨论文化差异和跨文化交际', duration: '25分钟', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
+  { scenario: '总结回顾', focus: '全面回顾30天学习成果，模拟综合对话', duration: '30分钟', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
+];
+
+// ============ 工具函数 ============
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg, duration = 2500) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, duration);
+}
+
+function showLoading(show) {
+  $('loadingScreen').style.display = show ? 'flex' : 'none';
+  $('mainContent').style.display = show ? 'none' : 'block';
+}
+
+// ============ Mock API 函数 ============
+function getPlan() {
+  const raw = localStorage.getItem('speaking_plan');
+  if (raw) {
+    try { return JSON.parse(raw); } catch(e) { return null; }
+  }
+  return null;
+}
+
+function savePlan(plan) {
+  localStorage.setItem('speaking_plan', JSON.stringify(plan));
+}
+
+function getProgress() {
+  const raw = localStorage.getItem('speaking_progress');
+  if (raw) {
+    try { return JSON.parse(raw); } catch(e) { return { completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] }; }
+  }
+  return { completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] };
+}
+
+function saveProgress(progress) {
+  localStorage.setItem('speaking_progress', JSON.stringify(progress));
+}
+
+function getSpeechHistory() {
+  const raw = localStorage.getItem('speaking_history');
+  if (raw) {
+    try { return JSON.parse(raw); } catch(e) { return []; }
+  }
+  return [];
+}
+
+function saveSpeechHistory(history) {
+  localStorage.setItem('speaking_history', JSON.stringify(history));
+}
+
+function generate30DayPlan() {
+  const plan = [];
+  const today = new Date();
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const idx = i % SCENARIOS.length;
+    plan.push({
+      day: i + 1,
+      date: d.toISOString().split('T')[0],
+      scenario: SCENARIOS[idx].scenario,
+      focus: SCENARIOS[idx].focus,
+      duration: SCENARIOS[idx].duration,
+      sample: SCENARIOS[idx].sample,
+      tasks: [
+        { id: 1, name: '听力练习', icon: '🎧', desc: '场景对话听力训练', time: '约10分钟' },
+        { id: 2, name: 'AI口语对话', icon: '🤖', desc: 'AI模拟对话练习', time: '约10分钟' },
+        { id: 3, name: 'SRS复习', icon: '🔄', desc: '间隔重复记忆复习', time: '约5分钟' },
+      ]
+    });
+  }
+  return plan;
+}
+
+// ============ 初始化 ============
+async function init() {
+  showLoading(true);
+
+  // 模拟API延迟
+  await sleep(600);
+
+  const plan = getPlan();
+  const progress = getProgress();
+  const speechHistory = getSpeechHistory();
+
+  STATE.plan = plan;
+  STATE.completedDays = progress.completedDays || [];
+  STATE.speechHistory = speechHistory || [];
+
+  if (plan && plan.length > 0) {
+    // 计算当前天数
+    const today = new Date().toISOString().split('T')[0];
+    let currentDay = 1;
+    for (let i = 0; i < plan.length; i++) {
+      if (plan[i].date <= today) {
+        currentDay = plan[i].day;
+      }
+    }
+    // 如果所有天都过了，取最后一天
+    if (currentDay > 30) currentDay = 30;
+    STATE.currentDay = currentDay;
+
+    // 检查当日是否已完成
+    const todayKey = 'day_' + currentDay;
+    STATE.todayCompleted = (progress.completedDays || []).includes(currentDay);
+    STATE.taskStatus = (progress.taskStatus && progress.taskStatus[todayKey]) || {1:false, 2:false, 3:false};
+  } else {
+    STATE.currentDay = 1;
+    STATE.todayCompleted = false;
+    STATE.taskStatus = {1:false, 2:false, 3:false};
+  }
+
+  showLoading(false);
+
+  if (!plan || plan.length === 0) {
+    showGenerateModal();
+  }
+
+  renderAll();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============ 弹窗 ============
+function showGenerateModal() {
+  $('generateModal').style.display = 'flex';
+  $('modalLoading').style.display = 'none';
+  $('modalActions').style.display = 'block';
+}
+
+function closeGenerateModal() {
+  $('generateModal').style.display = 'none';
+}
+
+async function generatePlan() {
+  $('modalLoading').style.display = 'block';
+  $('modalActions').style.display = 'none';
+
+  await sleep(1200);
+
+  const plan = generate30DayPlan();
+  savePlan(plan);
+  STATE.plan = plan;
+  STATE.currentDay = 1;
+  STATE.completedDays = [];
+  STATE.todayCompleted = false;
+  STATE.taskStatus = {1:false, 2:false, 3:false};
+  STATE.speechHistory = [];
+  saveProgress({ completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] });
+  saveSpeechHistory([]);
+
+  $('generateModal').style.display = 'none';
+  showToast('30天学习计划已生成！开始你的口语之旅吧~');
+  renderAll();
+}
+
+// ============ 渲染 ============
+function renderAll() {
+  if (!STATE.plan || STATE.plan.length === 0) return;
+  renderProgress();
+  renderTodayCard();
+  renderTasks();
+  renderCalendar();
+  renderSpeechHistory();
+  updateTabStyles();
+}
+
+function renderProgress() {
+  const completed = STATE.completedDays.length;
+  const pct = Math.round((completed / 30) * 100);
+  $('progressText').textContent = completed + '/30 天';
+  $('progressFill').style.width = pct + '%';
+  if (completed === 0) {
+    $('progressSubtext').textContent = '准备开始你的30天旅程';
+  } else if (completed >= 30) {
+    $('progressSubtext').textContent = '恭喜！你已完成全部30天学习！';
+  } else {
+    $('progressSubtext').textContent = '已完成 ' + completed + ' 天，继续加油！';
+  }
+}
+
+function renderTodayCard() {
+  const day = STATE.currentDay;
+  const planDay = STATE.plan[day - 1];
+  if (!planDay) return;
+  $('currentDay').textContent = day;
+  $('scenario').textContent = planDay.scenario;
+  $('focus').textContent = planDay.focus;
+  $('duration').textContent = planDay.duration;
+  $('sampleSentence').innerHTML = '"' + planDay.sample + '"';
+}
+
+function renderTasks() {
+  const day = STATE.currentDay;
+  const todayKey = 'day_' + day;
+  const tasks = STATE.taskStatus;
+
+  // 按顺序解锁：第一个未完成的任务为active，后续为locked
+  let nextLocked = false;
+  for (let i = 1; i <= 3; i++) {
+    const el = $('task-' + i);
+    const statusEl = $('taskStatus' + i);
+    el.classList.remove('completed', 'active', 'locked');
+    statusEl.textContent = '待完成';
+    statusEl.style.color = '#94a3b8';
+
+    if (tasks[i]) {
+      el.classList.add('completed');
+      statusEl.textContent = '已完成';
+      statusEl.style.color = '#10b981';
+    } else if (!nextLocked) {
+      el.classList.add('active');
+      statusEl.textContent = '进行中';
+      statusEl.style.color = '#3b82f6';
+      nextLocked = true;
+    } else {
+      el.classList.add('locked');
+      statusEl.style.color = '#cbd5e1';
+    }
+  }
+
+  // 更新完成按钮
+  const allDone = tasks[1] && tasks[2] && tasks[3];
+  $('completeBtn').disabled = !allDone || STATE.todayCompleted;
+  if (STATE.todayCompleted) {
+    $('completeBtn').textContent = '今日已完成';
+    $('completeBtn').style.background = '#10b981';
+  } else {
+    $('completeBtn').textContent = '完成当日学习';
+    $('completeBtn').style.background = 'linear-gradient(135deg, #3b82f6, #6366f1)';
+  }
+}
+
+function renderCalendar() {
+  const grid = $('calendarGrid');
+  const year = STATE.calendarYear;
+  const month = STATE.calendarMonth;
+
+  $('calendarMonth').textContent = year + '年' + (month + 1) + '月';
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  let html = '';
+  // 填充空白
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dateStr = date.toISOString().split('T')[0];
+    let cls = 'calendar-day';
+
+    // 找到对应计划天
+    const planDay = STATE.plan ? STATE.plan.find(p => p.date === dateStr) : null;
+    const dayNum = planDay ? planDay.day : null;
+
+    if (STATE.completedDays.includes(dayNum)) {
+      cls += ' done';
+    } else if (dayNum === STATE.currentDay && !STATE.todayCompleted) {
+      cls += ' current';
+    } else if (dateStr < todayStr) {
+      cls += ' past';
+    } else {
+      cls += ' future';
+    }
+    if (dateStr === todayStr) {
+      cls += ' today';
+    }
+
+    const title = dayNum ? '第' + dayNum + '天: ' + (planDay ? planDay.scenario : '') : '';
+    html += '<div class="' + cls + '" title="' + title + '" onclick="selectCalendarDay(' + (dayNum || 0) + ')">' + d + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function selectCalendarDay(dayNum) {
+  if (!dayNum || dayNum < 1 || dayNum > 30) return;
+  const planDay = STATE.plan[dayNum - 1];
+  if (!planDay) return;
+
+  const detail = $('dayDetail');
+  const title = $('detailDayTitle');
+  const content = $('detailContent');
+
+  title.textContent = '第 ' + dayNum + ' 天 - ' + planDay.scenario;
+  const isCompleted = STATE.completedDays.includes(dayNum);
+  const isCurrent = dayNum === STATE.currentDay;
+
+  let statusBadge = '';
+  if (isCompleted) statusBadge = '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:12px;">已完成</span>';
+  else if (isCurrent) statusBadge = '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;">进行中</span>';
+  else statusBadge = '<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:10px;font-size:12px;">未开始</span>';
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">${statusBadge} <span style="font-size:13px;color:#64748b;">${planDay.duration}</span></div>
+    <p style="font-size:13px;color:#475569;margin-bottom:8px;"><b>重点：</b>${planDay.focus}</p>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px;font-size:13px;color:#334155;font-style:italic;">
+      "${planDay.sample}"
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:#64748b;">
+      日期：${planDay.date}
+    </div>
+  `;
+  detail.style.display = 'block';
+}
+
+function changeCalendarMonth(delta) {
+  STATE.calendarMonth += delta;
+  if (STATE.calendarMonth < 0) { STATE.calendarMonth = 11; STATE.calendarYear--; }
+  if (STATE.calendarMonth > 11) { STATE.calendarMonth = 0; STATE.calendarYear++; }
+  renderCalendar();
+}
+
+function renderSpeechHistory() {
+  const history = STATE.speechHistory;
+  const card = $('historyCard');
+  const list = $('historyList');
+
+  if (history.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  let html = '';
+  history.slice().reverse().forEach((h, i) => {
+    html += `
+      <div style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#64748b;">${h.date || ''}</span>
+          <span style="font-weight:700;color:#6366f1;">${h.overall}分</span>
+        </div>
+        <div style="color:#94a3b8;font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">"${h.text}"</div>
+        <div style="display:flex;gap:8px;margin-top:4px;font-size:11px;color:#94a3b8;">
+          <span>发音:${h.pronunciation}</span><span>流利:${h.fluency}</span><span>准确:${h.accuracy}</span><span>完整:${h.completeness}</span>
+        </div>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+}
+
+function updateTabStyles() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tab = btn.dataset.tab;
+    if (tab === STATE.currentTab) {
+      btn.style.background = '#3b82f6';
+      btn.style.color = '#fff';
+    } else {
+      btn.style.background = '#e2e8f0';
+      btn.style.color = '#475569';
+    }
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  const activeTab = $('tab-' + STATE.currentTab);
+  if (activeTab) activeTab.classList.add('active');
+}
+
+// ============ 任务操作 ============
+async function startTask(taskId) {
+  if (STATE.todayCompleted) {
+    showToast('今日学习已完成，无法重复操作');
+    return;
+  }
+  if (STATE.taskStatus[taskId]) {
+    showToast('该任务已完成');
+    return;
+  }
+  // 检查前序任务
+  if (taskId > 1 && !STATE.taskStatus[taskId - 1]) {
+    showToast('请先完成前一个任务');
+    return;
+  }
+
+  const taskEl = $('task-' + taskId);
+  if (taskEl.classList.contains('locked')) {
+    showToast('请按顺序完成任务');
+    return;
+  }
+
+  const taskNames = ['', '听力练习', 'AI口语对话', 'SRS复习'];
+  showToast('正在进入「' + taskNames[taskId] + '」...');
+
+  // 模拟任务进行中
+  await sleep(800);
+
+  // 标记任务完成
+  STATE.taskStatus[taskId] = true;
+  const todayKey = 'day_' + STATE.currentDay;
+  const progress = getProgress();
+  if (!progress.taskStatus) progress.taskStatus = {};
+  progress.taskStatus[todayKey] = STATE.taskStatus;
+  saveProgress(progress);
+
+  renderTasks();
+  showToast('「' + taskNames[taskId] + '」已完成！');
+}
+
+// ============ 完成当日 ============
+async function completeToday() {
+  if (STATE.todayCompleted) {
+    showToast('今日已完成');
+    return;
+  }
+  if (!STATE.taskStatus[1] || !STATE.taskStatus[2] || !STATE.taskStatus[3]) {
+    showToast('请先完成所有任务');
+    return;
+  }
+
+  $('completeBtn').disabled = true;
+  $('completeBtn').textContent = '提交中...';
+
+  await sleep(1000);
+
+  STATE.todayCompleted = true;
+  if (!STATE.completedDays.includes(STATE.currentDay)) {
+    STATE.completedDays.push(STATE.currentDay);
+  }
+  const progress = getProgress();
+  progress.completedDays = STATE.completedDays;
+  progress.todayCompleted = true;
+  const todayKey = 'day_' + STATE.currentDay;
+  if (!progress.taskStatus) progress.taskStatus = {};
+  progress.taskStatus[todayKey] = STATE.taskStatus;
+  saveProgress(progress);
+
+  renderAll();
+  showToast('今日学习完成！太棒了！');
+
+  // 如果全部完成
+  if (STATE.completedDays.length >= 30) {
+    setTimeout(() => {
+      showToast('恭喜！你已完成全部30天口语速成学习！');
+    }, 1500);
+  }
+}
+
+// ============ 口语评测 ============
+async function submitEvaluation() {
+  const input = $('speechInput').value.trim();
+  const errEl = $('evaluateError');
+
+  if (!input) {
+    errEl.textContent = '请输入朗读内容';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const btn = $('evaluateBtn');
+  btn.disabled = true;
+  btn.textContent = '评测中...';
+
+  await sleep(1500);
+
+  // 模拟评分
+  const pronunciation = Math.floor(Math.random() * 20) + 75;
+  const fluency = Math.floor(Math.random() * 20) + 70;
+  const accuracy = Math.floor(Math.random() * 20) + 72;
+  const completeness = Math.floor(Math.random() * 15) + 80;
+  const overall = Math.round((pronunciation + fluency + accuracy + completeness) / 4);
+
+  // 显示评分
+  $('scoreCard').style.display = 'block';
+  $('overallScore').textContent = overall;
+  $('pronBar').style.width = pronunciation + '%';
+  $('pronScore').textContent = pronunciation;
+  $('fluencyBar').style.width = fluency + '%';
+  $('fluencyScore').textContent = fluency;
+  $('accuracyBar').style.width = accuracy + '%';
+  $('accuracyScore').textContent = accuracy;
+  $('completenessBar').style.width = completeness + '%';
+  $('completenessScore').textContent = completeness;
+
+  // 综合分颜色
+  const ring = $('overallRing');
+  if (overall >= 85) ring.style.borderColor = '#10b981';
+  else if (overall >= 70) ring.style.borderColor = '#f59e0b';
+  else ring.style.borderColor = '#ef4444';
+
+  // AI反馈
+  const feedbacks = [
+    '发音清晰，语调自然，继续保持！注意个别单词的重音位置。',
+    '整体表现不错，流利度有待提升，建议多练习连读技巧。',
+    '准确度很高！可以尝试更复杂的句式来表达。',
+    '表达完整，发音标准，语速适中，表现优秀！',
+    '基础扎实，建议在语调变化上多加练习，让表达更生动。',
+  ];
+  $('aiFeedback').textContent = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+
+  // 保存历史
+  const record = {
+    date: new Date().toISOString().split('T')[0],
+    text: input.substring(0, 100),
+    pronunciation, fluency, accuracy, completeness, overall,
+    day: STATE.currentDay,
+  };
+  STATE.speechHistory.push(record);
+  saveSpeechHistory(STATE.speechHistory);
+  renderSpeechHistory();
+
+  btn.disabled = false;
+  btn.textContent = '提交评测';
+  showToast('评测完成！综合评分：' + overall + '分');
+
+  // 滚动到评分区
+  $('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ============ 页面切换 ============
+function switchPage(page) {
+  STATE.currentPage = page;
+  if (page === 'profile') {
+    // 简单个人信息页
+    STATE.currentTab = 'profile';
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    // 在learn区域显示个人信息
+    const profileHtml = `
+      <div class="card" style="text-align:center;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;color:#fff;">&#x1F464;</div>
+        <h3 style="font-size:18px;font-weight:700;">口语学习者</h3>
+        <p style="font-size:13px;color:#64748b;">30天口语速成计划</p>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:#64748b;line-height:2;">
+          <div style="display:flex;justify-content:space-between;"><span>已完成天数</span><span style="font-weight:600;color:#1e293b;">${STATE.completedDays.length} / 30</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>评测次数</span><span style="font-weight:600;color:#1e293b;">${STATE.speechHistory.length}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>平均评分</span><span style="font-weight:600;color:#1e293b;">${STATE.speechHistory.length > 0 ? Math.round(STATE.speechHistory.reduce((a,b) => a+b.overall, 0) / STATE.speechHistory.length) : '--'}分</span></div>
+        </div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <button class="btn-outline" onclick="resetPlan()" style="width:100%;color:#ef4444;border-color:#ef4444;">重置学习计划</button>
+      </div>
+    `;
+    // 隐藏所有tab content，显示profile
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    let profileDiv = $('tab-profile');
+    if (!profileDiv) {
+      profileDiv = document.createElement('div');
+      profileDiv.id = 'tab-profile';
+      profileDiv.className = 'tab-content';
+      $('app').querySelector('#mainContent').appendChild(profileDiv);
+    }
+    profileDiv.innerHTML = profileHtml;
+    profileDiv.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => { b.style.background = '#e2e8f0'; b.style.color = '#475569'; });
+  } else {
+    STATE.currentTab = page;
+    updateTabStyles();
+    if (page === 'calendar') renderCalendar();
+    if (page === 'speak') renderSpeechHistory();
+  }
+
+  // 更新底部导航
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+}
+
+function resetPlan() {
+  if (confirm('确定要重置所有学习进度吗？此操作不可恢复。')) {
+    localStorage.removeItem('speaking_plan');
+    localStorage.removeItem('speaking_progress');
+    localStorage.removeItem('speaking_history');
+    STATE.plan = null;
+    STATE.completedDays = [];
+    STATE.taskStatus = {1:false, 2:false, 3:false};
+    STATE.todayCompleted = false;
+    STATE.speechHistory = [];
+    STATE.currentDay = 1;
+    showGenerateModal();
+    renderAll();
+    switchPage('learn');
+    showToast('计划已重置');
+  }
+}
+
+// ============ Tab切换点击 ============
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('tab-btn')) {
+    const tab = e.target.dataset.tab;
+    STATE.currentTab = tab;
+    STATE.currentPage = tab;
+    updateTabStyles();
+    if (tab === 'calendar') renderCalendar();
+    if (tab === 'speak') renderSpeechHistory();
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === tab);
+    });
+  }
+});
+
+// ============ 启动 ============
+init();
+
+// 修复：如果用户关闭弹窗但没有计划，渲染空状态
+setTimeout(() => {
+  if (!STATE.plan || STATE.plan.length === 0) {
+    showLoading(false);
+    // 显示一个空状态
+    $('mainContent').style.display = 'block';
+    $('mainContent').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:64px;margin-bottom:16px;">&#x1F4AD;</div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">还没有学习计划</h3>
+        <p style="color:#64748b;font-size:14px;margin-bottom:24px;">点击下方按钮生成你的30天口语速成计划</p>
+        <button class="btn-primary" onclick="showGenerateModal();generatePlan();" style="max-width:280px;margin:0 auto;">生成学习计划</button>
+      </div>
+    `;
+  }
+}, 2000);
+</script>
+</body>
+</html>

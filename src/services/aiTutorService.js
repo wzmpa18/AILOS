@@ -1,9 +1,10 @@
 // ============================================================
 // src/services/aiTutorService.js
 // Module 03 Step 4 — AI 导师对话记录 + 混元 AI 回复
+// M0 接线：统一走 aiGateway，禁止直连混元
 // ============================================================
 const prisma = require('../config/database');
-const aiService = require('./aiService');
+const { getAIGateway } = require('./aiGateway');
 const logger = require('../utils/logger');
 
 class AiTutorService {
@@ -91,16 +92,19 @@ class AiTutorService {
 3. 保持对话自然、鼓励性，像朋友一样交流
 4. 每次回复控制在200字以内`;
 
-    // 4. 调用 AI
+    // 4. 调用 AI（走 aiGateway）
     const aiMessages = [
       { role: 'system', content: systemPrompt },
       ...messages.slice(-20),
     ];
 
-    const result = await aiService.callHunyuan(aiMessages, {
+    const aiGateway = getAIGateway();
+    const result = await aiGateway.chatWithMessages(aiMessages, {
       userId,
       temperature: 0.7,
       maxTokens: 400,
+      languageContext: { nativeLang, targetLang, explanationLanguage: nativeLang, primaryTargetLanguage: targetLang },
+      scene: 'conversation',
     });
 
     // 5. 保存 AI 回复

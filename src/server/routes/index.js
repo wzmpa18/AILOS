@@ -39,4 +39,16 @@ router.use('/membership', require('./membership'));
 // AI (Module 03 — AI 对话引擎)
 router.use('/ai', require('./ai'));
 
+// Daily Plan (Phase 2 — 30天口语速成)
+router.use('/plan', require('./dailyPlan'));
+
+// Speech Evaluate (Phase 2 — 口语评测)
+router.use('/speech', require('./speechEvaluate'));
+
+// Blueprint (Phase 3 — QuestionBlueprint / CourseBlueprint AI 生成)
+router.use('/blueprint', require('./blueprint'));
+
+// Learn (Phase 3 — 学习内容动态 API)
+router.use('/learn', require('./learn'));
+
 module.exports = router;

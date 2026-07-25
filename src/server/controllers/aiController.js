@@ -1,9 +1,9 @@
 // ============================================================
 // src/server/controllers/aiController.js
 // Module 03 — AI 对话引擎控制器
-// 通过 aiService 统一调用混元（ai-proxy 优先，回退直连）
+// M0 接线：所有 AI 调用统一走 aiGateway，禁止直连混元
 // ============================================================
-const aiService = require('../../services/aiService');
+const { getAIGateway } = require('../../services/aiGateway');
 const aiQuotaService = require('../../services/aiQuotaService');
 const logger = require('../../utils/logger');
 const prisma = require('../../config/database');
@@ -44,12 +44,13 @@ async function chat(req, res) {
 }`;
 
     const startTime = Date.now();
-    const result = await aiService.callHunyuan(
+    const aiGateway = getAIGateway();
+    const result = await aiGateway.chatWithMessages(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userInput },
       ],
-      { userId: req.userId, temperature: 0.7, maxTokens: 500 }
+      { userId: req.userId, temperature: 0.7, maxTokens: 500, languageContext: { nativeLang, targetLang, userLevel }, scene: 'conversation' }
     );
 
     const latency = Date.now() - startTime;
@@ -165,12 +166,13 @@ async function translate(req, res) {
 
     const systemPrompt = `你是一个专业翻译引擎。将用户输入的文本翻译成${tgt}。只返回翻译结果，不要添加任何解释。`;
 
-    const result = await aiService.callHunyuan(
+    const aiGateway = getAIGateway();
+    const result = await aiGateway.chatWithMessages(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: text },
       ],
-      { userId: req.userId, temperature: 0.3, maxTokens: 300 }
+      { userId: req.userId, temperature: 0.3, maxTokens: 300, languageContext: { primaryTargetLanguage: tgt, explanationLanguage: src }, scene: 'translate' }
     );
 
     res.json({
@@ -209,12 +211,13 @@ async function grammarCheck(req, res) {
   "summary": "总体评价"
 }`;
 
-    const result = await aiService.callHunyuan(
+    const aiGateway = getAIGateway();
+    const result = await aiGateway.chatWithMessages(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: text },
       ],
-      { userId: req.userId, temperature: 0.3, maxTokens: 400 }
+      { userId: req.userId, temperature: 0.3, maxTokens: 400, languageContext: { primaryTargetLanguage: lang, explanationLanguage: 'zh-CN' }, scene: 'grammar_check' }
     );
 
     let parsed;
@@ -258,12 +261,13 @@ async function generateExercise(req, res) {
     const systemPrompt = `你是一个语言学习出题引擎。生成${cnt}道${lang}的${exType}练习题，难度为${lvl}。返回JSON数组格式：
 [{"question": "题目", "options": ["A", "B", "C", "D"], "answer": "正确答案", "explanation": "解释"}]`;
 
-    const result = await aiService.callHunyuan(
+    const aiGateway = getAIGateway();
+    const result = await aiGateway.chatWithMessages(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `生成${cnt}道${exType}练习题` },
       ],
-      { userId: req.userId, temperature: 0.7, maxTokens: 800 }
+      { userId: req.userId, temperature: 0.7, maxTokens: 800, languageContext: { primaryTargetLanguage: lang, explanationLanguage: 'zh-CN' }, scene: 'exercise_generate' }
     );
 
     let exercises;
