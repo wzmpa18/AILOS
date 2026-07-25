@@ -122,10 +122,69 @@
     }
   }
 
-  function autoRenderNav() { renderNav(detectActive()); }
+  // ===== 自动注入底部导航 + 左上角返回键（覆盖所有引入本文件的页面）=====
+  var NAV_CSS =
+    '.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid #E5E7EB;display:flex;justify-content:space-around;align-items:center;z-index:1000;box-shadow:0 -2px 10px rgba(0,0,0,.05);padding-bottom:env(safe-area-inset-bottom,0)}' +
+    '.bottom-nav .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;cursor:pointer;text-decoration:none;color:#9CA3AF;font-size:11px;font-weight:500;border:none;background:none;min-width:48px;position:relative}' +
+    '.bottom-nav .nav-item .nav-icon{font-size:22px;line-height:1}' +
+    '.bottom-nav .nav-item.active{color:#4F46E5;font-weight:700}' +
+    '.bottom-nav .nav-item.active::before{content:"";position:absolute;top:0;width:24px;height:3px;background:#4F46E5;border-radius:0 0 3px 3px}' +
+    'body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0) + 20px)}' +
+    '.ailos-back-btn{position:fixed;top:calc(env(safe-area-inset-top,0) + 12px);left:12px;z-index:2000;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:20px;color:#4F46E5;text-decoration:none;cursor:pointer;border:1px solid rgba(0,0,0,.06)}' +
+    '.ailos-back-btn:active{transform:scale(.94)}';
+
+  function injectStyle() {
+    if (document.getElementById('ailosNavStyle')) return;
+    var s = document.createElement('style');
+    s.id = 'ailosNavStyle';
+    s.textContent = NAV_CSS;
+    document.head.appendChild(s);
+  }
+
+  function ensureNav() {
+    if (document.querySelector('.bottom-nav')) { renderNav(detectActive()); return; }
+    var nav = document.createElement('nav');
+    nav.className = 'bottom-nav';
+    nav.id = 'bottomNav';
+    document.body.appendChild(nav);
+    renderNav(detectActive());
+  }
+
+  function isRootPage() {
+    var p = location.pathname;
+    return p.endsWith('/home') || p.endsWith('home.html') ||
+           p.endsWith('/') || p.indexOf('landing') >= 0 ||
+           p.indexOf('guest') >= 0;
+  }
+
+  function hasBackAffordance() {
+    return !!document.querySelector('.nav-back,.back-link,.header-back,.back-btn,.chat-back,a[title="返回"],[data-i18n*="back"]');
+  }
+
+  function ensureBackBtn() {
+    if (isRootPage()) return;
+    if (hasBackAffordance()) return;
+    if (document.getElementById('ailosBackBtn')) return;
+    var a = document.createElement('a');
+    a.id = 'ailosBackBtn';
+    a.className = 'ailos-back-btn';
+    a.innerHTML = '&#8592;';
+    a.setAttribute('aria-label', '返回上一级');
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.history.length > 1 && document.referrer && document.referrer.indexOf(location.origin) === 0) {
+        history.back();
+      } else {
+        location.href = '/xuewaiyu/home';
+      }
+    });
+    document.body.appendChild(a);
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
-    autoRenderNav();
+    injectStyle();
+    ensureNav();
+    ensureBackBtn();
     syncStudyLangFromApi();
   });
 
