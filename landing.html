@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -42,19 +42,8 @@
   @keyframes pulse-glow { 0%,100% { box-shadow: 0 6px 28px rgba(79,70,229,.45); } 50% { box-shadow: 0 8px 40px rgba(79,70,229,.65); } }
   .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; background: var(--card-bg); color: var(--primary); border: 2px solid var(--primary); transition: all .2s; }
   .btn-outline:hover { background: var(--primary-light); transform: translateY(-2px); }
-<<<<<<< Updated upstream
   .btn-register-hero { font-size: 14px; padding: 10px 24px; border-color: var(--text-muted); color: var(--text-secondary); }
   .btn-register-hero:hover { border-color: var(--primary); color: var(--primary); }
-=======
-  /* REQ-03: 登录为第一主按钮（最大），游客体验次之，注册第三 */
-  .btn-login-hero { font-size: 19px; padding: 18px 52px; font-weight: 700; box-shadow: 0 6px 24px rgba(79,70,229,.45); }
-  .btn-guest-hero { font-size: 16px; padding: 14px 32px; }
-  .btn-register-hero { font-size: 14px; padding: 12px 26px; border-width: 1.5px; color: var(--text-secondary); border-color: var(--border); }
-  .btn-register-hero:hover { color: var(--primary); border-color: var(--primary); }
-  .beian-line { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
-  .beian-line a { color: var(--text-muted); text-decoration: none; }
-  .beian-line a:hover { color: var(--primary); text-decoration: underline; }
->>>>>>> Stashed changes
 
   .section-title { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
   .section-sub { text-align: center; font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
@@ -112,11 +101,7 @@
   <p class="hero-vs" data-i18n="hero_vs"><span>vs Duolingo：</span>不只是游戏化刷题，AILOS用AI理解你的母语思维，生成个性化教学。<br><span>vs Babbel：</span>不只是固定课程，AILOS实时动态生成适合你当前水平的专属内容。</p>
   <div class="hero-cta">
     <a class="btn-primary btn-login-hero" href="/xuewaiyu/login" data-i18n="cta_login">登录</a>
-<<<<<<< Updated upstream
     <a class="btn-outline" href="/xuewaiyu/login?mode=guest" data-i18n="cta_guest">免费游客体验</a>
-=======
-    <a class="btn-outline btn-guest-hero" href="/xuewaiyu/login?mode=guest" data-i18n="cta_guest">免费游客体验</a>
->>>>>>> Stashed changes
     <a class="btn-outline btn-register-hero" href="/xuewaiyu/login?mode=register" data-i18n="cta_register">立即注册</a>
   </div>
 </section>
@@ -204,15 +189,9 @@
 <footer class="site-footer">
   <span data-i18n="footer_brand">东莞言道科技有限公司</span> &copy; 2026 &nbsp;|&nbsp;
   <a href="https://www.yandao.vip" data-i18n="footer_company">企业官网</a> &nbsp;|&nbsp;
-<<<<<<< Updated upstream
   <a href="/xuewaiyu/login" data-i18n="footer_login">登录</a> &nbsp;|&nbsp;
   <a href="/xuewaiyu/terms.html" data-i18n="footer_terms">服务条款</a>
   <br><span class="icp-record" id="icpRecord" data-i18n="footer_icp">备案号占位</span>
-=======
-  <a href="/xuewaiyu/login" data-i18n="footer_login">登录</a>
-  <!-- REQ-03: 备案号（法定信息不随语言切换）。TODO: 上线前替换为工信部核发的真实备案号 -->
-  <div class="beian-line"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">粤ICP备XXXXXXXX号</a></div>
->>>>>>> Stashed changes
 </footer>
 
 <script>
@@ -222,11 +201,7 @@ const I18N = {
     hero_title_1: '不只是语言APP，', hero_title_ai: 'AI原生', hero_title_2: '全层级教育操作系统',
     hero_sub: 'Duolingo 教你单词，Babbel 教你语法——AILOS 用你的母语，帮你构建完整的语言认知体系。',
     hero_vs: '<span>vs Duolingo：</span>不只是游戏化刷题，AILOS用AI理解你的母语思维，生成个性化教学。<br><span>vs Babbel：</span>不只是固定课程，AILOS实时动态生成适合你当前水平的专属内容。',
-<<<<<<< Updated upstream
     cta_guest: '免费游客体验', cta_register: '立即注册', cta_login: '登录',
-=======
-    cta_login: '登录', cta_guest: '免费游客体验', cta_register: '立即注册',
->>>>>>> Stashed changes
     diff_title: '四大核心差异化', diff_sub: 'AILOS 不是工具，是生态——每个角色都能在这里找到专属价值',
     feat_ai_title: '人格化AI语伴', feat_ai_desc: '专属AI导师用你的母语解释语法、生成例句、纠正发音。24小时在线，像真人教师一样陪伴你的学习旅程，而非冰冷的题库引擎。',
     feat_course_title: '动态AI课程生成', feat_course_desc: '告别固定教材。AI根据你的学习目标、当前水平、薄弱环节，实时生成个性化课程。每节课都是为你量身定制的独特内容，而非千篇一律的标准化课程。',
@@ -247,11 +222,7 @@ const I18N = {
     hero_title_1: 'Not Just a Language App — ', hero_title_ai: 'AI Native', hero_title_2: ' Full-Layer Education OS',
     hero_sub: 'Duolingo teaches you words. Babbel teaches you grammar. AILOS uses your native language to build a complete linguistic cognitive system.',
     hero_vs: '<span>vs Duolingo:</span> Beyond gamified drills — AILOS understands your native thinking patterns.<br><span>vs Babbel:</span> Beyond fixed courses — AILOS generates real-time personalized content.',
-<<<<<<< Updated upstream
     cta_guest: 'Try as Guest', cta_register: 'Sign Up', cta_login: 'Sign In',
-=======
-    cta_login: 'Log In', cta_guest: 'Try as Guest', cta_register: 'Sign Up',
->>>>>>> Stashed changes
     diff_title: 'Four Core Differentiators', diff_sub: 'AILOS is not a tool, it\'s an ecosystem — every role finds its unique value here',
     feat_ai_title: 'Personal AI Language Partner', feat_ai_desc: 'Your dedicated AI tutor explains grammar, generates examples, and corrects pronunciation in your native language. 24/7 availability, like a real teacher — not a cold question bank.',
     feat_course_title: 'Dynamic AI Course Generation', feat_course_desc: 'Say goodbye to fixed textbooks. AI generates personalized courses in real-time based on your goals, level, and weaknesses. Every lesson uniquely tailored for you.',
@@ -272,11 +243,7 @@ const I18N = {
     hero_title_1: '言語アプリではない、', hero_title_ai: 'AI Native', hero_title_2: ' 全層教育OS',
     hero_sub: 'Duolingoは単語を、Babbelは文法を教えます。AILOSはあなたの母語で完全な言語認知体系を構築します。',
     hero_vs: '<span>vs Duolingo：</span>ゲーム化ドリルを超えて、AIがあなたの母語思考を理解します。<br><span>vs Babbel：</span>固定コースを超えて、AIがリアルタイムに個別コンテンツを生成します。',
-<<<<<<< Updated upstream
     cta_guest: 'ゲスト体験', cta_register: '登録', cta_login: 'ログイン',
-=======
-    cta_login: 'ログイン', cta_guest: 'ゲスト体験', cta_register: '登録',
->>>>>>> Stashed changes
     diff_title: '四つの核心的差別化', diff_sub: 'AILOSはツールではなく、エコシステム——すべての役割に固有の価値を',
     feat_ai_title: '人格化AIパートナー', feat_ai_desc: '専用AIチューターが母語で文法を説明し、例文を生成し、発音を矯正します。24時間対応、本物の教師のように。',
     feat_course_title: '動的AIコース生成', feat_course_desc: '固定教科書にさようなら。AIが目標、レベル、弱点に基づいてリアルタイムで個別コースを生成します。',
@@ -297,11 +264,7 @@ const I18N = {
     hero_title_1: '언어 앱이 아닌, ', hero_title_ai: 'AI Native', hero_title_2: ' 전층 교육 OS',
     hero_sub: 'Duolingo는 단어를, Babbel은 문법을 가르칩니다. AILOS는 당신의 모국어로 완전한 언어 인지 체계를 구축합니다.',
     hero_vs: '<span>vs Duolingo:</span> 게임화 문제풀이를 넘어, AI가 모국어 사고를 이해합니다.<br><span>vs Babbel:</span> 고정 코스를 넘어, AI가 실시간 개인화 콘텐츠를 생성합니다.',
-<<<<<<< Updated upstream
     cta_guest: '게스트 체험', cta_register: '가입', cta_login: '로그인',
-=======
-    cta_login: '로그인', cta_guest: '게스트 체험', cta_register: '가입',
->>>>>>> Stashed changes
     diff_title: '네 가지 핵심 차별화', diff_sub: 'AILOS는 도구가 아닌 생태계 — 모든 역할이 고유한 가치를 찾습니다',
     feat_ai_title: '개인화 AI 파트너', feat_ai_desc: '전용 AI 튜터가 모국어로 문법을 설명하고 예문을 생성하며 발음을 교정합니다. 24시간 이용 가능, 실제 교사처럼.',
     feat_course_title: '동적 AI 코스 생성', feat_course_desc: '고정 교재는 이제 그만. AI가 목표, 수준, 약점에 따라 실시간으로 개인화 코스를 생성합니다.',
@@ -322,11 +285,7 @@ const I18N = {
     hero_title_1: 'Pas juste une app — ', hero_title_ai: 'IA Native', hero_title_2: ' OS éducatif complet',
     hero_sub: 'Duolingo enseigne des mots. Babbel enseigne la grammaire. AILOS utilise votre langue maternelle pour construire un système cognitif linguistique complet.',
     hero_vs: '<span>vs Duolingo:</span> Au-delà des exercices gamifiés — l\'IA comprend votre pensée native.<br><span>vs Babbel:</span> Au-delà des cours fixes — l\'IA génère du contenu personnalisé en temps réel.',
-<<<<<<< Updated upstream
     cta_guest: 'Essayer en invité', cta_register: 'S\'inscrire', cta_login: 'Connexion',
-=======
-    cta_login: 'Connexion', cta_guest: 'Essayer en invité', cta_register: 'S\'inscrire',
->>>>>>> Stashed changes
     diff_title: 'Quatre différenciateurs clés', diff_sub: 'AILOS n\'est pas un outil, c\'est un écosystème',
     feat_ai_title: 'Partenaire IA personnel', feat_ai_desc: 'Votre tuteur IA dédié explique la grammaire, génère des exemples et corrige la prononciation dans votre langue maternelle.',
     feat_course_title: 'Génération dynamique de cours', feat_course_desc: 'L\'IA génère des cours personnalisés en temps réel selon vos objectifs, niveau et faiblesses.',
@@ -347,11 +306,7 @@ const I18N = {
     hero_title_1: 'No solo una app — ', hero_title_ai: 'IA Nativa', hero_title_2: ' OS educativo completo',
     hero_sub: 'Duolingo enseña palabras. Babbel enseña gramática. AILOS usa tu lengua materna para construir un sistema cognitivo lingüístico completo.',
     hero_vs: '<span>vs Duolingo:</span> Más allá de ejercicios gamificados.<br><span>vs Babbel:</span> Más allá de cursos fijos — IA genera contenido en tiempo real.',
-<<<<<<< Updated upstream
     cta_guest: 'Probar como invitado', cta_register: 'Registrarse', cta_login: 'Iniciar sesión',
-=======
-    cta_login: 'Iniciar sesión', cta_guest: 'Probar como invitado', cta_register: 'Registrarse',
->>>>>>> Stashed changes
     diff_title: 'Cuatro diferenciadores', diff_sub: 'AILOS no es una herramienta, es un ecosistema',
     feat_ai_title: 'Compañero IA personal', feat_ai_desc: 'Tu tutor IA dedicado explica gramática, genera ejemplos y corrige pronunciación en tu lengua materna.',
     feat_course_title: 'Generación dinámica de cursos', feat_course_desc: 'IA genera cursos personalizados en tiempo real según tus objetivos, nivel y debilidades.',
@@ -372,11 +327,7 @@ const I18N = {
     hero_title_1: 'Keine Sprach-App — ', hero_title_ai: 'KI Native', hero_title_2: ' Bildungs-OS',
     hero_sub: 'Duolingo lehrt Wörter. Babbel lehrt Grammatik. AILOS nutzt deine Muttersprache für ein vollständiges linguistisches System.',
     hero_vs: '<span>vs Duolingo:</span> Mehr als gamifizierte Übungen.<br><span>vs Babbel:</span> Mehr als feste Kurse — KI generiert Echtzeit-Inhalte.',
-<<<<<<< Updated upstream
     cta_guest: 'Als Gast testen', cta_register: 'Registrieren', cta_login: 'Anmelden',
-=======
-    cta_login: 'Anmelden', cta_guest: 'Als Gast testen', cta_register: 'Registrieren',
->>>>>>> Stashed changes
     diff_title: 'Vier Kernunterschiede', diff_sub: 'AILOS ist kein Werkzeug, sondern ein Ökosystem',
     feat_ai_title: 'Persönlicher KI-Partner', feat_ai_desc: 'Dein KI-Tutor erklärt Grammatik, generiert Beispiele und korrigiert die Aussprache in deiner Muttersprache.',
     feat_course_title: 'Dynamische KI-Kursgenerierung', feat_course_desc: 'KI generiert personalisierte Kurse in Echtzeit basierend auf deinen Zielen und Schwächen.',
