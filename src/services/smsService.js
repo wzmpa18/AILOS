@@ -64,8 +64,11 @@ class SmsEmailService {
     }
 
     const expireMinutes = 5;
-    // Strip any existing +86 prefix to avoid double prefix
+    // BUG-020: 国际号码支持 — 前端传入 E.164 格式（如 +12025550123）时原样透传；
+    // 传入纯国内号码时保持旧行为（补 +86），完全向后兼容。
+    const isE164 = /^\+\d{6,18}$/.test(phone);
     const cleanPhone = phone.replace(/^\+86/, '');
+    const e164Phone = isE164 && !phone.startsWith('+86') ? phone : `+86${cleanPhone}`;
     try {
       const client = new SmsClient({
         credential: { secretId: this.secretId, secretKey: this.secretKey },
@@ -77,7 +80,7 @@ class SmsEmailService {
         SignName: this.smsSignName,
         TemplateId: this.smsTemplateId,
         TemplateParamSet: [code, String(expireMinutes)],
-        PhoneNumberSet: [`+86${cleanPhone}`],
+        PhoneNumberSet: [e164Phone],
       };
 
       const resp = await client.SendSms(params);
