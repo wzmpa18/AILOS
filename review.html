@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#4F46E5">
-<title>AILOS - SRS复习</title>
+<title>AILOS - SRS 复习</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -35,21 +35,56 @@
     min-height: 100vh;
     line-height: 1.6;
     padding-bottom: calc(var(--nav-height) + 20px);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
-  /* Header */
+  /* ============ Header ============ */
   .header {
     background: var(--card-bg);
     border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
+    padding: 14px 16px;
     position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; gap: 12px;
   }
+  .header-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); border: 1px solid var(--border);
+    cursor: pointer; font-size: 18px; color: var(--text-secondary);
+    text-decoration: none; flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .header-back:hover { background: var(--primary-light); }
+  .header-back:active { transform: scale(0.95); }
   .header-title { font-size: 18px; font-weight: 700; flex: 1; }
+  .header-lang {
+    font-size: 13px; color: var(--text-secondary);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer;
+    flex-shrink: 0;
+  }
 
-  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px; }
+  .container { max-width: 680px; margin: 0 auto; padding: 16px; }
 
-  /* Stats Cards */
+  /* ============ Tabs ============ */
+  .tabs {
+    display: flex; gap: 0; background: var(--bg); border-radius: 12px;
+    padding: 4px; margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 16px; border: none; border-radius: 10px;
+    background: transparent; color: var(--text-secondary);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--card-bg); color: var(--primary);
+    box-shadow: var(--shadow);
+  }
+  .tab-btn:active { transform: scale(0.97); }
+
+  /* ============ Stats Cards ============ */
   .stats-row {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
     margin-bottom: 20px;
@@ -59,9 +94,10 @@
     box-shadow: var(--shadow); text-align: center;
   }
   .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+  .stat-value.danger { color: var(--error); }
   .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
-  /* Review Queue */
+  /* ============ Card ============ */
   .card {
     background: var(--card-bg); border-radius: var(--radius);
     padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px;
@@ -72,6 +108,107 @@
   }
   .card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
 
+  /* ============ Flashcard ============ */
+  .flashcard-scene {
+    perspective: 1000px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .flashcard-inner {
+    width: 100%; min-height: 260px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .flashcard-inner.flipped { transform: rotateY(180deg); }
+
+  .flashcard-face {
+    position: absolute; width: 100%; min-height: 260px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius);
+    padding: 40px 28px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    cursor: pointer;
+    user-select: none;
+  }
+  .flashcard-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    z-index: 2;
+  }
+  .flashcard-back {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    transform: rotateY(180deg);
+  }
+  .flashcard-word {
+    font-size: 32px; font-weight: 800; margin-bottom: 12px;
+    letter-spacing: 0.5px; word-break: break-word;
+  }
+  .flashcard-phonetic {
+    font-size: 16px; opacity: 0.85; margin-bottom: 8px;
+    font-style: italic;
+  }
+  .flashcard-hint {
+    font-size: 13px; opacity: 0.7;
+    position: absolute; bottom: 20px;
+  }
+  .flashcard-meaning {
+    font-size: 24px; font-weight: 700; margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .flashcard-extra {
+    font-size: 14px; opacity: 0.85; margin-top: 8px;
+    word-break: break-word;
+  }
+  .flashcard-type {
+    font-size: 12px; opacity: 0.7; margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* ============ Rating Buttons ============ */
+  .rating-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-top: 16px;
+  }
+  .rating-btn {
+    padding: 14px 8px; border-radius: var(--radius-sm);
+    border: 2px solid transparent; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; background: var(--card-bg);
+  }
+  .rating-btn .rating-label { font-size: 14px; }
+  .rating-btn .rating-time { font-size: 11px; opacity: 0.7; }
+  .rating-btn.again { border-color: #FCA5A5; color: #DC2626; }
+  .rating-btn.again:hover, .rating-btn.again:active { background: #FEF2F2; }
+  .rating-btn.hard { border-color: #FCD34D; color: #D97706; }
+  .rating-btn.hard:hover, .rating-btn.hard:active { background: #FFFBEB; }
+  .rating-btn.good { border-color: #6EE7B7; color: #059669; }
+  .rating-btn.good:hover, .rating-btn.good:active { background: #ECFDF5; }
+  .rating-btn.easy { border-color: #93C5FD; color: #2563EB; }
+  .rating-btn.easy:hover, .rating-btn.easy:active { background: #EFF6FF; }
+  .rating-btn:active { transform: scale(0.95); }
+
+  /* ============ Progress ============ */
+  .progress-bar-wrap {
+    width: 100%; height: 6px; background: var(--border);
+    border-radius: 3px; margin-bottom: 8px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: var(--primary);
+    border-radius: 3px; transition: width 0.3s ease;
+  }
+  .progress-text {
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    text-align: center; margin-bottom: 16px;
+  }
+
+  /* ============ Review Queue List ============ */
   .review-item {
     display: flex; align-items: center; gap: 12px;
     padding: 14px 0; border-bottom: 1px solid var(--border);
@@ -79,6 +216,7 @@
   }
   .review-item:last-child { border-bottom: none; }
   .review-item:hover { background: var(--primary-light); margin: 0 -12px; padding: 14px 12px; border-radius: var(--radius-sm); }
+  .review-item:active { transform: scale(0.98); }
   .review-status {
     width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -98,15 +236,15 @@
   .review-score.medium { color: var(--warning); }
   .review-score.low { color: var(--error); }
 
-  /* Empty State */
+  /* ============ Empty State ============ */
   .empty-state {
     text-align: center; padding: 60px 20px; color: var(--text-muted);
   }
   .empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
   .empty-state .empty-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
-  .empty-state .empty-desc { font-size: 13px; }
+  .empty-state .empty-desc { font-size: 13px; margin-bottom: 20px; }
 
-  /* Loading */
+  /* ============ Loading ============ */
   .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
   .spinner {
     width: 32px; height: 32px; border: 3px solid var(--border);
@@ -115,7 +253,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Guest Banner */
+  /* ============ Guest Banner ============ */
   .guest-banner {
     background: linear-gradient(135deg, var(--primary-light), #E0E7FF);
     border-radius: var(--radius); padding: 28px 20px; text-align: center;
@@ -127,8 +265,19 @@
     padding: 10px 28px; border-radius: 20px; border: none;
     background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
   }
+  .guest-banner button:active { transform: scale(0.95); }
 
-  /* Bottom Navigation Bar */
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(30, 41, 59, 0.9); color: #fff;
+    padding: 12px 24px; border-radius: 24px; font-size: 14px;
+    font-weight: 600; z-index: 9999; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ============ Bottom Navigation Bar ============ */
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: var(--nav-height); background: var(--card-bg);
@@ -151,151 +300,638 @@
     background: var(--primary); border-radius: 0 0 3px 3px;
   }
 
+  /* ============ Responsive ============ */
   @media (max-width: 480px) {
     .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .stat-card { padding: 12px 8px; }
     .stat-value { font-size: 20px; }
+    .flashcard-face { padding: 32px 20px; min-height: 220px; }
+    .flashcard-word { font-size: 26px; }
+    .flashcard-meaning { font-size: 20px; }
+    .rating-row { gap: 6px; }
+    .rating-btn { padding: 12px 6px; font-size: 12px; }
+    .rating-btn .rating-label { font-size: 13px; }
+    .rating-btn .rating-time { font-size: 10px; }
   }
 </style>
 </head>
 <body>
   <script src="/xuewaiyu/assets/common.js"></script>
 
-
-<div class="header">
-  <span class="header-title">SRS 间隔复习</span>
-</div>
-
-<div class="container" id="app">
-  <div class="loading">
-    <div class="spinner"></div>
-    <p>正在加载复习队列...</p>
+  <!-- Header -->
+  <div class="header">
+    <a class="header-back" href="/xuewaiyu/home" title="返回">&#8592;</a>
+    <span class="header-title" id="headerTitle">SRS 间隔复习</span>
+    <button class="header-lang" id="langBtn" title="切换语言">ZH</button>
   </div>
-</div>
 
-<!-- Bottom Navigation Bar -->
-<nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="/xuewaiyu/home">
-    <span class="nav-icon">🏠</span>
-    <span>首页</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/learn.html">
-    <span class="nav-icon">📚</span>
-    <span>学习</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/chat.html">
-    <span class="nav-icon">💬</span>
-    <span>AI对话</span>
-  </a>
-  <a class="nav-item active" href="/xuewaiyu/review.html">
-    <span class="nav-icon">🔄</span>
-    <span>复习</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/profile.html">
-    <span class="nav-icon">👤</span>
-    <span>我的</span>
-  </a>
-</nav>
+  <!-- Main Content -->
+  <div class="container" id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p id="loadingText">正在加载复习队列...</p>
+    </div>
+  </div>
 
-<script>
-// ============ Token Helpers ============
-function getToken() {
-  try {
-    var stored = localStorage.getItem('auth_tokens');
-    if (stored) {
-      var tokens = JSON.parse(stored);
-      if (tokens.accessToken) return tokens.accessToken;
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav"></div>
+
+  <script>
+  // ============================================================================
+  // i18n
+  // ============================================================================
+  var I18N = {
+    zh: {
+      title: 'SRS 间隔复习',
+      cardTab: '卡片复习',
+      listTab: '复习队列',
+      loading: '正在加载复习队列...',
+      loginTitle: '请先登录',
+      loginDesc: '登录后查看你的SRS复习队列',
+      loginBtn: '去登录',
+      noDue: '暂无待复习内容',
+      noDueDesc: '太棒了！所有内容都已复习完毕，继续保持！',
+      noDueDesc2: '完成学习后，这里会显示需要复习的内容',
+      noQueue: '暂无复习内容',
+      noQueueDesc: '开始学习后，系统会自动为你安排间隔复习',
+      dueCount: '待复习',
+      completed: '已完成',
+      accuracy: '正确率',
+      again: '忘记',
+      hard: '困难',
+      good: '良好',
+      easy: '简单',
+      againTime: '<1分钟',
+      hardTime: '10分钟',
+      goodTime: '1天',
+      easyTime: '4天',
+      progress: '第 {current} / {total} 张',
+      finished: '复习完成',
+      finishedDesc: '你已完成本轮所有复习，继续加油！',
+      backToList: '返回列表',
+      tapFlip: '点击翻转查看答案',
+      cardFront: '正面',
+      cardBack: '背面',
+      newWord: '新',
+      interval: '间隔',
+      days: '天',
+      nextReview: '下次',
+      today: '今天',
+      submitted: '已提交',
+      loadError: '加载失败，请重试',
+      submitError: '提交失败，请重试'
+    },
+    en: {
+      title: 'SRS Review',
+      cardTab: 'Flashcards',
+      listTab: 'Queue',
+      loading: 'Loading review queue...',
+      loginTitle: 'Please Login',
+      loginDesc: 'Login to view your SRS review queue',
+      loginBtn: 'Go to Login',
+      noDue: 'No Reviews Due',
+      noDueDesc: 'Great job! All items reviewed. Keep it up!',
+      noDueDesc2: 'After learning, reviews will appear here automatically',
+      noQueue: 'No Review Items',
+      noQueueDesc: 'Start learning and the system will schedule spaced repetition reviews',
+      dueCount: 'Due',
+      completed: 'Completed',
+      accuracy: 'Accuracy',
+      again: 'Again',
+      hard: 'Hard',
+      good: 'Good',
+      easy: 'Easy',
+      againTime: '<1min',
+      hardTime: '10min',
+      goodTime: '1d',
+      easyTime: '4d',
+      progress: 'Card {current}/{total}',
+      finished: 'Review Complete',
+      finishedDesc: 'All reviews done! Keep up the great work!',
+      backToList: 'Back to List',
+      tapFlip: 'Tap to flip',
+      cardFront: 'Front',
+      cardBack: 'Back',
+      newWord: 'New',
+      interval: 'Interval',
+      days: 'd',
+      nextReview: 'Next',
+      today: 'Today',
+      submitted: 'Submitted',
+      loadError: 'Load failed, please retry',
+      submitError: 'Submit failed, please retry'
+    },
+    ja: {
+      title: 'SRS 復習',
+      cardTab: 'カード',
+      listTab: 'キュー',
+      loading: '復習キューを読み込み中...',
+      loginTitle: 'ログインしてください',
+      loginDesc: 'ログインしてSRS復習キューを表示',
+      loginBtn: 'ログインへ',
+      noDue: '復習はありません',
+      noDueDesc: '素晴らしい！全ての復習が完了しました！',
+      noDueDesc2: '学習後に復習内容がここに表示されます',
+      noQueue: '復習アイテムがありません',
+      noQueueDesc: '学習を始めると、システムが自動的に間隔復習をスケジュールします',
+      dueCount: '未復習',
+      completed: '完了',
+      accuracy: '正解率',
+      again: '忘れた',
+      hard: '難しい',
+      good: '普通',
+      easy: '簡単',
+      againTime: '<1分',
+      hardTime: '10分',
+      goodTime: '1日',
+      easyTime: '4日',
+      progress: '{current} / {total} 枚目',
+      finished: '復習完了',
+      finishedDesc: '今回の復習が全て完了しました！',
+      backToList: 'リストに戻る',
+      tapFlip: 'タップで裏返す',
+      cardFront: '表面',
+      cardBack: '裏面',
+      newWord: '新規',
+      interval: '間隔',
+      days: '日',
+      nextReview: '次回',
+      today: '今日',
+      submitted: '送信済み',
+      loadError: '読み込み失敗、再試行してください',
+      submitError: '送信失敗、再試行してください'
+    },
+    ko: {
+      title: 'SRS 복습',
+      cardTab: '카드',
+      listTab: '대기열',
+      loading: '복습 대기열 로딩 중...',
+      loginTitle: '로그인해주세요',
+      loginDesc: '로그인하여 SRS 복습 대기열을 확인하세요',
+      loginBtn: '로그인하기',
+      noDue: '복습할 내용 없음',
+      noDueDesc: '잘했어요! 모든 복습이 완료되었습니다!',
+      noDueDesc2: '학습 후 복습 내용이 여기에 표시됩니다',
+      noQueue: '복습 항목 없음',
+      noQueueDesc: '학습을 시작하면 시스템이 자동으로 간격 복습을 예약합니다',
+      dueCount: '대기',
+      completed: '완료',
+      accuracy: '정확도',
+      again: '잊음',
+      hard: '어려움',
+      good: '좋음',
+      easy: '쉬움',
+      againTime: '<1분',
+      hardTime: '10분',
+      goodTime: '1일',
+      easyTime: '4일',
+      progress: '{current} / {total}번째',
+      finished: '복습 완료',
+      finishedDesc: '이번 복습을 모두 완료했습니다!',
+      backToList: '목록으로',
+      tapFlip: '터치하여 뒤집기',
+      cardFront: '앞면',
+      cardBack: '뒷면',
+      newWord: '신규',
+      interval: '간격',
+      days: '일',
+      nextReview: '다음',
+      today: '오늘',
+      submitted: '제출됨',
+      loadError: '로딩 실패, 다시 시도하세요',
+      submitError: '제출 실패, 다시 시도하세요'
     }
-  } catch(e) {}
-  return localStorage.getItem('yandao_token_v1') || '';
-}
+  };
 
-// ============ Load Reviews ============
-async function loadReviews() {
-  var app = document.getElementById('app');
-  var token = getToken();
-
-  if (!token) {
-    app.innerHTML = '<div class="guest-banner"><h3>请先登录</h3><p>登录后查看你的SRS复习队列</p><button onclick="window.location.href=\'/xuewaiyu/login.html\'">去登录</button></div>';
-    return;
+  var currentLang = localStorage.getItem('xuewaiyu_lang') || 'zh';
+  function t(key) {
+    var lang = I18N[currentLang] || I18N['zh'];
+    return lang[key] !== undefined ? lang[key] : (I18N['zh'][key] || key);
+  }
+  function tf(key, replacements) {
+    var str = t(key);
+    for (var k in replacements) {
+      if (replacements.hasOwnProperty(k)) {
+        str = str.replace('{' + k + '}', replacements[k]);
+      }
+    }
+    return str;
   }
 
-  try {
-    var resp = await fetch('/api/reviews/due', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+  // ============================================================================
+  // Token Helpers
+  // ============================================================================
+  function getToken() {
+    try {
+      var stored = localStorage.getItem('auth_tokens');
+      if (stored) {
+        var tokens = JSON.parse(stored);
+        if (tokens.accessToken) return tokens.accessToken;
+      }
+    } catch(e) {}
+    return localStorage.getItem('yandao_token_v1') || '';
+  }
 
-    if (resp.status === 401) {
-      app.innerHTML = '<div class="guest-banner"><h3>请先登录</h3><p>登录后查看你的SRS复习队列</p><button onclick="window.location.href=\'/xuewaiyu/login.html\'">去登录</button></div>';
+  // ============================================================================
+  // Toast
+  // ============================================================================
+  var toastTimer = null;
+  function showToast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2000);
+  }
+
+  // ============================================================================
+  // API Helpers
+  // ============================================================================
+  async function apiGet(url) {
+    var token = getToken();
+    var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    return fetch(url, { headers: headers });
+  }
+
+  async function apiPost(url, body) {
+    var token = getToken();
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(body)
+    });
+  }
+
+  // ============================================================================
+  // State
+  // ============================================================================
+  var state = {
+    reviews: [],
+    currentIndex: 0,
+    isFlipped: false,
+    activeTab: 'card', // 'card' | 'list'
+    stats: { due: 0, completed: 0, accuracy: 0 },
+    submitting: false
+  };
+
+  // ============================================================================
+  // Render
+  // ============================================================================
+  function renderApp() {
+    var app = document.getElementById('app');
+    var token = getToken();
+
+    if (!token) {
+      renderGuest();
       return;
     }
 
-    var data = await resp.json();
-    if (data.success && data.data) {
-      renderReviews(data.data);
-    } else {
-      renderEmpty();
-    }
-  } catch(e) {
-    console.error('Load reviews error:', e);
-    renderEmpty();
+    loadData();
   }
-}
 
-function renderReviews(reviewData) {
-  var app = document.getElementById('app');
-  var items = reviewData.items || reviewData.reviews || [];
-  var stats = reviewData.stats || {};
+  function renderGuest() {
+    var app = document.getElementById('app');
+    app.innerHTML = '<div class="guest-banner">' +
+      '<h3>' + t('loginTitle') + '</h3>' +
+      '<p>' + t('loginDesc') + '</p>' +
+      '<button onclick="window.location.href=\'/xuewaiyu/login.html\'">' + t('loginBtn') + '</button>' +
+      '</div>';
+  }
 
-  var html = '';
+  async function loadData() {
+    var app = document.getElementById('app');
+    app.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + t('loading') + '</p></div>';
 
-  // Stats
-  html += '<div class="stats-row">' +
-    '<div class="stat-card"><div class="stat-value">' + (stats.due || items.length || 0) + '</div><div class="stat-label">待复习</div></div>' +
-    '<div class="stat-card"><div class="stat-value">' + (stats.completed || 0) + '</div><div class="stat-label">已完成</div></div>' +
-    '<div class="stat-card"><div class="stat-value">' + (stats.accuracy || 0) + '%</div><div class="stat-label">正确率</div></div>' +
-  '</div>';
+    try {
+      var [dueResp, statsResp] = await Promise.all([
+        apiGet('/api/reviews/due'),
+        apiGet('/api/reviews/stats')
+      ]);
 
-  if (items.length === 0) {
-    html += '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">暂无待复习内容</div><div class="empty-desc">完成学习后，这里会显示需要复习的内容</div></div>';
-  } else {
-    html += '<div class="card"><div class="card-title"><span class="dot"></span>复习队列</div>';
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
+      if (dueResp.status === 401 || statsResp.status === 401) {
+        renderGuest();
+        return;
+      }
+
+      var dueData = await dueResp.json().catch(function() { return null; });
+      var statsData = await statsResp.json().catch(function() { return null; });
+
+      var items = [];
+      if (dueData && dueData.success && dueData.data) {
+        items = dueData.data.items || dueData.data.reviews || dueData.data || [];
+      }
+      if (!Array.isArray(items)) items = [];
+
+      var stats = { due: items.length, completed: 0, accuracy: 0 };
+      if (statsData && statsData.success && statsData.data) {
+        stats = statsData.data;
+        stats.due = items.length;
+      }
+
+      state.reviews = items;
+      state.stats = stats;
+      state.currentIndex = 0;
+      state.isFlipped = false;
+
+      renderContent();
+    } catch(e) {
+      console.error('Load reviews error:', e);
+      app.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">&#9888;</div>' +
+        '<div class="empty-title">' + t('loadError') + '</div>' +
+        '</div>';
+    }
+  }
+
+  function renderContent() {
+    var app = document.getElementById('app');
+    var html = '';
+
+    // Stats
+    html += '<div class="stats-row">' +
+      '<div class="stat-card"><div class="stat-value">' + (state.stats.due || 0) + '</div><div class="stat-label">' + t('dueCount') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-value">' + (state.stats.completed || 0) + '</div><div class="stat-label">' + t('completed') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-value">' + (state.stats.accuracy || 0) + '%</div><div class="stat-label">' + t('accuracy') + '</div></div>' +
+      '</div>';
+
+    // Tabs
+    html += '<div class="tabs">' +
+      '<button class="tab-btn' + (state.activeTab === 'card' ? ' active' : '') + '" onclick="switchTab(\'card\')">' + t('cardTab') + '</button>' +
+      '<button class="tab-btn' + (state.activeTab === 'list' ? ' active' : '') + '" onclick="switchTab(\'list\')">' + t('listTab') + '</button>' +
+      '</div>';
+
+    // Tab content
+    html += '<div id="tabContent">';
+    if (state.activeTab === 'card') {
+      html += renderCardView();
+    } else {
+      html += renderListView();
+    }
+    html += '</div>';
+
+    app.innerHTML = html;
+  }
+
+  function renderCardView() {
+    if (state.reviews.length === 0) {
+      return '<div class="empty-state">' +
+        '<div class="empty-icon">&#127881;</div>' +
+        '<div class="empty-title">' + t('noDue') + '</div>' +
+        '<div class="empty-desc">' + t('noDueDesc') + '</div>' +
+        '</div>';
+    }
+
+    var item = state.reviews[state.currentIndex];
+    if (!item) {
+      return '<div class="empty-state">' +
+        '<div class="empty-icon">&#9989;</div>' +
+        '<div class="empty-title">' + t('finished') + '</div>' +
+        '<div class="empty-desc">' + t('finishedDesc') + '</div>' +
+        '<button class="rating-btn good" style="display:inline-block;margin-top:8px;padding:10px 24px;border:2px solid #6EE7B7;color:#059669;border-radius:var(--radius-sm);" onclick="resetReview()">' + t('backToList') + '</button>' +
+        '</div>';
+    }
+
+    var word = item.word || item.front || '';
+    var meaning = item.meaning || item.back || '';
+    var phonetic = item.phonetic || item.pronunciation || '';
+    var example = item.example || item.sentence || '';
+    var type = item.type || item.partOfSpeech || '';
+
+    var html = '';
+
+    // Progress
+    html += '<div class="progress-bar-wrap">' +
+      '<div class="progress-bar-fill" style="width:' + ((state.currentIndex / state.reviews.length) * 100) + '%"></div>' +
+      '</div>';
+    html += '<div class="progress-text">' + tf('progress', { current: state.currentIndex + 1, total: state.reviews.length }) + '</div>';
+
+    // Flashcard
+    html += '<div class="flashcard-scene">';
+    html += '<div class="flashcard-inner' + (state.isFlipped ? ' flipped' : '') + '" id="flashcard" onclick="flipCard()">';
+    // Front
+    html += '<div class="flashcard-face flashcard-front">';
+    if (type) html += '<div class="flashcard-type">' + escapeHtml(type) + '</div>';
+    html += '<div class="flashcard-word">' + escapeHtml(word) + '</div>';
+    if (phonetic) html += '<div class="flashcard-phonetic">' + escapeHtml(phonetic) + '</div>';
+    html += '<div class="flashcard-hint">' + t('tapFlip') + '</div>';
+    html += '</div>';
+    // Back
+    html += '<div class="flashcard-face flashcard-back">';
+    html += '<div class="flashcard-meaning">' + escapeHtml(meaning) + '</div>';
+    if (example) html += '<div class="flashcard-extra">' + escapeHtml(example) + '</div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    // Rating buttons
+    html += '<div class="rating-row">' +
+      '<button class="rating-btn again" onclick="submitRating(\'again\')">' +
+        '<span class="rating-label">' + t('again') + '</span>' +
+        '<span class="rating-time">' + t('againTime') + '</span>' +
+      '</button>' +
+      '<button class="rating-btn hard" onclick="submitRating(\'hard\')">' +
+        '<span class="rating-label">' + t('hard') + '</span>' +
+        '<span class="rating-time">' + t('hardTime') + '</span>' +
+      '</button>' +
+      '<button class="rating-btn good" onclick="submitRating(\'good\')">' +
+        '<span class="rating-label">' + t('good') + '</span>' +
+        '<span class="rating-time">' + t('goodTime') + '</span>' +
+      '</button>' +
+      '<button class="rating-btn easy" onclick="submitRating(\'easy\')">' +
+        '<span class="rating-label">' + t('easy') + '</span>' +
+        '<span class="rating-time">' + t('easyTime') + '</span>' +
+      '</button>' +
+    '</div>';
+
+    return html;
+  }
+
+  function renderListView() {
+    if (state.reviews.length === 0) {
+      return '<div class="empty-state">' +
+        '<div class="empty-icon">&#128218;</div>' +
+        '<div class="empty-title">' + t('noQueue') + '</div>' +
+        '<div class="empty-desc">' + t('noQueueDesc') + '</div>' +
+        '</div>';
+    }
+
+    var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('listTab') + ' (' + state.reviews.length + ')</div>';
+
+    for (var i = 0; i < state.reviews.length; i++) {
+      var item = state.reviews[i];
       var statusClass = item.overdue ? 'overdue' : 'due';
-      var statusIcon = item.overdue ? '⚠️' : '📝';
+      var statusIcon = item.overdue ? '&#9888;' : '&#128221;';
       var scoreClass = item.accuracy >= 80 ? 'high' : (item.accuracy >= 50 ? 'medium' : 'low');
-      var scoreText = item.accuracy !== undefined ? item.accuracy + '%' : '新';
-      html += '<div class="review-item">' +
+      var scoreText = item.accuracy !== undefined ? item.accuracy + '%' : t('newWord');
+      var intervalText = (item.interval || 1) + t('days');
+      var nextText = item.nextReview || t('today');
+
+      html += '<div class="review-item" onclick="startCardFrom(' + i + ')">' +
         '<div class="review-status ' + statusClass + '">' + statusIcon + '</div>' +
         '<div class="review-info">' +
           '<div class="review-word">' + escapeHtml(item.word || item.front || '') + '</div>' +
           '<div class="review-meaning">' + escapeHtml(item.meaning || item.back || '') + '</div>' +
-          '<div class="review-meta">间隔: ' + (item.interval || 1) + '天 · 下次: ' + (item.nextReview || '今天') + '</div>' +
+          '<div class="review-meta">' + t('interval') + ': ' + intervalText + ' &middot; ' + t('nextReview') + ': ' + nextText + '</div>' +
         '</div>' +
         '<div class="review-score ' + scoreClass + '">' + scoreText + '</div>' +
       '</div>';
     }
+
     html += '</div>';
+    return html;
   }
 
-  app.innerHTML = html;
-}
+  function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
 
-function renderEmpty() {
-  var app = document.getElementById('app');
-  app.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">暂无复习内容</div><div class="empty-desc">开始学习后，系统会自动为你安排间隔复习</div></div>';
-}
+  // ============================================================================
+  // Actions
+  // ============================================================================
+  function switchTab(tab) {
+    state.activeTab = tab;
+    state.isFlipped = false;
+    renderContent();
+  }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+  function flipCard() {
+    state.isFlipped = !state.isFlipped;
+    var card = document.getElementById('flashcard');
+    if (card) {
+      card.classList.toggle('flipped', state.isFlipped);
+    }
+  }
 
-// ============ Init ============
-loadReviews();
-</script>
+  function startCardFrom(index) {
+    state.currentIndex = index;
+    state.isFlipped = false;
+    state.activeTab = 'card';
+    renderContent();
+  }
+
+  async function submitRating(rating) {
+    if (state.submitting) return;
+    var item = state.reviews[state.currentIndex];
+    if (!item) return;
+
+    var reviewId = item.id || item.reviewId || item._id;
+    if (!reviewId) {
+      // No server ID, just advance
+      advanceCard();
+      return;
+    }
+
+    state.submitting = true;
+    try {
+      var resp = await apiPost('/api/reviews/' + reviewId + '/submit', { rating: rating });
+      if (resp.status === 401) {
+        renderGuest();
+        return;
+      }
+      if (!resp.ok) {
+        var errData = null;
+        try { errData = await resp.json(); } catch(e) {}
+        if (errData && errData.code === 'RATE_LIMIT') {
+          showToast(errData.message || t('submitError'));
+          state.submitting = false;
+          return;
+        }
+      }
+      showToast(t('submitted'));
+    } catch(e) {
+      console.error('Submit review error:', e);
+      showToast(t('submitError'));
+    }
+
+    state.submitting = false;
+    advanceCard();
+  }
+
+  function advanceCard() {
+    state.currentIndex++;
+    state.isFlipped = false;
+
+    if (state.currentIndex >= state.reviews.length) {
+      // All done
+      state.stats.completed = (state.stats.completed || 0) + 1;
+      renderContent();
+      return;
+    }
+
+    renderContent();
+  }
+
+  function resetReview() {
+    state.currentIndex = 0;
+    state.isFlipped = false;
+    renderContent();
+  }
+
+  // ============================================================================
+  // Language Switcher
+  // ============================================================================
+  function setupLangSwitcher() {
+    var btn = document.getElementById('langBtn');
+    var langNames = { zh: 'ZH', en: 'EN', ja: 'JA', ko: 'KO' };
+    var langOrder = ['zh', 'en', 'ja', 'ko'];
+
+    btn.textContent = langNames[currentLang] || 'ZH';
+
+    btn.addEventListener('click', function() {
+      var idx = langOrder.indexOf(currentLang);
+      idx = (idx + 1) % langOrder.length;
+      currentLang = langOrder[idx];
+      localStorage.setItem('xuewaiyu_lang', currentLang);
+      btn.textContent = langNames[currentLang];
+      document.getElementById('headerTitle').textContent = t('title');
+      document.getElementById('loadingText').textContent = t('loading');
+      renderContent();
+    });
+  }
+
+  // ============================================================================
+  // Bottom Nav
+  // ============================================================================
+  function renderBottomNav() {
+    var nav = document.getElementById('bottomNav');
+    nav.innerHTML = '';
+    var items = [
+      { href: '/xuewaiyu/home', icon: '\uD83C\uDFE0', label: { zh: '首页', en: 'Home', ja: 'ホーム', ko: '홈' } },
+      { href: '/xuewaiyu/learn.html', icon: '\uD83D\uDCDA', label: { zh: '学习', en: 'Learn', ja: '学習', ko: '학습' } },
+      { href: '/xuewaiyu/chat.html', icon: '\uD83D\uDCAC', label: { zh: 'AI对话', en: 'AI Chat', ja: 'AI会話', ko: 'AI 대화' } },
+      { href: '/xuewaiyu/review.html', icon: '\uD83D\uDD04', label: { zh: '复习', en: 'Review', ja: '復習', ko: '복습' }, active: true },
+      { href: '/xuewaiyu/profile.html', icon: '\uD83D\uDC64', label: { zh: '我的', en: 'Me', ja: 'マイ', ko: '내정보' } }
+    ];
+
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var a = document.createElement('a');
+      a.className = 'nav-item' + (it.active ? ' active' : '');
+      a.href = it.href;
+      a.innerHTML = '<span class="nav-icon">' + it.icon + '</span><span>' + (it.label[currentLang] || it.label.zh) + '</span>';
+      nav.appendChild(a);
+    }
+  }
+
+  // ============================================================================
+  // Init
+  // ============================================================================
+  function init() {
+    document.getElementById('headerTitle').textContent = t('title');
+    document.getElementById('loadingText').textContent = t('loading');
+    setupLangSwitcher();
+    renderBottomNav();
+    renderApp();
+  }
+
+  init();
+  </script>
 </body>
 </html>

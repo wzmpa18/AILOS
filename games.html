@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AILOS Game Center | 游戏中心</title>
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-light: #818CF8;
+  --primary-dark: #3730A3;
+  --bg: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== HEADER ========== */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.page-header .back-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.page-header .back-btn:hover { background: var(--bg); }
+.page-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.header-lang {
+  margin-left: auto;
+  display: flex; gap: 4px;
+}
+.header-lang button {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+.header-lang button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.header-lang button:hover:not(.active) { background: var(--bg); }
+
+/* ========== GAME GRID ========== */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+@media (min-width: 640px) {
+  .game-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.game-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  border: 2px solid transparent;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.game-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-light);
+}
+.game-card:active { transform: scale(0.97); }
+.game-card .game-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+  display: block;
+}
+.game-card .game-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.game-card .game-name-en {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.game-card .game-best {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 600;
+}
+.game-card .game-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ========== GAME CONTAINER ========== */
+.game-container {
+  display: none;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 60vh;
+}
+.game-container.active { display: block; }
+
+.game-back-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.game-back-bar button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card-bg);
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.game-back-bar button:hover { background: var(--bg); color: var(--primary); }
+.game-back-bar .game-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ========== SCORE & PROGRESS ========== */
+.score-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.score-bar .score-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.score-bar .score-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.score-bar .progress-info {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* ========== QUESTION CARD ========== */
+.question-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  text-align: center;
+}
+.question-word {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+.question-word-en {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.question-num {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ========== OPTIONS ========== */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.option-btn {
+  padding: 14px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text);
+  text-align: center;
+}
+.option-btn:hover:not(:disabled) {
+  border-color: var(--primary-light);
+  background: #EEF2FF;
+}
+.option-btn:active:not(:disabled) { transform: scale(0.96); }
+.option-btn.correct {
+  border-color: var(--success);
+  background: #D1FAE5;
+  color: #065F46;
+  animation: pulse 0.4s ease;
+}
+.option-btn.wrong {
+  border-color: var(--danger);
+  background: #FEE2E2;
+  color: #991B1B;
+  animation: shake 0.4s ease;
+}
+.option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* ========== RESULT SCREEN ========== */
+.result-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+.result-emoji { font-size: 64px; margin-bottom: 16px; }
+.result-title {
+  font-size: 24px; font-weight: 800; color: var(--text);
+  margin-bottom: 8px;
+}
+.result-score {
+  font-size: 48px; font-weight: 900; color: var(--primary);
+  margin-bottom: 4px;
+}
+.result-score-label {
+  font-size: 14px; color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.result-btns {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+}
+.btn-primary {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 24px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.96); }
+.btn-secondary {
+  padding: 12px 28px;
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-secondary:hover { background: var(--bg); }
+
+/* ========== FEEDBACK TOAST ========== */
+.feedback-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 48px;
+  z-index: 200;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.feedback-toast.show { transform: translate(-50%, -50%) scale(1); }
+
+/* ========== WORD CHAIN ========== */
+.word-chain-area {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.word-chain-display {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 16px;
+  min-height: 32px;
+  align-items: center;
+}
+.word-chain-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.word-chain-tag.player {
+  background: #EEF2FF;
+  color: var(--primary);
+}
+.word-chain-tag.computer {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.word-chain-input-row {
+  display: flex; gap: 8px;
+}
+.word-chain-input-row input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  font-size: 15px;
+  outline: none;
+  transition: var(--transition);
+}
+.word-chain-input-row input:focus {
+  border-color: var(--primary);
+}
+.word-chain-input-row button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 24px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.word-chain-input-row button:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+}
+.word-chain-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.chain-timer {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--warning);
+  margin-bottom: 12px;
+}
+
+/* ========== MAGIC PLANET ========== */
+.planet-canvas {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.planet-word {
+  position: absolute;
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  transition: transform 0.1s ease;
+  animation: float 4s ease-in-out infinite;
+  user-select: none;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.planet-word:hover { transform: scale(1.15); }
+.planet-word.tapped {
+  animation: pop 0.3s ease forwards;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes pop {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ========== ESCAPE ROOM ========== */
+.escape-progress {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.escape-step {
+  flex: 1; height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  transition: background var(--transition);
+}
+.escape-step.done { background: var(--success); }
+.escape-step.current { background: var(--primary); animation: pulse 1.5s infinite; }
+.escape-room-theme {
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #1E1B4B, #312E81);
+  color: #fff;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.escape-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  margin-bottom: 12px;
+  transition: var(--transition);
+}
+.escape-input:focus { border-color: var(--primary); }
+
+/* ========== LEADERBOARD ========== */
+.leaderboard-tabs {
+  display: flex; gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.leaderboard-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card-bg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+.leaderboard-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.leaderboard-list {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.leaderboard-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+}
+.leaderboard-item:last-child { border-bottom: none; }
+.leaderboard-item.current-user {
+  background: #EEF2FF;
+  border-left: 3px solid var(--primary);
+}
+.leaderboard-rank {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800;
+  flex-shrink: 0;
+}
+.leaderboard-rank.gold { background: #FEF3C7; color: #92400E; }
+.leaderboard-rank.silver { background: #F1F5F9; color: #475569; }
+.leaderboard-rank.bronze { background: #FEF2F2; color: #991B1B; }
+.leaderboard-rank.normal { background: var(--bg); color: var(--text-muted); }
+.leaderboard-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.leaderboard-name {
+  flex: 1;
+  font-size: 14px; font-weight: 600;
+  color: var(--text);
+}
+.leaderboard-score {
+  font-size: 16px; font-weight: 800;
+  color: var(--primary);
+}
+
+/* ========== COMMON ========== */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* ========== TIMER ========== */
+.timer-display {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--danger);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.timer-display.warning { animation: pulse 0.5s infinite; }
+</style>
+</head>
+<body>
+
+<script src="/xuewaiyu/assets/common.js"></script>
+
+<!-- ========== HEADER ========== -->
+<header class="page-header">
+  <button class="back-btn" onclick="goBack()" aria-label="Back">&#8592;</button>
+  <h1 data-i18n="game_center">游戏中心</h1>
+  <div class="header-lang">
+    <button data-lang="zh" class="active" onclick="setLang('zh')">中</button>
+    <button data-lang="en" onclick="setLang('en')">EN</button>
+    <button data-lang="ja" onclick="setLang('ja')">日</button>
+    <button data-lang="ko" onclick="setLang('ko')">한</button>
+  </div>
+</header>
+
+<!-- ========== GAME GRID ========== -->
+<div id="gameGrid" class="game-grid">
+  <div class="game-card" onclick="startGame('vocab')">
+    <span class="game-icon">🎯</span>
+    <div class="game-name" data-i18n="vocab_hunter">词汇猎手</div>
+    <div class="game-name-en">Vocabulary Hunter</div>
+    <div class="game-best" id="bestVocab">--</div>
+  </div>
+  <div class="game-card" onclick="startGame('grammar')">
+    <span class="game-icon">🧱</span>
+    <div class="game-name" data-i18n="grammar_blocks">语法方块</div>
+    <div class="game-name-en">Grammar Blocks</div>
+    <div class="game-best" id="bestGrammar">--</div>
+  </div>
+  <div class="game-card" onclick="startGame('escape')">
+    <span class="game-icon">🔐</span>
+    <div class="game-name" data-i18n="escape_room">密室逃脱</div>
+    <div class="game-name-en">Escape Room</div>
+    <div class="game-best" id="bestEscape">--</div>
+  </div>
+  <div class="game-card" onclick="startGame('chain')">
+    <span class="game-icon">🔗</span>
+    <div class="game-name" data-i18n="word_chain">词语接龙</div>
+    <div class="game-name-en">Word Chain</div>
+    <div class="game-best" id="bestChain">--</div>
+  </div>
+  <div class="game-card" onclick="startGame('planet')">
+    <span class="game-icon">🪐</span>
+    <div class="game-name" data-i18n="magic_planet">魔法星球</div>
+    <div class="game-name-en">Magic Planet</div>
+    <div class="game-best" id="bestPlanet">--</div>
+  </div>
+  <div class="game-card" onclick="startGame('leaderboard')">
+    <span class="game-icon">🏆</span>
+    <div class="game-name" data-i18n="leaderboard">排行榜</div>
+    <div class="game-name-en">Leaderboard</div>
+  </div>
+</div>
+
+<!-- ========== GAME 1: VOCABULARY HUNTER ========== -->
+<div id="gameVocab" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🎯 <span data-i18n="vocab_hunter">词汇猎手</span></span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label" data-i18n="score">得分</span>
+    <span class="score-value" id="vocabScore">0</span>
+    <span class="progress-info" id="vocabProgress">1/10</span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="vocabProgressBar" style="width:0%"></div></div>
+  <div id="vocabQuestionArea"></div>
+  <div id="vocabResult" class="hidden"></div>
+</div>
+
+<!-- ========== GAME 2: GRAMMAR BLOCKS ========== -->
+<div id="gameGrammar" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🧱 <span data-i18n="grammar_blocks">语法方块</span></span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label" data-i18n="score">得分</span>
+    <span class="score-value" id="grammarScore">0</span>
+    <span class="progress-info" id="grammarProgress">1/10</span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="grammarProgressBar" style="width:0%"></div></div>
+  <div id="grammarQuestionArea"></div>
+  <div id="grammarResult" class="hidden"></div>
+</div>
+
+<!-- ========== GAME 3: ESCAPE ROOM ========== -->
+<div id="gameEscape" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🔐 <span data-i18n="escape_room">密室逃脱</span></span>
+  </div>
+  <div class="escape-room-theme">
+    <span data-i18n="escape_theme">你被困在语言密室中！解决5个谜题来逃脱！</span>
+  </div>
+  <div class="escape-progress" id="escapeProgress">
+    <div class="escape-step current"></div>
+    <div class="escape-step"></div>
+    <div class="escape-step"></div>
+    <div class="escape-step"></div>
+    <div class="escape-step"></div>
+  </div>
+  <div id="escapeQuestionArea"></div>
+  <div id="escapeResult" class="hidden"></div>
+</div>
+
+<!-- ========== GAME 4: WORD CHAIN ========== -->
+<div id="gameChain" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🔗 <span data-i18n="word_chain">词语接龙</span></span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label" data-i18n="score">得分</span>
+    <span class="score-value" id="chainScore">0</span>
+    <span class="chain-timer" id="chainTimer">⏱ 30s</span>
+  </div>
+  <div class="word-chain-area">
+    <div class="word-chain-display" id="chainWords"></div>
+    <div class="word-chain-input-row">
+      <input type="text" id="chainInput" placeholder="Enter a word..." data-i18n-placeholder="chain_placeholder" autocomplete="off">
+      <button id="chainSubmitBtn" onclick="submitChainWord()" data-i18n="submit">提交</button>
+    </div>
+    <div class="word-chain-info" id="chainHint"></div>
+  </div>
+  <div id="chainResult" class="hidden"></div>
+</div>
+
+<!-- ========== GAME 5: MAGIC PLANET ========== -->
+<div id="gamePlanet" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🪐 <span data-i18n="magic_planet">魔法星球</span></span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label" data-i18n="score">得分</span>
+    <span class="score-value" id="planetScore">0</span>
+    <span class="timer-display" id="planetTimer">⏱ 60s</span>
+  </div>
+  <div class="planet-canvas" id="planetCanvas">
+    <div class="text-center" style="padding-top:160px;color:#fff;font-size:18px;">
+      <span data-i18n="planet_tap_start">点击开始游戏</span>
+    </div>
+  </div>
+  <div class="text-center">
+    <span style="color:var(--text-muted);font-size:13px;" data-i18n="planet_target">目标词：</span>
+    <span id="planetTarget" style="font-size:20px;font-weight:800;color:var(--primary);">--</span>
+  </div>
+  <div id="planetResult" class="hidden"></div>
+</div>
+
+<!-- ========== GAME 6: LEADERBOARD ========== -->
+<div id="gameLeaderboard" class="game-container">
+  <div class="game-back-bar">
+    <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
+    <span class="game-title">🏆 <span data-i18n="leaderboard">排行榜</span></span>
+  </div>
+  <div class="leaderboard-tabs" id="lbTabs">
+    <div class="leaderboard-tab active" data-game="vocab" onclick="switchLB('vocab')">🎯 <span data-i18n="vocab_hunter">词汇猎手</span></div>
+    <div class="leaderboard-tab" data-game="grammar" onclick="switchLB('grammar')">🧱 <span data-i18n="grammar_blocks">语法方块</span></div>
+    <div class="leaderboard-tab" data-game="escape" onclick="switchLB('escape')">🔐 <span data-i18n="escape_room">密室逃脱</span></div>
+    <div class="leaderboard-tab" data-game="chain" onclick="switchLB('chain')">🔗 <span data-i18n="word_chain">词语接龙</span></div>
+    <div class="leaderboard-tab" data-game="planet" onclick="switchLB('planet')">🪐 <span data-i18n="magic_planet">魔法星球</span></div>
+  </div>
+  <div class="leaderboard-list" id="lbList"></div>
+</div>
+
+<!-- ========== FEEDBACK TOAST ========== -->
+<div class="feedback-toast" id="feedbackToast"></div>
+
+<!-- ========== BOTTOM NAV ========== -->
+<div class="bottom-nav" id="bottomNav"></div>
+
+<script>
+// ==================== i18n ====================
+const i18n = {
+  zh: {
+    game_center: '游戏中心',
+    back: '返回',
+    score: '得分',
+    retry: '再来一次',
+    submit: '提交',
+    vocab_hunter: '词汇猎手',
+    grammar_blocks: '语法方块',
+    escape_room: '密室逃脱',
+    word_chain: '词语接龙',
+    magic_planet: '魔法星球',
+    leaderboard: '排行榜',
+    question: '问题',
+    correct: '正确！',
+    wrong: '错误！',
+    time_up: '时间到！',
+    game_over: '游戏结束',
+    victory: '恭喜通关！',
+    defeat: '挑战失败',
+    escaped: '你成功逃脱了！',
+    not_escaped: '你未能逃脱...',
+    best_score: '最高分',
+    chain_placeholder: '输入一个单词...',
+    chain_hint: '请输入以 "{letter}" 开头的单词',
+    planet_tap_start: '点击屏幕开始游戏',
+    planet_target: '目标词：',
+    escape_theme: '你被困在语言密室中！解决5个谜题来逃脱！',
+    your_rank: '你的排名',
+    no_record: '暂无记录',
+    chain_start: '电脑先开始：',
+    chain_your_turn: '轮到你了！',
+    chain_computer_thinking: '电脑思考中...',
+    chain_invalid: '无效单词，请重试！',
+    chain_used: '该单词已使用过！',
+    chain_wrong_letter: '必须以 "{letter}" 开头！',
+    chain_win: '你赢了！',
+    chain_lose: '电脑赢了！',
+    escape_puzzle_prefix: '谜题',
+    loading: '加载中...',
+    your_position: '你',
+    users: '用户',
+    points: '分',
+  },
+  en: {
+    game_center: 'Game Center',
+    back: 'Back',
+    score: 'Score',
+    retry: 'Try Again',
+    submit: 'Submit',
+    vocab_hunter: 'Vocabulary Hunter',
+    grammar_blocks: 'Grammar Blocks',
+    escape_room: 'Escape Room',
+    word_chain: 'Word Chain',
+    magic_planet: 'Magic Planet',
+    leaderboard: 'Leaderboard',
+    question: 'Question',
+    correct: 'Correct!',
+    wrong: 'Wrong!',
+    time_up: "Time's Up!",
+    game_over: 'Game Over',
+    victory: 'Victory!',
+    defeat: 'Defeat',
+    escaped: 'You escaped!',
+    not_escaped: 'You failed to escape...',
+    best_score: 'Best Score',
+    chain_placeholder: 'Enter a word...',
+    chain_hint: 'Enter a word starting with "{letter}"',
+    planet_tap_start: 'Tap to start',
+    planet_target: 'Target: ',
+    escape_theme: 'You are trapped in a language room! Solve 5 puzzles to escape!',
+    your_rank: 'Your Rank',
+    no_record: 'No record',
+    chain_start: 'Computer starts: ',
+    chain_your_turn: 'Your turn!',
+    chain_computer_thinking: 'Computer is thinking...',
+    chain_invalid: 'Invalid word, try again!',
+    chain_used: 'That word was already used!',
+    chain_wrong_letter: 'Must start with "{letter}"!',
+    chain_win: 'You win!',
+    chain_lose: 'Computer wins!',
+    escape_puzzle_prefix: 'Puzzle',
+    loading: 'Loading...',
+    your_position: 'You',
+    users: 'users',
+    points: 'pts',
+  },
+  ja: {
+    game_center: 'ゲームセンター',
+    back: '戻る',
+    score: 'スコア',
+    retry: 'もう一度',
+    submit: '提出',
+    vocab_hunter: '語彙ハンター',
+    grammar_blocks: '文法ブロック',
+    escape_room: '脱出ゲーム',
+    word_chain: '言葉の連鎖',
+    magic_planet: 'マジックプラネット',
+    leaderboard: 'ランキング',
+    question: '問題',
+    correct: '正解！',
+    wrong: '不正解！',
+    time_up: '時間切れ！',
+    game_over: 'ゲームオーバー',
+    victory: 'クリア！',
+    defeat: '失敗',
+    escaped: '脱出成功！',
+    not_escaped: '脱出失敗...',
+    best_score: '最高スコア',
+    chain_placeholder: '単語を入力...',
+    chain_hint: '"{letter}" で始まる単語を入力してください',
+    planet_tap_start: 'タップして開始',
+    planet_target: 'ターゲット：',
+    escape_theme: '言語の部屋に閉じ込められた！5つの謎を解いて脱出せよ！',
+    your_rank: 'あなたの順位',
+    no_record: '記録なし',
+    chain_start: 'コンピューターが先：',
+    chain_your_turn: 'あなたの番です！',
+    chain_computer_thinking: 'コンピューター考え中...',
+    chain_invalid: '無効な単語です！',
+    chain_used: 'その単語は既に使用されています！',
+    chain_wrong_letter: '"{letter}" で始める必要があります！',
+    chain_win: 'あなたの勝ち！',
+    chain_lose: 'コンピューターの勝ち！',
+    escape_puzzle_prefix: '謎',
+    loading: '読み込み中...',
+    your_position: 'あなた',
+    users: 'ユーザー',
+    points: '点',
+  },
+  ko: {
+    game_center: '게임 센터',
+    back: '뒤로',
+    score: '점수',
+    retry: '다시 하기',
+    submit: '제출',
+    vocab_hunter: '어휘 사냥꾼',
+    grammar_blocks: '문법 블록',
+    escape_room: '방 탈출',
+    word_chain: '단어 사슬',
+    magic_planet: '매직 플래닛',
+    leaderboard: '리더보드',
+    question: '문제',
+    correct: '정답!',
+    wrong: '오답!',
+    time_up: '시간 종료!',
+    game_over: '게임 종료',
+    victory: '클리어!',
+    defeat: '실패',
+    escaped: '탈출 성공!',
+    not_escaped: '탈출 실패...',
+    best_score: '최고 점수',
+    chain_placeholder: '단어를 입력하세요...',
+    chain_hint: '"{letter}"(으)로 시작하는 단어를 입력하세요',
+    planet_tap_start: '탭하여 시작',
+    planet_target: '목표: ',
+    escape_theme: '언어의 방에 갇혔습니다! 5개의 퍼즐을 풀어 탈출하세요!',
+    your_rank: '내 순위',
+    no_record: '기록 없음',
+    chain_start: '컴퓨터가 먼저: ',
+    chain_your_turn: '당신 차례입니다!',
+    chain_computer_thinking: '컴퓨터 생각 중...',
+    chain_invalid: '유효하지 않은 단어입니다!',
+    chain_used: '이미 사용된 단어입니다!',
+    chain_wrong_letter: '"{letter}"(으)로 시작해야 합니다!',
+    chain_win: '승리!',
+    chain_lose: '컴퓨터 승리!',
+    escape_puzzle_prefix: '퍼즐',
+    loading: '로딩 중...',
+    your_position: '나',
+    users: '사용자',
+    points: '점',
+  }
+};
+
+let currentLang = 'zh';
+
+function t(key, params) {
+  let text = (i18n[currentLang] && i18n[currentLang][key]) || i18n['zh'][key] || key;
+  if (params) {
+    for (const p in params) {
+      text = text.replace('{' + p + '}', params[p]);
+    }
+  }
+  return text;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.header-lang button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  // Refresh current game UI if active
+  const activeGame = document.querySelector('.game-container.active');
+  if (activeGame) {
+    if (activeGame.id === 'gameLeaderboard') {
+      switchLB(currentLBGame);
+    } else if (activeGame.id === 'gameVocab' && vocabState.inProgress) {
+      renderVocabQuestion();
+    } else if (activeGame.id === 'gameGrammar' && grammarState.inProgress) {
+      renderGrammarQuestion();
+    } else if (activeGame.id === 'gameEscape' && escapeState.inProgress) {
+      renderEscapePuzzle();
+    } else if (activeGame.id === 'gameChain') {
+      updateChainHint();
+    } else if (activeGame.id === 'gamePlanet') {
+      document.getElementById('planetTarget').textContent = '--';
+    }
+  }
+  updateBestScores();
+}
+
+// ==================== NAVIGATION ====================
+function goBack() {
+  window.location.href = '/xuewaiyu/home';
+}
+
+function showGameGrid() {
+  document.getElementById('gameGrid').style.display = '';
+  document.querySelectorAll('.game-container').forEach(c => c.classList.remove('active'));
+  updateBestScores();
+}
+
+function backToGrid() {
+  stopAllGames();
+  showGameGrid();
+}
+
+function startGame(gameId) {
+  document.getElementById('gameGrid').style.display = 'none';
+  document.querySelectorAll('.game-container').forEach(c => c.classList.remove('active'));
+  const gameEl = document.getElementById('game' + gameId.charAt(0).toUpperCase() + gameId.slice(1));
+  if (gameEl) gameEl.classList.add('active');
+
+  switch (gameId) {
+    case 'vocab': initVocabGame(); break;
+    case 'grammar': initGrammarGame(); break;
+    case 'escape': initEscapeGame(); break;
+    case 'chain': initChainGame(); break;
+    case 'planet': initPlanetGame(); break;
+    case 'leaderboard': initLeaderboard(); break;
+  }
+}
+
+function stopAllGames() {
+  if (planetTimerId) { clearInterval(planetTimerId); planetTimerId = null; }
+  if (chainTimerId) { clearInterval(chainTimerId); chainTimerId = null; }
+  vocabState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
+  grammarState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
+  escapeState = { inProgress: false, currentPuzzle: 0, solved: 0 };
+  chainState = { inProgress: false, words: [], score: 0, timer: 30, timerId: null };
+  planetState = { inProgress: false, score: 0, timer: 60, planets: [], targetWord: null };
+}
+
+// ==================== BEST SCORES ====================
+function getBestScore(game) {
+  return parseInt(localStorage.getItem('ailos_best_' + game) || '0');
+}
+
+function setBestScore(game, score) {
+  const current = getBestScore(game);
+  if (score > current) {
+    localStorage.setItem('ailos_best_' + game, score);
+  }
+}
+
+function updateBestScores() {
+  const games = ['vocab', 'grammar', 'escape', 'chain', 'planet'];
+  const ids = ['bestVocab', 'bestGrammar', 'bestEscape', 'bestChain', 'bestPlanet'];
+  games.forEach((g, i) => {
+    const best = getBestScore(g);
+    const el = document.getElementById(ids[i]);
+    if (el) {
+      el.textContent = best > 0 ? t('best_score') + ': ' + best : '--';
+    }
+  });
+}
+
+// ==================== FEEDBACK TOAST ====================
+function showFeedback(emoji) {
+  const toast = document.getElementById('feedbackToast');
+  toast.textContent = emoji;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 600);
+}
+
+// ==================== GAME 1: VOCABULARY HUNTER ====================
+const vocabBank = [
+  { word: 'Apple', zh: '苹果', options: ['苹果', '香蕉', '橙子', '葡萄'] },
+  { word: 'Book', zh: '书', options: ['钢笔', '书', '纸', '桌子'] },
+  { word: 'Cat', zh: '猫', options: ['狗', '猫', '鸟', '鱼'] },
+  { word: 'Dog', zh: '狗', options: ['猫', '兔子', '狗', '马'] },
+  { word: 'Elephant', zh: '大象', options: ['老虎', '大象', '狮子', '熊'] },
+  { word: 'Flower', zh: '花', options: ['树', '草', '花', '叶子'] },
+  { word: 'Garden', zh: '花园', options: ['公园', '花园', '森林', '沙漠'] },
+  { word: 'House', zh: '房子', options: ['学校', '房子', '医院', '商店'] },
+  { word: 'Ice', zh: '冰', options: ['水', '冰', '雪', '霜'] },
+  { word: 'Jump', zh: '跳', options: ['跑', '走', '跳', '坐'] },
+  { word: 'King', zh: '国王', options: ['王后', '王子', '国王', '公主'] },
+  { word: 'Lion', zh: '狮子', options: ['老虎', '狮子', '豹', '狼'] },
+  { word: 'Moon', zh: '月亮', options: ['太阳', '星星', '月亮', '云'] },
+  { word: 'Night', zh: '夜晚', options: ['早上', '下午', '夜晚', '中午'] },
+  { word: 'Ocean', zh: '海洋', options: ['河流', '湖泊', '海洋', '池塘'] },
+  { word: 'Piano', zh: '钢琴', options: ['吉他', '钢琴', '鼓', '小提琴'] },
+  { word: 'Queen', zh: '女王', options: ['国王', '女王', '公主', '王子'] },
+  { word: 'Rain', zh: '雨', options: ['雪', '雨', '风', '雾'] },
+  { word: 'Sun', zh: '太阳', options: ['月亮', '太阳', '星星', '地球'] },
+  { word: 'Tree', zh: '树', options: ['花', '草', '树', '灌木'] },
+];
+
+let vocabState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
+
+function initVocabGame() {
+  const shuffled = [...vocabBank].sort(() => Math.random() - 0.5).slice(0, 10);
+  vocabState = { inProgress: true, questions: shuffled, currentQ: 0, score: 0 };
+  document.getElementById('vocabScore').textContent = '0';
+  document.getElementById('vocabProgress').textContent = '1/10';
+  document.getElementById('vocabProgressBar').style.width = '0%';
+  document.getElementById('vocabResult').classList.add('hidden');
+  document.getElementById('vocabQuestionArea').classList.remove('hidden');
+  renderVocabQuestion();
+}
+
+function renderVocabQuestion() {
+  if (vocabState.currentQ >= vocabState.questions.length) {
+    endVocabGame();
+    return;
+  }
+  const q = vocabState.questions[vocabState.currentQ];
+  const i = vocabState.currentQ + 1;
+  const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+  document.getElementById('vocabProgress').textContent = i + '/10';
+  document.getElementById('vocabProgressBar').style.width = ((i - 1) / 10 * 100) + '%';
+
+  let html = '<div class="question-card">';
+  html += '<div class="question-num">' + t('question') + ' ' + i + '/10</div>';
+  html += '<div class="question-word">' + q.word + '</div>';
+  html += '<div class="question-word-en">' + t('vocab_hunter') + '</div>';
+  html += '</div>';
+  html += '<div class="options-grid">';
+  shuffledOptions.forEach(opt => {
+    html += '<button class="option-btn" onclick="checkVocabAnswer(this, \'' + opt + '\', \'' + q.zh + '\')">' + opt + '</button>';
+  });
+  html += '</div>';
+  document.getElementById('vocabQuestionArea').innerHTML = html;
+}
+
+function checkVocabAnswer(btn, selected, correct) {
+  const allBtns = document.querySelectorAll('#vocabQuestionArea .option-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if (selected === correct) {
+    btn.classList.add('correct');
+    vocabState.score += 10;
+    showFeedback('✅');
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+    showFeedback('❌');
+  }
+
+  document.getElementById('vocabScore').textContent = vocabState.score;
+
+  setTimeout(() => {
+    vocabState.currentQ++;
+    renderVocabQuestion();
+  }, 800);
+}
+
+function endVocabGame() {
+  vocabState.inProgress = false;
+  setBestScore('vocab', vocabState.score);
+  document.getElementById('vocabProgressBar').style.width = '100%';
+  document.getElementById('vocabQuestionArea').classList.add('hidden');
+  const resultDiv = document.getElementById('vocabResult');
+  resultDiv.classList.remove('hidden');
+  const isGood = vocabState.score >= 60;
+  resultDiv.innerHTML = `
+    <div class="result-screen">
+      <div class="result-emoji">${isGood ? '🎉' : '💪'}</div>
+      <div class="result-title">${isGood ? t('victory') : t('game_over')}</div>
+      <div class="result-score">${vocabState.score}</div>
+      <div class="result-score-label">${t('points')}</div>
+      <div class="result-btns">
+        <button class="btn-primary" onclick="initVocabGame()">${t('retry')}</button>
+        <button class="btn-secondary" onclick="backToGrid()">${t('back')}</button>
+      </div>
+    </div>
+  `;
+  updateBestScores();
+}
+
+// ==================== GAME 2: GRAMMAR BLOCKS ====================
+const grammarBank = [
+  { sentence: 'She ___ to school every day.', blank: 'goes', options: ['go', 'goes', 'going', 'went'] },
+  { sentence: 'They ___ playing football now.', blank: 'are', options: ['is', 'am', 'are', 'be'] },
+  { sentence: 'I have ___ my homework.', blank: 'finished', options: ['finish', 'finishes', 'finished', 'finishing'] },
+  { sentence: 'He ___ a book yesterday.', blank: 'read', options: ['reads', 'read', 'reading', 'is read'] },
+  { sentence: 'We ___ to the park last Sunday.', blank: 'went', options: ['go', 'goes', 'went', 'going'] },
+  { sentence: 'There ___ many students in the classroom.', blank: 'are', options: ['is', 'am', 'are', 'be'] },
+  { sentence: 'She can ___ English very well.', blank: 'speak', options: ['speaks', 'speaking', 'speak', 'spoke'] },
+  { sentence: 'The book ___ on the table.', blank: 'is', options: ['are', 'is', 'am', 'be'] },
+  { sentence: 'He ___ never been to Japan.', blank: 'has', options: ['have', 'has', 'had', 'having'] },
+  { sentence: 'If I ___ you, I would go.', blank: 'were', options: ['was', 'am', 'were', 'be'] },
+  { sentence: 'She is ___ than her sister.', blank: 'taller', options: ['tall', 'taller', 'tallest', 'more tall'] },
+  { sentence: 'I look forward to ___ from you.', blank: 'hearing', options: ['hear', 'hears', 'heard', 'hearing'] },
+  { sentence: 'They ___ arrive on time.', blank: 'always', options: ['always', 'is always', 'are always', 'always are'] },
+  { sentence: 'Neither he nor I ___ a teacher.', blank: 'am', options: ['is', 'am', 'are', 'be'] },
+  { sentence: 'The cake was ___ by my mother.', blank: 'made', options: ['make', 'makes', 'made', 'making'] },
+];
+
+let grammarState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
+
+function initGrammarGame() {
+  const shuffled = [...grammarBank].sort(() => Math.random() - 0.5).slice(0, 10);
+  grammarState = { inProgress: true, questions: shuffled, currentQ: 0, score: 0 };
+  document.getElementById('grammarScore').textContent = '0';
+  document.getElementById('grammarProgress').textContent = '1/10';
+  document.getElementById('grammarProgressBar').style.width = '0%';
+  document.getElementById('grammarResult').classList.add('hidden');
+  document.getElementById('grammarQuestionArea').classList.remove('hidden');
+  renderGrammarQuestion();
+}
+
+function renderGrammarQuestion() {
+  if (grammarState.currentQ >= grammarState.questions.length) {
+    endGrammarGame();
+    return;
+  }
+  const q = grammarState.questions[grammarState.currentQ];
+  const i = grammarState.currentQ + 1;
+  const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+  document.getElementById('grammarProgress').textContent = i + '/10';
+  document.getElementById('grammarProgressBar').style.width = ((i - 1) / 10 * 100) + '%';
+
+  let html = '<div class="question-card">';
+  html += '<div class="question-num">' + t('question') + ' ' + i + '/10</div>';
+  html += '<div class="question-word" style="font-size:18px;">' + q.sentence + '</div>';
+  html += '</div>';
+  html += '<div class="options-grid">';
+  shuffledOptions.forEach(opt => {
+    html += '<button class="option-btn" onclick="checkGrammarAnswer(this, \'' + opt + '\', \'' + q.blank + '\')">' + opt + '</button>';
+  });
+  html += '</div>';
+  document.getElementById('grammarQuestionArea').innerHTML = html;
+}
+
+function checkGrammarAnswer(btn, selected, correct) {
+  const allBtns = document.querySelectorAll('#grammarQuestionArea .option-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if (selected === correct) {
+    btn.classList.add('correct');
+    grammarState.score += 10;
+    showFeedback('✅');
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+    showFeedback('❌');
+  }
+
+  document.getElementById('grammarScore').textContent = grammarState.score;
+
+  setTimeout(() => {
+    grammarState.currentQ++;
+    renderGrammarQuestion();
+  }, 800);
+}
+
+function endGrammarGame() {
+  grammarState.inProgress = false;
+  setBestScore('grammar', grammarState.score);
+  document.getElementById('grammarProgressBar').style.width = '100%';
+  document.getElementById('grammarQuestionArea').classList.add('hidden');
+  const resultDiv = document.getElementById('grammarResult');
+  resultDiv.classList.remove('hidden');
+  const isGood = grammarState.score >= 60;
+  resultDiv.innerHTML = `
+    <div class="result-screen">
+      <div class="result-emoji">${isGood ? '🎉' : '💪'}</div>
+      <div class="result-title">${isGood ? t('victory') : t('game_over')}</div>
+      <div class="result-score">${grammarState.score}</div>
+      <div class="result-score-label">${t('points')}</div>
+      <div class="result-btns">
+        <button class="btn-primary" onclick="initGrammarGame()">${t('retry')}</button>
+        <button class="btn-secondary" onclick="backToGrid()">${t('back')}</button>
+      </div>
+    </div>
+  `;
+  updateBestScores();
+}
+
+// ==================== GAME 3: ESCAPE ROOM ====================
+const escapePuzzles = [
+  {
+    question: 'What has keys but no locks, space but no room, and you can enter but not go in?',
+    questionCN: '什么东西有按键但没有锁，有空间但没有房间，你可以进入但不能进去？',
+    answer: 'keyboard',
+    hint: 'You use it to type',
+    hintCN: '你用它来打字',
+  },
+  {
+    question: 'I am a word of five letters. Take away my first letter, I am a type of energy. Take away my first two letters, I am needed to live. What am I?',
+    questionCN: '我是一个五个字母的单词。去掉第一个字母，我是一种能量。去掉前两个字母，我是生存所需。我是什么？',
+    answer: 'wheat',
+    hint: 'A grain crop',
+    hintCN: '一种谷物',
+  },
+  {
+    question: 'What comes once in a minute, twice in a moment, but never in a thousand years?',
+    questionCN: '什么东西在一分钟里出现一次，在片刻里出现两次，但在一千年里从不出现？',
+    answer: 'm',
+    hint: 'Think about letters',
+    hintCN: '想想字母',
+  },
+  {
+    question: 'The more you take, the more you leave behind. What am I?',
+    questionCN: '你拿走的越多，留下的就越多。我是什么？',
+    answer: 'footsteps',
+    hint: 'Walking creates these',
+    hintCN: '走路会产生这个',
+  },
+  {
+    question: 'I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?',
+    questionCN: '我没有嘴巴却能说话，没有耳朵却能听见。我没有身体，但风让我活起来。我是什么？',
+    answer: 'echo',
+    hint: 'Sounds bounce back',
+    hintCN: '声音会反弹',
+  },
+];
+
+let escapeState = { inProgress: false, currentPuzzle: 0, solved: 0 };
+
+function initEscapeGame() {
+  escapeState = { inProgress: true, currentPuzzle: 0, solved: 0 };
+  document.getElementById('escapeResult').classList.add('hidden');
+  document.getElementById('escapeQuestionArea').classList.remove('hidden');
+  updateEscapeProgress();
+  renderEscapePuzzle();
+}
+
+function updateEscapeProgress() {
+  const steps = document.querySelectorAll('#escapeProgress .escape-step');
+  steps.forEach((step, i) => {
+    step.classList.remove('done', 'current');
+    if (i < escapeState.solved) step.classList.add('done');
+    else if (i === escapeState.currentPuzzle) step.classList.add('current');
+  });
+}
+
+function renderEscapePuzzle() {
+  if (escapeState.currentPuzzle >= escapePuzzles.length) {
+    endEscapeGame(true);
+    return;
+  }
+  const p = escapePuzzles[escapeState.currentPuzzle];
+  const i = escapeState.currentPuzzle + 1;
+
+  let html = '<div class="question-card">';
+  html += '<div class="question-num">' + t('escape_puzzle_prefix') + ' ' + i + '/5</div>';
+  html += '<div class="question-word" style="font-size:16px;line-height:1.6;">' + p.question + '</div>';
+  html += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px;">' + p.questionCN + '</div>';
+  html += '<div style="font-size:12px;color:var(--warning);margin-top:8px;">💡 ' + (currentLang === 'zh' ? p.hintCN : p.hint) + '</div>';
+  html += '</div>';
+  html += '<input type="text" class="escape-input" id="escapeInput" placeholder="' + (currentLang === 'zh' ? '输入答案...' : 'Enter your answer...') + '" autocomplete="off">';
+  html += '<div class="text-center"><button class="btn-primary" onclick="checkEscapeAnswer()">' + t('submit') + '</button></div>';
+  document.getElementById('escapeQuestionArea').innerHTML = html;
+
+  const input = document.getElementById('escapeInput');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkEscapeAnswer();
+    });
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+function checkEscapeAnswer() {
+  const input = document.getElementById('escapeInput');
+  if (!input) return;
+  const userAnswer = input.value.trim().toLowerCase();
+  const correctAnswer = escapePuzzles[escapeState.currentPuzzle].answer.toLowerCase();
+
+  if (userAnswer === correctAnswer) {
+    escapeState.solved++;
+    showFeedback('✅');
+    escapeState.currentPuzzle++;
+    updateEscapeProgress();
+    if (escapeState.currentPuzzle >= escapePuzzles.length) {
+      endEscapeGame(true);
+    } else {
+      setTimeout(() => renderEscapePuzzle(), 500);
+    }
+  } else {
+    showFeedback('❌');
+    input.style.borderColor = 'var(--danger)';
+    input.style.animation = 'shake 0.4s ease';
+    setTimeout(() => {
+      input.style.borderColor = 'var(--border)';
+      input.style.animation = '';
+      input.value = '';
+    }, 500);
+  }
+}
+
+function endEscapeGame(won) {
+  escapeState.inProgress = false;
+  const score = escapeState.solved * 20;
+  setBestScore('escape', score);
+  document.getElementById('escapeQuestionArea').classList.add('hidden');
+  const resultDiv = document.getElementById('escapeResult');
+  resultDiv.classList.remove('hidden');
+  resultDiv.innerHTML = `
+    <div class="result-screen">
+      <div class="result-emoji">${won ? '🔓' : '🔒'}</div>
+      <div class="result-title">${won ? t('escaped') : t('not_escaped')}</div>
+      <div class="result-score">${score}</div>
+      <div class="result-score-label">${t('points')} (${escapeState.solved}/5 ${t('escape_puzzle_prefix')})</div>
+      <div class="result-btns">
+        <button class="btn-primary" onclick="initEscapeGame()">${t('retry')}</button>
+        <button class="btn-secondary" onclick="backToGrid()">${t('back')}</button>
+      </div>
+    </div>
+  `;
+  updateBestScores();
+}
+
+// ==================== GAME 4: WORD CHAIN ====================
+const wordList = [
+  'apple', 'elephant', 'tiger', 'rabbit', 'tree', 'egg', 'grape', 'eagle',
+  'orange', 'eleven', 'notebook', 'king', 'garden', 'night', 'table', 'earth',
+  'house', 'energy', 'yellow', 'window', 'door', 'river', 'rose', 'eye',
+  'island', 'dream', 'mountain', 'north', 'heart', 'train', 'nest', 'time',
+  'engine', 'east', 'tower', 'road', 'dark', 'kite', 'early', 'year',
+  'rain', 'nature', 'elegant', 'tea', 'animal', 'love', 'envelope', 'paper',
+  'room', 'music', 'city', 'young', 'garden', 'nation', 'nut', 'top',
+  'piano', 'ocean', 'nest', 'temple', 'eagle', 'edge', 'ink', 'key',
+  'youth', 'hotel', 'lamp', 'park', 'knee', 'eight', 'tent', 'tomato',
+  'ostrich', 'honey', 'yoga', 'arm', 'milk', 'kangaroo', 'oil', 'lion',
+  'notebook', 'kite', 'equal', 'library', 'yesterday', 'date', 'engine',
+  'ear', 'ring', 'goat', 'tulip', 'peach', 'hat', 'tale', 'earphone',
+  'editor', 'rice', 'echo', 'opera', 'angel', 'ladder', 'rabbit', 'tomato',
+  'orange', 'elevator', 'rescue', 'element', 'train', 'noble', 'epic',
+  'cable', 'empire', 'erase', 'elbow', 'winter', 'ruler', 'robot', 'temple',
+  'exit', 'table', 'elephant', 'turkey', 'yacht', 'tractor', 'roses',
+  'sister', 'rabbit', 'tornado', 'otter', 'rainbow', 'whale', 'envelope',
+];
+
+let chainState = { inProgress: false, words: [], score: 0, timer: 30, timerId: null };
+let chainTimerId = null;
+
+function initChainGame() {
+  chainState = { inProgress: true, words: [], score: 0, timer: 30 };
+  document.getElementById('chainScore').textContent = '0';
+  document.getElementById('chainWords').innerHTML = '';
+  document.getElementById('chainResult').classList.add('hidden');
+  document.getElementById('chainInput').value = '';
+  document.getElementById('chainInput').disabled = false;
+  document.getElementById('chainSubmitBtn').disabled = false;
+  updateChainTimer();
+  updateChainHint();
+
+  // Computer starts
+  const firstWord = wordList[Math.floor(Math.random() * wordList.length)];
+  chainState.words.push({ word: firstWord, type: 'computer' });
+  updateChainWords();
+  document.getElementById('chainHint').textContent = t('chain_your_turn');
+
+  startChainTimer();
+  document.getElementById('chainInput').focus();
+}
+
+function startChainTimer() {
+  if (chainTimerId) clearInterval(chainTimerId);
+  chainTimerId = setInterval(() => {
+    chainState.timer--;
+    updateChainTimer();
+    if (chainState.timer <= 0) {
+      endChainGame(false);
+    }
+  }, 1000);
+}
+
+function updateChainTimer() {
+  const el = document.getElementById('chainTimer');
+  el.textContent = '⏱ ' + chainState.timer + 's';
+  if (chainState.timer <= 10) el.classList.add('warning');
+  else el.classList.remove('warning');
+}
+
+function updateChainWords() {
+  const container = document.getElementById('chainWords');
+  container.innerHTML = chainState.words.map(w =>
+    '<span class="word-chain-tag ' + w.type + '">' +
+    (w.type === 'player' ? '👤 ' : '🤖 ') + w.word +
+    '</span>'
+  ).join('');
+}
+
+function updateChainHint() {
+  if (chainState.words.length === 0) {
+    document.getElementById('chainHint').textContent = t('chain_start');
+    return;
+  }
+  const lastWord = chainState.words[chainState.words.length - 1].word;
+  const lastLetter = lastWord.charAt(lastWord.length - 1);
+  document.getElementById('chainHint').textContent = t('chain_your_turn');
+}
+
+function submitChainWord() {
+  if (!chainState.inProgress) return;
+  const input = document.getElementById('chainInput');
+  const word = input.value.trim().toLowerCase();
+  if (!word) return;
+
+  const lastWord = chainState.words[chainState.words.length - 1].word;
+  const lastLetter = lastWord.charAt(lastWord.length - 1);
+
+  // Validate
+  if (word.charAt(0) !== lastLetter) {
+    document.getElementById('chainHint').textContent = t('chain_wrong_letter', { letter: lastLetter });
+    input.style.borderColor = 'var(--danger)';
+    setTimeout(() => input.style.borderColor = 'var(--border)', 500);
+    return;
+  }
+
+  if (chainState.words.some(w => w.word === word)) {
+    document.getElementById('chainHint').textContent = t('chain_used');
+    input.style.borderColor = 'var(--danger)';
+    setTimeout(() => input.style.borderColor = 'var(--border)', 500);
+    return;
+  }
+
+  if (!wordList.includes(word) || word.length < 2) {
+    document.getElementById('chainHint').textContent = t('chain_invalid');
+    input.style.borderColor = 'var(--danger)';
+    setTimeout(() => input.style.borderColor = 'var(--border)', 500);
+    return;
+  }
+
+  // Valid word
+  chainState.words.push({ word: word, type: 'player' });
+  chainState.score += 10;
+  document.getElementById('chainScore').textContent = chainState.score;
+  chainState.timer = Math.min(chainState.timer + 5, 30);
+  updateChainWords();
+  updateChainTimer();
+  input.value = '';
+  document.getElementById('chainHint').textContent = t('chain_computer_thinking');
+
+  // Computer's turn
+  input.disabled = true;
+  document.getElementById('chainSubmitBtn').disabled = true;
+
+  setTimeout(() => {
+    const computerLastLetter = word.charAt(word.length - 1);
+    const candidates = wordList.filter(w =>
+      w.charAt(0) === computerLastLetter &&
+      !chainState.words.some(uw => uw.word === w) &&
+      w.length >= 2
+    );
+
+    if (candidates.length === 0) {
+      endChainGame(true);
+      return;
+    }
+
+    const computerWord = candidates[Math.floor(Math.random() * candidates.length)];
+    chainState.words.push({ word: computerWord, type: 'computer' });
+    updateChainWords();
+    document.getElementById('chainHint').textContent = t('chain_your_turn');
+    input.disabled = false;
+    document.getElementById('chainSubmitBtn').disabled = false;
+    input.focus();
+  }, 800 + Math.random() * 1200);
+}
+
+function endChainGame(playerWon) {
+  chainState.inProgress = false;
+  if (chainTimerId) { clearInterval(chainTimerId); chainTimerId = null; }
+  setBestScore('chain', chainState.score);
+  document.getElementById('chainInput').disabled = true;
+  document.getElementById('chainSubmitBtn').disabled = true;
+  document.getElementById('chainResult').classList.remove('hidden');
+  document.getElementById('chainResult').innerHTML = `
+    <div class="result-screen">
+      <div class="result-emoji">${playerWon ? '🏆' : '🤖'}</div>
+      <div class="result-title">${playerWon ? t('chain_win') : t('chain_lose')}</div>
+      <div class="result-score">${chainState.score}</div>
+      <div class="result-score-label">${t('points')}</div>
+      <div class="result-btns">
+        <button class="btn-primary" onclick="initChainGame()">${t('retry')}</button>
+        <button class="btn-secondary" onclick="backToGrid()">${t('back')}</button>
+      </div>
+    </div>
+  `;
+  updateBestScores();
+}
+
+// ==================== GAME 5: MAGIC PLANET ====================
+const planetWords = [
+  { en: 'Apple', zh: '苹果', ja: 'リンゴ', ko: '사과' },
+  { en: 'Book', zh: '书', ja: '本', ko: '책' },
+  { en: 'Cat', zh: '猫', ja: '猫', ko: '고양이' },
+  { en: 'Dog', zh: '狗', ja: '犬', ko: '개' },
+  { en: 'Sun', zh: '太阳', ja: '太陽', ko: '태양' },
+  { en: 'Moon', zh: '月亮', ja: '月', ko: '달' },
+  { en: 'Star', zh: '星星', ja: '星', ko: '별' },
+  { en: 'Water', zh: '水', ja: '水', ko: '물' },
+  { en: 'Fire', zh: '火', ja: '火', ko: '불' },
+  { en: 'Tree', zh: '树', ja: '木', ko: '나무' },
+  { en: 'Flower', zh: '花', ja: '花', ko: '꽃' },
+  { en: 'Bird', zh: '鸟', ja: '鳥', ko: '새' },
+  { en: 'Fish', zh: '鱼', ja: '魚', ko: '물고기' },
+  { en: 'House', zh: '房子', ja: '家', ko: '집' },
+  { en: 'Car', zh: '汽车', ja: '車', ko: '자동차' },
+  { en: 'Music', zh: '音乐', ja: '音楽', ko: '음악' },
+  { en: 'Love', zh: '爱', ja: '愛', ko: '사랑' },
+  { en: 'Ocean', zh: '海洋', ja: '海', ko: '바다' },
+  { en: 'Mountain', zh: '山', ja: '山', ko: '산' },
+  { en: 'Rain', zh: '雨', ja: '雨', ko: '비' },
+  { en: 'Snow', zh: '雪', ja: '雪', ko: '눈' },
+  { en: 'Wind', zh: '风', ja: '風', ko: '바람' },
+  { en: 'Cloud', zh: '云', ja: '雲', ko: '구름' },
+  { en: 'River', zh: '河流', ja: '川', ko: '강' },
+  { en: 'Bridge', zh: '桥', ja: '橋', ko: '다리' },
+  { en: 'Garden', zh: '花园', ja: '庭', ko: '정원' },
+  { en: 'Tiger', zh: '老虎', ja: '虎', ko: '호랑이' },
+  { en: 'Lion', zh: '狮子', ja: 'ライオン', ko: '사자' },
+  { en: 'Elephant', zh: '大象', ja: '象', ko: '코끼리' },
+  { en: 'Rabbit', zh: '兔子', ja: 'ウサギ', ko: '토끼' },
+];
+
+const planetColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9FF3', '#54A0FF', '#5F27CD', '#01A3A4', '#F368E0', '#EE5A24', '#6AB04C', '#F9CA24', '#A29BFE', '#FD79A8'];
+
+let planetState = { inProgress: false, score: 0, timer: 60, planets: [], targetWord: null };
+let planetTimerId = null;
+let planetGameStarted = false;
+
+function initPlanetGame() {
+  planetState = { inProgress: false, score: 0, timer: 60, planets: [], targetWord: null };
+  planetGameStarted = false;
+  document.getElementById('planetScore').textContent = '0';
+  document.getElementById('planetTimer').textContent = '⏱ 60s';
+  document.getElementById('planetTimer').classList.remove('warning');
+  document.getElementById('planetResult').classList.add('hidden');
+  const canvas = document.getElementById('planetCanvas');
+  canvas.innerHTML = '<div class="text-center" style="padding-top:160px;color:#fff;font-size:18px;">' + t('planet_tap_start') + '</div>';
+  document.getElementById('planetTarget').textContent = '--';
+  canvas.onclick = startPlanetRound;
+}
+
+function startPlanetRound() {
+  if (planetGameStarted) return;
+  planetGameStarted = true;
+  planetState.inProgress = true;
+  const canvas = document.getElementById('planetCanvas');
+  canvas.innerHTML = '';
+  canvas.onclick = null;
+  spawnPlanets();
+  pickTarget();
+  startPlanetTimer();
+}
+
+function startPlanetTimer() {
+  if (planetTimerId) clearInterval(planetTimerId);
+  planetTimerId = setInterval(() => {
+    planetState.timer--;
+    document.getElementById('planetTimer').textContent = '⏱ ' + planetState.timer + 's';
+    if (planetState.timer <= 10) document.getElementById('planetTimer').classList.add('warning');
+    if (planetState.timer <= 0) {
+      endPlanetGame();
+    }
+    // Increase difficulty over time
+    if (planetState.timer % 10 === 0 && planetState.timer < 50) {
+      spawnPlanets();
+    }
+  }, 1000);
+}
+
+function spawnPlanets() {
+  const canvas = document.getElementById('planetCanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const count = Math.min(3 + Math.floor((60 - planetState.timer) / 10), 8);
+
+  // Remove old planets
+  const existing = canvas.querySelectorAll('.planet-word');
+  if (existing.length >= 12) return;
+
+  const shuffled = [...planetWords].sort(() => Math.random() - 0.5);
+  const toAdd = shuffled.slice(0, count);
+
+  toAdd.forEach(wordData => {
+    const planet = document.createElement('div');
+    planet.className = 'planet-word';
+    const color = planetColors[Math.floor(Math.random() * planetColors.length)];
+    planet.style.background = 'radial-gradient(circle at 30% 30%, ' + color + ', ' + darkenColor(color) + ')';
+    planet.style.left = (10 + Math.random() * 70) + '%';
+    planet.style.top = (10 + Math.random() * 70) + '%';
+    planet.style.animationDelay = Math.random() * 3 + 's';
+    planet.style.animationDuration = (3 + Math.random() * 3) + 's';
+    planet.dataset.en = wordData.en;
+    planet.dataset.zh = wordData.zh;
+    planet.dataset.ja = wordData.ja;
+    planet.dataset.ko = wordData.ko;
+    planet.textContent = wordData.en;
+    planet.onclick = function(e) { tapPlanet(this, e); };
+    canvas.appendChild(planet);
+  });
+}
+
+function darkenColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return '#' + [r, g, b].map(c => Math.max(0, c - 60).toString(16).padStart(2, '0')).join('');
+}
+
+function pickTarget() {
+  const canvas = document.getElementById('planetCanvas');
+  const planets = canvas.querySelectorAll('.planet-word');
+  if (planets.length === 0) {
+    planetState.targetWord = planetWords[Math.floor(Math.random() * planetWords.length)];
+  } else {
+    const randomPlanet = planets[Math.floor(Math.random() * planets.length)];
+    planetState.targetWord = {
+      en: randomPlanet.dataset.en,
+      zh: randomPlanet.dataset.zh,
+      ja: randomPlanet.dataset.ja,
+      ko: randomPlanet.dataset.ko,
+    };
+  }
+  const tw = planetState.targetWord;
+  const targetEl = document.getElementById('planetTarget');
+  const langKey = currentLang === 'zh' ? 'zh' : currentLang === 'ja' ? 'ja' : currentLang === 'ko' ? 'ko' : 'en';
+  targetEl.textContent = tw[langKey] || tw.en;
+}
+
+function tapPlanet(planet, event) {
+  if (!planetState.inProgress) return;
+  event.stopPropagation();
+
+  const tw = planetState.targetWord;
+  const langKey = currentLang === 'zh' ? 'zh' : currentLang === 'ja' ? 'ja' : currentLang === 'ko' ? 'ko' : 'en';
+  const targetTranslation = tw[langKey] || tw.en;
+
+  if (planet.dataset[langKey] === targetTranslation || planet.dataset.en === tw.en) {
+    // Correct
+    planetState.score += 10;
+    document.getElementById('planetScore').textContent = planetState.score;
+    planet.classList.add('tapped');
+    showFeedback('✅');
+    setTimeout(() => planet.remove(), 300);
+    // Spawn new planet
+    setTimeout(() => {
+      if (planetState.inProgress) {
+        spawnPlanets();
+        pickTarget();
+      }
+    }, 400);
+  } else {
+    // Wrong
+    planetState.score = Math.max(0, planetState.score - 5);
+    document.getElementById('planetScore').textContent = planetState.score;
+    showFeedback('❌');
+  }
+}
+
+function endPlanetGame() {
+  planetState.inProgress = false;
+  planetGameStarted = false;
+  if (planetTimerId) { clearInterval(planetTimerId); planetTimerId = null; }
+  setBestScore('planet', planetState.score);
+  document.getElementById('planetTimer').textContent = '⏱ 0s';
+  document.getElementById('planetTimer').classList.remove('warning');
+  document.getElementById('planetResult').classList.remove('hidden');
+  const isGood = planetState.score >= 50;
+  document.getElementById('planetResult').innerHTML = `
+    <div class="result-screen">
+      <div class="result-emoji">${isGood ? '🌟' : '🪐'}</div>
+      <div class="result-title">${isGood ? t('victory') : t('time_up')}</div>
+      <div class="result-score">${planetState.score}</div>
+      <div class="result-score-label">${t('points')}</div>
+      <div class="result-btns">
+        <button class="btn-primary" onclick="initPlanetGame()">${t('retry')}</button>
+        <button class="btn-secondary" onclick="backToGrid()">${t('back')}</button>
+      </div>
+    </div>
+  `;
+  updateBestScores();
+}
+
+// ==================== GAME 6: LEADERBOARD ====================
+const leaderboardData = {
+  vocab: [
+    { name: 'Alice', avatar: 'A', score: 100, isCurrent: false },
+    { name: 'Bob', avatar: 'B', score: 90, isCurrent: false },
+    { name: 'Charlie', avatar: 'C', score: 80, isCurrent: false },
+    { name: 'David', avatar: 'D', score: 70, isCurrent: false },
+    { name: 'Eve', avatar: 'E', score: 60, isCurrent: false },
+    { name: '我', avatar: '我', score: 50, isCurrent: true },
+    { name: 'Frank', avatar: 'F', score: 40, isCurrent: false },
+    { name: 'Grace', avatar: 'G', score: 30, isCurrent: false },
+    { name: 'Henry', avatar: 'H', score: 20, isCurrent: false },
+    { name: 'Ivy', avatar: 'I', score: 10, isCurrent: false },
+  ],
+  grammar: [
+    { name: 'Bob', avatar: 'B', score: 95, isCurrent: false },
+    { name: 'Alice', avatar: 'A', score: 85, isCurrent: false },
+    { name: '我', avatar: '我', score: 75, isCurrent: true },
+    { name: 'Charlie', avatar: 'C', score: 70, isCurrent: false },
+    { name: 'David', avatar: 'D', score: 65, isCurrent: false },
+    { name: 'Eve', avatar: 'E', score: 55, isCurrent: false },
+    { name: 'Frank', avatar: 'F', score: 45, isCurrent: false },
+    { name: 'Grace', avatar: 'G', score: 35, isCurrent: false },
+    { name: 'Henry', avatar: 'H', score: 25, isCurrent: false },
+    { name: 'Ivy', avatar: 'I', score: 15, isCurrent: false },
+  ],
+  escape: [
+    { name: 'Charlie', avatar: 'C', score: 100, isCurrent: false },
+    { name: 'Alice', avatar: 'A', score: 100, isCurrent: false },
+    { name: 'Bob', avatar: 'B', score: 80, isCurrent: false },
+    { name: 'David', avatar: 'D', score: 80, isCurrent: false },
+    { name: '我', avatar: '我', score: 60, isCurrent: true },
+    { name: 'Eve', avatar: 'E', score: 60, isCurrent: false },
+    { name: 'Frank', avatar: 'F', score: 40, isCurrent: false },
+    { name: 'Grace', avatar: 'G', score: 40, isCurrent: false },
+    { name: 'Henry', avatar: 'H', score: 20, isCurrent: false },
+    { name: 'Ivy', avatar: 'I', score: 20, isCurrent: false },
+  ],
+  chain: [
+    { name: '我', avatar: '我', score: 120, isCurrent: true },
+    { name: 'Alice', avatar: 'A', score: 110, isCurrent: false },
+    { name: 'Bob', avatar: 'B', score: 90, isCurrent: false },
+    { name: 'Charlie', avatar: 'C', score: 80, isCurrent: false },
+    { name: 'David', avatar: 'D', score: 70, isCurrent: false },
+    { name: 'Eve', avatar: 'E', score: 60, isCurrent: false },
+    { name: 'Frank', avatar: 'F', score: 50, isCurrent: false },
+    { name: 'Grace', avatar: 'G', score: 40, isCurrent: false },
+    { name: 'Henry', avatar: 'H', score: 30, isCurrent: false },
+    { name: 'Ivy', avatar: 'I', score: 20, isCurrent: false },
+  ],
+  planet: [
+    { name: 'Alice', avatar: 'A', score: 200, isCurrent: false },
+    { name: 'Bob', avatar: 'B', score: 180, isCurrent: false },
+    { name: '我', avatar: '我', score: 150, isCurrent: true },
+    { name: 'Charlie', avatar: 'C', score: 140, isCurrent: false },
+    { name: 'David', avatar: 'D', score: 130, isCurrent: false },
+    { name: 'Eve', avatar: 'E', score: 120, isCurrent: false },
+    { name: 'Frank', avatar: 'F', score: 100, isCurrent: false },
+    { name: 'Grace', avatar: 'G', score: 90, isCurrent: false },
+    { name: 'Henry', avatar: 'H', score: 80, isCurrent: false },
+    { name: 'Ivy', avatar: 'I', score: 70, isCurrent: false },
+  ],
+};
+
+let currentLBGame = 'vocab';
+
+function initLeaderboard() {
+  currentLBGame = 'vocab';
+  document.querySelectorAll('#lbTabs .leaderboard-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('#lbTabs .leaderboard-tab[data-game="vocab"]').classList.add('active');
+  renderLeaderboard();
+}
+
+function switchLB(game) {
+  currentLBGame = game;
+  document.querySelectorAll('#lbTabs .leaderboard-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.game === game);
+  });
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const data = leaderboardData[currentLBGame] || [];
+  const best = getBestScore(currentLBGame);
+  const list = document.getElementById('lbList');
+
+  // Merge current user's best score
+  let merged = [...data];
+  if (best > 0) {
+    const currentUserIdx = merged.findIndex(u => u.isCurrent);
+    if (currentUserIdx >= 0) {
+      merged[currentUserIdx].score = Math.max(merged[currentUserIdx].score, best);
+    } else {
+      merged.push({ name: t('your_position'), avatar: '我', score: best, isCurrent: true });
+    }
+  }
+  merged.sort((a, b) => b.score - a.score);
+
+  let html = '';
+  merged.forEach((user, i) => {
+    const rank = i + 1;
+    let rankClass = 'normal';
+    if (rank === 1) rankClass = 'gold';
+    else if (rank === 2) rankClass = 'silver';
+    else if (rank === 3) rankClass = 'bronze';
+
+    const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
+
+    html += '<div class="leaderboard-item' + (user.isCurrent ? ' current-user' : '') + '">';
+    html += '<div class="leaderboard-rank ' + rankClass + '">' + rankIcon + '</div>';
+    html += '<div class="leaderboard-avatar" style="background:' + planetColors[i % planetColors.length] + ';color:#fff;">' + user.avatar + '</div>';
+    html += '<div class="leaderboard-name">' + user.name + (user.isCurrent ? ' <span style="color:var(--primary);font-size:11px;">(' + t('your_position') + ')</span>' : '') + '</div>';
+    html += '<div class="leaderboard-score">' + user.score + ' ' + t('points') + '</div>';
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', function() {
+  updateBestScores();
+
+  // Chain input enter key
+  document.getElementById('chainInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submitChainWord();
+  });
+});
+</script>
+
+<div class="bottom-nav" id="bottomNav"></div>
+
+</body>
+</html>

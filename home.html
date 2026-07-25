@@ -284,6 +284,28 @@
     try { var _sl = (window.AILOS ? AILOS.getStudyLang() : 'en'); var _nm = (window.AILOS ? AILOS.LANG_NAMES[_sl] : _sl); var _el = document.getElementById('homeStudyLang'); if (_el && _nm) _el.textContent = '（当前学习语言：' + _nm + '）'; } catch(e){}
   </script>
 
+  <!-- 快捷入口 -->
+  <div class="container" style="padding-bottom:0">
+    <div class="card-header" style="margin-bottom:10px"><span class="icon">⚡</span><span>快捷入口</span></div>
+    <div class="quick-grid">
+      <a class="quick-item" href="/xuewaiyu/games.html"><span class="quick-icon">🎮</span><span class="quick-label">游戏中心</span></a>
+      <a class="quick-item" href="/xuewaiyu/speaking.html"><span class="quick-icon">🗣️</span><span class="quick-label">口语速成</span></a>
+      <a class="quick-item" href="/xuewaiyu/sentences.html"><span class="quick-icon">📝</span><span class="quick-label">句库</span></a>
+      <a class="quick-item" href="/xuewaiyu/notebook.html"><span class="quick-icon">📖</span><span class="quick-label">错题本</span></a>
+      <a class="quick-item" href="/xuewaiyu/messages.html"><span class="quick-icon">💌</span><span class="quick-label">消息</span></a>
+      <a class="quick-item" href="/xuewaiyu/vip.html"><span class="quick-icon">👑</span><span class="quick-label">会员</span></a>
+    </div>
+  </div>
+
+  <style>
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .quick-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; background: var(--card-bg); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); box-shadow: var(--shadow); transition: all .2s; }
+    .quick-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .quick-icon { font-size: 28px; line-height: 1; }
+    .quick-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    @media (max-width: 480px) { .quick-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+  </style>
+
   <div class="container" id="app">
     <div class="loading">
       <div class="spinner"></div>

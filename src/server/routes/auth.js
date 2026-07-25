@@ -10,4 +10,9 @@ router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/wechat', authController.wechatAuth);
 
+// BUG-019: 游客模式路由（之前遗漏，导致前端 /api/auth/guest 404）
+router.post('/guest', authController.createGuest);
+router.put('/guest/:guestId/progress', authController.updateGuestProgress);
+router.post('/guest/:guestId/convert', authController.convertGuest);
+
 module.exports = router;

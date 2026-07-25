@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title data-i18n="page_title">会员中心 - AILOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --success-light: #ECFDF5;
+    --warning: #F59E0B;
+    --warning-light: #FFFBEB;
+    --danger: #EF4444;
+    --gold: #D4A843;
+    --gold-light: #FDF6E3;
+    --gold-dark: #B8860B;
+    --gold-gradient: linear-gradient(135deg, #D4A843 0%, #F0C060 50%, #C8963E 100%);
+    --platinum: #8B5CF6;
+    --platinum-light: #F5F3FF;
+    --platinum-dark: #6D28D9;
+    --platinum-gradient: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #6D28D9 100%);
+    --free-bg: #F1F5F9;
+    --free-border: #CBD5E1;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.06);
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 16px calc(var(--nav-height) + 20px);
+    line-height: 1.6;
+  }
+
+  /* ===== Navbar ===== */
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; position: sticky; top: 0; z-index: 100;
+    background: var(--bg); gap: 8px; flex-wrap: wrap;
+  }
+  .nav-back {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    transition: color .2s;
+  }
+  .nav-back:hover { color: var(--primary); }
+  .nav-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+  }
+  .lang-switch {
+    display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .lang-flag {
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap;
+  }
+  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
+  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+  /* ===== Container ===== */
+  .container {
+    width: 100%; max-width: 680px; margin: 0 auto;
+  }
+
+  /* ===== Current Plan Banner ===== */
+  .current-plan-banner {
+    background: linear-gradient(135deg, var(--primary-light), #E0E7FF);
+    border-radius: var(--radius); padding: 20px 24px;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 16px;
+    box-shadow: var(--shadow);
+  }
+  .current-plan-banner.pro {
+    background: linear-gradient(135deg, var(--gold-light), #FFF8E1);
+  }
+  .current-plan-banner.ultimate {
+    background: linear-gradient(135deg, var(--platinum-light), #EDE9FE);
+  }
+  .current-plan-banner .plan-icon {
+    width: 52px; height: 52px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 24px;
+    background: var(--primary); color: #fff; flex-shrink: 0;
+  }
+  .current-plan-banner.pro .plan-icon { background: var(--gold-gradient); }
+  .current-plan-banner.ultimate .plan-icon { background: var(--platinum-gradient); }
+  .current-plan-info { flex: 1; }
+  .current-plan-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .current-plan-name { font-size: 18px; font-weight: 700; color: var(--text); margin: 2px 0; }
+  .current-plan-expire { font-size: 12px; color: var(--text-muted); }
+  .current-plan-badge {
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: var(--primary); color: #fff;
+  }
+  .current-plan-banner.pro .current-plan-badge { background: var(--gold-gradient); }
+  .current-plan-banner.ultimate .current-plan-badge { background: var(--platinum-gradient); }
+
+  /* ===== Toggle ===== */
+  .billing-toggle-wrap {
+    display: flex; justify-content: center; margin-bottom: 24px;
+  }
+  .billing-toggle {
+    display: flex; background: var(--card-bg); border-radius: 30px;
+    padding: 4px; box-shadow: var(--shadow); position: relative;
+  }
+  .toggle-option {
+    padding: 10px 24px; border-radius: 26px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .3s; color: var(--text-secondary);
+    border: none; background: none; position: relative; z-index: 1;
+    white-space: nowrap;
+  }
+  .toggle-option.active {
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 0 2px 8px rgba(79,70,229,.3);
+  }
+  .toggle-save-badge {
+    font-size: 10px; font-weight: 700; color: var(--success);
+    position: absolute; top: -8px; right: 4px;
+    background: var(--success-light); padding: 1px 6px; border-radius: 10px;
+  }
+  .toggle-option-wrap { position: relative; }
+
+  /* ===== Pricing Cards ===== */
+  .pricing-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 28px;
+  }
+  .pricing-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 24px 16px; text-align: center;
+    border: 2px solid var(--border); transition: all .3s;
+    position: relative; display: flex; flex-direction: column;
+  }
+  .pricing-card.recommended {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(212,168,67,.15), var(--shadow-lg);
+    transform: translateY(-4px);
+  }
+  .pricing-card.ultimate-card {
+    border-color: var(--platinum);
+  }
+  .recommended-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--gold-gradient); color: #fff; padding: 4px 16px;
+    border-radius: 20px; font-size: 11px; font-weight: 700;
+    white-space: nowrap; box-shadow: 0 2px 8px rgba(212,168,67,.4);
+  }
+  .tier-icon {
+    font-size: 36px; margin-bottom: 8px; line-height: 1;
+  }
+  .tier-name {
+    font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+  }
+  .tier-desc {
+    font-size: 12px; color: var(--text-muted); margin-bottom: 16px;
+    min-height: 36px;
+  }
+  .tier-price {
+    margin-bottom: 16px;
+  }
+  .price-amount {
+    font-size: 32px; font-weight: 800; color: var(--text);
+  }
+  .pricing-card.recommended .price-amount { color: var(--gold-dark); }
+  .pricing-card.ultimate-card .price-amount { color: var(--platinum-dark); }
+  .price-unit {
+    font-size: 13px; color: var(--text-secondary); font-weight: 400;
+  }
+  .price-original {
+    font-size: 13px; color: var(--text-muted); text-decoration: line-through;
+    margin-top: 2px; display: none;
+  }
+  .price-original.show { display: block; }
+  .price-discount {
+    font-size: 11px; color: var(--danger); font-weight: 600; display: none;
+  }
+  .price-discount.show { display: inline; }
+  .btn-upgrade {
+    display: block; width: 100%; padding: 12px 0; border-radius: 24px;
+    font-size: 14px; font-weight: 700; cursor: pointer; border: none;
+    transition: all .2s; margin-top: auto;
+  }
+  .btn-upgrade-free {
+    background: var(--free-bg); color: var(--text-secondary);
+    border: 1.5px solid var(--free-border);
+  }
+  .btn-upgrade-free:hover { background: #E2E8F0; }
+  .btn-upgrade-pro {
+    background: var(--gold-gradient); color: #fff;
+    box-shadow: 0 4px 12px rgba(212,168,67,.4);
+  }
+  .btn-upgrade-pro:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .btn-upgrade-ultimate {
+    background: var(--platinum-gradient); color: #fff;
+    box-shadow: 0 4px 12px rgba(139,92,246,.4);
+  }
+  .btn-upgrade-ultimate:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .btn-upgrade.current {
+    background: var(--bg); color: var(--text-muted); cursor: default;
+    border: 1.5px solid var(--border); box-shadow: none;
+  }
+  .btn-upgrade.current:hover { filter: none; transform: none; }
+
+  /* ===== Comparison Table ===== */
+  .section-title {
+    font-size: 18px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; text-align: center;
+  }
+  .comparison-table-wrap {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 28px;
+  }
+  .comparison-table {
+    width: 100%; border-collapse: collapse;
+  }
+  .comparison-table thead th {
+    padding: 14px 10px; font-size: 13px; font-weight: 700; text-align: center;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+  }
+  .comparison-table thead th:first-child {
+    text-align: left; padding-left: 16px; min-width: 120px;
+  }
+  .comparison-table thead th.col-free { color: var(--text-secondary); }
+  .comparison-table thead th.col-pro {
+    color: var(--gold-dark); background: var(--gold-light);
+  }
+  .comparison-table thead th.col-ultimate {
+    color: var(--platinum-dark); background: var(--platinum-light);
+  }
+  .comparison-table tbody td {
+    padding: 12px 10px; font-size: 13px; text-align: center;
+    border-bottom: 1px solid var(--border); color: var(--text-secondary);
+  }
+  .comparison-table tbody td:first-child {
+    text-align: left; padding-left: 16px; font-weight: 600; color: var(--text);
+  }
+  .comparison-table tbody tr:hover { background: #F8FAFC; }
+  .check-icon { color: var(--success); font-weight: 700; }
+  .cross-icon { color: var(--text-muted); }
+  .dash-icon { color: var(--text-muted); }
+
+  /* ===== Benefits Section ===== */
+  .benefits-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    margin-bottom: 28px;
+  }
+  .benefit-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; text-align: center;
+    transition: all .2s;
+  }
+  .benefit-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .benefit-icon {
+    font-size: 32px; margin-bottom: 10px; line-height: 1;
+  }
+  .benefit-title {
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px;
+  }
+  .benefit-desc {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+  }
+
+  /* ===== FAQ Section ===== */
+  .faq-list {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 28px;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--border);
+  }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-question {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; cursor: pointer; font-size: 14px; font-weight: 600;
+    color: var(--text); transition: all .2s; user-select: none;
+  }
+  .faq-question:hover { color: var(--primary); }
+  .faq-arrow {
+    font-size: 12px; color: var(--text-muted); transition: transform .3s;
+    flex-shrink: 0; margin-left: 12px;
+  }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--primary); }
+  .faq-answer {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease;
+    padding: 0 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+  }
+  .faq-item.open .faq-answer {
+    max-height: 200px; padding-bottom: 16px;
+  }
+
+  /* ===== Bottom Navigation Bar ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-height); background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex;
+    justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); transition: all 0.2s; font-size: 11px;
+    font-weight: 500; border: none; background: none; min-width: 56px;
+    position: relative; padding-top: 10px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+  .bottom-nav .nav-item.active::before {
+    content: ''; position: absolute; top: 0; width: 24px; height: 3px;
+    background: var(--primary); border-radius: 0 0 3px 3px;
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300;
+    padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    display: none; white-space: nowrap; max-width: 90vw;
+    animation: toastIn .3s ease;
+  }
+  .toast.show { display: block; }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error { background: var(--danger); color: #fff; }
+  .toast.info { background: var(--primary); color: #fff; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* ===== Responsive: Mobile ===== */
+  @media (max-width: 640px) {
+    .pricing-grid {
+      grid-template-columns: 1fr; gap: 16px; max-width: 360px; margin-left: auto; margin-right: auto;
+    }
+    .pricing-card.recommended { transform: none; }
+    .benefits-grid { grid-template-columns: 1fr; }
+    .comparison-table thead th { font-size: 11px; padding: 10px 6px; }
+    .comparison-table thead th:first-child { min-width: 90px; padding-left: 10px; }
+    .comparison-table tbody td { font-size: 11px; padding: 10px 6px; }
+    .comparison-table tbody td:first-child { padding-left: 10px; }
+    .navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .lang-switch { justify-content: center; width: 100%; }
+    .current-plan-banner { flex-direction: column; text-align: center; }
+  }
+  @media (max-width: 380px) {
+    .toggle-option { padding: 8px 16px; font-size: 12px; }
+    .pricing-card { padding: 20px 12px; }
+    .price-amount { font-size: 26px; }
+    .tier-name { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <div class="container">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <a class="nav-back" href="/xuewaiyu/home" data-i18n="back_to_home">← 返回首页</a>
+      <span class="nav-title" data-i18n="page_title">会员中心</span>
+      <div class="lang-switch" id="langSwitch"></div>
+    </nav>
+
+    <!-- Current Plan Banner -->
+    <div class="current-plan-banner" id="currentPlanBanner" style="display:none">
+      <div class="plan-icon" id="currentPlanIcon">⭐</div>
+      <div class="current-plan-info">
+        <div class="current-plan-label" data-i18n="current_plan_label">当前方案</div>
+        <div class="current-plan-name" id="currentPlanName">免费版</div>
+        <div class="current-plan-expire" id="currentPlanExpire"></div>
+      </div>
+      <div class="current-plan-badge" id="currentPlanBadge" data-i18n="plan_active">使用中</div>
+    </div>
+
+    <!-- Billing Toggle -->
+    <div class="billing-toggle-wrap">
+      <div class="billing-toggle">
+        <div class="toggle-option-wrap">
+          <button class="toggle-option active" id="toggleMonthly" onclick="switchBilling('monthly')" data-i18n="billing_monthly">月付</button>
+        </div>
+        <div class="toggle-option-wrap">
+          <button class="toggle-option" id="toggleYearly" onclick="switchBilling('yearly')" data-i18n="billing_yearly">年付</button>
+          <span class="toggle-save-badge" data-i18n="save_badge">省20%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="pricing-grid" id="pricingGrid">
+      <!-- Free -->
+      <div class="pricing-card" id="cardFree">
+        <div class="tier-icon">🆓</div>
+        <div class="tier-name" data-i18n="tier_free_name">免费</div>
+        <div class="tier-desc" data-i18n="tier_free_desc">入门体验，基础学习功能</div>
+        <div class="tier-price">
+          <span class="price-amount">¥0</span>
+          <span class="price-unit" data-i18n="price_per_month">/月</span>
+          <div class="price-original" id="freePriceOriginal"></div>
+        </div>
+        <button class="btn-upgrade btn-upgrade-free" onclick="handleUpgrade('free')" data-i18n="btn_current_plan">当前方案</button>
+      </div>
+
+      <!-- Pro (Recommended) -->
+      <div class="pricing-card recommended" id="cardPro">
+        <div class="recommended-badge" data-i18n="badge_recommended">推荐</div>
+        <div class="tier-icon">⭐</div>
+        <div class="tier-name" data-i18n="tier_pro_name">专业版</div>
+        <div class="tier-desc" data-i18n="tier_pro_desc">深度学习者，解锁高级功能</div>
+        <div class="tier-price">
+          <span class="price-amount" id="proPrice">¥49</span>
+          <span class="price-unit" id="proPriceUnit" data-i18n="price_per_month">/月</span>
+          <div class="price-original" id="proPriceOriginal">¥49</div>
+          <div class="price-discount" id="proDiscount"></div>
+        </div>
+        <button class="btn-upgrade btn-upgrade-pro" onclick="handleUpgrade('pro')" data-i18n="btn_upgrade_now">立即升级</button>
+      </div>
+
+      <!-- Ultimate -->
+      <div class="pricing-card ultimate-card" id="cardUltimate">
+        <div class="tier-icon">👑</div>
+        <div class="tier-name" data-i18n="tier_ultimate_name">旗舰版</div>
+        <div class="tier-desc" data-i18n="tier_ultimate_desc">终极体验，畅享全部功能</div>
+        <div class="tier-price">
+          <span class="price-amount" id="ultimatePrice">¥99</span>
+          <span class="price-unit" id="ultimatePriceUnit" data-i18n="price_per_month">/月</span>
+          <div class="price-original" id="ultimatePriceOriginal">¥99</div>
+          <div class="price-discount" id="ultimateDiscount"></div>
+        </div>
+        <button class="btn-upgrade btn-upgrade-ultimate" onclick="handleUpgrade('ultimate')" data-i18n="btn_upgrade_now">立即升级</button>
+      </div>
+    </div>
+
+    <!-- Feature Comparison Table -->
+    <div class="section-title" data-i18n="comparison_title">功能对比</div>
+    <div class="comparison-table-wrap">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th data-i18n="col_feature">功能</th>
+            <th class="col-free" data-i18n="tier_free_name">免费</th>
+            <th class="col-pro" data-i18n="tier_pro_name">专业版</th>
+            <th class="col-ultimate" data-i18n="tier_ultimate_name">旗舰版</th>
+          </tr>
+        </thead>
+        <tbody id="comparisonTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Benefits Section -->
+    <div class="section-title" data-i18n="benefits_title">为什么升级？</div>
+    <div class="benefits-grid" id="benefitsGrid"></div>
+
+    <!-- FAQ Section -->
+    <div class="section-title" data-i18n="faq_title">常见问题</div>
+    <div class="faq-list" id="faqList"></div>
+
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav"></div>
+
+  <script>
+  // ==================== I18N ====================
+  const I18N = {
+    zh: {
+      page_title: '会员中心',
+      back_to_home: '← 返回首页',
+      current_plan_label: '当前方案',
+      plan_active: '使用中',
+      plan_expires: '有效期至 ',
+      billing_monthly: '月付',
+      billing_yearly: '年付',
+      save_badge: '省20%',
+      tier_free_name: '免费',
+      tier_free_desc: '入门体验，基础学习功能',
+      tier_pro_name: '专业版',
+      tier_pro_desc: '深度学习者，解锁高级功能',
+      tier_ultimate_name: '旗舰版',
+      tier_ultimate_desc: '终极体验，畅享全部功能',
+      price_per_month: '/月',
+      price_per_year: '/年',
+      btn_current_plan: '当前方案',
+      btn_upgrade_now: '立即升级',
+      badge_recommended: '推荐',
+      comparison_title: '功能对比',
+      col_feature: '功能',
+      benefits_title: '为什么升级？',
+      faq_title: '常见问题',
+      feature_ai_chat: 'AI对话次数',
+      feature_content_gen: '学习内容生成',
+      feature_speaking: '口语评测',
+      feature_review: '复习提醒',
+      feature_games: '游戏中心',
+      feature_notebook: '错题本',
+      feature_sentences: '句库',
+      feature_social: '社交功能',
+      feature_ai_tutor: '专属AI导师',
+      feature_support: '优先客服',
+      val_unlimited: '无限',
+      val_10day: '10次/天',
+      val_100day: '100次/天',
+      val_basic: '基础',
+      val_advanced: '高级',
+      val_all: '全部',
+      val_limited: '有限',
+      val_standard: '标准',
+      val_smart: '智能',
+      val_smart_plus: '智能+',
+      val_restricted: '受限',
+      val_full: '完整',
+      val_extended: '扩展',
+      val_none: '无',
+      val_exclusive: '专属',
+      benefit_1_title: '无限学习体验',
+      benefit_1_desc: '无限制AI对话，随时随地问答练习，突破语言瓶颈',
+      benefit_2_title: '智能学习规划',
+      benefit_2_desc: '专属AI导师根据你的水平定制学习路径，高效提升',
+      benefit_3_title: '深度口语评测',
+      benefit_3_desc: 'AI精准发音评测，逐字纠正，让你的口语更地道',
+      benefit_4_title: '专属优先服务',
+      benefit_4_desc: '优先客服响应，专属通道，问题快速解决',
+      faq_q1: '如何升级会员？',
+      faq_a1: '选择你想要的会员方案，点击"立即升级"按钮，按照引导完成支付即可。支付成功后，会员权益立即生效。',
+      faq_q2: '可以随时取消吗？',
+      faq_a2: '可以。你可以在个人中心的订阅管理中随时取消自动续费。取消后，当前周期的权益仍然有效，到期后不会自动续费。',
+      faq_q3: '年付可以省多少钱？',
+      faq_a3: '年付方案相比月付可节省约20%的费用。专业版年付仅需¥468/年（月付¥49×12=¥588），旗舰版年付仅需¥948/年（月付¥99×12=¥1188）。',
+      faq_q4: '支持哪些支付方式？',
+      faq_a4: '我们支持微信支付、支付宝、Apple Pay和信用卡等多种支付方式，方便快捷。',
+      faq_q5: '免费版有哪些功能？',
+      faq_a5: '免费版提供每日10次AI对话、基础学习内容生成、有限口语评测、基础复习提醒、错题本和基础句库，让你充分体验AILOS的学习魅力。',
+      toast_upgrade: '正在跳转到支付页面...',
+      toast_login_required: '请先登录后再升级会员',
+      toast_already_pro: '你已经是专业版会员',
+      toast_already_ultimate: '你已经是旗舰版会员',
+    },
+    en: {
+      page_title: 'Membership',
+      back_to_home: '← Back to Home',
+      current_plan_label: 'Current Plan',
+      plan_active: 'Active',
+      plan_expires: 'Expires on ',
+      billing_monthly: 'Monthly',
+      billing_yearly: 'Yearly',
+      save_badge: 'Save 20%',
+      tier_free_name: 'Free',
+      tier_free_desc: 'Get started with basic features',
+      tier_pro_name: 'Pro',
+      tier_pro_desc: 'For serious learners, unlock advanced features',
+      tier_ultimate_name: 'Ultimate',
+      tier_ultimate_desc: 'The ultimate experience with all features',
+      price_per_month: '/month',
+      price_per_year: '/year',
+      btn_current_plan: 'Current Plan',
+      btn_upgrade_now: 'Upgrade Now',
+      badge_recommended: 'Recommended',
+      comparison_title: 'Feature Comparison',
+      col_feature: 'Feature',
+      benefits_title: 'Why Upgrade?',
+      faq_title: 'FAQ',
+      feature_ai_chat: 'AI Conversations',
+      feature_content_gen: 'Content Generation',
+      feature_speaking: 'Speaking Assessment',
+      feature_review: 'Review Reminders',
+      feature_games: 'Game Center',
+      feature_notebook: 'Error Notebook',
+      feature_sentences: 'Sentence Bank',
+      feature_social: 'Social Features',
+      feature_ai_tutor: 'Personal AI Tutor',
+      feature_support: 'Priority Support',
+      val_unlimited: 'Unlimited',
+      val_10day: '10/day',
+      val_100day: '100/day',
+      val_basic: 'Basic',
+      val_advanced: 'Advanced',
+      val_all: 'All',
+      val_limited: 'Limited',
+      val_standard: 'Standard',
+      val_smart: 'Smart',
+      val_smart_plus: 'Smart+',
+      val_restricted: 'Restricted',
+      val_full: 'Full',
+      val_extended: 'Extended',
+      val_none: 'None',
+      val_exclusive: 'Exclusive',
+      benefit_1_title: 'Unlimited Learning',
+      benefit_1_desc: 'Unlimited AI conversations for anytime, anywhere Q&A practice to break through language barriers.',
+      benefit_2_title: 'Smart Learning Plans',
+      benefit_2_desc: 'Personal AI tutor customizes your learning path based on your level for efficient improvement.',
+      benefit_3_title: 'Deep Speaking Assessment',
+      benefit_3_desc: 'AI-powered precise pronunciation assessment, word-by-word correction for more authentic speech.',
+      benefit_4_title: 'Priority Service',
+      benefit_4_desc: 'Priority customer support with dedicated channels for quick problem resolution.',
+      faq_q1: 'How do I upgrade?',
+      faq_a1: 'Select your desired plan, click "Upgrade Now", and follow the payment instructions. Membership benefits take effect immediately after payment.',
+      faq_q2: 'Can I cancel anytime?',
+      faq_a2: 'Yes. You can cancel auto-renewal anytime in your subscription settings. Your current period benefits remain valid until expiration.',
+      faq_q3: 'How much can I save with yearly?',
+      faq_a3: 'Yearly plans save about 20% compared to monthly. Pro yearly is only ¥468/year (monthly ¥49×12=¥588), Ultimate yearly is ¥948/year (monthly ¥99×12=¥1188).',
+      faq_q4: 'What payment methods are supported?',
+      faq_a4: 'We support WeChat Pay, Alipay, Apple Pay, and credit cards for convenient payment.',
+      faq_q5: 'What does the free plan include?',
+      faq_a5: 'The free plan includes 10 AI conversations per day, basic content generation, limited speaking assessment, basic review reminders, error notebook, and basic sentence bank to fully experience AILOS.',
+      toast_upgrade: 'Redirecting to payment page...',
+      toast_login_required: 'Please log in before upgrading',
+      toast_already_pro: 'You are already a Pro member',
+      toast_already_ultimate: 'You are already an Ultimate member',
+    },
+    ja: {
+      page_title: 'メンバーシップ',
+      back_to_home: '← ホームに戻る',
+      current_plan_label: '現在のプラン',
+      plan_active: '利用中',
+      plan_expires: '有効期限: ',
+      billing_monthly: '月払い',
+      billing_yearly: '年払い',
+      save_badge: '20%節約',
+      tier_free_name: '無料',
+      tier_free_desc: '基本機能で始めよう',
+      tier_pro_name: 'プロ',
+      tier_pro_desc: '本格学習者向け、高度な機能を解放',
+      tier_ultimate_name: 'アルティメット',
+      tier_ultimate_desc: '全機能を使い尽くす究極体験',
+      price_per_month: '/月',
+      price_per_year: '/年',
+      btn_current_plan: '現在のプラン',
+      btn_upgrade_now: '今すぐアップグレード',
+      badge_recommended: 'おすすめ',
+      comparison_title: '機能比較',
+      col_feature: '機能',
+      benefits_title: 'アップグレードの理由',
+      faq_title: 'よくある質問',
+      feature_ai_chat: 'AI会話回数',
+      feature_content_gen: '学習コンテンツ生成',
+      feature_speaking: 'スピーキング評価',
+      feature_review: '復習リマインダー',
+      feature_games: 'ゲームセンター',
+      feature_notebook: '間違いノート',
+      feature_sentences: '例文バンク',
+      feature_social: 'ソーシャル機能',
+      feature_ai_tutor: '専属AIチューター',
+      feature_support: '優先サポート',
+      val_unlimited: '無制限',
+      val_10day: '10回/日',
+      val_100day: '100回/日',
+      val_basic: '基本',
+      val_advanced: '高度',
+      val_all: 'すべて',
+      val_limited: '制限付き',
+      val_standard: '標準',
+      val_smart: 'スマート',
+      val_smart_plus: 'スマート+',
+      val_restricted: '制限あり',
+      val_full: '完全',
+      val_extended: '拡張',
+      val_none: 'なし',
+      val_exclusive: '専属',
+      benefit_1_title: '無制限の学習体験',
+      benefit_1_desc: '無制限のAI会話で、いつでもどこでも質問練習ができ、言語の壁を突破できます。',
+      benefit_2_title: 'スマート学習計画',
+      benefit_2_desc: '専属AIチューターがあなたのレベルに合わせて学習パスをカスタマイズし、効率的に向上します。',
+      benefit_3_title: '詳細なスピーキング評価',
+      benefit_3_desc: 'AIによる精密な発音評価で、単語ごとに修正し、より自然な発音を実現します。',
+      benefit_4_title: '優先サービス',
+      benefit_4_desc: '優先カスタマーサポート、専用チャンネルで問題を迅速に解決します。',
+      faq_q1: 'アップグレード方法は？',
+      faq_a1: '希望のプランを選択し、「今すぐアップグレード」をクリックして、支払い手順に従ってください。支払い完了後、会員特典がすぐに有効になります。',
+      faq_q2: 'いつでもキャンセルできますか？',
+      faq_a2: 'はい。サブスクリプション管理からいつでも自動更新をキャンセルできます。現在の期間の特典は有効期限までご利用いただけます。',
+      faq_q3: '年払いでいくら節約できますか？',
+      faq_a3: '年払いは月払いより約20%お得です。プロ年払いは¥468/年（月払い¥49×12=¥588）、アルティメット年払いは¥948/年（月払い¥99×12=¥1188）です。',
+      faq_q4: '対応している支払い方法は？',
+      faq_a4: 'WeChat Pay、Alipay、Apple Pay、クレジットカードなど、さまざまな支払い方法に対応しています。',
+      faq_q5: '無料版にはどのような機能がありますか？',
+      faq_a5: '無料版では、1日10回のAI会話、基本学習コンテンツ生成、制限付きスピーキング評価、基本復習リマインダー、間違いノート、基本例文バンクをご利用いただけます。',
+      toast_upgrade: '支払いページに移動中...',
+      toast_login_required: 'アップグレード前にログインしてください',
+      toast_already_pro: 'すでにプロ会員です',
+      toast_already_ultimate: 'すでにアルティメット会員です',
+    },
+    ko: {
+      page_title: '멤버십',
+      back_to_home: '← 홈으로 돌아가기',
+      current_plan_label: '현재 플랜',
+      plan_active: '사용 중',
+      plan_expires: '만료일: ',
+      billing_monthly: '월간',
+      billing_yearly: '연간',
+      save_badge: '20% 절약',
+      tier_free_name: '무료',
+      tier_free_desc: '기본 기능으로 시작하기',
+      tier_pro_name: '프로',
+      tier_pro_desc: '진지한 학습자를 위한 고급 기능',
+      tier_ultimate_name: '얼티밋',
+      tier_ultimate_desc: '모든 기능을 갖춘 최고의 경험',
+      price_per_month: '/월',
+      price_per_year: '/년',
+      btn_current_plan: '현재 플랜',
+      btn_upgrade_now: '지금 업그레이드',
+      badge_recommended: '추천',
+      comparison_title: '기능 비교',
+      col_feature: '기능',
+      benefits_title: '업그레이드 이유',
+      faq_title: '자주 묻는 질문',
+      feature_ai_chat: 'AI 대화 횟수',
+      feature_content_gen: '학습 콘텐츠 생성',
+      feature_speaking: '말하기 평가',
+      feature_review: '복습 알림',
+      feature_games: '게임 센터',
+      feature_notebook: '오답 노트',
+      feature_sentences: '문장 뱅크',
+      feature_social: '소셜 기능',
+      feature_ai_tutor: '전용 AI 튜터',
+      feature_support: '우선 고객 지원',
+      val_unlimited: '무제한',
+      val_10day: '10회/일',
+      val_100day: '100회/일',
+      val_basic: '기본',
+      val_advanced: '고급',
+      val_all: '전체',
+      val_limited: '제한적',
+      val_standard: '표준',
+      val_smart: '스마트',
+      val_smart_plus: '스마트+',
+      val_restricted: '제한됨',
+      val_full: '완전',
+      val_extended: '확장',
+      val_none: '없음',
+      val_exclusive: '전용',
+      benefit_1_title: '무제한 학습 경험',
+      benefit_1_desc: '무제한 AI 대화로 언제 어디서나 질문 연습을 통해 언어 장벽을 돌파하세요.',
+      benefit_2_title: '스마트 학습 계획',
+      benefit_2_desc: '전용 AI 튜터가 당신의 레벨에 맞춰 학습 경로를 맞춤화하여 효율적으로 향상시킵니다.',
+      benefit_3_title: '심층 말하기 평가',
+      benefit_3_desc: 'AI 기반 정밀 발음 평가로 단어별 교정을 통해 더 자연스러운 발음을 구현합니다.',
+      benefit_4_title: '우선 서비스',
+      benefit_4_desc: '우선 고객 지원, 전용 채널로 문제를 빠르게 해결합니다.',
+      faq_q1: '어떻게 업그레이드하나요?',
+      faq_a1: '원하는 플랜을 선택하고 "지금 업그레이드"를 클릭한 후 결제 안내에 따라 진행하세요. 결제 완료 후 회원 혜택이 즉시 적용됩니다.',
+      faq_q2: '언제든지 취소할 수 있나요?',
+      faq_a2: '네. 구독 관리에서 언제든지 자동 갱신을 취소할 수 있습니다. 현재 기간의 혜택은 만료일까지 유효합니다.',
+      faq_q3: '연간 결제로 얼마나 절약할 수 있나요?',
+      faq_a3: '연간 플랜은 월간 대비 약 20% 절약됩니다. 프로 연간은 ¥468/년 (월간 ¥49×12=¥588), 얼티밋 연간은 ¥948/년 (월간 ¥99×12=¥1188)입니다.',
+      faq_q4: '어떤 결제 수단을 지원하나요?',
+      faq_a4: '위챗페이, 알리페이, Apple Pay, 신용카드 등 다양한 결제 수단을 지원합니다.',
+      faq_q5: '무료 플랜에는 어떤 기능이 있나요?',
+      faq_a5: '무료 플랜은 일일 10회 AI 대화, 기본 학습 콘텐츠 생성, 제한적 말하기 평가, 기본 복습 알림, 오답 노트, 기본 문장 뱅크를 제공하여 AILOS의 학습 매력을 충분히 경험할 수 있습니다.',
+      toast_upgrade: '결제 페이지로 이동 중...',
+      toast_login_required: '업그레이드 전에 로그인해 주세요',
+      toast_already_pro: '이미 프로 회원입니다',
+      toast_already_ultimate: '이미 얼티밋 회원입니다',
+    },
+  };
+
+  // ==================== Language Detection ====================
+  const LANG_MAP = { 'zh-cn': 'zh', 'zh-tw': 'zh', 'zh-hk': 'zh', 'zh': 'zh', 'en': 'en', 'en-us': 'en', 'en-gb': 'en', 'ja': 'ja', 'jp': 'ja', 'ko': 'ko', 'kr': 'ko' };
+  const LANG_NAMES = { zh: '中文', en: 'English', ja: '日本語', ko: '한국어' };
+  const LANG_CODES = ['zh', 'en', 'ja', 'ko'];
+
+  function detectLang() {
+    try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch (e) {}
+    const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+    return LANG_MAP[nav] || 'zh';
+  }
+
+  let currentLang = detectLang();
+  function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
+
+  // ==================== State ====================
+  let billingCycle = 'monthly';
+  let currentPlan = null; // 'free', 'pro', 'ultimate', or null
+  let currentPlanExpire = null;
+
+  // ==================== Pricing Data ====================
+  const PRICING = {
+    free: { monthly: 0, yearly: 0 },
+    pro: { monthly: 49, yearly: 468 },
+    ultimate: { monthly: 99, yearly: 948 },
+  };
+
+  // ==================== Feature Comparison Data ====================
+  const FEATURES = [
+    { key: 'feature_ai_chat',    free: 'val_10day',     pro: 'val_100day',    ultimate: 'val_unlimited' },
+    { key: 'feature_content_gen', free: 'val_basic',    pro: 'val_advanced',  ultimate: 'val_all' },
+    { key: 'feature_speaking',   free: 'val_limited',   pro: 'val_standard',  ultimate: 'val_advanced' },
+    { key: 'feature_review',     free: 'val_basic',     pro: 'val_smart',     ultimate: 'val_smart_plus' },
+    { key: 'feature_games',      free: 'val_restricted', pro: 'val_all',       ultimate: 'val_all' },
+    { key: 'feature_notebook',   free: 'val_basic',     pro: 'val_basic',     ultimate: 'val_basic' },
+    { key: 'feature_sentences',  free: 'val_basic',     pro: 'val_extended',  ultimate: 'val_all' },
+    { key: 'feature_social',     free: 'val_basic',     pro: 'val_full',      ultimate: 'val_full' },
+    { key: 'feature_ai_tutor',   free: 'val_none',      pro: 'val_standard',  ultimate: 'val_exclusive' },
+    { key: 'feature_support',    free: 'val_none',      pro: 'val_standard',  ultimate: 'val_exclusive' },
+  ];
+
+  // ==================== Benefits Data ====================
+  const BENEFITS = [
+    { icon: '🚀', titleKey: 'benefit_1_title', descKey: 'benefit_1_desc' },
+    { icon: '🎯', titleKey: 'benefit_2_title', descKey: 'benefit_2_desc' },
+    { icon: '🎤', titleKey: 'benefit_3_title', descKey: 'benefit_3_desc' },
+    { icon: '💎', titleKey: 'benefit_4_title', descKey: 'benefit_4_desc' },
+  ];
+
+  // ==================== FAQ Data ====================
+  const FAQS = [
+    { qKey: 'faq_q1', aKey: 'faq_a1' },
+    { qKey: 'faq_q2', aKey: 'faq_a2' },
+    { qKey: 'faq_q3', aKey: 'faq_a3' },
+    { qKey: 'faq_q4', aKey: 'faq_a4' },
+    { qKey: 'faq_q5', aKey: 'faq_a5' },
+  ];
+
+  // ==================== Render ====================
+  function renderLangSwitch() {
+    document.getElementById('langSwitch').innerHTML = LANG_CODES.map(code =>
+      '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
+    ).join('');
+  }
+
+  function switchLang(code) {
+    currentLang = code;
+    try { localStorage.setItem('yandao_ui_lang_v1', code); } catch (e) {}
+    updateI18n();
+    renderLangSwitch();
+    renderComparisonTable();
+    renderBenefits();
+    renderFAQ();
+    renderPricing();
+    renderCurrentPlanBanner();
+  }
+
+  function updateI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const text = t(key);
+      if (text !== undefined) el.textContent = text;
+    });
+    document.title = t('page_title') + ' - AILOS';
+  }
+
+  // ==================== Pricing ====================
+  function renderPricing() {
+    const proPrice = PRICING.pro[billingCycle];
+    const ultimatePrice = PRICING.ultimate[billingCycle];
+    const unit = billingCycle === 'monthly' ? t('price_per_month') : t('price_per_year');
+
+    document.getElementById('proPrice').textContent = '¥' + proPrice;
+    document.getElementById('proPriceUnit').textContent = unit;
+    document.getElementById('ultimatePrice').textContent = '¥' + ultimatePrice;
+    document.getElementById('ultimatePriceUnit').textContent = unit;
+
+    // Show/hide original prices and discounts for yearly
+    const proOrig = document.getElementById('proPriceOriginal');
+    const proDisc = document.getElementById('proDiscount');
+    const ultOrig = document.getElementById('ultimatePriceOriginal');
+    const ultDisc = document.getElementById('ultimateDiscount');
+
+    if (billingCycle === 'yearly') {
+      const proMonthlyTotal = PRICING.pro.monthly * 12;
+      const ultMonthlyTotal = PRICING.ultimate.monthly * 12;
+      proOrig.textContent = '¥' + proMonthlyTotal;
+      proOrig.classList.add('show');
+      proDisc.textContent = '省¥' + (proMonthlyTotal - proPrice);
+      proDisc.classList.add('show');
+      ultOrig.textContent = '¥' + ultMonthlyTotal;
+      ultOrig.classList.add('show');
+      ultDisc.textContent = '省¥' + (ultMonthlyTotal - ultimatePrice);
+      ultDisc.classList.add('show');
+    } else {
+      proOrig.classList.remove('show');
+      proDisc.classList.remove('show');
+      ultOrig.classList.remove('show');
+      ultDisc.classList.remove('show');
+    }
+
+    // Update buttons
+    updateUpgradeButtons();
+  }
+
+  function updateUpgradeButtons() {
+    const freeBtn = document.querySelector('#cardFree .btn-upgrade');
+    const proBtn = document.querySelector('#cardPro .btn-upgrade');
+    const ultimateBtn = document.querySelector('#cardUltimate .btn-upgrade');
+
+    // Reset all
+    freeBtn.className = 'btn-upgrade btn-upgrade-free';
+    proBtn.className = 'btn-upgrade btn-upgrade-pro';
+    ultimateBtn.className = 'btn-upgrade btn-upgrade-ultimate';
+    freeBtn.textContent = t('btn_upgrade_now');
+    proBtn.textContent = t('btn_upgrade_now');
+    ultimateBtn.textContent = t('btn_upgrade_now');
+
+    if (currentPlan === 'free') {
+      freeBtn.className = 'btn-upgrade current';
+      freeBtn.textContent = t('btn_current_plan');
+    } else if (currentPlan === 'pro') {
+      proBtn.className = 'btn-upgrade current';
+      proBtn.textContent = t('btn_current_plan');
+    } else if (currentPlan === 'ultimate') {
+      ultimateBtn.className = 'btn-upgrade current';
+      ultimateBtn.textContent = t('btn_current_plan');
+    }
+  }
+
+  function switchBilling(cycle) {
+    billingCycle = cycle;
+    document.getElementById('toggleMonthly').classList.toggle('active', cycle === 'monthly');
+    document.getElementById('toggleYearly').classList.toggle('active', cycle === 'yearly');
+    renderPricing();
+  }
+
+  // ==================== Comparison Table ====================
+  function renderComparisonTable() {
+    const tbody = document.getElementById('comparisonTbody');
+    tbody.innerHTML = FEATURES.map(f => {
+      const freeVal = t(f.free);
+      const proVal = t(f.pro);
+      const ultVal = t(f.ultimate);
+      const freeClass = f.free === 'val_none' ? 'cross-icon' : (f.free === 'val_limited' || f.free === 'val_restricted' ? 'dash-icon' : 'check-icon');
+      const proClass = f.pro === 'val_none' ? 'cross-icon' : 'check-icon';
+      const ultClass = f.ultimate === 'val_none' ? 'cross-icon' : 'check-icon';
+      return '<tr>' +
+        '<td>' + t(f.key) + '</td>' +
+        '<td class="' + freeClass + '">' + freeVal + '</td>' +
+        '<td class="' + proClass + '">' + proVal + '</td>' +
+        '<td class="' + ultClass + '">' + ultVal + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ==================== Benefits ====================
+  function renderBenefits() {
+    const grid = document.getElementById('benefitsGrid');
+    grid.innerHTML = BENEFITS.map(b =>
+      '<div class="benefit-card">' +
+        '<div class="benefit-icon">' + b.icon + '</div>' +
+        '<div class="benefit-title">' + t(b.titleKey) + '</div>' +
+        '<div class="benefit-desc">' + t(b.descKey) + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  // ==================== FAQ ====================
+  function renderFAQ() {
+    const list = document.getElementById('faqList');
+    list.innerHTML = FAQS.map((faq, i) =>
+      '<div class="faq-item' + (i === 0 ? ' open' : '') + '" onclick="toggleFAQ(this)">' +
+        '<div class="faq-question">' +
+          '<span>' + t(faq.qKey) + '</span>' +
+          '<span class="faq-arrow">▼</span>' +
+        '</div>' +
+        '<div class="faq-answer">' + t(faq.aKey) + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  function toggleFAQ(el) {
+    el.classList.toggle('open');
+  }
+
+  // ==================== Current Plan Banner ====================
+  function renderCurrentPlanBanner() {
+    const banner = document.getElementById('currentPlanBanner');
+    if (!currentPlan || currentPlan === 'free') {
+      banner.style.display = 'none';
+      return;
+    }
+
+    banner.style.display = 'flex';
+    banner.className = 'current-plan-banner ' + currentPlan;
+
+    const iconEl = document.getElementById('currentPlanIcon');
+    const nameEl = document.getElementById('currentPlanName');
+    const expireEl = document.getElementById('currentPlanExpire');
+    const badgeEl = document.getElementById('currentPlanBadge');
+
+    if (currentPlan === 'pro') {
+      iconEl.textContent = '⭐';
+      nameEl.textContent = t('tier_pro_name');
+    } else if (currentPlan === 'ultimate') {
+      iconEl.textContent = '👑';
+      nameEl.textContent = t('tier_ultimate_name');
+    }
+
+    badgeEl.textContent = t('plan_active');
+
+    if (currentPlanExpire) {
+      expireEl.textContent = t('plan_expires') + currentPlanExpire;
+    } else {
+      expireEl.textContent = '';
+    }
+  }
+
+  // ==================== Token ====================
+  function getToken() {
+    try {
+      var t = localStorage.getItem('yandao_token_v1');
+      if (!t) {
+        var a = localStorage.getItem('auth_tokens');
+        if (a) { try { var p = JSON.parse(a); t = p.accessToken || p.token || a; } catch (e) { t = a; } }
+      }
+      return t;
+    } catch (e) { return null; }
+  }
+
+  // ==================== User Plan ====================
+  async function loadUserPlan() {
+    const token = getToken();
+    if (!token) {
+      currentPlan = null;
+      updateUpgradeButtons();
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/user/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const user = data.user || data;
+
+      if (user.membership) {
+        currentPlan = user.membership.tier || user.membership.plan || 'free';
+        currentPlanExpire = user.membership.expireAt || user.membership.expiresAt || null;
+        if (currentPlanExpire) {
+          currentPlanExpire = new Date(currentPlanExpire).toLocaleDateString();
+        }
+      } else {
+        currentPlan = 'free';
+        currentPlanExpire = null;
+      }
+
+      renderCurrentPlanBanner();
+      updateUpgradeButtons();
+    } catch (e) {
+      console.warn('Failed to load user plan:', e);
+    }
+  }
+
+  // ==================== Upgrade Handler ====================
+  function handleUpgrade(tier) {
+    if (tier === currentPlan) {
+      if (tier === 'free') {
+        showToast(t('toast_upgrade'), 'info');
+      }
+      return;
+    }
+
+    const token = getToken();
+    if (!token) {
+      showToast(t('toast_login_required'), 'error');
+      setTimeout(() => { window.location.href = '/xuewaiyu/login.html?redirect=' + encodeURIComponent(window.location.pathname); }, 1500);
+      return;
+    }
+
+    showToast(t('toast_upgrade'), 'info');
+    // Redirect to payment page with plan info
+    const period = billingCycle === 'yearly' ? 'year' : 'month';
+    setTimeout(() => {
+      window.location.href = '/xuewaiyu/payment.html?plan=' + tier + '&period=' + period;
+    }, 800);
+  }
+
+  // ==================== Toast ====================
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type + ' show';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = 'toast'; }, 2500);
+  }
+
+  // ==================== Init ====================
+  function init() {
+    renderLangSwitch();
+    updateI18n();
+    renderPricing();
+    renderComparisonTable();
+    renderBenefits();
+    renderFAQ();
+    loadUserPlan();
+  }
+
+  init();
+  </script>
+</body>
+</html>

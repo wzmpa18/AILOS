@@ -2,219 +2,415 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>30天口语速成 - TRAE</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 30天口语速成</title>
 <style>
-  :root {
-    --green-start: #10b981;
-    --gold-end: #f59e0b;
-    --primary: #3b82f6;
-    --bg: #f8fafc;
-    --card: #ffffff;
-    --text: #1e293b;
-    --text-secondary: #64748b;
-    --border: #e2e8f0;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --accent: #8b5cf6;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 80px;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .card {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 20px;
-    margin: 12px 16px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  }
-  .progress-bar {
-    height: 8px;
-    border-radius: 4px;
-    background: #e2e8f0;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--green-start), var(--gold-end));
-    transition: width 0.5s ease;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-  }
-  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-outline {
-    background: #fff;
-    color: var(--primary);
-    border: 2px solid var(--primary);
-    border-radius: 12px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-outline:active { transform: scale(0.97); }
-  .task-item {
-    display: flex;
-    align-items: center;
-    padding: 14px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid var(--border);
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-  .task-item.completed {
-    background: #f0fdf4;
-    border-color: #86efac;
-  }
-  .task-item.active {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-  }
-  .task-item.locked {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .task-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-  .score-ring {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 700;
-    border: 4px solid;
-    margin: 0 auto;
-  }
-  .nav-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff;
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0 12px;
-    border-top: 1px solid var(--border);
-    z-index: 100;
-  }
-  .nav-item {
-    display: flex; flex-direction: column; align-items: center;
-    font-size: 11px; color: var(--text-secondary); cursor: pointer;
-    padding: 4px 12px; border-radius: 8px; transition: all 0.2s;
-  }
-  .nav-item.active { color: var(--primary); }
-  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 200;
-    padding: 20px;
-  }
-  .modal {
-    background: #fff;
-    border-radius: 20px;
-    padding: 28px 24px;
-    max-width: 360px;
-    width: 100%;
-    text-align: center;
-    animation: modalIn 0.3s ease;
-  }
-  @keyframes modalIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    text-align: center;
-  }
-  .calendar-day {
-    aspect-ratio: 1;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 10px; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.15s;
-    border: 1px solid transparent;
-  }
-  .calendar-day.today { border-color: var(--primary); background: #eff6ff; }
-  .calendar-day.done { background: #d1fae5; color: #065f46; }
-  .calendar-day.current { background: #fef3c7; }
-  .calendar-day.past { color: #cbd5e1; }
-  .calendar-day.future { color: #94a3b8; }
-  .calendar-day:hover { transform: scale(1.05); }
-  .spinner {
-    width: 24px; height: 24px;
-    border: 3px solid #e2e8f0;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .toast {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    background: #1e293b; color: #fff; padding: 12px 24px;
-    border-radius: 12px; font-size: 14px; z-index: 300;
-    animation: toastIn 0.3s ease;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  }
-  @keyframes toastIn {
-    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-    to { transform: translateX(-50%) translateY(0); opacity: 1; }
-  }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-  textarea {
-    width: 100%; border: 2px solid var(--border);
-    border-radius: 12px; padding: 12px;
-    font-size: 15px; resize: vertical; min-height: 80px;
-    font-family: inherit; outline: none;
-    transition: border-color 0.2s;
-  }
-  textarea:focus { border-color: var(--primary); }
-  .score-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0; border-bottom: 1px solid #f1f5f9;
-  }
-  .score-bar {
-    height: 6px; border-radius: 3px; background: #e2e8f0;
-    flex: 1; margin: 0 12px; overflow: hidden;
-  }
-  .score-bar-fill {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    transition: width 0.5s ease;
-  }
-  .pulse { animation: pulse 2s infinite; }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+:root {
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-light: #EEF2FF;
+  --bg: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --nav-height: 64px;
+  --green-start: #10b981;
+  --gold-end: #f59e0b;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: calc(var(--nav-height) + 20px);
+}
+
+/* Header */
+.header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.back-link {
+  font-size: 14px; color: var(--text-secondary); text-decoration: none;
+  transition: color .2s; flex-shrink: 0;
+}
+.back-link:hover { color: var(--primary); }
+.header-title {
+  font-size: 18px; font-weight: 700; flex: 1;
+}
+.header-lang {
+  display: flex; gap: 2px; align-items: center;
+}
+.header-lang-btn {
+  padding: 2px 8px; border-radius: 12px; font-size: 11px; cursor: pointer;
+  border: 1.5px solid transparent; background: transparent;
+  color: var(--text-muted); transition: all .2s; white-space: nowrap;
+}
+.header-lang-btn:hover { background: var(--primary-light); color: var(--primary); }
+.header-lang-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+/* Main Content */
+.main-content { padding: 16px 20px; max-width: 640px; margin: 0 auto; }
+
+/* Progress Card */
+.progress-card {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px 20px; margin-bottom: 16px;
+}
+.progress-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.progress-label { font-size: 14px; font-weight: 600; }
+.progress-num { font-size: 14px; font-weight: 700; color: var(--primary); }
+.progress-bar {
+  height: 8px; border-radius: 4px; background: var(--border); overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--green-start), var(--gold-end));
+  transition: width 0.5s ease;
+}
+.progress-sub {
+  font-size: 12px; color: var(--text-secondary); margin-top: 6px;
+}
+
+/* Tab Switcher */
+.tab-switcher {
+  display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.tab-switcher::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  border: none; cursor: pointer; white-space: nowrap; transition: all .2s;
+  background: var(--border); color: var(--text-secondary); flex-shrink: 0;
+}
+.tab-btn.active { background: var(--primary); color: #fff; }
+
+/* Tab Content */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Card */
+.card {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 20px; margin-bottom: 16px;
+}
+
+/* Today Card */
+.today-card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.today-card-left {
+  display: flex; align-items: center; gap: 10px;
+}
+.today-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.today-meta { font-size: 12px; color: var(--text-secondary); }
+.today-scenario { font-size: 16px; font-weight: 700; }
+.today-duration {
+  background: var(--primary-light); padding: 4px 10px; border-radius: 20px;
+  font-size: 12px; color: var(--primary); font-weight: 500;
+}
+.today-focus-box {
+  background: var(--bg); border-radius: var(--radius-sm); padding: 12px;
+}
+.today-focus-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.today-focus-text { font-size: 14px; font-weight: 500; }
+
+/* Task List */
+.task-item {
+  display: flex; align-items: center; padding: 14px; border-radius: var(--radius-sm);
+  margin-bottom: 10px; border: 1px solid var(--border); transition: all .2s; cursor: pointer;
+}
+.task-item.completed { background: #f0fdf4; border-color: #86efac; }
+.task-item.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+.task-item.locked { opacity: 0.5; cursor: not-allowed; }
+.task-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-right: 12px; flex-shrink: 0;
+}
+.task-info { flex: 1; min-width: 0; }
+.task-name { font-size: 14px; font-weight: 600; }
+.task-desc { font-size: 12px; color: var(--text-secondary); }
+.task-status {
+  font-size: 12px; font-weight: 500; flex-shrink: 0; margin-left: 8px;
+}
+.task-status.pending { color: var(--text-muted); }
+.task-status.active-status { color: var(--primary); }
+.task-status.done { color: var(--success); }
+
+/* Buttons */
+.btn-primary {
+  background: var(--primary); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 12px 24px; font-size: 15px;
+  font-weight: 600; cursor: pointer; transition: all .2s; width: 100%;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary.success { background: var(--success); }
+
+.btn-outline {
+  background: var(--card-bg); color: var(--primary); border: 2px solid var(--primary);
+  border-radius: var(--radius-sm); padding: 10px 20px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.btn-outline:active { transform: scale(0.97); }
+.btn-outline.danger { color: var(--danger); border-color: var(--danger); }
+
+/* Speech Section */
+.sample-sentence {
+  background: var(--bg); border-radius: var(--radius-sm); padding: 12px;
+  font-size: 15px; color: var(--text); font-style: italic;
+  border-left: 4px solid var(--primary); margin-bottom: 16px;
+}
+textarea.speech-input {
+  width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px; font-size: 15px; resize: vertical; min-height: 80px;
+  font-family: inherit; outline: none; transition: border-color .2s;
+  background: var(--card-bg); color: var(--text);
+}
+textarea.speech-input:focus { border-color: var(--primary); }
+.record-placeholder {
+  height: 44px; background: var(--bg); border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text-muted); margin-bottom: 12px;
+}
+
+/* Score Card */
+.score-overall {
+  text-align: center; margin-bottom: 20px;
+}
+.score-ring {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700; border: 5px solid; margin: 0 auto 8px;
+  transition: border-color .3s;
+}
+.score-detail-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.score-detail-label { font-size: 13px; width: 60px; flex-shrink: 0; }
+.score-detail-bar {
+  height: 6px; border-radius: 3px; background: var(--border);
+  flex: 1; margin: 0 12px; overflow: hidden;
+}
+.score-detail-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--primary), #8B5CF6);
+  transition: width .5s ease;
+}
+.score-detail-val { font-size: 13px; font-weight: 600; width: 36px; text-align: right; flex-shrink: 0; }
+.ai-feedback {
+  background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-top: 16px;
+}
+.ai-feedback-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.ai-feedback-text { font-size: 13px; color: var(--text); }
+
+/* History */
+.history-list { max-height: 320px; overflow-y: auto; }
+.history-item {
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.history-item-top {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.history-date { color: var(--text-secondary); }
+.history-score { font-weight: 700; color: var(--primary); }
+.history-text {
+  color: var(--text-muted); font-size: 12px; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.history-subs {
+  display: flex; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--text-muted);
+}
+
+/* Calendar */
+.calendar-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.calendar-month-btn {
+  padding: 6px 14px; font-size: 20px; border: none; background: transparent;
+  color: var(--text-secondary); cursor: pointer; line-height: 1;
+}
+.calendar-month-label { font-size: 15px; font-weight: 700; }
+.calendar-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  text-align: center; margin-bottom: 8px;
+}
+.calendar-weekday {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+}
+.calendar-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;
+}
+.calendar-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .15s; border: 1px solid transparent;
+}
+.calendar-day.today { border-color: var(--primary); background: var(--primary-light); }
+.calendar-day.done { background: #d1fae5; color: #065f46; }
+.calendar-day.current { background: #fef3c7; color: #92400e; }
+.calendar-day.past { color: var(--text-muted); }
+.calendar-day.future { color: var(--text-muted); }
+.calendar-day:hover { transform: scale(1.05); }
+.calendar-legend {
+  display: flex; gap: 16px; justify-content: center; margin-top: 16px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.calendar-legend span { display: flex; align-items: center; gap: 4px; }
+.calendar-legend-dot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+
+/* Day Detail */
+.day-detail-status {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.status-badge {
+  padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
+}
+.status-badge.done { background: #d1fae5; color: #065f46; }
+.status-badge.current { background: #fef3c7; color: #92400e; }
+.status-badge.pending { background: var(--bg); color: var(--text-secondary); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+}
+.modal {
+  background: var(--card-bg); border-radius: var(--radius); padding: 28px 24px;
+  max-width: 360px; width: 100%; text-align: center;
+  animation: modalIn .3s ease;
+}
+@keyframes modalIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-icon { font-size: 48px; margin-bottom: 12px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.modal-text { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+/* Spinner */
+.spinner {
+  width: 24px; height: 24px; border: 3px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin .6s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff; padding: 12px 24px;
+  border-radius: 24px; font-size: 14px; z-index: 300;
+  animation: toastIn .3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+@keyframes toastIn {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* Bottom Nav - common.js will populate this */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-height); background: var(--card-bg);
+  border-top: 1px solid var(--border); display: flex;
+  justify-content: space-around; align-items: center;
+  z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,.05);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.bottom-nav .nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 12px; cursor: pointer; text-decoration: none;
+  color: var(--text-muted); transition: all .2s; font-size: 11px;
+  font-weight: 500; border: none; background: none; min-width: 56px;
+  position: relative; padding-top: 10px;
+}
+.bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+.bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+.bottom-nav .nav-item.active::before {
+  content: ''; position: absolute; top: 0; width: 24px; height: 3px;
+  background: var(--primary); border-radius: 0 0 3px 3px;
+}
+
+/* Loading */
+.loading-screen {
+  display: flex; align-items: center; justify-content: center;
+  height: 80vh; flex-direction: column;
+}
+.loading-screen .spinner { width: 40px; height: 40px; border-width: 4px; }
+.loading-text { color: var(--text-secondary); margin-top: 16px; font-size: 14px; }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state-icon { font-size: 64px; margin-bottom: 16px; }
+.empty-state-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty-state-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+/* Guest Tip */
+.guest-tip {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  margin-bottom: 16px; border-radius: var(--radius-sm);
+  background: #FFFBEB; border: 1px solid #FCD34D; color: #92400E;
+  font-size: 13px;
+}
+.guest-tip-icon { font-size: 20px; flex-shrink: 0; }
+.guest-tip-close {
+  margin-left: auto; background: none; border: none; font-size: 18px;
+  cursor: pointer; color: #92400E; padding: 0 4px; line-height: 1;
+}
+
+/* Level Select */
+.level-select {
+  margin-bottom: 16px;
+}
+.level-select-label {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;
+}
+.level-options {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.level-option {
+  padding: 6px 14px; border-radius: 16px; border: 1.5px solid var(--border);
+  font-size: 12px; cursor: pointer; transition: all .2s;
+  background: var(--card-bg); color: var(--text-secondary);
+}
+.level-option:hover { border-color: var(--primary); color: var(--primary); }
+.level-option.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -222,914 +418,1420 @@
 <!-- Toast -->
 <div id="toast" class="toast" style="display:none;"></div>
 
-<!-- 确认生成计划弹窗 -->
-<div id="generateModal" class="modal-overlay" style="display:none;">
-  <div class="modal">
-    <div style="font-size:48px;margin-bottom:12px;">&#x1F4DA;</div>
-    <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">生成30天口语学习计划</h3>
-    <p style="color:#64748b;font-size:14px;margin-bottom:20px;">系统将为你自动生成一份为期30天的口语速成计划，包含每日场景、重点训练和SRS复习内容。</p>
-    <div id="modalLoading" style="display:none;margin-bottom:16px;">
-      <div class="spinner"></div>
-      <p style="color:#64748b;font-size:13px;margin-top:8px;">正在生成计划...</p>
-    </div>
-    <div id="modalActions">
-      <button class="btn-primary" onclick="generatePlan()" style="margin-bottom:8px;">立即生成</button>
-      <button class="btn-outline" onclick="closeGenerateModal()" style="width:100%;">稍后再说</button>
-    </div>
+<!-- Header -->
+<header class="header">
+  <a class="back-link" href="/xuewaiyu/home">&larr; <span data-i18n="back">返回</span></a>
+  <span class="header-title" data-i18n="title">30天口语速成</span>
+  <div class="header-lang" id="langSwitcher">
+    <button class="header-lang-btn" data-lang="zh">中</button>
+    <button class="header-lang-btn" data-lang="en">EN</button>
+    <button class="header-lang-btn" data-lang="ja">日</button>
+    <button class="header-lang-btn" data-lang="ko">韩</button>
   </div>
-</div>
+</header>
 
-<!-- 页面主体 -->
-<div id="app">
-  <!-- 加载状态 -->
-  <div id="loadingScreen" style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;">
-    <div class="spinner" style="width:40px;height:40px;border-width:4px;"></div>
-    <p style="color:#64748b;margin-top:16px;font-size:14px;">加载中...</p>
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+
+  <!-- Loading -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p class="loading-text" data-i18n="loading">加载中...</p>
   </div>
 
-  <!-- 主内容 -->
-  <div id="mainContent" style="display:none;">
-    <!-- 顶部标题栏 -->
-    <div style="padding:20px 16px 12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;">
-      <h1 style="font-size:22px;font-weight:700;">30天口语速成</h1>
-      <p style="font-size:13px;opacity:0.85;margin-top:4px;">每天进步一点点，30天自信开口说英语</p>
-    </div>
+  <!-- Guest Tip -->
+  <div id="guestTip" class="guest-tip" style="display:none;">
+    <span class="guest-tip-icon">&#x26A0;</span>
+    <span data-i18n="guestTip">游客模式：学习进度仅保存在本地浏览器中</span>
+    <button class="guest-tip-close" onclick="dismissGuestTip()">&times;</button>
+  </div>
 
-    <!-- 进度条 -->
-    <div class="card" style="padding:16px 20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:14px;font-weight:600;">学习进度</span>
-        <span style="font-size:14px;font-weight:700;color:#6366f1;" id="progressText">0/30 天</span>
+  <!-- Generate Plan Modal -->
+  <div id="generateModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-icon">&#x1F4DA;</div>
+      <h3 class="modal-title" data-i18n="generateTitle">生成30天口语学习计划</h3>
+      <p class="modal-text" data-i18n="generateDesc">系统将为你自动生成一份为期30天的口语速成计划，包含每日场景、重点训练和复习内容。</p>
+      <div class="level-select" style="text-align:left;">
+        <span class="level-select-label" data-i18n="selectLevel">选择你的水平</span>
+        <div class="level-options">
+          <button class="level-option selected" data-level="beginner" onclick="selectLevel('beginner', this)">&#x1F31F; <span data-i18n="beginner">初学者</span></button>
+          <button class="level-option" data-level="intermediate" onclick="selectLevel('intermediate', this)">&#x1F31F;&#x1F31F; <span data-i18n="intermediate">中级</span></button>
+          <button class="level-option" data-level="advanced" onclick="selectLevel('advanced', this)">&#x1F31F;&#x1F31F;&#x1F31F; <span data-i18n="advanced">高级</span></button>
+        </div>
+      </div>
+      <div id="modalLoading" style="display:none;margin-bottom:16px;">
+        <div class="spinner"></div>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:8px;" data-i18n="generating">正在生成计划...</p>
+      </div>
+      <div id="modalActions">
+        <button class="btn-primary" onclick="generatePlan()" style="margin-bottom:8px;" data-i18n="generateBtn">立即生成</button>
+        <button class="btn-outline" onclick="closeGenerateModal()" style="width:100%;" data-i18n="laterBtn">稍后再说</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Content -->
+  <div id="appContent" style="display:none;">
+
+    <!-- Progress -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-label" data-i18n="progress">学习进度</span>
+        <span class="progress-num" id="progressText">0/30 天</span>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width:0%;"></div>
       </div>
-      <p style="font-size:12px;color:#64748b;margin-top:6px;" id="progressSubtext">准备开始你的30天旅程</p>
+      <p class="progress-sub" id="progressSubtext" data-i18n="progressReady">准备开始你的30天旅程</p>
     </div>
 
-    <!-- Tab切换标签 -->
-    <div style="display:flex;gap:8px;padding:0 16px;margin-bottom:4px;overflow-x:auto;">
-      <button class="tab-btn active" data-tab="learn" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#3b82f6;color:#fff;white-space:nowrap;">今日学习</button>
-      <button class="tab-btn" data-tab="speak" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#e2e8f0;color:#475569;white-space:nowrap;">口语评测</button>
-      <button class="tab-btn" data-tab="calendar" style="padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#e2e8f0;color:#475569;white-space:nowrap;">30天日历</button>
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+      <button class="tab-btn active" data-tab="learn" data-i18n="tabLearn">今日学习</button>
+      <button class="tab-btn" data-tab="speak" data-i18n="tabSpeak">口语评测</button>
+      <button class="tab-btn" data-tab="calendar" data-i18n="tabCalendar">30天日历</button>
     </div>
 
-    <!-- ======== Tab 1: 今日学习 ======== -->
+    <!-- ========== Tab 1: Today's Learning ========== -->
     <div id="tab-learn" class="tab-content active">
 
-      <!-- 当日学习卡片 -->
       <div class="card" id="todayCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);display:flex;align-items:center;justify-content:center;font-size:20px;">&#x1F4AC;</div>
+        <div class="today-card-header">
+          <div class="today-card-left">
+            <div class="today-icon">&#x1F4AC;</div>
             <div>
-              <span style="font-size:12px;color:#64748b;">第 <b id="currentDay">1</b> 天</span>
-              <h3 id="scenario" style="font-size:16px;font-weight:700;">餐厅点餐</h3>
+              <span class="today-meta" data-i18n="dayLabel">第 <b id="currentDay">1</b> 天</span>
+              <h3 class="today-scenario" id="scenario">餐厅点餐</h3>
             </div>
           </div>
-          <span id="duration" style="background:#f1f5f9;padding:4px 10px;border-radius:20px;font-size:12px;color:#64748b;">25分钟</span>
+          <span class="today-duration" id="duration">25分钟</span>
         </div>
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-          <div style="font-size:13px;color:#64748b;margin-bottom:4px;">今日重点</div>
-          <p id="focus" style="font-size:14px;font-weight:500;">掌握餐厅点餐常用句型与词汇</p>
+        <div class="today-focus-box">
+          <div class="today-focus-label" data-i18n="todayFocus">今日重点</div>
+          <p class="today-focus-text" id="focus">掌握餐厅点餐常用句型与词汇</p>
         </div>
       </div>
 
-      <!-- 任务列表 -->
-      <div class="card" style="padding:16px;">
-        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">今日任务</h3>
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;" data-i18n="todayTasks">今日任务</h3>
         <div id="taskList">
           <div class="task-item locked" id="task-1" onclick="startTask(1)">
-            <div class="task-icon" style="background:#eff6ff;">&#x1F3A7;</div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;">听力练习</div>
-              <div style="font-size:12px;color:#64748b;">场景对话听力训练 · 约10分钟</div>
+            <div class="task-icon" style="background:#EEF2FF;">&#x1F3A7;</div>
+            <div class="task-info">
+              <div class="task-name" data-i18n="task1Name">听力练习</div>
+              <div class="task-desc" data-i18n="task1Desc">场景对话听力训练 · 约10分钟</div>
             </div>
-            <span id="taskStatus1" style="font-size:12px;color:#94a3b8;">待完成</span>
+            <span class="task-status pending" id="taskStatus1" data-i18n="taskPending">待完成</span>
           </div>
           <div class="task-item locked" id="task-2" onclick="startTask(2)">
-            <div class="task-icon" style="background:#fef3c7;">&#x1F916;</div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;">AI口语对话</div>
-              <div style="font-size:12px;color:#64748b;">AI模拟对话练习 · 约10分钟</div>
+            <div class="task-icon" style="background:#FEF3C7;">&#x1F916;</div>
+            <div class="task-info">
+              <div class="task-name" data-i18n="task2Name">AI口语对话</div>
+              <div class="task-desc" data-i18n="task2Desc">AI模拟对话练习 · 约10分钟</div>
             </div>
-            <span id="taskStatus2" style="font-size:12px;color:#94a3b8;">待完成</span>
+            <span class="task-status pending" id="taskStatus2" data-i18n="taskPending">待完成</span>
           </div>
           <div class="task-item locked" id="task-3" onclick="startTask(3)">
-            <div class="task-icon" style="background:#f0fdf4;">&#x1F504;</div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;">SRS复习</div>
-              <div style="font-size:12px;color:#64748b;">间隔重复记忆复习 · 约5分钟</div>
+            <div class="task-icon" style="background:#F0FDF4;">&#x1F504;</div>
+            <div class="task-info">
+              <div class="task-name" data-i18n="task3Name">SRS复习</div>
+              <div class="task-desc" data-i18n="task3Desc">间隔重复记忆复习 · 约5分钟</div>
             </div>
-            <span id="taskStatus3" style="font-size:12px;color:#94a3b8;">待完成</span>
+            <span class="task-status pending" id="taskStatus3" data-i18n="taskPending">待完成</span>
           </div>
         </div>
-        <button class="btn-primary" id="completeBtn" onclick="completeToday()" disabled style="margin-top:16px;">
-          完成当日学习
-        </button>
+        <button class="btn-primary" id="completeBtn" onclick="completeToday()" disabled style="margin-top:16px;" data-i18n="completeDay">完成当日学习</button>
       </div>
     </div>
 
-    <!-- ======== Tab 2: 口语评测 ======== -->
+    <!-- ========== Tab 2: Speech Evaluation ========== -->
     <div id="tab-speak" class="tab-content">
       <div class="card">
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:4px;">口语评测</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">输入英文句子，获取发音和流利度评分</p>
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:4px;" data-i18n="speechTitle">口语评测</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="speechDesc">输入英文句子，获取发音和流利度评分</p>
 
         <div style="margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#475569;">今日场景例句</div>
-          <div id="sampleSentence" style="background:#f8fafc;border-radius:10px;padding:12px;font-size:15px;color:#1e293b;font-style:italic;border-left:4px solid #3b82f6;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);" data-i18n="sampleLabel">今日场景例句</div>
+          <div class="sample-sentence" id="sampleSentence">
             "I'd like to order a coffee and a sandwich, please."
           </div>
         </div>
 
         <div style="margin-bottom:16px;">
-          <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">输入你的朗读内容</label>
-          <textarea id="speechInput" placeholder="在此输入你朗读的英文句子..."></textarea>
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;" data-i18n="inputLabel">输入你的朗读内容</label>
+          <textarea class="speech-input" id="speechInput" data-i18n-placeholder="inputPlaceholder" placeholder="在此输入你朗读的英文句子..."></textarea>
         </div>
 
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="flex:1;height:44px;background:#f1f5f9;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#94a3b8;">
-            &#x1F3A4; 录音功能开发中...
-          </div>
-        </div>
+        <div class="record-placeholder" data-i18n="recordHint">&#x1F3A4; 录音功能开发中...</div>
 
-        <button class="btn-primary" id="evaluateBtn" onclick="submitEvaluation()" style="margin-bottom:8px;">
-          提交评测
-        </button>
-        <p id="evaluateError" style="color:#ef4444;font-size:13px;display:none;"></p>
+        <button class="btn-primary" id="evaluateBtn" onclick="submitEvaluation()" style="margin-bottom:8px;" data-i18n="evaluateBtn">提交评测</button>
+        <p id="evaluateError" style="color:var(--danger);font-size:13px;display:none;"></p>
       </div>
 
-      <!-- 评分展示 -->
+      <!-- Score Card -->
       <div class="card" id="scoreCard" style="display:none;">
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;text-align:center;">评测结果</h3>
-
-        <div style="text-align:center;margin-bottom:20px;">
-          <div class="score-ring" id="overallRing" style="border-color:#6366f1;margin-bottom:8px;">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;text-align:center;" data-i18n="scoreTitle">评测结果</h3>
+        <div class="score-overall">
+          <div class="score-ring" id="overallRing" style="border-color:var(--primary);">
             <span id="overallScore">--</span>
           </div>
-          <span style="font-size:12px;color:#64748b;">综合评分</span>
+          <span style="font-size:12px;color:var(--text-secondary);" data-i18n="overallLabel">综合评分</span>
         </div>
-
         <div id="scoreDetails">
-          <div class="score-item">
-            <span style="font-size:13px;width:60px;">&#x1F5E3; 发音</span>
-            <div class="score-bar"><div class="score-bar-fill" id="pronBar" style="width:0%;"></div></div>
-            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="pronScore">--</span>
+          <div class="score-detail-item">
+            <span class="score-detail-label" data-i18n="pronunciation">&#x1F5E3; 发音</span>
+            <div class="score-detail-bar"><div class="score-detail-fill" id="pronBar" style="width:0%;"></div></div>
+            <span class="score-detail-val" id="pronScore">--</span>
           </div>
-          <div class="score-item">
-            <span style="font-size:13px;width:60px;">&#x1F4A8; 流利度</span>
-            <div class="score-bar"><div class="score-bar-fill" id="fluencyBar" style="width:0%;"></div></div>
-            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="fluencyScore">--</span>
+          <div class="score-detail-item">
+            <span class="score-detail-label" data-i18n="fluency">&#x1F4A8; 流利度</span>
+            <div class="score-detail-bar"><div class="score-detail-fill" id="fluencyBar" style="width:0%;"></div></div>
+            <span class="score-detail-val" id="fluencyScore">--</span>
           </div>
-          <div class="score-item">
-            <span style="font-size:13px;width:60px;">&#x1F3AF; 准确度</span>
-            <div class="score-bar"><div class="score-bar-fill" id="accuracyBar" style="width:0%;"></div></div>
-            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="accuracyScore">--</span>
+          <div class="score-detail-item">
+            <span class="score-detail-label" data-i18n="accuracy">&#x1F3AF; 准确度</span>
+            <div class="score-detail-bar"><div class="score-detail-fill" id="accuracyBar" style="width:0%;"></div></div>
+            <span class="score-detail-val" id="accuracyScore">--</span>
           </div>
-          <div class="score-item">
-            <span style="font-size:13px;width:60px;">&#x2705; 完整度</span>
-            <div class="score-bar"><div class="score-bar-fill" id="completenessBar" style="width:0%;"></div></div>
-            <span style="font-size:13px;font-weight:600;width:36px;text-align:right;" id="completenessScore">--</span>
+          <div class="score-detail-item">
+            <span class="score-detail-label" data-i18n="completeness">&#x2705; 完整度</span>
+            <div class="score-detail-bar"><div class="score-detail-fill" id="completenessBar" style="width:0%;"></div></div>
+            <span class="score-detail-val" id="completenessScore">--</span>
           </div>
         </div>
-
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-top:16px;">
-          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">AI反馈</div>
-          <p id="aiFeedback" style="font-size:13px;color:#334155;"></p>
+        <div class="ai-feedback">
+          <div class="ai-feedback-label" data-i18n="aiFeedback">AI反馈</div>
+          <p class="ai-feedback-text" id="aiFeedback"></p>
         </div>
       </div>
 
-      <!-- 评测历史 -->
+      <!-- History -->
       <div class="card" id="historyCard" style="display:none;">
-        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">评测历史</h3>
-        <div id="historyList" style="max-height:300px;overflow-y:auto;"></div>
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;" data-i18n="historyTitle">评测历史</h3>
+        <div class="history-list" id="historyList"></div>
       </div>
     </div>
 
-    <!-- ======== Tab 3: 30天日历 ======== -->
+    <!-- ========== Tab 3: 30-Day Calendar ========== -->
     <div id="tab-calendar" class="tab-content">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <button class="btn-outline" onclick="changeCalendarMonth(-1)" style="padding:6px 14px;font-size:20px;width:auto;border:none;background:transparent;color:#64748b;">&#x25C0;</button>
-          <span id="calendarMonth" style="font-size:15px;font-weight:700;">2026年7月</span>
-          <button class="btn-outline" onclick="changeCalendarMonth(1)" style="padding:6px 14px;font-size:20px;width:auto;border:none;background:transparent;color:#64748b;">&#x25B6;</button>
+        <div class="calendar-header">
+          <button class="calendar-month-btn" onclick="changeCalendarMonth(-1)">&#x25C0;</button>
+          <span class="calendar-month-label" id="calendarMonth">2026年7月</span>
+          <button class="calendar-month-btn" onclick="changeCalendarMonth(1)">&#x25B6;</button>
         </div>
-        <div class="calendar-grid" style="margin-bottom:8px;">
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">日</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">一</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">二</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">三</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">四</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">五</span>
-          <span style="font-size:11px;color:#94a3b8;font-weight:600;">六</span>
+        <div class="calendar-weekdays">
+          <span class="calendar-weekday" data-i18n="sun">日</span>
+          <span class="calendar-weekday" data-i18n="mon">一</span>
+          <span class="calendar-weekday" data-i18n="tue">二</span>
+          <span class="calendar-weekday" data-i18n="wed">三</span>
+          <span class="calendar-weekday" data-i18n="thu">四</span>
+          <span class="calendar-weekday" data-i18n="fri">五</span>
+          <span class="calendar-weekday" data-i18n="sat">六</span>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
-        <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;font-size:12px;color:#64748b;">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d1fae5;margin-right:4px;"></span>已完成</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fef3c7;margin-right:4px;"></span>进行中</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e2e8f0;margin-right:4px;"></span>未开始</span>
+        <div class="calendar-legend">
+          <span><span class="calendar-legend-dot" style="background:#d1fae5;"></span> <span data-i18n="legendDone">已完成</span></span>
+          <span><span class="calendar-legend-dot" style="background:#fef3c7;"></span> <span data-i18n="legendCurrent">进行中</span></span>
+          <span><span class="calendar-legend-dot" style="background:var(--border);"></span> <span data-i18n="legendPending">未开始</span></span>
         </div>
       </div>
 
-      <!-- 选中日期的详情 -->
       <div class="card" id="dayDetail" style="display:none;">
         <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;" id="detailDayTitle">第 1 天</h3>
         <div id="detailContent"></div>
       </div>
     </div>
   </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <div class="empty-state-icon">&#x1F4AD;</div>
+    <h3 class="empty-state-title" data-i18n="emptyTitle">还没有学习计划</h3>
+    <p class="empty-state-desc" data-i18n="emptyDesc">点击下方按钮生成你的30天口语速成计划</p>
+    <button class="btn-primary" onclick="showGenerateModal()" style="max-width:280px;margin:0 auto;" data-i18n="generateBtn">生成学习计划</button>
+  </div>
 </div>
 
-<!-- 底部导航 -->
-<nav class="nav-bar" id="bottomNav">
-  <div class="nav-item active" data-page="learn" onclick="switchPage('learn')">
-    <span class="nav-icon">&#x1F3E0;</span>
-    <span>首页</span>
-  </div>
-  <div class="nav-item" data-page="learn" onclick="switchPage('learn')">
-    <span class="nav-icon">&#x1F4D6;</span>
-    <span>学习</span>
-  </div>
-  <div class="nav-item" data-page="speak" onclick="switchPage('speak')">
-    <span class="nav-icon">&#x1F916;</span>
-    <span>AI对话</span>
-  </div>
-  <div class="nav-item" data-page="calendar" onclick="switchPage('calendar')">
-    <span class="nav-icon">&#x1F504;</span>
-    <span>复习</span>
-  </div>
-  <div class="nav-item" data-page="profile" onclick="switchPage('profile')">
-    <span class="nav-icon">&#x1F464;</span>
-    <span>我的</span>
-  </div>
-</nav>
+<!-- Bottom Navigation - populated by common.js -->
+<div class="bottom-nav" id="bottomNav"></div>
 
+<script src="/xuewaiyu/assets/common.js"></script>
 <script>
-// ============ 全局状态 ============
-const STATE = {
-  plan: null,           // 30天计划数据
-  currentDay: 1,        // 当前第几天
-  completedDays: [],    // 已完成的天数
-  taskStatus: {1:false, 2:false, 3:false}, // 当日任务状态
-  speechHistory: [],    // 评测历史
-  todayCompleted: false,
-  calendarMonth: 6,     // 0-indexed: 6=July
-  calendarYear: 2026,
-  currentTab: 'learn',
-  currentPage: 'learn',
-};
+(function () {
+  'use strict';
 
-const SCENARIOS = [
-  { scenario: '餐厅点餐', focus: '掌握餐厅点餐常用句型与词汇', duration: '25分钟', sample: "I'd like to order a coffee and a sandwich, please." },
-  { scenario: '酒店入住', focus: '学会酒店登记入住的对话流程', duration: '25分钟', sample: "I have a reservation under the name of Smith." },
-  { scenario: '问路指路', focus: '掌握问路和指路的核心表达', duration: '25分钟', sample: "Excuse me, could you tell me how to get to the museum?" },
-  { scenario: '购物交流', focus: '学会购物时的讨价还价和尺码询问', duration: '25分钟', sample: "How much does this sweater cost? Do you have it in a larger size?" },
-  { scenario: '机场登机', focus: '熟悉机场办理登机手续的英语表达', duration: '30分钟', sample: "I'd like to check in for my flight to New York." },
-  { scenario: '电话预约', focus: '掌握电话预约的礼貌用语和流程', duration: '25分钟', sample: "I'd like to make an appointment for next Tuesday, please." },
-  { scenario: '看病就医', focus: '学会描述症状和与医生沟通', duration: '30分钟', sample: "I've been having a headache and a sore throat for three days." },
-  { scenario: '面试英语', focus: '掌握英文面试的自我介绍和常见问题', duration: '30分钟', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
-  { scenario: '商务会议', focus: '学会商务会议中的表达和讨论技巧', duration: '30分钟', sample: "I'd like to propose a new strategy for our marketing campaign." },
-  { scenario: '社交聚会', focus: '掌握社交场合的闲聊和自我介绍', duration: '25分钟', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
-  { scenario: '银行办事', focus: '学会银行开户和办理业务的英语', duration: '25分钟', sample: "I'd like to open a savings account and deposit some money." },
-  { scenario: '租房看房', focus: '掌握租房相关的词汇和对话', duration: '25分钟', sample: "How much is the monthly rent? Are utilities included?" },
-  { scenario: '旅游问讯', focus: '学会在旅游信息中心获取帮助', duration: '25分钟', sample: "Could you recommend some popular tourist attractions in this city?" },
-  { scenario: '公共交通', focus: '掌握乘坐公交地铁的英语表达', duration: '25分钟', sample: "Which bus should I take to get to the city center?" },
-  { scenario: '快递邮寄', focus: '学会寄快递和邮寄包裹的英语', duration: '25分钟', sample: "I'd like to send this package to China by air mail." },
-  { scenario: '理发美发', focus: '掌握理发店与发型师沟通的英语', duration: '25分钟', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
-  { scenario: '电影娱乐', focus: '学会讨论电影和娱乐话题', duration: '25分钟', sample: "What kind of movies do you like? I'm a big fan of action films." },
-  { scenario: '健身运动', focus: '掌握健身和运动相关的英语表达', duration: '25分钟', sample: "I go to the gym three times a week. How about you?" },
-  { scenario: '环保话题', focus: '学会用英语讨论环保和可持续发展', duration: '25分钟', sample: "I think we should all do our part to reduce plastic waste." },
-  { scenario: '科技趋势', focus: '掌握科技相关话题的英语讨论', duration: '30分钟', sample: "Artificial intelligence is changing the way we work and live." },
-  { scenario: '节日庆祝', focus: '学会用英语表达节日祝福和习俗', duration: '25分钟', sample: "How do you usually celebrate the New Year in your country?" },
-  { scenario: '宠物话题', focus: '掌握有关宠物和动物的话题表达', duration: '25分钟', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
-  { scenario: '烹饪美食', focus: '学会用英语描述烹饪步骤和美食', duration: '30分钟', sample: "First, you need to chop the vegetables and then fry them in a pan." },
-  { scenario: '紧急情况', focus: '掌握紧急情况下的英语求助表达', duration: '30分钟', sample: "Help! I need an ambulance. There's been an accident." },
-  { scenario: '自我介绍', focus: '完善自我介绍，提升表达自信', duration: '25分钟', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
-  { scenario: '兴趣爱好', focus: '学会用英语深入讨论兴趣爱好', duration: '25分钟', sample: "In my free time, I enjoy reading books and playing the guitar." },
-  { scenario: '学术讨论', focus: '掌握学术场景下的英语讨论技巧', duration: '30分钟', sample: "According to the research, there is a strong correlation between these two variables." },
-  { scenario: '谈判技巧', focus: '学会商务谈判中的英语表达', duration: '30分钟', sample: "I believe we can find a solution that works for both parties." },
-  { scenario: '文化差异', focus: '学会讨论文化差异和跨文化交际', duration: '25分钟', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
-  { scenario: '总结回顾', focus: '全面回顾30天学习成果，模拟综合对话', duration: '30分钟', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
-];
+  // ==================== i18n ====================
+  var I18N = {
+    zh: {
+      back: '返回', title: '30天口语速成', loading: '加载中...',
+      guestTip: '游客模式：学习进度仅保存在本地浏览器中',
+      generateTitle: '生成30天口语学习计划',
+      generateDesc: '系统将为你自动生成一份为期30天的口语速成计划，包含每日场景、重点训练和复习内容。',
+      selectLevel: '选择你的水平', beginner: '初学者', intermediate: '中级', advanced: '高级',
+      generating: '正在生成计划...', generateBtn: '立即生成', laterBtn: '稍后再说',
+      progress: '学习进度', progressReady: '准备开始你的30天旅程', progressDone: '恭喜！你已完成全部30天学习！',
+      progressPartial: '已完成 {0} 天，继续加油！',
+      tabLearn: '今日学习', tabSpeak: '口语评测', tabCalendar: '30天日历',
+      dayLabel: '第', todayFocus: '今日重点', todayTasks: '今日任务',
+      task1Name: '听力练习', task1Desc: '场景对话听力训练 · 约10分钟',
+      task2Name: 'AI口语对话', task2Desc: 'AI模拟对话练习 · 约10分钟',
+      task3Name: 'SRS复习', task3Desc: '间隔重复记忆复习 · 约5分钟',
+      taskPending: '待完成', taskActive: '进行中', taskDone: '已完成',
+      completeDay: '完成当日学习', completedToday: '今日已完成',
+      speechTitle: '口语评测', speechDesc: '输入英文句子，获取发音和流利度评分',
+      sampleLabel: '今日场景例句', inputLabel: '输入你的朗读内容',
+      inputPlaceholder: '在此输入你朗读的英文句子...', recordHint: '录音功能开发中...',
+      evaluateBtn: '提交评测', evaluatingBtn: '评测中...',
+      scoreTitle: '评测结果', overallLabel: '综合评分',
+      pronunciation: '发音', fluency: '流利度', accuracy: '准确度', completeness: '完整度',
+      aiFeedback: 'AI反馈', historyTitle: '评测历史',
+      sun: '日', mon: '一', tue: '二', wed: '三', thu: '四', fri: '五', sat: '六',
+      legendDone: '已完成', legendCurrent: '进行中', legendPending: '未开始',
+      emptyTitle: '还没有学习计划', emptyDesc: '点击下方按钮生成你的30天口语速成计划',
+      errNeedInput: '请输入朗读内容',
+      errNeedAllTasks: '请先完成所有任务',
+      errTaskPrev: '请先完成前一个任务',
+      errTaskOrder: '请按顺序完成任务',
+      errDayDone: '今日学习已完成，无法重复操作',
+      toastPlanGenerated: '30天学习计划已生成！开始你的口语之旅吧~',
+      toastTaskDone: '已完成！',
+      toastDayComplete: '今日学习完成！太棒了！',
+      toastAllComplete: '恭喜！你已完成全部30天口语速成学习！',
+      toastScore: '评测完成！综合评分：{0}分',
+      toastReset: '计划已重置',
+      toastApiError: '网络请求失败，已切换到本地模式',
+      resetConfirm: '确定要重置所有学习进度吗？此操作不可恢复。',
+      noHistory: '暂无评测记录',
+      day: '天',
+      statusDone: '已完成', statusCurrent: '进行中', statusPending: '未开始',
+      feed1: '发音清晰，语调自然，继续保持！注意个别单词的重音位置。',
+      feed2: '整体表现不错，流利度有待提升，建议多练习连读技巧。',
+      feed3: '准确度很高！可以尝试更复杂的句式来表达。',
+      feed4: '表达完整，发音标准，语速适中，表现优秀！',
+      feed5: '基础扎实，建议在语调变化上多加练习，让表达更生动。',
+    },
+    en: {
+      back: 'Back', title: '30-Day Speaking Sprint', loading: 'Loading...',
+      guestTip: 'Guest mode: progress is saved only in this browser',
+      generateTitle: 'Generate 30-Day Speaking Plan',
+      generateDesc: 'The system will auto-generate a 30-day speaking crash course with daily scenarios, key training, and review.',
+      selectLevel: 'Select your level', beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced',
+      generating: 'Generating plan...', generateBtn: 'Generate Now', laterBtn: 'Later',
+      progress: 'Progress', progressReady: 'Ready to start your 30-day journey',
+      progressDone: 'Congratulations! You completed all 30 days!',
+      progressPartial: 'Completed {0} days, keep going!',
+      tabLearn: 'Today', tabSpeak: 'Speaking', tabCalendar: 'Calendar',
+      dayLabel: 'Day ', todayFocus: 'Today\'s Focus', todayTasks: 'Today\'s Tasks',
+      task1Name: 'Listening', task1Desc: 'Scenario listening training · ~10 min',
+      task2Name: 'AI Speaking', task2Desc: 'AI conversation practice · ~10 min',
+      task3Name: 'SRS Review', task3Desc: 'Spaced repetition review · ~5 min',
+      taskPending: 'Pending', taskActive: 'Active', taskDone: 'Done',
+      completeDay: 'Complete Today', completedToday: 'Completed Today',
+      speechTitle: 'Speech Evaluation', speechDesc: 'Enter an English sentence for pronunciation & fluency scoring',
+      sampleLabel: 'Today\'s Sample Sentence', inputLabel: 'Enter your speech text',
+      inputPlaceholder: 'Type the English sentence you read...', recordHint: 'Recording is coming soon...',
+      evaluateBtn: 'Submit', evaluatingBtn: 'Evaluating...',
+      scoreTitle: 'Evaluation Result', overallLabel: 'Overall Score',
+      pronunciation: 'Pronunciation', fluency: 'Fluency', accuracy: 'Accuracy', completeness: 'Completeness',
+      aiFeedback: 'AI Feedback', historyTitle: 'Evaluation History',
+      sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat',
+      legendDone: 'Done', legendCurrent: 'Active', legendPending: 'Pending',
+      emptyTitle: 'No Plan Yet', emptyDesc: 'Tap below to generate your 30-day speaking plan',
+      errNeedInput: 'Please enter your speech text',
+      errNeedAllTasks: 'Please complete all tasks first',
+      errTaskPrev: 'Please finish the previous task first',
+      errTaskOrder: 'Please complete tasks in order',
+      errDayDone: 'Today\'s learning is complete',
+      toastPlanGenerated: '30-day plan generated! Start your speaking journey~',
+      toastTaskDone: 'Completed!',
+      toastDayComplete: 'Today\'s learning complete! Great job!',
+      toastAllComplete: 'Congratulations! You finished all 30 days!',
+      toastScore: 'Evaluation complete! Overall score: {0}',
+      toastReset: 'Plan has been reset',
+      toastApiError: 'Network error, switched to local mode',
+      resetConfirm: 'Reset all progress? This cannot be undone.',
+      noHistory: 'No evaluation history',
+      day: 'Day',
+      statusDone: 'Done', statusCurrent: 'Active', statusPending: 'Pending',
+      feed1: 'Clear pronunciation, natural intonation — keep it up! Watch stress on some words.',
+      feed2: 'Good overall! Work on fluency and connected speech.',
+      feed3: 'Great accuracy! Try more complex sentence structures.',
+      feed4: 'Complete expression, standard pronunciation, perfect pace — excellent!',
+      feed5: 'Solid foundation. Try varying your intonation for more lively delivery.',
+    },
+    ja: {
+      back: '戻る', title: '30日間スピーキング', loading: '読み込み中...',
+      guestTip: 'ゲストモード：進捗はこのブラウザにのみ保存されます',
+      generateTitle: '30日間学習計画を生成',
+      generateDesc: '毎日のシナリオ、重点トレーニング、復習を含む30日間のスピーキング速成計画を自動生成します。',
+      selectLevel: 'レベルを選択', beginner: '初級', intermediate: '中級', advanced: '上級',
+      generating: '計画を生成中...', generateBtn: '今すぐ生成', laterBtn: '後で',
+      progress: '進捗', progressReady: '30日間の旅を始めましょう',
+      progressDone: 'おめでとう！30日間すべて完了しました！',
+      progressPartial: '{0}日完了しました。頑張りましょう！',
+      tabLearn: '今日の学習', tabSpeak: 'スピーキング', tabCalendar: 'カレンダー',
+      dayLabel: '第', todayFocus: '今日の重点', todayTasks: '今日のタスク',
+      task1Name: 'リスニング', task1Desc: 'シナリオ会話リスニング · 約10分',
+      task2Name: 'AI会話', task2Desc: 'AI会話練習 · 約10分',
+      task3Name: 'SRS復習', task3Desc: '間隔反復復習 · 約5分',
+      taskPending: '未完了', taskActive: '進行中', taskDone: '完了',
+      completeDay: '今日の学習を完了', completedToday: '本日完了済',
+      speechTitle: 'スピーキング評価', speechDesc: '英文を入力して発音と流暢さを評価',
+      sampleLabel: '今日の例文', inputLabel: '読み上げた内容を入力',
+      inputPlaceholder: '読み上げた英文を入力してください...', recordHint: '録音機能は準備中...',
+      evaluateBtn: '評価を提出', evaluatingBtn: '評価中...',
+      scoreTitle: '評価結果', overallLabel: '総合スコア',
+      pronunciation: '発音', fluency: '流暢さ', accuracy: '正確さ', completeness: '完全性',
+      aiFeedback: 'AIフィードバック', historyTitle: '評価履歴',
+      sun: '日', mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土',
+      legendDone: '完了', legendCurrent: '進行中', legendPending: '未着手',
+      emptyTitle: '学習計画がありません', emptyDesc: '下のボタンをクリックして30日間の計画を生成',
+      errNeedInput: '内容を入力してください',
+      errNeedAllTasks: 'すべてのタスクを完了してください',
+      errTaskPrev: '前のタスクを先に完了してください',
+      errTaskOrder: '順番にタスクを完了してください',
+      errDayDone: '本日の学習は完了しています',
+      toastPlanGenerated: '30日間の計画が生成されました！学習を始めましょう〜',
+      toastTaskDone: '完了しました！',
+      toastDayComplete: '今日の学習が完了しました！素晴らしい！',
+      toastAllComplete: 'おめでとう！30日間の学習をすべて完了しました！',
+      toastScore: '評価完了！総合スコア：{0}点',
+      toastReset: '計画をリセットしました',
+      toastApiError: 'ネットワークエラー、ローカルモードに切り替えました',
+      resetConfirm: 'すべての進捗をリセットしますか？この操作は取り消せません。',
+      noHistory: '評価履歴はありません',
+      day: '日',
+      statusDone: '完了', statusCurrent: '進行中', statusPending: '未着手',
+      feed1: '発音が明瞭で、イントネーションも自然です。一部の単語のアクセントに注意しましょう。',
+      feed2: '全体的に良いです。流暢さを向上させるために、リンキングの練習をお勧めします。',
+      feed3: '正確さが非常に高いです！より複雑な文構造に挑戦してみましょう。',
+      feed4: '表現が完璧で、発音も標準的、ペースも適切で素晴らしいです！',
+      feed5: '基礎がしっかりしています。イントネーションの変化を練習すると、より生き生きとした表現になります。',
+    },
+    ko: {
+      back: '뒤로', title: '30일 스피킹 집중', loading: '로딩 중...',
+      guestTip: '게스트 모드: 진행 상황은 이 브라우저에만 저장됩니다',
+      generateTitle: '30일 학습 계획 생성',
+      generateDesc: '매일의 시나리오, 핵심 훈련, 복습을 포함한 30일 스피킹 집중 계획을 자동 생성합니다.',
+      selectLevel: '레벨 선택', beginner: '초급', intermediate: '중급', advanced: '고급',
+      generating: '계획 생성 중...', generateBtn: '지금 생성', laterBtn: '나중에',
+      progress: '진행률', progressReady: '30일 여정을 시작할 준비를 하세요',
+      progressDone: '축하합니다! 30일을 모두 완료했습니다!',
+      progressPartial: '{0}일 완료했습니다. 계속 힘내세요!',
+      tabLearn: '오늘의 학습', tabSpeak: '스피킹 평가', tabCalendar: '캘린더',
+      dayLabel: '제', todayFocus: '오늘의 핵심', todayTasks: '오늘의 과제',
+      task1Name: '리스닝', task1Desc: '시나리오 대화 듣기 · 약 10분',
+      task2Name: 'AI 대화', task2Desc: 'AI 대화 연습 · 약 10분',
+      task3Name: 'SRS 복습', task3Desc: '간격 반복 복습 · 약 5분',
+      taskPending: '대기', taskActive: '진행 중', taskDone: '완료',
+      completeDay: '오늘 학습 완료', completedToday: '오늘 완료됨',
+      speechTitle: '스피킹 평가', speechDesc: '영어 문장을 입력하여 발음과 유창성 점수를 받으세요',
+      sampleLabel: '오늘의 예문', inputLabel: '읽은 내용을 입력하세요',
+      inputPlaceholder: '읽은 영어 문장을 입력하세요...', recordHint: '녹음 기능 준비 중...',
+      evaluateBtn: '평가 제출', evaluatingBtn: '평가 중...',
+      scoreTitle: '평가 결과', overallLabel: '종합 점수',
+      pronunciation: '발음', fluency: '유창성', accuracy: '정확도', completeness: '완성도',
+      aiFeedback: 'AI 피드백', historyTitle: '평가 기록',
+      sun: '일', mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토',
+      legendDone: '완료', legendCurrent: '진행 중', legendPending: '대기',
+      emptyTitle: '학습 계획이 없습니다', emptyDesc: '아래 버튼을 눌러 30일 스피킹 계획을 생성하세요',
+      errNeedInput: '내용을 입력해 주세요',
+      errNeedAllTasks: '모든 과제를 먼저 완료하세요',
+      errTaskPrev: '이전 과제를 먼저 완료하세요',
+      errTaskOrder: '순서대로 과제를 완료하세요',
+      errDayDone: '오늘 학습이 이미 완료되었습니다',
+      toastPlanGenerated: '30일 계획이 생성되었습니다! 스피킹 여정을 시작하세요~',
+      toastTaskDone: '완료했습니다!',
+      toastDayComplete: '오늘 학습 완료! 훌륭합니다!',
+      toastAllComplete: '축하합니다! 30일 스피킹 과정을 모두 완료했습니다!',
+      toastScore: '평가 완료! 종합 점수: {0}점',
+      toastReset: '계획이 초기화되었습니다',
+      toastApiError: '네트워크 오류, 로컬 모드로 전환했습니다',
+      resetConfirm: '모든 진행 상황을 초기화하시겠습니까? 되돌릴 수 없습니다.',
+      noHistory: '평가 기록이 없습니다',
+      day: '일',
+      statusDone: '완료', statusCurrent: '진행 중', statusPending: '대기',
+      feed1: '발음이 명확하고 억양이 자연스럽습니다. 일부 단어의 강세에 주의하세요.',
+      feed2: '전반적으로 좋습니다. 연결 발음을 더 연습하면 유창성이 향상됩니다.',
+      feed3: '정확도가 매우 높습니다! 더 복잡한 문장 구조에 도전해 보세요.',
+      feed4: '완벽한 표현, 표준 발음, 적절한 속도 — 훌륭합니다!',
+      feed5: '기초가 탄탄합니다. 억양 변화를 연습하면 더 생동감 있는 표현이 됩니다.',
+    }
+  };
 
-// ============ 工具函数 ============
-function $(id) { return document.getElementById(id); }
-
-function showToast(msg, duration = 2500) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.display = 'none'; }, duration);
-}
-
-function showLoading(show) {
-  $('loadingScreen').style.display = show ? 'flex' : 'none';
-  $('mainContent').style.display = show ? 'none' : 'block';
-}
-
-// ============ Mock API 函数 ============
-function getPlan() {
-  const raw = localStorage.getItem('speaking_plan');
-  if (raw) {
-    try { return JSON.parse(raw); } catch(e) { return null; }
+  function getLang() {
+    try {
+      if (window.AILOS && window.AILOS.getStudyLang) {
+        var l = window.AILOS.getStudyLang();
+        if (I18N[l]) return l;
+      }
+      var s = localStorage.getItem('yandao_study_lang');
+      if (I18N[s]) return s;
+      var t = localStorage.getItem('yandao_target_lang_v1');
+      if (I18N[t]) return t;
+    } catch (e) {}
+    return 'zh';
   }
-  return null;
-}
 
-function savePlan(plan) {
-  localStorage.setItem('speaking_plan', JSON.stringify(plan));
-}
-
-function getProgress() {
-  const raw = localStorage.getItem('speaking_progress');
-  if (raw) {
-    try { return JSON.parse(raw); } catch(e) { return { completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] }; }
+  function t(key) {
+    var lang = getLang();
+    var dict = I18N[lang] || I18N.zh;
+    var val = dict[key] || I18N.zh[key] || key;
+    for (var i = 1; i < arguments.length; i++) {
+      val = val.replace('{' + (i - 1) + '}', arguments[i]);
+    }
+    return val;
   }
-  return { completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] };
-}
 
-function saveProgress(progress) {
-  localStorage.setItem('speaking_progress', JSON.stringify(progress));
-}
-
-function getSpeechHistory() {
-  const raw = localStorage.getItem('speaking_history');
-  if (raw) {
-    try { return JSON.parse(raw); } catch(e) { return []; }
-  }
-  return [];
-}
-
-function saveSpeechHistory(history) {
-  localStorage.setItem('speaking_history', JSON.stringify(history));
-}
-
-function generate30DayPlan() {
-  const plan = [];
-  const today = new Date();
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    const idx = i % SCENARIOS.length;
-    plan.push({
-      day: i + 1,
-      date: d.toISOString().split('T')[0],
-      scenario: SCENARIOS[idx].scenario,
-      focus: SCENARIOS[idx].focus,
-      duration: SCENARIOS[idx].duration,
-      sample: SCENARIOS[idx].sample,
-      tasks: [
-        { id: 1, name: '听力练习', icon: '🎧', desc: '场景对话听力训练', time: '约10分钟' },
-        { id: 2, name: 'AI口语对话', icon: '🤖', desc: 'AI模拟对话练习', time: '约10分钟' },
-        { id: 3, name: 'SRS复习', icon: '🔄', desc: '间隔重复记忆复习', time: '约5分钟' },
-      ]
-    });
-  }
-  return plan;
-}
-
-// ============ 初始化 ============
-async function init() {
-  showLoading(true);
-
-  // 模拟API延迟
-  await sleep(600);
-
-  const plan = getPlan();
-  const progress = getProgress();
-  const speechHistory = getSpeechHistory();
-
-  STATE.plan = plan;
-  STATE.completedDays = progress.completedDays || [];
-  STATE.speechHistory = speechHistory || [];
-
-  if (plan && plan.length > 0) {
-    // 计算当前天数
-    const today = new Date().toISOString().split('T')[0];
-    let currentDay = 1;
-    for (let i = 0; i < plan.length; i++) {
-      if (plan[i].date <= today) {
-        currentDay = plan[i].day;
+  function translateUI() {
+    var els = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      var key = el.getAttribute('data-i18n');
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        var phKey = el.getAttribute('data-i18n-placeholder');
+        if (phKey) el.placeholder = t(phKey);
+      } else if (el.children.length === 0) {
+        el.textContent = t(key);
       }
     }
-    // 如果所有天都过了，取最后一天
-    if (currentDay > 30) currentDay = 30;
-    STATE.currentDay = currentDay;
-
-    // 检查当日是否已完成
-    const todayKey = 'day_' + currentDay;
-    STATE.todayCompleted = (progress.completedDays || []).includes(currentDay);
-    STATE.taskStatus = (progress.taskStatus && progress.taskStatus[todayKey]) || {1:false, 2:false, 3:false};
-  } else {
-    STATE.currentDay = 1;
-    STATE.todayCompleted = false;
-    STATE.taskStatus = {1:false, 2:false, 3:false};
-  }
-
-  showLoading(false);
-
-  if (!plan || plan.length === 0) {
-    showGenerateModal();
-  }
-
-  renderAll();
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ============ 弹窗 ============
-function showGenerateModal() {
-  $('generateModal').style.display = 'flex';
-  $('modalLoading').style.display = 'none';
-  $('modalActions').style.display = 'block';
-}
-
-function closeGenerateModal() {
-  $('generateModal').style.display = 'none';
-}
-
-async function generatePlan() {
-  $('modalLoading').style.display = 'block';
-  $('modalActions').style.display = 'none';
-
-  await sleep(1200);
-
-  const plan = generate30DayPlan();
-  savePlan(plan);
-  STATE.plan = plan;
-  STATE.currentDay = 1;
-  STATE.completedDays = [];
-  STATE.todayCompleted = false;
-  STATE.taskStatus = {1:false, 2:false, 3:false};
-  STATE.speechHistory = [];
-  saveProgress({ completedDays: [], taskStatus: {}, todayCompleted: false, speechHistory: [] });
-  saveSpeechHistory([]);
-
-  $('generateModal').style.display = 'none';
-  showToast('30天学习计划已生成！开始你的口语之旅吧~');
-  renderAll();
-}
-
-// ============ 渲染 ============
-function renderAll() {
-  if (!STATE.plan || STATE.plan.length === 0) return;
-  renderProgress();
-  renderTodayCard();
-  renderTasks();
-  renderCalendar();
-  renderSpeechHistory();
-  updateTabStyles();
-}
-
-function renderProgress() {
-  const completed = STATE.completedDays.length;
-  const pct = Math.round((completed / 30) * 100);
-  $('progressText').textContent = completed + '/30 天';
-  $('progressFill').style.width = pct + '%';
-  if (completed === 0) {
-    $('progressSubtext').textContent = '准备开始你的30天旅程';
-  } else if (completed >= 30) {
-    $('progressSubtext').textContent = '恭喜！你已完成全部30天学习！';
-  } else {
-    $('progressSubtext').textContent = '已完成 ' + completed + ' 天，继续加油！';
-  }
-}
-
-function renderTodayCard() {
-  const day = STATE.currentDay;
-  const planDay = STATE.plan[day - 1];
-  if (!planDay) return;
-  $('currentDay').textContent = day;
-  $('scenario').textContent = planDay.scenario;
-  $('focus').textContent = planDay.focus;
-  $('duration').textContent = planDay.duration;
-  $('sampleSentence').innerHTML = '"' + planDay.sample + '"';
-}
-
-function renderTasks() {
-  const day = STATE.currentDay;
-  const todayKey = 'day_' + day;
-  const tasks = STATE.taskStatus;
-
-  // 按顺序解锁：第一个未完成的任务为active，后续为locked
-  let nextLocked = false;
-  for (let i = 1; i <= 3; i++) {
-    const el = $('task-' + i);
-    const statusEl = $('taskStatus' + i);
-    el.classList.remove('completed', 'active', 'locked');
-    statusEl.textContent = '待完成';
-    statusEl.style.color = '#94a3b8';
-
-    if (tasks[i]) {
-      el.classList.add('completed');
-      statusEl.textContent = '已完成';
-      statusEl.style.color = '#10b981';
-    } else if (!nextLocked) {
-      el.classList.add('active');
-      statusEl.textContent = '进行中';
-      statusEl.style.color = '#3b82f6';
-      nextLocked = true;
-    } else {
-      el.classList.add('locked');
-      statusEl.style.color = '#cbd5e1';
+    // Update tab buttons via parent
+    var tabs = document.querySelectorAll('.tab-btn');
+    for (var j = 0; j < tabs.length; j++) {
+      var tb = tabs[j];
+      var k = tb.getAttribute('data-i18n');
+      if (k) tb.textContent = t(k);
+    }
+    // Update lang switcher
+    var langBtns = document.querySelectorAll('#langSwitcher .header-lang-btn');
+    var currentLang = getLang();
+    for (var m = 0; m < langBtns.length; m++) {
+      langBtns[m].classList.toggle('active', langBtns[m].getAttribute('data-lang') === currentLang);
     }
   }
 
-  // 更新完成按钮
-  const allDone = tasks[1] && tasks[2] && tasks[3];
-  $('completeBtn').disabled = !allDone || STATE.todayCompleted;
-  if (STATE.todayCompleted) {
-    $('completeBtn').textContent = '今日已完成';
-    $('completeBtn').style.background = '#10b981';
-  } else {
-    $('completeBtn').textContent = '完成当日学习';
-    $('completeBtn').style.background = 'linear-gradient(135deg, #3b82f6, #6366f1)';
-  }
-}
-
-function renderCalendar() {
-  const grid = $('calendarGrid');
-  const year = STATE.calendarYear;
-  const month = STATE.calendarMonth;
-
-  $('calendarMonth').textContent = year + '年' + (month + 1) + '月';
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-
-  let html = '';
-  // 填充空白
-  for (let i = 0; i < firstDay; i++) {
-    html += '<div></div>';
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const dateStr = date.toISOString().split('T')[0];
-    let cls = 'calendar-day';
-
-    // 找到对应计划天
-    const planDay = STATE.plan ? STATE.plan.find(p => p.date === dateStr) : null;
-    const dayNum = planDay ? planDay.day : null;
-
-    if (STATE.completedDays.includes(dayNum)) {
-      cls += ' done';
-    } else if (dayNum === STATE.currentDay && !STATE.todayCompleted) {
-      cls += ' current';
-    } else if (dateStr < todayStr) {
-      cls += ' past';
-    } else {
-      cls += ' future';
-    }
-    if (dateStr === todayStr) {
-      cls += ' today';
-    }
-
-    const title = dayNum ? '第' + dayNum + '天: ' + (planDay ? planDay.scenario : '') : '';
-    html += '<div class="' + cls + '" title="' + title + '" onclick="selectCalendarDay(' + (dayNum || 0) + ')">' + d + '</div>';
-  }
-  grid.innerHTML = html;
-}
-
-function selectCalendarDay(dayNum) {
-  if (!dayNum || dayNum < 1 || dayNum > 30) return;
-  const planDay = STATE.plan[dayNum - 1];
-  if (!planDay) return;
-
-  const detail = $('dayDetail');
-  const title = $('detailDayTitle');
-  const content = $('detailContent');
-
-  title.textContent = '第 ' + dayNum + ' 天 - ' + planDay.scenario;
-  const isCompleted = STATE.completedDays.includes(dayNum);
-  const isCurrent = dayNum === STATE.currentDay;
-
-  let statusBadge = '';
-  if (isCompleted) statusBadge = '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:12px;">已完成</span>';
-  else if (isCurrent) statusBadge = '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;">进行中</span>';
-  else statusBadge = '<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:10px;font-size:12px;">未开始</span>';
-
-  content.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">${statusBadge} <span style="font-size:13px;color:#64748b;">${planDay.duration}</span></div>
-    <p style="font-size:13px;color:#475569;margin-bottom:8px;"><b>重点：</b>${planDay.focus}</p>
-    <div style="background:#f8fafc;border-radius:8px;padding:10px;font-size:13px;color:#334155;font-style:italic;">
-      "${planDay.sample}"
-    </div>
-    <div style="margin-top:12px;font-size:12px;color:#64748b;">
-      日期：${planDay.date}
-    </div>
-  `;
-  detail.style.display = 'block';
-}
-
-function changeCalendarMonth(delta) {
-  STATE.calendarMonth += delta;
-  if (STATE.calendarMonth < 0) { STATE.calendarMonth = 11; STATE.calendarYear--; }
-  if (STATE.calendarMonth > 11) { STATE.calendarMonth = 0; STATE.calendarYear++; }
-  renderCalendar();
-}
-
-function renderSpeechHistory() {
-  const history = STATE.speechHistory;
-  const card = $('historyCard');
-  const list = $('historyList');
-
-  if (history.length === 0) {
-    card.style.display = 'none';
-    return;
-  }
-  card.style.display = 'block';
-
-  let html = '';
-  history.slice().reverse().forEach((h, i) => {
-    html += `
-      <div style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="color:#64748b;">${h.date || ''}</span>
-          <span style="font-weight:700;color:#6366f1;">${h.overall}分</span>
-        </div>
-        <div style="color:#94a3b8;font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">"${h.text}"</div>
-        <div style="display:flex;gap:8px;margin-top:4px;font-size:11px;color:#94a3b8;">
-          <span>发音:${h.pronunciation}</span><span>流利:${h.fluency}</span><span>准确:${h.accuracy}</span><span>完整:${h.completeness}</span>
-        </div>
-      </div>
-    `;
-  });
-  list.innerHTML = html;
-}
-
-function updateTabStyles() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    const tab = btn.dataset.tab;
-    if (tab === STATE.currentTab) {
-      btn.style.background = '#3b82f6';
-      btn.style.color = '#fff';
-    } else {
-      btn.style.background = '#e2e8f0';
-      btn.style.color = '#475569';
-    }
-  });
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-  const activeTab = $('tab-' + STATE.currentTab);
-  if (activeTab) activeTab.classList.add('active');
-}
-
-// ============ 任务操作 ============
-async function startTask(taskId) {
-  if (STATE.todayCompleted) {
-    showToast('今日学习已完成，无法重复操作');
-    return;
-  }
-  if (STATE.taskStatus[taskId]) {
-    showToast('该任务已完成');
-    return;
-  }
-  // 检查前序任务
-  if (taskId > 1 && !STATE.taskStatus[taskId - 1]) {
-    showToast('请先完成前一个任务');
-    return;
-  }
-
-  const taskEl = $('task-' + taskId);
-  if (taskEl.classList.contains('locked')) {
-    showToast('请按顺序完成任务');
-    return;
-  }
-
-  const taskNames = ['', '听力练习', 'AI口语对话', 'SRS复习'];
-  showToast('正在进入「' + taskNames[taskId] + '」...');
-
-  // 模拟任务进行中
-  await sleep(800);
-
-  // 标记任务完成
-  STATE.taskStatus[taskId] = true;
-  const todayKey = 'day_' + STATE.currentDay;
-  const progress = getProgress();
-  if (!progress.taskStatus) progress.taskStatus = {};
-  progress.taskStatus[todayKey] = STATE.taskStatus;
-  saveProgress(progress);
-
-  renderTasks();
-  showToast('「' + taskNames[taskId] + '」已完成！');
-}
-
-// ============ 完成当日 ============
-async function completeToday() {
-  if (STATE.todayCompleted) {
-    showToast('今日已完成');
-    return;
-  }
-  if (!STATE.taskStatus[1] || !STATE.taskStatus[2] || !STATE.taskStatus[3]) {
-    showToast('请先完成所有任务');
-    return;
-  }
-
-  $('completeBtn').disabled = true;
-  $('completeBtn').textContent = '提交中...';
-
-  await sleep(1000);
-
-  STATE.todayCompleted = true;
-  if (!STATE.completedDays.includes(STATE.currentDay)) {
-    STATE.completedDays.push(STATE.currentDay);
-  }
-  const progress = getProgress();
-  progress.completedDays = STATE.completedDays;
-  progress.todayCompleted = true;
-  const todayKey = 'day_' + STATE.currentDay;
-  if (!progress.taskStatus) progress.taskStatus = {};
-  progress.taskStatus[todayKey] = STATE.taskStatus;
-  saveProgress(progress);
-
-  renderAll();
-  showToast('今日学习完成！太棒了！');
-
-  // 如果全部完成
-  if (STATE.completedDays.length >= 30) {
-    setTimeout(() => {
-      showToast('恭喜！你已完成全部30天口语速成学习！');
-    }, 1500);
-  }
-}
-
-// ============ 口语评测 ============
-async function submitEvaluation() {
-  const input = $('speechInput').value.trim();
-  const errEl = $('evaluateError');
-
-  if (!input) {
-    errEl.textContent = '请输入朗读内容';
-    errEl.style.display = 'block';
-    return;
-  }
-  errEl.style.display = 'none';
-
-  const btn = $('evaluateBtn');
-  btn.disabled = true;
-  btn.textContent = '评测中...';
-
-  await sleep(1500);
-
-  // 模拟评分
-  const pronunciation = Math.floor(Math.random() * 20) + 75;
-  const fluency = Math.floor(Math.random() * 20) + 70;
-  const accuracy = Math.floor(Math.random() * 20) + 72;
-  const completeness = Math.floor(Math.random() * 15) + 80;
-  const overall = Math.round((pronunciation + fluency + accuracy + completeness) / 4);
-
-  // 显示评分
-  $('scoreCard').style.display = 'block';
-  $('overallScore').textContent = overall;
-  $('pronBar').style.width = pronunciation + '%';
-  $('pronScore').textContent = pronunciation;
-  $('fluencyBar').style.width = fluency + '%';
-  $('fluencyScore').textContent = fluency;
-  $('accuracyBar').style.width = accuracy + '%';
-  $('accuracyScore').textContent = accuracy;
-  $('completenessBar').style.width = completeness + '%';
-  $('completenessScore').textContent = completeness;
-
-  // 综合分颜色
-  const ring = $('overallRing');
-  if (overall >= 85) ring.style.borderColor = '#10b981';
-  else if (overall >= 70) ring.style.borderColor = '#f59e0b';
-  else ring.style.borderColor = '#ef4444';
-
-  // AI反馈
-  const feedbacks = [
-    '发音清晰，语调自然，继续保持！注意个别单词的重音位置。',
-    '整体表现不错，流利度有待提升，建议多练习连读技巧。',
-    '准确度很高！可以尝试更复杂的句式来表达。',
-    '表达完整，发音标准，语速适中，表现优秀！',
-    '基础扎实，建议在语调变化上多加练习，让表达更生动。',
-  ];
-  $('aiFeedback').textContent = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-
-  // 保存历史
-  const record = {
-    date: new Date().toISOString().split('T')[0],
-    text: input.substring(0, 100),
-    pronunciation, fluency, accuracy, completeness, overall,
-    day: STATE.currentDay,
-  };
-  STATE.speechHistory.push(record);
-  saveSpeechHistory(STATE.speechHistory);
-  renderSpeechHistory();
-
-  btn.disabled = false;
-  btn.textContent = '提交评测';
-  showToast('评测完成！综合评分：' + overall + '分');
-
-  // 滚动到评分区
-  $('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// ============ 页面切换 ============
-function switchPage(page) {
-  STATE.currentPage = page;
-  if (page === 'profile') {
-    // 简单个人信息页
-    STATE.currentTab = 'profile';
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    // 在learn区域显示个人信息
-    const profileHtml = `
-      <div class="card" style="text-align:center;">
-        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;color:#fff;">&#x1F464;</div>
-        <h3 style="font-size:18px;font-weight:700;">口语学习者</h3>
-        <p style="font-size:13px;color:#64748b;">30天口语速成计划</p>
-      </div>
-      <div class="card">
-        <div style="font-size:13px;color:#64748b;line-height:2;">
-          <div style="display:flex;justify-content:space-between;"><span>已完成天数</span><span style="font-weight:600;color:#1e293b;">${STATE.completedDays.length} / 30</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>评测次数</span><span style="font-weight:600;color:#1e293b;">${STATE.speechHistory.length}</span></div>
-          <div style="display:flex;justify-content:space-between;"><span>平均评分</span><span style="font-weight:600;color:#1e293b;">${STATE.speechHistory.length > 0 ? Math.round(STATE.speechHistory.reduce((a,b) => a+b.overall, 0) / STATE.speechHistory.length) : '--'}分</span></div>
-        </div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <button class="btn-outline" onclick="resetPlan()" style="width:100%;color:#ef4444;border-color:#ef4444;">重置学习计划</button>
-      </div>
-    `;
-    // 隐藏所有tab content，显示profile
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    let profileDiv = $('tab-profile');
-    if (!profileDiv) {
-      profileDiv = document.createElement('div');
-      profileDiv.id = 'tab-profile';
-      profileDiv.className = 'tab-content';
-      $('app').querySelector('#mainContent').appendChild(profileDiv);
-    }
-    profileDiv.innerHTML = profileHtml;
-    profileDiv.classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach(b => { b.style.background = '#e2e8f0'; b.style.color = '#475569'; });
-  } else {
-    STATE.currentTab = page;
-    updateTabStyles();
-    if (page === 'calendar') renderCalendar();
-    if (page === 'speak') renderSpeechHistory();
-  }
-
-  // 更新底部导航
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.page === page);
-  });
-}
-
-function resetPlan() {
-  if (confirm('确定要重置所有学习进度吗？此操作不可恢复。')) {
-    localStorage.removeItem('speaking_plan');
-    localStorage.removeItem('speaking_progress');
-    localStorage.removeItem('speaking_history');
-    STATE.plan = null;
-    STATE.completedDays = [];
-    STATE.taskStatus = {1:false, 2:false, 3:false};
-    STATE.todayCompleted = false;
-    STATE.speechHistory = [];
-    STATE.currentDay = 1;
-    showGenerateModal();
+  function setLang(code) {
+    if (!I18N[code]) return;
+    try {
+      localStorage.setItem('yandao_study_lang', code);
+      if (window.AILOS && window.AILOS.setStudyLang) window.AILOS.setStudyLang(code);
+    } catch (e) {}
+    translateUI();
     renderAll();
-    switchPage('learn');
-    showToast('计划已重置');
   }
-}
 
-// ============ Tab切换点击 ============
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('tab-btn')) {
-    const tab = e.target.dataset.tab;
+  // ==================== Token & API ====================
+  function getToken() {
+    if (window.AILOS && window.AILOS.getToken) {
+      var t = window.AILOS.getToken();
+      if (t) return t;
+    }
+    try {
+      var t1 = localStorage.getItem('yandao_token_v1');
+      if (t1) return t1;
+      var a = localStorage.getItem('auth_tokens');
+      if (a) {
+        try { var p = JSON.parse(a); return p.accessToken || p.token || a; } catch (e) { return a; }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function isGuest() { return !getToken(); }
+
+  function apiHeaders() {
+    var h = { 'Content-Type': 'application/json' };
+    var token = getToken();
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+
+  async function apiFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, apiHeaders(), opts.headers || {});
+    try {
+      var resp = await fetch(url, opts);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return await resp.json();
+    } catch (err) {
+      console.warn('API call failed:', url, err.message);
+      throw err;
+    }
+  }
+
+  // ==================== State ====================
+  var STATE = {
+    plan: null,
+    currentDay: 1,
+    completedDays: [],
+    taskStatus: { 1: false, 2: false, 3: false },
+    speechHistory: [],
+    todayCompleted: false,
+    calendarMonth: 6,
+    calendarYear: 2026,
+    currentTab: 'learn',
+    selectedLevel: 'beginner',
+    toastTimer: null,
+  };
+
+  // ==================== Default Scenarios (fallback for local generation) ====================
+  var SCENARIOS = [
+    { scenario: '餐厅点餐', focus: '掌握餐厅点餐常用句型与词汇', duration: '25分钟', sample: "I'd like to order a coffee and a sandwich, please." },
+    { scenario: '酒店入住', focus: '学会酒店登记入住的对话流程', duration: '25分钟', sample: "I have a reservation under the name of Smith." },
+    { scenario: '问路指路', focus: '掌握问路和指路的核心表达', duration: '25分钟', sample: "Excuse me, could you tell me how to get to the museum?" },
+    { scenario: '购物交流', focus: '学会购物时的讨价还价和尺码询问', duration: '25分钟', sample: "How much does this sweater cost? Do you have it in a larger size?" },
+    { scenario: '机场登机', focus: '熟悉机场办理登机手续的英语表达', duration: '30分钟', sample: "I'd like to check in for my flight to New York." },
+    { scenario: '电话预约', focus: '掌握电话预约的礼貌用语和流程', duration: '25分钟', sample: "I'd like to make an appointment for next Tuesday, please." },
+    { scenario: '看病就医', focus: '学会描述症状和与医生沟通', duration: '30分钟', sample: "I've been having a headache and a sore throat for three days." },
+    { scenario: '面试英语', focus: '掌握英文面试的自我介绍和常见问题', duration: '30分钟', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
+    { scenario: '商务会议', focus: '学会商务会议中的表达和讨论技巧', duration: '30分钟', sample: "I'd like to propose a new strategy for our marketing campaign." },
+    { scenario: '社交聚会', focus: '掌握社交场合的闲聊和自我介绍', duration: '25分钟', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
+    { scenario: '银行办事', focus: '学会银行开户和办理业务的英语', duration: '25分钟', sample: "I'd like to open a savings account and deposit some money." },
+    { scenario: '租房看房', focus: '掌握租房相关的词汇和对话', duration: '25分钟', sample: "How much is the monthly rent? Are utilities included?" },
+    { scenario: '旅游问讯', focus: '学会在旅游信息中心获取帮助', duration: '25分钟', sample: "Could you recommend some popular tourist attractions in this city?" },
+    { scenario: '公共交通', focus: '掌握乘坐公交地铁的英语表达', duration: '25分钟', sample: "Which bus should I take to get to the city center?" },
+    { scenario: '快递邮寄', focus: '学会寄快递和邮寄包裹的英语', duration: '25分钟', sample: "I'd like to send this package to China by air mail." },
+    { scenario: '理发美发', focus: '掌握理发店与发型师沟通的英语', duration: '25分钟', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
+    { scenario: '电影娱乐', focus: '学会讨论电影和娱乐话题', duration: '25分钟', sample: "What kind of movies do you like? I'm a big fan of action films." },
+    { scenario: '健身运动', focus: '掌握健身和运动相关的英语表达', duration: '25分钟', sample: "I go to the gym three times a week. How about you?" },
+    { scenario: '环保话题', focus: '学会用英语讨论环保和可持续发展', duration: '25分钟', sample: "I think we should all do our part to reduce plastic waste." },
+    { scenario: '科技趋势', focus: '掌握科技相关话题的英语讨论', duration: '30分钟', sample: "Artificial intelligence is changing the way we work and live." },
+    { scenario: '节日庆祝', focus: '学会用英语表达节日祝福和习俗', duration: '25分钟', sample: "How do you usually celebrate the New Year in your country?" },
+    { scenario: '宠物话题', focus: '掌握有关宠物和动物的话题表达', duration: '25分钟', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
+    { scenario: '烹饪美食', focus: '学会用英语描述烹饪步骤和美食', duration: '30分钟', sample: "First, you need to chop the vegetables and then fry them in a pan." },
+    { scenario: '紧急情况', focus: '掌握紧急情况下的英语求助表达', duration: '30分钟', sample: "Help! I need an ambulance. There's been an accident." },
+    { scenario: '自我介绍', focus: '完善自我介绍，提升表达自信', duration: '25分钟', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
+    { scenario: '兴趣爱好', focus: '学会用英语深入讨论兴趣爱好', duration: '25分钟', sample: "In my free time, I enjoy reading books and playing the guitar." },
+    { scenario: '学术讨论', focus: '掌握学术场景下的英语讨论技巧', duration: '30分钟', sample: "According to the research, there is a strong correlation between these two variables." },
+    { scenario: '谈判技巧', focus: '学会商务谈判中的英语表达', duration: '30分钟', sample: "I believe we can find a solution that works for both parties." },
+    { scenario: '文化差异', focus: '学会讨论文化差异和跨文化交际', duration: '25分钟', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
+    { scenario: '总结回顾', focus: '全面回顾30天学习成果，模拟综合对话', duration: '30分钟', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
+  ];
+
+  var SCENARIOS_EN = [
+    { scenario: 'Restaurant Ordering', focus: 'Master common restaurant ordering phrases and vocabulary', duration: '25 min', sample: "I'd like to order a coffee and a sandwich, please." },
+    { scenario: 'Hotel Check-in', focus: 'Learn hotel check-in conversation flow', duration: '25 min', sample: "I have a reservation under the name of Smith." },
+    { scenario: 'Asking Directions', focus: 'Master asking and giving directions', duration: '25 min', sample: "Excuse me, could you tell me how to get to the museum?" },
+    { scenario: 'Shopping', focus: 'Learn bargaining and size inquiries', duration: '25 min', sample: "How much does this sweater cost? Do you have it in a larger size?" },
+    { scenario: 'Airport Check-in', focus: 'Familiarize with airport check-in expressions', duration: '30 min', sample: "I'd like to check in for my flight to New York." },
+    { scenario: 'Phone Appointments', focus: 'Master polite phone appointment phrases', duration: '25 min', sample: "I'd like to make an appointment for next Tuesday, please." },
+    { scenario: 'Doctor Visit', focus: 'Learn to describe symptoms', duration: '30 min', sample: "I've been having a headache and a sore throat for three days." },
+    { scenario: 'Job Interview', focus: 'Master self-introduction and common questions', duration: '30 min', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
+    { scenario: 'Business Meeting', focus: 'Learn business meeting expressions', duration: '30 min', sample: "I'd like to propose a new strategy for our marketing campaign." },
+    { scenario: 'Social Gathering', focus: 'Master small talk and self-introduction', duration: '25 min', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
+    { scenario: 'Bank Services', focus: 'Learn banking English', duration: '25 min', sample: "I'd like to open a savings account and deposit some money." },
+    { scenario: 'Renting an Apartment', focus: 'Master rental vocabulary and dialogue', duration: '25 min', sample: "How much is the monthly rent? Are utilities included?" },
+    { scenario: 'Tourist Information', focus: 'Learn to get help at tourist info centers', duration: '25 min', sample: "Could you recommend some popular tourist attractions in this city?" },
+    { scenario: 'Public Transportation', focus: 'Master bus and subway English', duration: '25 min', sample: "Which bus should I take to get to the city center?" },
+    { scenario: 'Mailing & Shipping', focus: 'Learn postal English', duration: '25 min', sample: "I'd like to send this package to China by air mail." },
+    { scenario: 'Hair Salon', focus: 'Master hair salon communication', duration: '25 min', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
+    { scenario: 'Movies & Entertainment', focus: 'Discuss movies and entertainment', duration: '25 min', sample: "What kind of movies do you like? I'm a big fan of action films." },
+    { scenario: 'Fitness & Exercise', focus: 'Master fitness-related English', duration: '25 min', sample: "I go to the gym three times a week. How about you?" },
+    { scenario: 'Environmental Topics', focus: 'Discuss environment and sustainability', duration: '25 min', sample: "I think we should all do our part to reduce plastic waste." },
+    { scenario: 'Tech Trends', focus: 'Master tech-related English discussion', duration: '30 min', sample: "Artificial intelligence is changing the way we work and live." },
+    { scenario: 'Holiday Celebrations', focus: 'Express holiday greetings and customs', duration: '25 min', sample: "How do you usually celebrate the New Year in your country?" },
+    { scenario: 'Pet Topics', focus: 'Discuss pets and animals', duration: '25 min', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
+    { scenario: 'Cooking & Food', focus: 'Describe cooking steps and cuisine', duration: '30 min', sample: "First, you need to chop the vegetables and then fry them in a pan." },
+    { scenario: 'Emergencies', focus: 'Master emergency English expressions', duration: '30 min', sample: "Help! I need an ambulance. There's been an accident." },
+    { scenario: 'Self-Introduction', focus: 'Perfect your self-introduction', duration: '25 min', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
+    { scenario: 'Hobbies & Interests', focus: 'Discuss hobbies in depth', duration: '25 min', sample: "In my free time, I enjoy reading books and playing the guitar." },
+    { scenario: 'Academic Discussion', focus: 'Master academic English discussion', duration: '30 min', sample: "According to the research, there is a strong correlation between these two variables." },
+    { scenario: 'Negotiation Skills', focus: 'Learn business negotiation English', duration: '30 min', sample: "I believe we can find a solution that works for both parties." },
+    { scenario: 'Cultural Differences', focus: 'Discuss cross-cultural communication', duration: '25 min', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
+    { scenario: 'Review & Wrap-up', focus: 'Comprehensive review of 30 days, simulate conversations', duration: '30 min', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
+  ];
+
+  var SCENARIOS_JA = [
+    { scenario: 'レストラン注文', focus: 'レストランでの注文表現を習得', duration: '25分', sample: "I'd like to order a coffee and a sandwich, please." },
+    { scenario: 'ホテルチェックイン', focus: 'ホテルチェックインの会話', duration: '25分', sample: "I have a reservation under the name of Smith." },
+    { scenario: '道案内', focus: '道を尋ねる・案内する表現', duration: '25分', sample: "Excuse me, could you tell me how to get to the museum?" },
+    { scenario: 'ショッピング', focus: '買い物での会話表現', duration: '25分', sample: "How much does this sweater cost? Do you have it in a larger size?" },
+    { scenario: '空港チェックイン', focus: '空港での搭乗手続き表現', duration: '30分', sample: "I'd like to check in for my flight to New York." },
+    { scenario: '電話予約', focus: '電話予約の丁寧な表現', duration: '25分', sample: "I'd like to make an appointment for next Tuesday, please." },
+    { scenario: '診察', focus: '症状の説明と医師との会話', duration: '30分', sample: "I've been having a headache and a sore throat for three days." },
+    { scenario: '面接英語', focus: '英語面接の自己紹介とよくある質問', duration: '30分', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
+    { scenario: 'ビジネス会議', focus: 'ビジネス会議での表現と討論', duration: '30分', sample: "I'd like to propose a new strategy for our marketing campaign." },
+    { scenario: '社交パーティー', focus: '社交の場での会話と自己紹介', duration: '25分', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
+    { scenario: '銀行手続き', focus: '銀行口座開設と取引の英語', duration: '25分', sample: "I'd like to open a savings account and deposit some money." },
+    { scenario: '賃貸契約', focus: '賃貸関連の語彙と会話', duration: '25分', sample: "How much is the monthly rent? Are utilities included?" },
+    { scenario: '観光案内所', focus: '観光情報センターでの会話', duration: '25分', sample: "Could you recommend some popular tourist attractions in this city?" },
+    { scenario: '公共交通機関', focus: 'バス・地下鉄の英語表現', duration: '25分', sample: "Which bus should I take to get to the city center?" },
+    { scenario: '郵便・配送', focus: '郵便・配送の英語', duration: '25分', sample: "I'd like to send this package to China by air mail." },
+    { scenario: '美容室', focus: '美容室でのコミュニケーション', duration: '25分', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
+    { scenario: '映画・娯楽', focus: '映画や娯楽の話題', duration: '25分', sample: "What kind of movies do you like? I'm a big fan of action films." },
+    { scenario: 'フィットネス', focus: 'フィットネス関連の英語表現', duration: '25分', sample: "I go to the gym three times a week. How about you?" },
+    { scenario: '環境問題', focus: '環境と持続可能性の議論', duration: '25分', sample: "I think we should all do our part to reduce plastic waste." },
+    { scenario: 'テクノロジー', focus: 'テクノロジー関連の英語討論', duration: '30分', sample: "Artificial intelligence is changing the way we work and live." },
+    { scenario: '祝日・お祝い', focus: '祝日の挨拶と習慣の表現', duration: '25分', sample: "How do you usually celebrate the New Year in your country?" },
+    { scenario: 'ペットの話題', focus: 'ペットと動物に関する話題', duration: '25分', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
+    { scenario: '料理・グルメ', focus: '調理手順と料理の説明', duration: '30分', sample: "First, you need to chop the vegetables and then fry them in a pan." },
+    { scenario: '緊急事態', focus: '緊急時の英語表現', duration: '30分', sample: "Help! I need an ambulance. There's been an accident." },
+    { scenario: '自己紹介', focus: '自己紹介の完成度を高める', duration: '25分', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
+    { scenario: '趣味・興味', focus: '趣味について深く議論', duration: '25分', sample: "In my free time, I enjoy reading books and playing the guitar." },
+    { scenario: '学術討論', focus: '学術的な英語討論の技術', duration: '30分', sample: "According to the research, there is a strong correlation between these two variables." },
+    { scenario: '交渉術', focus: 'ビジネス交渉の英語表現', duration: '30分', sample: "I believe we can find a solution that works for both parties." },
+    { scenario: '文化の違い', focus: '異文化コミュニケーション', duration: '25分', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
+    { scenario: '総復習', focus: '30日間の総復習、総合会話練習', duration: '30分', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
+  ];
+
+  var SCENARIOS_KO = [
+    { scenario: '식당 주문', focus: '식당 주문 표현 익히기', duration: '25분', sample: "I'd like to order a coffee and a sandwich, please." },
+    { scenario: '호텔 체크인', focus: '호텔 체크인 대화 익히기', duration: '25분', sample: "I have a reservation under the name of Smith." },
+    { scenario: '길 묻기', focus: '길 묻고 안내하는 표현', duration: '25분', sample: "Excuse me, could you tell me how to get to the museum?" },
+    { scenario: '쇼핑', focus: '쇼핑 시 흥정과 사이즈 문의', duration: '25분', sample: "How much does this sweater cost? Do you have it in a larger size?" },
+    { scenario: '공항 체크인', focus: '공항 탑승 수속 영어', duration: '30분', sample: "I'd like to check in for my flight to New York." },
+    { scenario: '전화 예약', focus: '전화 예약 예의 바른 표현', duration: '25분', sample: "I'd like to make an appointment for next Tuesday, please." },
+    { scenario: '병원 진료', focus: '증상 설명과 의사 소통', duration: '30분', sample: "I've been having a headache and a sore throat for three days." },
+    { scenario: '면접 영어', focus: '영어 면접 자기소개와 질문', duration: '30분', sample: "I'm a hardworking and detail-oriented person with five years of experience." },
+    { scenario: '비즈니스 회의', focus: '비즈니스 회의 표현과 토론', duration: '30분', sample: "I'd like to propose a new strategy for our marketing campaign." },
+    { scenario: '사교 모임', focus: '사교 자리에서의 대화와 자기소개', duration: '25분', sample: "Hi, I'm John. It's nice to meet you. What do you do for a living?" },
+    { scenario: '은행 업무', focus: '은행 계좌 개설과 업무 영어', duration: '25분', sample: "I'd like to open a savings account and deposit some money." },
+    { scenario: '임대 계약', focus: '임대 관련 어휘와 대화', duration: '25분', sample: "How much is the monthly rent? Are utilities included?" },
+    { scenario: '관광 안내', focus: '관광 정보 센터에서 도움 받기', duration: '25분', sample: "Could you recommend some popular tourist attractions in this city?" },
+    { scenario: '대중교통', focus: '버스와 지하철 영어 표현', duration: '25분', sample: "Which bus should I take to get to the city center?" },
+    { scenario: '우편 발송', focus: '우편 발송 영어', duration: '25분', sample: "I'd like to send this package to China by air mail." },
+    { scenario: '미용실', focus: '미용사와의 영어 소통', duration: '25분', sample: "I'd like a trim. Just cut about an inch off the ends, please." },
+    { scenario: '영화와 오락', focus: '영화와 오락 주제 토론', duration: '25분', sample: "What kind of movies do you like? I'm a big fan of action films." },
+    { scenario: '운동과 피트니스', focus: '운동 관련 영어 표현', duration: '25분', sample: "I go to the gym three times a week. How about you?" },
+    { scenario: '환경 주제', focus: '환경과 지속 가능성 토론', duration: '25분', sample: "I think we should all do our part to reduce plastic waste." },
+    { scenario: '기술 트렌드', focus: '기술 관련 영어 토론', duration: '30분', sample: "Artificial intelligence is changing the way we work and live." },
+    { scenario: '명절 축하', focus: '명절 인사와 관습 표현', duration: '25분', sample: "How do you usually celebrate the New Year in your country?" },
+    { scenario: '반려동물', focus: '반려동물과 동물 주제', duration: '25분', sample: "I have a golden retriever. He's very friendly and loves to play fetch." },
+    { scenario: '요리와 음식', focus: '요리 단계와 음식 설명', duration: '30분', sample: "First, you need to chop the vegetables and then fry them in a pan." },
+    { scenario: '긴급 상황', focus: '긴급 상황 영어 표현', duration: '30분', sample: "Help! I need an ambulance. There's been an accident." },
+    { scenario: '자기소개', focus: '자기소개 완성도 높이기', duration: '25분', sample: "Let me introduce myself. I'm from Beijing and I work as a software engineer." },
+    { scenario: '취미와 관심사', focus: '취미에 대해 깊이 토론', duration: '25분', sample: "In my free time, I enjoy reading books and playing the guitar." },
+    { scenario: '학술 토론', focus: '학술적 영어 토론 기술', duration: '30분', sample: "According to the research, there is a strong correlation between these two variables." },
+    { scenario: '협상 기술', focus: '비즈니스 협상 영어 표현', duration: '30분', sample: "I believe we can find a solution that works for both parties." },
+    { scenario: '문화 차이', focus: '문화 간 소통 토론', duration: '25분', sample: "In my culture, it's common to bring a small gift when visiting someone's home." },
+    { scenario: '총정리', focus: '30일 학습 총정리, 종합 대화 시뮬레이션', duration: '30분', sample: "Over the past month, I've learned so much and my speaking has improved a lot." },
+  ];
+
+  function getScenarios() {
+    var lang = getLang();
+    switch (lang) {
+      case 'en': return SCENARIOS_EN;
+      case 'ja': return SCENARIOS_JA;
+      case 'ko': return SCENARIOS_KO;
+      default: return SCENARIOS;
+    }
+  }
+
+  // ==================== Helpers ====================
+  function $(id) { return document.getElementById(id); }
+
+  function showToast(msg, duration) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    if (STATE.toastTimer) clearTimeout(STATE.toastTimer);
+    STATE.toastTimer = setTimeout(function () { t.style.display = 'none'; }, duration || 2500);
+  }
+
+  function showLoading(show) {
+    $('loadingScreen').style.display = show ? 'flex' : 'none';
+    $('appContent').style.display = show ? 'none' : 'block';
+    $('emptyState').style.display = 'none';
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  // ==================== localStorage Persistence ====================
+  function loadFromLocal() {
+    try {
+      var raw = localStorage.getItem('speaking_plan_v2');
+      if (raw) STATE.plan = JSON.parse(raw);
+    } catch (e) { STATE.plan = null; }
+    try {
+      var rawP = localStorage.getItem('speaking_progress_v2');
+      if (rawP) {
+        var p = JSON.parse(rawP);
+        STATE.completedDays = p.completedDays || [];
+        STATE.todayCompleted = p.todayCompleted || false;
+        STATE.taskStatus = p.taskStatus || { 1: false, 2: false, 3: false };
+        STATE.speechHistory = p.speechHistory || [];
+      }
+    } catch (e) {
+      STATE.completedDays = [];
+      STATE.todayCompleted = false;
+      STATE.taskStatus = { 1: false, 2: false, 3: false };
+      STATE.speechHistory = [];
+    }
+  }
+
+  function saveToLocal() {
+    try {
+      if (STATE.plan) localStorage.setItem('speaking_plan_v2', JSON.stringify(STATE.plan));
+      localStorage.setItem('speaking_progress_v2', JSON.stringify({
+        completedDays: STATE.completedDays,
+        todayCompleted: STATE.todayCompleted,
+        taskStatus: STATE.taskStatus,
+        speechHistory: STATE.speechHistory,
+      }));
+    } catch (e) {}
+  }
+
+  function generateLocalPlan() {
+    var scenarios = getScenarios();
+    var plan = [];
+    var today = new Date();
+    for (var i = 0; i < 30; i++) {
+      var d = new Date(today);
+      d.setDate(d.getDate() + i);
+      var idx = i % scenarios.length;
+      plan.push({
+        day: i + 1,
+        date: d.toISOString().split('T')[0],
+        scenario: scenarios[idx].scenario,
+        focus: scenarios[idx].focus,
+        duration: scenarios[idx].duration,
+        sample: scenarios[idx].sample,
+        tasks: [
+          { id: 1, name: t('task1Name'), icon: '&#x1F3A7;', desc: t('task1Desc'), time: '约10分钟' },
+          { id: 2, name: t('task2Name'), icon: '&#x1F916;', desc: t('task2Desc'), time: '约10分钟' },
+          { id: 3, name: t('task3Name'), icon: '&#x1F504;', desc: t('task3Desc'), time: '约5分钟' },
+        ]
+      });
+    }
+    return plan;
+  }
+
+  // ==================== API Calls ====================
+  async function apiGeneratePlan(targetLanguage, level) {
+    try {
+      var data = await apiFetch('/api/plan/generate', {
+        method: 'POST',
+        body: JSON.stringify({ targetLanguage: targetLanguage || 'en', level: level || 'beginner' }),
+      });
+      return data;
+    } catch (err) {
+      if (isGuest()) throw err;
+      // Fallback: generate locally
+      console.warn('API plan/generate failed, using local generation');
+      return null;
+    }
+  }
+
+  async function apiGetTodayPlan() {
+    try {
+      return await apiFetch('/api/plan/today');
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function apiCompleteDay(dayNumber) {
+    try {
+      return await apiFetch('/api/plan/complete', {
+        method: 'POST',
+        body: JSON.stringify({ dayNumber: dayNumber }),
+      });
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function apiGetProgress() {
+    try {
+      return await apiFetch('/api/plan/progress');
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function apiEvaluateSpeech(transcript, referenceText, targetLanguage) {
+    try {
+      return await apiFetch('/api/speech/evaluate', {
+        method: 'POST',
+        body: JSON.stringify({
+          transcript: transcript,
+          referenceText: referenceText || '',
+          targetLanguage: targetLanguage || 'en',
+        }),
+      });
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function apiGetSpeechHistory(limit) {
+    try {
+      return await apiFetch('/api/speech/history?limit=' + (limit || 20));
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // ==================== Init ====================
+  async function init() {
+    showLoading(true);
+
+    var token = getToken();
+    var planLoaded = false;
+
+    if (token) {
+      // Try to load from API first
+      try {
+        var progressData = await apiGetProgress();
+        if (progressData) {
+          STATE.completedDays = progressData.completedDays || [];
+          STATE.todayCompleted = progressData.todayCompleted || false;
+          STATE.taskStatus = progressData.taskStatus || { 1: false, 2: false, 3: false };
+        }
+
+        var todayData = await apiGetTodayPlan();
+        if (todayData) {
+          if (todayData.plan && Array.isArray(todayData.plan)) {
+            STATE.plan = todayData.plan;
+          } else if (todayData.day) {
+            // Single day data - need to load full plan from local
+            loadFromLocal();
+          }
+          if (todayData.currentDay) STATE.currentDay = todayData.currentDay;
+          if (todayData.taskStatus) STATE.taskStatus = todayData.taskStatus;
+          if (todayData.todayCompleted !== undefined) STATE.todayCompleted = todayData.todayCompleted;
+          planLoaded = true;
+        }
+
+        // Load speech history from API
+        try {
+          var historyData = await apiGetSpeechHistory(20);
+          if (historyData && historyData.history) {
+            STATE.speechHistory = historyData.history;
+          }
+        } catch (e) {}
+
+        if (!planLoaded) {
+          loadFromLocal();
+        }
+      } catch (e) {
+        loadFromLocal();
+      }
+    } else {
+      // Guest mode
+      loadFromLocal();
+      $('guestTip').style.display = 'flex';
+    }
+
+    showLoading(false);
+
+    if (!STATE.plan || STATE.plan.length === 0) {
+      showGenerateModal();
+      $('emptyState').style.display = 'block';
+    } else {
+      // Calculate current day
+      var today = new Date().toISOString().split('T')[0];
+      var currentDay = 1;
+      for (var i = 0; i < STATE.plan.length; i++) {
+        if (STATE.plan[i].date <= today) currentDay = STATE.plan[i].day;
+      }
+      if (currentDay > 30) currentDay = 30;
+      STATE.currentDay = currentDay;
+
+      $('appContent').style.display = 'block';
+      renderAll();
+    }
+
+    translateUI();
+    updateNavActive();
+  }
+
+  function updateNavActive() {
+    // common.js will auto-render nav on DOMContentLoaded
+    // We can also manually set it
+    if (window.AILOS && window.AILOS.renderNav) {
+      window.AILOS.renderNav('learn');
+    }
+  }
+
+  function dismissGuestTip() {
+    $('guestTip').style.display = 'none';
+  }
+
+  // ==================== Modal ====================
+  function showGenerateModal() {
+    $('generateModal').style.display = 'flex';
+    $('modalLoading').style.display = 'none';
+    $('modalActions').style.display = 'block';
+    $('emptyState').style.display = 'none';
+  }
+
+  function closeGenerateModal() {
+    $('generateModal').style.display = 'none';
+    if (!STATE.plan || STATE.plan.length === 0) {
+      $('appContent').style.display = 'none';
+      $('emptyState').style.display = 'block';
+    }
+  }
+
+  function selectLevel(level, el) {
+    STATE.selectedLevel = level;
+    var opts = document.querySelectorAll('.level-option');
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.remove('selected');
+    }
+    el.classList.add('selected');
+  }
+
+  async function generatePlan() {
+    $('modalLoading').style.display = 'block';
+    $('modalActions').style.display = 'none';
+
+    var token = getToken();
+    var plan = null;
+
+    if (token) {
+      try {
+        var lang = getLang();
+        if (lang === 'zh') lang = 'en';
+        var result = await apiGeneratePlan(lang, STATE.selectedLevel);
+        if (result && result.plan) {
+          plan = result.plan;
+        }
+      } catch (e) {}
+    }
+
+    if (!plan) {
+      // Fallback to local generation
+      await sleep(800);
+      plan = generateLocalPlan();
+    }
+
+    STATE.plan = plan;
+    STATE.currentDay = 1;
+    STATE.completedDays = [];
+    STATE.todayCompleted = false;
+    STATE.taskStatus = { 1: false, 2: false, 3: false };
+    STATE.speechHistory = [];
+    saveToLocal();
+
+    $('generateModal').style.display = 'none';
+    $('appContent').style.display = 'block';
+    $('emptyState').style.display = 'none';
+    showToast(t('toastPlanGenerated'));
+    renderAll();
+  }
+
+  // ==================== Render ====================
+  function renderAll() {
+    if (!STATE.plan || STATE.plan.length === 0) return;
+    renderProgress();
+    renderTodayCard();
+    renderTasks();
+    renderCalendar();
+    renderSpeechHistory();
+    updateTabStyles();
+  }
+
+  function renderProgress() {
+    var completed = STATE.completedDays.length;
+    var pct = Math.round((completed / 30) * 100);
+    $('progressText').textContent = completed + '/30 ' + t('day');
+    $('progressFill').style.width = pct + '%';
+    if (completed === 0) {
+      $('progressSubtext').textContent = t('progressReady');
+    } else if (completed >= 30) {
+      $('progressSubtext').textContent = t('progressDone');
+    } else {
+      $('progressSubtext').textContent = t('progressPartial', completed);
+    }
+  }
+
+  function renderTodayCard() {
+    var day = STATE.currentDay;
+    var planDay = STATE.plan[day - 1];
+    if (!planDay) return;
+    $('currentDay').textContent = day;
+    $('scenario').textContent = planDay.scenario;
+    $('focus').textContent = planDay.focus;
+    $('duration').textContent = planDay.duration;
+    $('sampleSentence').innerHTML = '"' + planDay.sample + '"';
+  }
+
+  function renderTasks() {
+    var tasks = STATE.taskStatus;
+    var nextLocked = false;
+
+    for (var i = 1; i <= 3; i++) {
+      var el = $('task-' + i);
+      var statusEl = $('taskStatus' + i);
+      el.classList.remove('completed', 'active', 'locked');
+      statusEl.classList.remove('pending', 'active-status', 'done');
+
+      if (tasks[i]) {
+        el.classList.add('completed');
+        statusEl.classList.add('done');
+        statusEl.textContent = t('taskDone');
+      } else if (!nextLocked) {
+        el.classList.add('active');
+        statusEl.classList.add('active-status');
+        statusEl.textContent = t('taskActive');
+        nextLocked = true;
+      } else {
+        el.classList.add('locked');
+        statusEl.classList.add('pending');
+        statusEl.textContent = t('taskPending');
+      }
+    }
+
+    var allDone = tasks[1] && tasks[2] && tasks[3];
+    $('completeBtn').disabled = !allDone || STATE.todayCompleted;
+    if (STATE.todayCompleted) {
+      $('completeBtn').textContent = t('completedToday');
+      $('completeBtn').classList.add('success');
+    } else {
+      $('completeBtn').textContent = t('completeDay');
+      $('completeBtn').classList.remove('success');
+    }
+  }
+
+  function renderCalendar() {
+    var grid = $('calendarGrid');
+    var year = STATE.calendarYear;
+    var month = STATE.calendarMonth;
+
+    $('calendarMonth').textContent = year + '年' + (month + 1) + '月';
+
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+
+    var html = '';
+    for (var i = 0; i < firstDay; i++) {
+      html += '<div></div>';
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var date = new Date(year, month, d);
+      var dateStr = date.toISOString().split('T')[0];
+      var cls = 'calendar-day';
+
+      var planDay = STATE.plan ? STATE.plan.find(function (p) { return p.date === dateStr; }) : null;
+      var dayNum = planDay ? planDay.day : null;
+
+      if (dayNum && STATE.completedDays.indexOf(dayNum) >= 0) {
+        cls += ' done';
+      } else if (dayNum === STATE.currentDay && !STATE.todayCompleted) {
+        cls += ' current';
+      } else if (dateStr < todayStr) {
+        cls += ' past';
+      } else {
+        cls += ' future';
+      }
+      if (dateStr === todayStr) {
+        cls += ' today';
+      }
+
+      var title = dayNum ? ('第' + dayNum + t('day') + ': ' + (planDay ? planDay.scenario : '')) : '';
+      html += '<div class="' + cls + '" title="' + title + '" onclick="selectCalendarDay(' + (dayNum || 0) + ')">' + d + '</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function selectCalendarDay(dayNum) {
+    if (!dayNum || dayNum < 1 || dayNum > 30) return;
+    var planDay = STATE.plan[dayNum - 1];
+    if (!planDay) return;
+
+    var detail = $('dayDetail');
+    var title = $('detailDayTitle');
+    var content = $('detailContent');
+
+    title.textContent = '第 ' + dayNum + ' ' + t('day') + ' - ' + planDay.scenario;
+    var isCompleted = STATE.completedDays.indexOf(dayNum) >= 0;
+    var isCurrent = dayNum === STATE.currentDay;
+
+    var statusBadge = '';
+    if (isCompleted) {
+      statusBadge = '<span class="status-badge done">' + t('statusDone') + '</span>';
+    } else if (isCurrent) {
+      statusBadge = '<span class="status-badge current">' + t('statusCurrent') + '</span>';
+    } else {
+      statusBadge = '<span class="status-badge pending">' + t('statusPending') + '</span>';
+    }
+
+    content.innerHTML =
+      '<div class="day-detail-status">' + statusBadge + ' <span style="font-size:13px;color:var(--text-secondary);">' + planDay.duration + '</span></div>' +
+      '<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><b>' + t('todayFocus') + '：</b>' + planDay.focus + '</p>' +
+      '<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;color:var(--text);font-style:italic;">' +
+      '"' + planDay.sample + '"' +
+      '</div>' +
+      '<div style="margin-top:12px;font-size:12px;color:var(--text-muted);">' + planDay.date + '</div>';
+
+    detail.style.display = 'block';
+  }
+
+  function changeCalendarMonth(delta) {
+    STATE.calendarMonth += delta;
+    if (STATE.calendarMonth < 0) { STATE.calendarMonth = 11; STATE.calendarYear--; }
+    if (STATE.calendarMonth > 11) { STATE.calendarMonth = 0; STATE.calendarYear++; }
+    renderCalendar();
+  }
+
+  function renderSpeechHistory() {
+    var history = STATE.speechHistory;
+    var card = $('historyCard');
+    var list = $('historyList');
+
+    if (!history || history.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+
+    var html = '';
+    var reversed = history.slice().reverse();
+    for (var i = 0; i < reversed.length; i++) {
+      var h = reversed[i];
+      var dateStr = h.date || h.createdAt || '';
+      var text = h.text || h.transcript || '';
+      html +=
+        '<div class="history-item">' +
+          '<div class="history-item-top">' +
+            '<span class="history-date">' + dateStr + '</span>' +
+            '<span class="history-score">' + (h.overall || h.overallScore || 0) + '分</span>' +
+          '</div>' +
+          '<div class="history-text">"' + (text.length > 60 ? text.substring(0, 60) + '...' : text) + '"</div>' +
+          '<div class="history-subs">' +
+            '<span>&#x1F5E3; ' + (h.pronunciation || h.pron || 0) + '</span>' +
+            '<span>&#x1F4A8; ' + (h.fluency || 0) + '</span>' +
+            '<span>&#x1F3AF; ' + (h.accuracy || 0) + '</span>' +
+            '<span>&#x2705; ' + (h.completeness || 0) + '</span>' +
+          '</div>' +
+        '</div>';
+    }
+    list.innerHTML = html;
+  }
+
+  function updateTabStyles() {
+    var buttons = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === STATE.currentTab);
+    }
+    var contents = document.querySelectorAll('.tab-content');
+    for (var j = 0; j < contents.length; j++) {
+      contents[j].classList.remove('active');
+    }
+    var activeContent = $('tab-' + STATE.currentTab);
+    if (activeContent) activeContent.classList.add('active');
+  }
+
+  // ==================== Task Operations ====================
+  async function startTask(taskId) {
+    if (STATE.todayCompleted) {
+      showToast(t('errDayDone'));
+      return;
+    }
+    if (STATE.taskStatus[taskId]) {
+      showToast(t('taskDone'));
+      return;
+    }
+    if (taskId > 1 && !STATE.taskStatus[taskId - 1]) {
+      showToast(t('errTaskPrev'));
+      return;
+    }
+    var taskEl = $('task-' + taskId);
+    if (taskEl.classList.contains('locked')) {
+      showToast(t('errTaskOrder'));
+      return;
+    }
+
+    var taskNames = ['', t('task1Name'), t('task2Name'), t('task3Name')];
+    showToast(taskNames[taskId] + '...');
+
+    await sleep(800);
+
+    STATE.taskStatus[taskId] = true;
+    saveToLocal();
+    renderTasks();
+    showToast(t('toastTaskDone'));
+  }
+
+  async function completeToday() {
+    if (STATE.todayCompleted) {
+      showToast(t('errDayDone'));
+      return;
+    }
+    if (!STATE.taskStatus[1] || !STATE.taskStatus[2] || !STATE.taskStatus[3]) {
+      showToast(t('errNeedAllTasks'));
+      return;
+    }
+
+    $('completeBtn').disabled = true;
+    $('completeBtn').textContent = '...';
+
+    var token = getToken();
+    if (token) {
+      try {
+        await apiCompleteDay(STATE.currentDay);
+      } catch (e) {
+        // API failed, still mark locally
+      }
+    }
+
+    STATE.todayCompleted = true;
+    if (STATE.completedDays.indexOf(STATE.currentDay) < 0) {
+      STATE.completedDays.push(STATE.currentDay);
+    }
+    saveToLocal();
+    renderAll();
+    showToast(t('toastDayComplete'));
+
+    if (STATE.completedDays.length >= 30) {
+      setTimeout(function () {
+        showToast(t('toastAllComplete'));
+      }, 1500);
+    }
+  }
+
+  // ==================== Speech Evaluation ====================
+  async function submitEvaluation() {
+    var input = $('speechInput').value.trim();
+    var errEl = $('evaluateError');
+
+    if (!input) {
+      errEl.textContent = t('errNeedInput');
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    var btn = $('evaluateBtn');
+    btn.disabled = true;
+    btn.textContent = t('evaluatingBtn');
+
+    var planDay = STATE.plan ? STATE.plan[STATE.currentDay - 1] : null;
+    var referenceText = planDay ? planDay.sample : '';
+    var lang = getLang();
+    if (lang === 'zh') lang = 'en';
+
+    var result = null;
+    var token = getToken();
+    if (token) {
+      try {
+        result = await apiEvaluateSpeech(input, referenceText, lang);
+      } catch (e) {}
+    }
+
+    var pronunciation, fluency, accuracy, completeness, overall, feedback;
+    if (result && result.scores) {
+      pronunciation = result.scores.pronunciation || result.scores.pron || 0;
+      fluency = result.scores.fluency || 0;
+      accuracy = result.scores.accuracy || 0;
+      completeness = result.scores.completeness || 0;
+      overall = result.overallScore || Math.round((pronunciation + fluency + accuracy + completeness) / 4);
+      feedback = result.feedback || '';
+    } else {
+      // Mock evaluation for guest / fallback
+      pronunciation = Math.floor(Math.random() * 20) + 75;
+      fluency = Math.floor(Math.random() * 20) + 70;
+      accuracy = Math.floor(Math.random() * 20) + 72;
+      completeness = Math.floor(Math.random() * 15) + 80;
+      overall = Math.round((pronunciation + fluency + accuracy + completeness) / 4);
+      var feedbacks = [t('feed1'), t('feed2'), t('feed3'), t('feed4'), t('feed5')];
+      feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+    }
+
+    $('scoreCard').style.display = 'block';
+    $('overallScore').textContent = overall;
+    $('pronBar').style.width = pronunciation + '%';
+    $('pronScore').textContent = pronunciation;
+    $('fluencyBar').style.width = fluency + '%';
+    $('fluencyScore').textContent = fluency;
+    $('accuracyBar').style.width = accuracy + '%';
+    $('accuracyScore').textContent = accuracy;
+    $('completenessBar').style.width = completeness + '%';
+    $('completenessScore').textContent = completeness;
+
+    var ring = $('overallRing');
+    if (overall >= 85) ring.style.borderColor = 'var(--success)';
+    else if (overall >= 70) ring.style.borderColor = 'var(--warning)';
+    else ring.style.borderColor = 'var(--danger)';
+
+    $('aiFeedback').textContent = feedback;
+
+    // Save to history
+    var record = {
+      date: new Date().toISOString().split('T')[0],
+      text: input.substring(0, 200),
+      pronunciation: pronunciation,
+      fluency: fluency,
+      accuracy: accuracy,
+      completeness: completeness,
+      overall: overall,
+      day: STATE.currentDay,
+    };
+    STATE.speechHistory.push(record);
+    saveToLocal();
+    renderSpeechHistory();
+
+    btn.disabled = false;
+    btn.textContent = t('evaluateBtn');
+    showToast(t('toastScore', overall));
+
+    $('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ==================== Tab Switching ====================
+  function switchTab(tab) {
     STATE.currentTab = tab;
-    STATE.currentPage = tab;
     updateTabStyles();
     if (tab === 'calendar') renderCalendar();
     if (tab === 'speak') renderSpeechHistory();
-    document.querySelectorAll('.nav-item').forEach(n => {
-      n.classList.toggle('active', n.dataset.page === tab);
+  }
+
+  // ==================== Reset ====================
+  function resetPlan() {
+    if (confirm(t('resetConfirm'))) {
+      localStorage.removeItem('speaking_plan_v2');
+      localStorage.removeItem('speaking_progress_v2');
+      STATE.plan = null;
+      STATE.completedDays = [];
+      STATE.taskStatus = { 1: false, 2: false, 3: false };
+      STATE.todayCompleted = false;
+      STATE.speechHistory = [];
+      STATE.currentDay = 1;
+      showGenerateModal();
+      showToast(t('toastReset'));
+    }
+  }
+
+  // ==================== Event Listeners ====================
+  document.addEventListener('DOMContentLoaded', function () {
+    // Tab click
+    document.querySelector('.main-content').addEventListener('click', function (e) {
+      if (e.target.classList.contains('tab-btn')) {
+        switchTab(e.target.getAttribute('data-tab'));
+      }
     });
-  }
-});
 
-// ============ 启动 ============
-init();
+    // Language switcher
+    document.getElementById('langSwitcher').addEventListener('click', function (e) {
+      if (e.target.classList.contains('header-lang-btn')) {
+        setLang(e.target.getAttribute('data-lang'));
+      }
+    });
+  });
 
-// 修复：如果用户关闭弹窗但没有计划，渲染空状态
-setTimeout(() => {
-  if (!STATE.plan || STATE.plan.length === 0) {
-    showLoading(false);
-    // 显示一个空状态
-    $('mainContent').style.display = 'block';
-    $('mainContent').innerHTML = `
-      <div style="text-align:center;padding:60px 20px;">
-        <div style="font-size:64px;margin-bottom:16px;">&#x1F4AD;</div>
-        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">还没有学习计划</h3>
-        <p style="color:#64748b;font-size:14px;margin-bottom:24px;">点击下方按钮生成你的30天口语速成计划</p>
-        <button class="btn-primary" onclick="showGenerateModal();generatePlan();" style="max-width:280px;margin:0 auto;">生成学习计划</button>
-      </div>
-    `;
-  }
-}, 2000);
+  // Expose globals for onclick handlers
+  window.startTask = startTask;
+  window.completeToday = completeToday;
+  window.submitEvaluation = submitEvaluation;
+  window.selectCalendarDay = selectCalendarDay;
+  window.changeCalendarMonth = changeCalendarMonth;
+  window.generatePlan = generatePlan;
+  window.closeGenerateModal = closeGenerateModal;
+  window.showGenerateModal = showGenerateModal;
+  window.selectLevel = selectLevel;
+  window.resetPlan = resetPlan;
+  window.dismissGuestTip = dismissGuestTip;
+
+  // ==================== Boot ====================
+  init();
+})();
 </script>
 </body>
 </html>

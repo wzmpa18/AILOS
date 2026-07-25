@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 消息中心</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --nav-height: 64px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    line-height: 1.6;
+    padding-bottom: var(--nav-height);
+  }
+
+  /* ========== Top Navbar ========== */
+  .navbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-left { display: flex; align-items: center; gap: 8px; }
+  .nav-back {
+    font-size: 13px; color: var(--text-secondary); text-decoration: none;
+    display: flex; align-items: center; gap: 4px; transition: color .2s;
+    white-space: nowrap;
+  }
+  .nav-back:hover { color: var(--primary); }
+  .nav-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+
+  .lang-switch {
+    display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  }
+  .lang-switch::-webkit-scrollbar { display: none; }
+  .lang-flag {
+    padding: 3px 8px; border-radius: 14px; font-size: 11px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap; flex-shrink: 0;
+  }
+  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
+  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+  /* ========== Main Container ========== */
+  .main-container {
+    flex: 1; display: flex; flex-direction: column;
+    max-width: 800px; width: 100%; margin: 0 auto; padding: 0 16px;
+    overflow: hidden;
+  }
+
+  /* ========== Tab Filter ========== */
+  .tab-bar {
+    display: flex; gap: 0; padding: 12px 0 8px; flex-shrink: 0;
+    overflow-x: auto; scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-item {
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    color: var(--text-secondary); transition: all .2s;
+    border: none; background: none; font-family: inherit;
+  }
+  .tab-item:hover { background: var(--primary-light); color: var(--primary); }
+  .tab-item.active {
+    background: var(--primary); color: #fff;
+  }
+
+  /* ========== Conversation List ========== */
+  .conv-list {
+    flex: 1; overflow-y: auto; padding: 4px 0;
+    scroll-behavior: smooth;
+  }
+  .conv-list::-webkit-scrollbar { width: 4px; }
+  .conv-list::-webkit-scrollbar-track { background: transparent; }
+  .conv-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .conv-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; cursor: pointer;
+    transition: background .15s; border-radius: var(--radius-sm);
+    margin: 2px 0;
+  }
+  .conv-item:hover { background: var(--card-bg); box-shadow: var(--shadow); }
+  .conv-item:active { background: var(--primary-light); }
+
+  .conv-avatar {
+    width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: #fff;
+    position: relative;
+  }
+  .conv-avatar.system { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .conv-avatar.partner { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .conv-avatar.official { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .conv-avatar.achievement { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+  .conv-info {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;
+  }
+  .conv-name {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .conv-preview {
+    font-size: 13px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .conv-meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+    flex-shrink: 0;
+  }
+  .conv-time {
+    font-size: 11px; color: var(--text-muted);
+  }
+  .conv-badge {
+    min-width: 20px; height: 20px; border-radius: 10px; background: var(--primary);
+    color: #fff; font-size: 11px; font-weight: 700; display: flex;
+    align-items: center; justify-content: center; padding: 0 6px;
+  }
+  .conv-badge.system-badge {
+    background: var(--warning); color: #fff;
+  }
+
+  /* ========== Empty State ========== */
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; text-align: center; color: var(--text-muted);
+  }
+  .empty-state.hidden { display: none; }
+  .empty-icon { font-size: 56px; margin-bottom: 16px; opacity: .6; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; max-width: 260px; }
+
+  /* ========== Chat View Overlay ========== */
+  .chat-view {
+    position: fixed; inset: 0; background: var(--bg); z-index: 200;
+    display: flex; flex-direction: column; transform: translateX(100%);
+    transition: transform .3s ease;
+  }
+  .chat-view.open { transform: translateX(0); }
+
+  .chat-header {
+    background: var(--card-bg); border-bottom: 1px solid var(--border);
+    padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-back {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    color: var(--text-secondary); padding: 4px; line-height: 1;
+    transition: color .2s;
+  }
+  .chat-back:hover { color: var(--primary); }
+  .chat-partner-name {
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+  .chat-partner-avatar {
+    width: 32px; height: 32px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 14px; color: #fff;
+    font-weight: 700; flex-shrink: 0;
+  }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .msg-bubble {
+    display: flex; gap: 8px; max-width: 80%; animation: fadeInUp .25s ease;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-bubble.sent { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-bubble.received { align-self: flex-start; }
+
+  .msg-avatar-sm {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+  }
+
+  .msg-content {
+    padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6;
+    word-break: break-word;
+  }
+  .msg-bubble.sent .msg-content {
+    background: var(--primary); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bubble.received .msg-content {
+    background: var(--card-bg); color: var(--text);
+    border-bottom-left-radius: 4px; box-shadow: var(--shadow);
+  }
+
+  .msg-time {
+    font-size: 10px; color: var(--text-muted); margin-top: 2px;
+    padding: 0 4px;
+  }
+  .msg-bubble.sent .msg-time { text-align: right; }
+
+  .msg-date-divider {
+    text-align: center; font-size: 11px; color: var(--text-muted);
+    padding: 8px 0;
+  }
+
+  /* ========== Chat Input ========== */
+  .chat-input-area {
+    padding: 10px 16px 14px; flex-shrink: 0;
+    display: flex; gap: 8px; align-items: flex-end;
+    background: var(--card-bg); border-top: 1px solid var(--border);
+  }
+  .chat-input-wrapper {
+    flex: 1; position: relative;
+  }
+  .chat-input-wrapper input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: 22px; font-size: 14px; font-family: inherit;
+    background: var(--bg); color: var(--text); transition: border-color .2s;
+    outline: none;
+  }
+  .chat-input-wrapper input:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+  }
+  .chat-input-wrapper input::placeholder { color: var(--text-muted); }
+
+  .btn-send {
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: var(--primary); color: #fff; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+  }
+  .btn-send:hover { background: var(--primary-hover); transform: scale(1.05); }
+  .btn-send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-send svg { width: 18px; height: 18px; }
+
+  /* ========== System Notifications Section ========== */
+  .system-section {
+    padding: 0; flex-shrink: 0;
+  }
+  .system-section-title {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .5px;
+    padding: 16px 16px 8px;
+  }
+  .system-notif {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; cursor: pointer;
+    transition: background .15s; border-radius: var(--radius-sm);
+    margin: 2px 0;
+  }
+  .system-notif:hover { background: var(--card-bg); }
+  .system-notif:active { background: var(--primary-light); }
+  .system-notif-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .system-notif-icon.achievement { background: #FEF3C7; }
+  .system-notif-icon.reminder { background: #DBEAFE; }
+  .system-notif-icon.update { background: #D1FAE5; }
+  .system-notif-info { flex: 1; min-width: 0; }
+  .system-notif-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .system-notif-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .system-notif-time { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* ========== Bottom Navigation Bar ========== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-height); background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex;
+    justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom, 0); flex-shrink: 0;
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); transition: all 0.2s; font-size: 11px;
+    font-weight: 500; border: none; background: none; min-width: 56px;
+    position: relative; padding-top: 10px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+  .bottom-nav .nav-item.active::before {
+    content: ''; position: absolute; top: 0; width: 24px; height: 3px;
+    background: var(--primary); border-radius: 0 0 3px 3px;
+  }
+
+  /* ========== Responsive: Mobile ========== */
+  @media (max-width: 480px) {
+    .navbar { padding: 0 10px; }
+    .nav-back { font-size: 12px; }
+    .nav-title { font-size: 14px; }
+    .lang-flag { padding: 2px 6px; font-size: 10px; }
+    .main-container { padding: 0 10px; }
+    .tab-item { padding: 5px 12px; font-size: 12px; }
+    .conv-item { padding: 12px 10px; gap: 10px; }
+    .conv-avatar { width: 44px; height: 44px; font-size: 18px; }
+    .conv-name { font-size: 14px; }
+    .conv-preview { font-size: 12px; }
+    .msg-bubble { max-width: 88%; }
+    .chat-input-area { padding: 8px 10px 10px; }
+    .system-notif { padding: 10px 10px; }
+  }
+  @media (max-width: 375px) {
+    .tab-item { padding: 4px 10px; font-size: 11px; }
+    .msg-bubble { max-width: 92%; }
+  }
+</style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js"></script>
+
+  <!-- ==================== Top Navbar ==================== -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a class="nav-back" href="/xuewaiyu/home" data-i18n="back_to_home">&#8592; 返回首页</a>
+      <span class="nav-title" data-i18n="page_title">消息</span>
+    </div>
+    <div class="lang-switch" id="langSwitch"></div>
+  </nav>
+
+  <!-- ==================== Main Container ==================== -->
+  <div class="main-container" id="inboxView">
+    <!-- Tab Filter -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-item active" data-tab="all" data-i18n="tab_all">全部</button>
+      <button class="tab-item" data-tab="unread" data-i18n="tab_unread">未读</button>
+      <button class="tab-item" data-tab="partner" data-i18n="tab_partner">学习伙伴</button>
+      <button class="tab-item" data-tab="system" data-i18n="tab_system">系统</button>
+    </div>
+
+    <!-- Conversation List -->
+    <div class="conv-list" id="convList"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title" data-i18n="empty_title">暂无消息</div>
+      <div class="empty-sub" data-i18n="empty_sub">当有新的消息时，会在这里显示</div>
+    </div>
+
+    <!-- System Notifications -->
+    <div class="system-section" id="systemSection">
+      <div class="system-section-title" data-i18n="system_notifications">系统通知</div>
+      <div id="systemNotifList"></div>
+    </div>
+  </div>
+
+  <!-- ==================== Chat View Overlay ==================== -->
+  <div class="chat-view" id="chatView">
+    <div class="chat-header">
+      <button class="chat-back" onclick="closeChatView()" aria-label="返回">&#8592;</button>
+      <div class="chat-partner-avatar" id="chatPartnerAvatar"></div>
+      <span class="chat-partner-name" id="chatPartnerName"></span>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <input type="text" id="chatInput" placeholder="输入消息..." data-i18n-placeholder="input_placeholder" onkeydown="onChatInputKeydown(event)">
+      </div>
+      <button class="btn-send" id="btnSend" onclick="sendChatMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav"></div>
+
+  <script>
+// ==================== i18n System ====================
+var I18N = {
+  zh: {
+    back_to_home: '\u2190 返回首页',
+    page_title: '消息',
+    tab_all: '全部',
+    tab_unread: '未读',
+    tab_partner: '学习伙伴',
+    tab_system: '系统',
+    empty_title: '暂无消息',
+    empty_sub: '当有新的消息时，会在这里显示',
+    input_placeholder: '输入消息...',
+    system_notifications: '系统通知',
+    today: '今天',
+    yesterday: '昨天',
+    you: '你',
+    send: '发送',
+  },
+  en: {
+    back_to_home: '\u2190 Back to Home',
+    page_title: 'Messages',
+    tab_all: 'All',
+    tab_unread: 'Unread',
+    tab_partner: 'Study Partners',
+    tab_system: 'System',
+    empty_title: 'No Messages',
+    empty_sub: 'New messages will appear here',
+    input_placeholder: 'Type a message...',
+    system_notifications: 'System Notifications',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    you: 'You',
+    send: 'Send',
+  },
+  ja: {
+    back_to_home: '\u2190 ホームに戻る',
+    page_title: '\u30E1\u30C3\u30BB\u30FC\u30B8',
+    tab_all: '\u3059\u3079\u3066',
+    tab_unread: '\u672A\u8AAD',
+    tab_partner: '\u5B66\u7FD2\u30D1\u30FC\u30C8\u30CA\u30FC',
+    tab_system: '\u30B7\u30B9\u30C6\u30E0',
+    empty_title: '\u30E1\u30C3\u30BB\u30FC\u30B8\u306F\u3042\u308A\u307E\u305B\u3093',
+    empty_sub: '\u65B0\u3057\u3044\u30E1\u30C3\u30BB\u30FC\u30B8\u304C\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059',
+    input_placeholder: '\u30E1\u30C3\u30BB\u30FC\u30B8\u3092\u5165\u529B...',
+    system_notifications: '\u30B7\u30B9\u30C6\u30E0\u901A\u77E5',
+    today: '\u4ECA\u65E5',
+    yesterday: '\u6628\u65E5',
+    you: '\u3042\u306A\u305F',
+    send: '\u9001\u4FE1',
+  },
+  ko: {
+    back_to_home: '\u2190 \uD648\uC73C\uB85C',
+    page_title: '\uBA54\uC2DC\uC9C0',
+    tab_all: '\uC804\uCCB4',
+    tab_unread: '\uC548 \uC77D\uC74C',
+    tab_partner: '\uD559\uC2B5 \uD30C\uD2B8\uB108',
+    tab_system: '\uC2DC\uC2A4\uD15C',
+    empty_title: '\uBA54\uC2DC\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4',
+    empty_sub: '\uC0C8 \uBA54\uC2DC\uC9C0\uAC00 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4',
+    input_placeholder: '\uBA54\uC2DC\uC9C0 \uC785\uB825...',
+    system_notifications: '\uC2DC\uC2A4\uD15C \uC54C\uB9BC',
+    today: '\uC624\uB298',
+    yesterday: '\uC5B4\uC81C',
+    you: '\uB098',
+    send: '\uBCF4\uB0B4\uAE30',
+  },
+};
+
+// Language Detection
+var LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko' };
+var LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어' };
+var LANG_CODES = ['zh', 'en', 'ja', 'ko'];
+
+function detectLang() {
+  try { var s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  var nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+var currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
+
+function renderLangSwitch() {
+  var container = document.getElementById('langSwitch');
+  var html = '';
+  for (var i = 0; i < LANG_CODES.length; i++) {
+    var code = LANG_CODES[i];
+    html += '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>';
+  }
+  container.innerHTML = html;
+}
+
+function switchLang(code) {
+  currentLang = code;
+  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
+  updateI18n();
+  renderLangSwitch();
+  renderConversationList();
+  renderSystemNotifications();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var text = t(key);
+    if (text !== undefined) el.textContent = text;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    var text = t(key);
+    if (text !== undefined) el.setAttribute('placeholder', text);
+  });
+}
+
+// ==================== Mock Data ====================
+function getDefaultMockData() {
+  var now = Date.now();
+  var min = 60 * 1000;
+  var hr = 60 * min;
+  var day = 24 * hr;
+
+  return {
+    conversations: [
+      {
+        id: 'conv_1',
+        type: 'partner',
+        name: '张明',
+        name_en: 'Zhang Ming',
+        name_ja: '張明',
+        name_ko: '장명',
+        avatar: '张',
+        avatarClass: 'partner',
+        lastMessage: '你好！我最近在练习英语口语，要不要一起练习？',
+        lastMessage_en: 'Hi! I\'ve been practicing English speaking lately, want to practice together?',
+        lastMessage_ja: 'こんにちは！最近英語のスピーキングを練習していますが、一緒に練習しませんか？',
+        lastMessage_ko: '안녕하세요! 요즘 영어 말하기를 연습하고 있는데, 같이 연습할래요?',
+        timestamp: now - 5 * min,
+        unread: 2,
+        messages: [
+          { role: 'received', text: '你好！我最近在练习英语口语，要不要一起练习？', text_en: 'Hi! I\'ve been practicing English speaking lately, want to practice together?', text_ja: 'こんにちは！最近英語のスピーキングを練習していますが、一緒に練習しませんか？', text_ko: '안녕하세요! 요즘 영어 말하기를 연습하고 있는데, 같이 연습할래요?', time: now - 5 * min },
+          { role: 'sent', text: '好啊！我正想找个人一起练呢。', text_en: 'Great! I was just looking for someone to practice with.', text_ja: 'いいですね！ちょうど一緒に練習できる人を探していました。', text_ko: '좋아요! 마침 같이 연습할 사람을 찾고 있었어요.', time: now - 4 * min },
+          { role: 'received', text: '太好了！那我们约个时间，明天下午怎么样？', text_en: 'Awesome! Let\'s set a time, how about tomorrow afternoon?', text_ja: '素晴らしい！それでは時間を決めましょう、明日の午後はいかがですか？', text_ko: '좋아요! 그럼 시간을 정해요, 내일 오후 어때요?', time: now - 3 * min },
+        ]
+      },
+      {
+        id: 'conv_2',
+        type: 'partner',
+        name: 'Emily Chen',
+        name_en: 'Emily Chen',
+        name_ja: 'Emily Chen',
+        name_ko: 'Emily Chen',
+        avatar: 'E',
+        avatarClass: 'partner',
+        lastMessage: 'Thanks for the language exchange yesterday! Your Chinese is really improving.',
+        lastMessage_en: 'Thanks for the language exchange yesterday! Your Chinese is really improving.',
+        lastMessage_ja: '昨日の言語交換ありがとう！あなたの中国語は本当に上達していますね。',
+        lastMessage_ko: '어제 언어 교환 고마워요! 당신의 중국어가 정말 늘고 있어요.',
+        timestamp: now - 35 * min,
+        unread: 0,
+        messages: [
+          { role: 'received', text: 'Thanks for the language exchange yesterday! Your Chinese is really improving.', text_en: 'Thanks for the language exchange yesterday! Your Chinese is really improving.', text_ja: '昨日の言語交換ありがとう！あなたの中国語は本当に上達していますね。', text_ko: '어제 언어 교환 고마워요! 당신의 중국어가 정말 늘고 있어요.', time: now - 35 * min },
+          { role: 'sent', text: 'Thank you! Your English is also very good. I learned a lot of new expressions.', text_en: 'Thank you! Your English is also very good. I learned a lot of new expressions.', text_ja: 'ありがとう！あなたの英語もとても上手です。新しい表現をたくさん学びました。', text_ko: '고마워요! 당신의 영어도 정말 좋아요. 새로운 표현을 많이 배웠어요.', time: now - 30 * min },
+        ]
+      },
+      {
+        id: 'conv_3',
+        type: 'partner',
+        name: '田中太郎',
+        name_en: 'Taro Tanaka',
+        name_ja: '田中太郎',
+        name_ko: '타나카 타로',
+        avatar: '田',
+        avatarClass: 'partner',
+        lastMessage: 'はじめまして！日本語を勉強していると聞きました。一緒に頑張りましょう！',
+        lastMessage_en: 'Nice to meet you! I heard you\'re studying Japanese. Let\'s work hard together!',
+        lastMessage_ja: 'はじめまして！日本語を勉強していると聞きました。一緒に頑張りましょう！',
+        lastMessage_ko: '처음 뵙겠습니다! 일본어를 공부하고 있다고 들었습니다. 함께 힘내요!',
+        timestamp: now - 2 * hr,
+        unread: 3,
+        messages: [
+          { role: 'received', text: 'はじめまして！日本語を勉強していると聞きました。一緒に頑張りましょう！', text_en: 'Nice to meet you! I heard you\'re studying Japanese. Let\'s work hard together!', text_ja: 'はじめまして！日本語を勉強していると聞きました。一緒に頑張りましょう！', text_ko: '처음 뵙겠습니다! 일본어를 공부하고 있다고 들었습니다. 함께 힘내요!', time: now - 2 * hr },
+          { role: 'sent', text: 'ありがとうございます！よろしくお願いします。', text_en: 'Thank you! I look forward to studying with you.', text_ja: 'ありがとうございます！よろしくお願いします。', text_ko: '감사합니다! 잘 부탁드립니다.', time: now - 2 * hr + 5 * min },
+          { role: 'received', text: 'あなたのレベルはどのくらいですか？', text_en: 'What level are you at?', text_ja: 'あなたのレベルはどのくらいですか？', text_ko: '당신의 레벨은 어느 정도인가요?', time: now - 2 * hr + 10 * min },
+          { role: 'sent', text: 'まだ初心者です。N4を勉強しています。', text_en: 'I\'m still a beginner. I\'m studying for N4.', text_ja: 'まだ初心者です。N4を勉強しています。', text_ko: '아직 초보자입니다. N4를 공부하고 있습니다.', time: now - 2 * hr + 15 * min },
+        ]
+      },
+      {
+        id: 'conv_4',
+        type: 'partner',
+        name: '김민지',
+        name_en: 'Minji Kim',
+        name_ja: 'キム・ミンジ',
+        name_ko: '김민지',
+        avatar: '김',
+        avatarClass: 'partner',
+        lastMessage: '안녕하세요! 한국어 공부 열심히 하고 계신가요?',
+        lastMessage_en: 'Hello! Are you studying Korean hard?',
+        lastMessage_ja: 'こんにちは！韓国語の勉強頑張っていますか？',
+        lastMessage_ko: '안녕하세요! 한국어 공부 열심히 하고 계신가요?',
+        timestamp: now - 5 * hr,
+        unread: 1,
+        messages: [
+          { role: 'received', text: '안녕하세요! 한국어 공부 열심히 하고 계신가요?', text_en: 'Hello! Are you studying Korean hard?', text_ja: 'こんにちは！韓国語の勉強頑張っていますか？', text_ko: '안녕하세요! 한국어 공부 열심히 하고 계신가요?', time: now - 5 * hr },
+          { role: 'sent', text: '네, 열심히 하고 있어요! 아직 어렵지만 재미있어요.', text_en: 'Yes, I\'m studying hard! It\'s still difficult but fun.', text_ja: 'はい、頑張っています！まだ難しいですが楽しいです。', text_ko: '네, 열심히 하고 있어요! 아직 어렵지만 재미있어요.', time: now - 5 * hr + 8 * min },
+          { role: 'received', text: '저도 중국어를 배우고 있어요. 서로 도와주면 좋겠어요!', text_en: 'I\'m also learning Chinese. It would be great if we could help each other!', text_ja: '私も中国語を学んでいます。お互いに助け合えるといいですね！', text_ko: '저도 중국어를 배우고 있어요. 서로 도와주면 좋겠어요!', time: now - 5 * hr + 15 * min },
+        ]
+      },
+      {
+        id: 'conv_5',
+        type: 'partner',
+        name: 'Sarah Johnson',
+        name_en: 'Sarah Johnson',
+        name_ja: 'Sarah Johnson',
+        name_ko: 'Sarah Johnson',
+        avatar: 'S',
+        avatarClass: 'partner',
+        lastMessage: 'I found this amazing English podcast for learners! Want me to share the link?',
+        lastMessage_en: 'I found this amazing English podcast for learners! Want me to share the link?',
+        lastMessage_ja: '学習者向けの素晴らしい英語ポッドキャストを見つけました！リンクを共有しましょうか？',
+        lastMessage_ko: '학습자를 위한 멋진 영어 팟캐스트를 찾았어요! 링크 공유할까요?',
+        timestamp: now - 1 * day,
+        unread: 0,
+        messages: [
+          { role: 'received', text: 'I found this amazing English podcast for learners! Want me to share the link?', text_en: 'I found this amazing English podcast for learners! Want me to share the link?', text_ja: '学習者向けの素晴らしい英語ポッドキャストを見つけました！リンクを共有しましょうか？', text_ko: '학습자를 위한 멋진 영어 팟캐스트를 찾았어요! 링크 공유할까요?', time: now - 1 * day },
+          { role: 'sent', text: 'Yes please! That would be really helpful.', text_en: 'Yes please! That would be really helpful.', text_ja: 'はい、お願いします！とても助かります。', text_ko: '네, 부탁해요! 정말 도움이 될 것 같아요.', time: now - 1 * day + 3 * min },
+          { role: 'received', text: 'Here it is: https://example.com/podcast - They have episodes for all levels!', text_en: 'Here it is: https://example.com/podcast - They have episodes for all levels!', text_ja: 'こちらです：https://example.com/podcast - 全レベル対応のエピソードがあります！', text_ko: '여기 있습니다: https://example.com/podcast - 모든 레벨을 위한 에피소드가 있어요!', time: now - 1 * day + 5 * min },
+        ]
+      },
+      {
+        id: 'conv_6',
+        type: 'partner',
+        name: '李华',
+        name_en: 'Li Hua',
+        name_ja: '李華',
+        name_ko: '이화',
+        avatar: '李',
+        avatarClass: 'partner',
+        lastMessage: '这周末的英语角你去吗？听说有很多外国朋友会来。',
+        lastMessage_en: 'Are you going to the English corner this weekend? I heard many foreign friends will come.',
+        lastMessage_ja: '今週末の英語コーナーに行きますか？多くの外国人の友達が来るそうです。',
+        lastMessage_ko: '이번 주말 영어 코너에 가나요? 많은 외국인 친구들이 온다고 들었어요.',
+        timestamp: now - 1 * day - 3 * hr,
+        unread: 0,
+        messages: [
+          { role: 'received', text: '这周末的英语角你去吗？听说有很多外国朋友会来。', text_en: 'Are you going to the English corner this weekend? I heard many foreign friends will come.', text_ja: '今週末の英語コーナーに行きますか？多くの外国人の友達が来るそうです。', text_ko: '이번 주말 영어 코너에 가나요? 많은 외국인 친구들이 온다고 들었어요.', time: now - 1 * day - 3 * hr },
+          { role: 'sent', text: '真的吗？那必须去啊！几点开始？', text_en: 'Really? Then I must go! What time does it start?', text_ja: '本当ですか？それは行かなきゃ！何時に始まりますか？', text_ko: '정말요? 그럼 꼭 가야죠! 몇 시에 시작해요?', time: now - 1 * day - 3 * hr + 2 * min },
+          { role: 'received', text: '周六下午两点，在图书馆三楼。', text_en: 'Saturday at 2pm, on the third floor of the library.', text_ja: '土曜日の午後2時、図書館の3階です。', text_ko: '토요일 오후 2시, 도서관 3층이에요.', time: now - 1 * day - 3 * hr + 3 * min },
+        ]
+      },
+      {
+        id: 'conv_7',
+        type: 'partner',
+        name: 'Alex Wang',
+        name_en: 'Alex Wang',
+        name_ja: 'Alex Wang',
+        name_ko: 'Alex Wang',
+        avatar: 'A',
+        avatarClass: 'partner',
+        lastMessage: 'Hey, do you have any tips for memorizing vocabulary? I\'m struggling with it.',
+        lastMessage_en: 'Hey, do you have any tips for memorizing vocabulary? I\'m struggling with it.',
+        lastMessage_ja: 'やあ、単語を覚えるコツはありますか？苦戦しています。',
+        lastMessage_ko: '안녕, 단어 외우는 팁 있어? 나는 그게 힘들어.',
+        timestamp: now - 2 * day,
+        unread: 0,
+        messages: [
+          { role: 'received', text: 'Hey, do you have any tips for memorizing vocabulary? I\'m struggling with it.', text_en: 'Hey, do you have any tips for memorizing vocabulary? I\'m struggling with it.', text_ja: 'やあ、単語を覚えるコツはありますか？苦戦しています。', text_ko: '안녕, 단어 외우는 팁 있어? 나는 그게 힘들어.', time: now - 2 * day },
+          { role: 'sent', text: 'I use the spaced repetition method with flashcards. It works really well!', text_en: 'I use the spaced repetition method with flashcards. It works really well!', text_ja: '私はフラッシュカードで間隔反復法を使っています。とても効果的です！', text_ko: '나는 플래시카드로 간격 반복 방법을 사용해. 정말 효과가 좋아!', time: now - 2 * day + 10 * min },
+          { role: 'received', text: 'That sounds great! Which app do you use?', text_en: 'That sounds great! Which app do you use?', text_ja: 'それはいいですね！どのアプリを使っていますか？', text_ko: '그거 좋은데! 어떤 앱을 사용해?', time: now - 2 * day + 15 * min },
+          { role: 'sent', text: 'I use Anki. It\'s free and has a lot of shared decks for language learning.', text_en: 'I use Anki. It\'s free and has a lot of shared decks for language learning.', text_ja: 'Ankiを使っています。無料で、言語学習用の共有デッキがたくさんあります。', text_ko: '나는 Anki를 사용해. 무료이고 언어 학습용 공유 덱이 많아.', time: now - 2 * day + 18 * min },
+        ]
+      },
+      {
+        id: 'conv_8',
+        type: 'partner',
+        name: 'Laura Miller',
+        name_en: 'Laura Miller',
+        name_ja: 'Laura Miller',
+        name_ko: 'Laura Miller',
+        avatar: 'L',
+        avatarClass: 'partner',
+        lastMessage: 'Congratulations on completing the 30-day speaking challenge! ',
+        lastMessage_en: 'Congratulations on completing the 30-day speaking challenge! ',
+        lastMessage_ja: '30日間のスピーキングチャレンジ完了おめでとうございます！',
+        lastMessage_ko: '30일 말하기 챌린지 완료를 축하해요!',
+        timestamp: now - 3 * day,
+        unread: 0,
+        messages: [
+          { role: 'received', text: 'Congratulations on completing the 30-day speaking challenge! ', text_en: 'Congratulations on completing the 30-day speaking challenge! ', text_ja: '30日間のスピーキングチャレンジ完了おめでとうございます！', text_ko: '30일 말하기 챌린지 완료를 축하해요!', time: now - 3 * day },
+          { role: 'sent', text: 'Thank you so much! It was tough but totally worth it. My confidence has improved a lot.', text_en: 'Thank you so much! It was tough but totally worth it. My confidence has improved a lot.', text_ja: 'ありがとうございます！大変でしたが、本当に価値がありました。自信が大幅に向上しました。', text_ko: '정말 감사합니다! 힘들었지만 완전히 가치 있었어요. 자신감이 많이 향상됐어요.', time: now - 3 * day + 7 * min },
+        ]
+      },
+      {
+        id: 'conv_9',
+        type: 'partner',
+        name: '王芳',
+        name_en: 'Wang Fang',
+        name_ja: '王芳',
+        name_ko: '왕팡',
+        avatar: '王',
+        avatarClass: 'partner',
+        lastMessage: '我看到你分享的日语学习笔记了，整理得太好了！能分享一下你的学习方法吗？',
+        lastMessage_en: 'I saw your Japanese study notes you shared, they\'re so well organized! Can you share your study method?',
+        lastMessage_ja: 'あなたが共有した日本語の学習ノートを見ました。とてもよく整理されていますね！勉強方法を教えていただけますか？',
+        lastMessage_ko: '당신이 공유한 일본어 학습 노트를 봤어요. 정말 잘 정리되어 있네요! 학습 방법을 공유해 주실 수 있나요?',
+        timestamp: now - 3 * day - 6 * hr,
+        unread: 1,
+        messages: [
+          { role: 'received', text: '我看到你分享的日语学习笔记了，整理得太好了！能分享一下你的学习方法吗？', text_en: 'I saw your Japanese study notes you shared, they\'re so well organized! Can you share your study method?', text_ja: 'あなたが共有した日本語の学習ノートを見ました。とてもよく整理されていますね！勉強方法を教えていただけますか？', text_ko: '당신이 공유한 일본어 학습 노트를 봤어요. 정말 잘 정리되어 있네요! 학습 방법을 공유해 주실 수 있나요?', time: now - 3 * day - 6 * hr },
+          { role: 'sent', text: '当然可以！我主要是用思维导图来做笔记，把相关的词汇和语法点都联系起来。', text_en: 'Of course! I mainly use mind maps to take notes, connecting related vocabulary and grammar points together.', text_ja: 'もちろんです！主にマインドマップを使ってノートを取り、関連する語彙と文法ポイントを結びつけています。', text_ko: '물론이죠! 저는 주로 마인드맵을 사용해서 노트를 작성하고, 관련 어휘와 문법 포인트를 연결해요.', time: now - 3 * day - 6 * hr + 2 * min },
+        ]
+      },
+      {
+        id: 'conv_10',
+        type: 'partner',
+        name: 'Jean Dupont',
+        name_en: 'Jean Dupont',
+        name_ja: 'Jean Dupont',
+        name_ko: 'Jean Dupont',
+        avatar: 'J',
+        avatarClass: 'partner',
+        lastMessage: 'Bonjour! I see you\'re learning French too. Would you like to practice conversation together?',
+        lastMessage_en: 'Bonjour! I see you\'re learning French too. Would you like to practice conversation together?',
+        lastMessage_ja: 'ボンジュール！あなたもフランス語を学んでいるんですね。一緒に会話練習しませんか？',
+        lastMessage_ko: 'Bonjour! 당신도 프랑스어를 배우고 있군요. 같이 대화 연습할래요?',
+        timestamp: now - 4 * day,
+        unread: 0,
+        messages: [
+          { role: 'received', text: 'Bonjour! I see you\'re learning French too. Would you like to practice conversation together?', text_en: 'Bonjour! I see you\'re learning French too. Would you like to practice conversation together?', text_ja: 'ボンジュール！あなたもフランス語を学んでいるんですね。一緒に会話練習しませんか？', text_ko: 'Bonjour! 당신도 프랑스어를 배우고 있군요. 같이 대화 연습할래요?', time: now - 4 * day },
+          { role: 'sent', text: 'Oui! That would be great. I\'m still at A2 level though.', text_en: 'Oui! That would be great. I\'m still at A2 level though.', text_ja: 'はい！それは素晴らしいですね。でもまだA2レベルです。', text_ko: 'Oui! 그거 좋겠네요. 하지만 아직 A2 레벨이에요.', time: now - 4 * day + 5 * min },
+          { role: 'received', text: 'Pas de problème! We can start with simple topics and work our way up.', text_en: 'No problem! We can start with simple topics and work our way up.', text_ja: '問題ありません！簡単なトピックから始めて、徐々にレベルアップしましょう。', text_ko: '문제없어요! 간단한 주제부터 시작해서 점점 올라가요.', time: now - 4 * day + 8 * min },
+        ]
+      },
+    ],
+    systemNotifications: [
+      {
+        id: 'sys_1',
+        type: 'achievement',
+        icon: '',
+        iconClass: 'achievement',
+        title: '成就解锁：连续学习30天！',
+        title_en: 'Achievement Unlocked: 30-Day Learning Streak!',
+        title_ja: '実績解除：30日連続学習達成！',
+        title_ko: '업적 달성: 30일 연속 학습!',
+        desc: '你已经连续学习30天，获得"持之以恒"徽章',
+        desc_en: 'You have studied for 30 consecutive days and earned the "Perseverance" badge',
+        desc_ja: '30日間連続で学習し、「継続は力なり」バッジを獲得しました',
+        desc_ko: '30일 연속 학습하여 "끈기" 배지를 획득했습니다',
+        time: now - 2 * hr,
+      },
+      {
+        id: 'sys_2',
+        type: 'reminder',
+        icon: '',
+        iconClass: 'reminder',
+        title: '学习提醒：今日目标还未完成',
+        title_en: 'Study Reminder: Today\'s goal is not yet completed',
+        title_ja: '学習リマインダー：今日の目標がまだ完了していません',
+        title_ko: '학습 알림: 오늘의 목표가 아직 완료되지 않았습니다',
+        desc: '你还有15个单词和1篇阅读未完成',
+        desc_en: 'You still have 15 words and 1 reading to complete',
+        desc_ja: 'あと15単語と1つのリーディングが残っています',
+        desc_ko: '아직 15개의 단어와 1개의 읽기가 남아 있습니다',
+        time: now - 4 * hr,
+      },
+      {
+        id: 'sys_3',
+        type: 'update',
+        icon: '',
+        iconClass: 'update',
+        title: '系统更新：AI口语评分功能上线',
+        title_en: 'System Update: AI Speaking Assessment is now live',
+        title_ja: 'システム更新：AIスピーキング評価機能がリリースされました',
+        title_ko: '시스템 업데이트: AI 말하기 평가 기능 출시',
+        desc: '新版AI口语评分现已上线，支持发音准确度、流利度和语调分析',
+        desc_en: 'The new AI speaking assessment is now live, supporting pronunciation accuracy, fluency, and intonation analysis',
+        desc_ja: '新しいAIスピーキング評価がリリースされ、発音の正確さ、流暢さ、イントネーション分析をサポートします',
+        desc_ko: '새로운 AI 말하기 평가가 출시되어 발음 정확도, 유창성, 억양 분석을 지원합니다',
+        time: now - 1 * day,
+      },
+      {
+        id: 'sys_4',
+        type: 'achievement',
+        icon: '',
+        iconClass: 'achievement',
+        title: '恭喜！你的词汇量突破1000',
+        title_en: 'Congratulations! Your vocabulary has exceeded 1000 words',
+        title_ja: 'おめでとう！語彙数が1000語を突破しました',
+        title_ko: '축하합니다! 어휘량이 1000단어를 돌파했습니다',
+        desc: '获得"词汇达人"称号，继续加油！',
+        desc_en: 'You\'ve earned the "Vocabulary Master" title. Keep it up!',
+        desc_ja: '「語彙マスター」の称号を獲得しました。これからも頑張ってください！',
+        desc_ko: '"어휘 달인" 칭호를 획득했습니다. 계속 힘내세요!',
+        time: now - 2 * day,
+      },
+      {
+        id: 'sys_5',
+        type: 'reminder',
+        icon: '',
+        iconClass: 'reminder',
+        title: '周末语言交换活动即将开始',
+        title_en: 'Weekend Language Exchange Event is coming up',
+        title_ja: '週末の言語交換イベントがまもなく始まります',
+        title_ko: '주말 언어 교환 이벤트가 곧 시작됩니다',
+        desc: '本周六下午2点，图书馆三楼，不要错过！',
+        desc_en: 'This Saturday at 2pm, 3rd floor of the library. Don\'t miss it!',
+        desc_ja: '今週土曜日の午後2時、図書館3階。お見逃しなく！',
+        desc_ko: '이번 주 토요일 오후 2시, 도서관 3층. 놓치지 마세요!',
+        time: now - 2 * day - 5 * hr,
+      },
+    ],
+  };
+}
+
+// ==================== Data Management ====================
+var STORAGE_KEY = 'ailos_messages';
+var appData = null;
+
+function loadData() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      appData = JSON.parse(raw);
+      return;
+    }
+  } catch(e) {}
+  appData = getDefaultMockData();
+  saveData();
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  } catch(e) {}
+}
+
+function resetData() {
+  appData = getDefaultMockData();
+  saveData();
+}
+
+// Convenience accessors
+function getConversations() { return appData.conversations; }
+function getConversation(id) {
+  for (var i = 0; i < appData.conversations.length; i++) {
+    if (appData.conversations[i].id === id) return appData.conversations[i];
+  }
+  return null;
+}
+function getSystemNotifications() { return appData.systemNotifications; }
+
+// ==================== Time Formatting ====================
+function formatTime(ts) {
+  var now = new Date();
+  var date = new Date(ts);
+  var diff = now - date;
+  var min = 60 * 1000;
+  var hr = 60 * min;
+  var day = 24 * hr;
+
+  if (diff < min) return t('today') || '今天';
+  if (diff < hr) return Math.floor(diff / min) + ' min';
+  if (diff < day) return Math.floor(diff / hr) + ' hr';
+  if (diff < 2 * day) return t('yesterday') || '昨天';
+  if (diff < 7 * day) return Math.floor(diff / day) + ' d';
+
+  var month = date.getMonth() + 1;
+  var d = date.getDate();
+  return month + '/' + d;
+}
+
+function formatChatTime(ts) {
+  var d = new Date(ts);
+  var h = d.getHours();
+  var m = d.getMinutes();
+  return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m);
+}
+
+// ==================== Localized Text Helpers ====================
+function getLocalized(obj, key) {
+  var langKey = key + '_' + currentLang;
+  if (obj[langKey]) return obj[langKey];
+  if (currentLang === 'ja' && obj[key + '_ja']) return obj[key + '_ja'];
+  if (currentLang === 'ko' && obj[key + '_ko']) return obj[key + '_ko'];
+  if (currentLang === 'en' && obj[key + '_en']) return obj[key + '_en'];
+  return obj[key] || '';
+}
+
+function getConvName(conv) { return getLocalized(conv, 'name'); }
+function getConvLastMessage(conv) { return getLocalized(conv, 'lastMessage'); }
+
+// ==================== Render Conversation List ====================
+var activeTab = 'all';
+
+function setActiveTab(tab) {
+  activeTab = tab;
+  var items = document.querySelectorAll('.tab-item');
+  for (var i = 0; i < items.length; i++) {
+    var t = items[i].getAttribute('data-tab');
+    if (t === tab) {
+      items[i].classList.add('active');
+    } else {
+      items[i].classList.remove('active');
+    }
+  }
+  renderConversationList();
+}
+
+function renderConversationList() {
+  var container = document.getElementById('convList');
+  var emptyState = document.getElementById('emptyState');
+  var conversations = getConversations();
+
+  var filtered = conversations;
+  if (activeTab === 'unread') {
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].unread > 0) filtered.push(conversations[i]);
+    }
+  } else if (activeTab === 'partner') {
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].type === 'partner') filtered.push(conversations[i]);
+    }
+  } else if (activeTab === 'system') {
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].type === 'system') filtered.push(conversations[i]);
+    }
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+
+  emptyState.classList.add('hidden');
+
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var conv = filtered[i];
+    var name = getConvName(conv);
+    var lastMsg = getConvLastMessage(conv);
+    var timeStr = formatTime(conv.timestamp);
+    var avatarClass = conv.avatarClass || 'partner';
+
+    html += '<div class="conv-item" onclick="openChatView(\'' + conv.id + '\')">';
+    html += '<div class="conv-avatar ' + avatarClass + '">' + conv.avatar + '</div>';
+    html += '<div class="conv-info">';
+    html += '<div class="conv-name">' + name + '</div>';
+    html += '<div class="conv-preview">' + lastMsg + '</div>';
+    html += '</div>';
+    html += '<div class="conv-meta">';
+    html += '<span class="conv-time">' + timeStr + '</span>';
+    if (conv.unread > 0) {
+      html += '<span class="conv-badge">' + conv.unread + '</span>';
+    }
+    html += '</div>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+// ==================== Render System Notifications ====================
+function renderSystemNotifications() {
+  var container = document.getElementById('systemNotifList');
+  var notifs = getSystemNotifications();
+  var html = '';
+
+  for (var i = 0; i < notifs.length; i++) {
+    var n = notifs[i];
+    var title = getLocalized(n, 'title');
+    var desc = getLocalized(n, 'desc');
+    var timeStr = formatTime(n.time);
+
+    html += '<div class="system-notif">';
+    html += '<div class="system-notif-icon ' + n.iconClass + '">' + n.icon + '</div>';
+    html += '<div class="system-notif-info">';
+    html += '<div class="system-notif-title">' + title + '</div>';
+    html += '<div class="system-notif-desc">' + desc + '</div>';
+    html += '</div>';
+    html += '<span class="system-notif-time">' + timeStr + '</span>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+// ==================== Chat View ====================
+var currentConvId = null;
+
+function openChatView(convId) {
+  var conv = getConversation(convId);
+  if (!conv) return;
+
+  currentConvId = convId;
+
+  // Mark as read
+  conv.unread = 0;
+  saveData();
+  renderConversationList();
+
+  // Update chat header
+  document.getElementById('chatPartnerAvatar').textContent = conv.avatar;
+  document.getElementById('chatPartnerAvatar').className = 'chat-partner-avatar ' + (conv.avatarClass || 'partner');
+  document.getElementById('chatPartnerName').textContent = getConvName(conv);
+
+  // Render messages
+  renderChatMessages(conv);
+
+  // Show chat view
+  document.getElementById('chatView').classList.add('open');
+
+  // Focus input
+  setTimeout(function() {
+    document.getElementById('chatInput').focus();
+  }, 350);
+}
+
+function closeChatView() {
+  document.getElementById('chatView').classList.remove('open');
+  currentConvId = null;
+  renderConversationList();
+}
+
+function renderChatMessages(conv) {
+  var container = document.getElementById('chatMessages');
+  var messages = conv.messages || [];
+  var html = '';
+
+  var lastDate = '';
+  for (var i = 0; i < messages.length; i++) {
+    var msg = messages[i];
+    // Date divider
+    var msgDate = new Date(msg.time).toDateString();
+    if (msgDate !== lastDate) {
+      lastDate = msgDate;
+      var today = new Date().toDateString();
+      var yesterday = new Date(Date.now() - 86400000).toDateString();
+      var label = msgDate === today ? (t('today') || '今天') : (msgDate === yesterday ? (t('yesterday') || '昨天') : new Date(msg.time).toLocaleDateString());
+      html += '<div class="msg-date-divider">' + label + '</div>';
+    }
+
+    var text = getLocalized(msg, 'text');
+    var timeStr = formatChatTime(msg.time);
+    var isSent = msg.role === 'sent';
+
+    html += '<div class="msg-bubble ' + (isSent ? 'sent' : 'received') + '">';
+    if (!isSent) {
+      html += '<div class="msg-avatar-sm ' + (conv.avatarClass || 'partner') + '">' + conv.avatar + '</div>';
+    }
+    html += '<div>';
+    html += '<div class="msg-content">' + escapeHtml(text) + '</div>';
+    html += '<div class="msg-time">' + timeStr + '</div>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+
+  // Scroll to bottom
+  requestAnimationFrame(function() {
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function sendChatMessage() {
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
+  if (!text || !currentConvId) return;
+
+  var conv = getConversation(currentConvId);
+  if (!conv) return;
+
+  // Add sent message
+  if (!conv.messages) conv.messages = [];
+  var now = Date.now();
+  conv.messages.push({
+    role: 'sent',
+    text: text,
+    text_en: text,
+    text_ja: text,
+    text_ko: text,
+    time: now
+  });
+
+  // Update last message
+  conv.lastMessage = text;
+  conv.lastMessage_en = text;
+  conv.lastMessage_ja = text;
+  conv.lastMessage_ko = text;
+  conv.timestamp = now;
+
+  saveData();
+  input.value = '';
+
+  renderChatMessages(conv);
+
+  // Simulate auto-reply after a delay
+  setTimeout(function() {
+    if (currentConvId !== conv.id) return;
+    autoReply(conv);
+  }, 1500 + Math.random() * 2000);
+}
+
+function autoReply(conv) {
+  var replies = {
+    zh: ['好的，收到！', '明白了，谢谢！', '嗯嗯，有道理！', '哈哈，确实如此！', '好的，我们继续加油！'],
+    en: ['Got it, thanks!', 'That makes sense!', 'Haha, exactly!', 'Sure, let\'s keep going!', 'I agree with you!'],
+    ja: ['わかりました、ありがとう！', 'なるほど！', 'はは、確かに！', 'はい、頑張りましょう！', '同意します！'],
+    ko: ['알겠습니다, 감사합니다!', '그렇군요!', '하하, 정말 그렇네요!', '네, 계속 힘내요!', '동의합니다!'],
+  };
+
+  var langReplies = replies[currentLang] || replies['zh'];
+  var replyText = langReplies[Math.floor(Math.random() * langReplies.length)];
+
+  conv.messages.push({
+    role: 'received',
+    text: replyText,
+    text_en: replyText,
+    text_ja: replyText,
+    text_ko: replyText,
+    time: Date.now()
+  });
+
+  conv.lastMessage = replyText;
+  conv.lastMessage_en = replyText;
+  conv.lastMessage_ja = replyText;
+  conv.lastMessage_ko = replyText;
+  conv.timestamp = Date.now();
+
+  saveData();
+  renderChatMessages(conv);
+}
+
+function onChatInputKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendChatMessage();
+  }
+}
+
+// ==================== Tab Click Handler ====================
+function initTabs() {
+  var tabBar = document.getElementById('tabBar');
+  tabBar.addEventListener('click', function(e) {
+    var target = e.target;
+    if (target.classList.contains('tab-item')) {
+      setActiveTab(target.getAttribute('data-tab'));
+    }
+  });
+}
+
+// ==================== Init ====================
+function init() {
+  loadData();
+  renderLangSwitch();
+  initTabs();
+  renderConversationList();
+  renderSystemNotifications();
+  updateI18n();
+
+  // Listen for Escape to close chat view
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('chatView').classList.contains('open')) {
+      closeChatView();
+    }
+  });
+}
+
+// Run
+init();
+</script>
+
+</body>
+</html>
