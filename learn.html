@@ -398,9 +398,9 @@
 const API_BASE_URL = (() => {
   try {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
-    return window.location.origin + '/api/v1';
-  } catch(e) { return '/api/v1'; }
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api';
+    return window.location.origin + '/api';
+  } catch(e) { return '/api'; }
 })();
 
 // ==================== GLOI i18n System ====================
