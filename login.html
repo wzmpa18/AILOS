@@ -719,7 +719,14 @@ async function handleSubmit() {
     showMsg(successMsg, 'success');
 
     setTimeout(() => {
-      const dest = isReset ? '/login' : '/xuewaiyu/home';
+      let dest = isReset ? '/login' : '/xuewaiyu/home';
+      try {
+        // REQ-04 引导闸：未定级则先去定级，保证只测一次
+        if (!isReset && !localStorage.getItem('yandao_level_assessment')) {
+          const studyLang = localStorage.getItem('yandao_study_lang') || 'ja';
+          dest = '/xuewaiyu/placement.html?lang=' + studyLang;
+        }
+      } catch (e) {}
       window.location.href = dest;
     }, 1200);
   } catch (e) {

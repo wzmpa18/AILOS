@@ -694,6 +694,32 @@ function retrySingleError(id) {
   }
 }
 
+/* ============ AI 重练（变式题，蓝图铁律：内容 AI 生成） ============ */
+function startAIQuiz() {
+  var token = localStorage.getItem('yandao_token_v1');
+  if (!token) { showToast(t('toast_login_first') || '请先登录后使用 AI 重练'); startQuiz(getFilteredErrors()); return; }
+  showToast('正在生成 AI 变式题...');
+  fetch('/api/ai/generate-exercise', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ language: localStorage.getItem('yandao_study_lang') || 'en', level: 'beginner', type: 'grammar', count: 3 })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    var exs = (j && j.exercises) || [];
+    if (!exs.length) { showToast('AI 暂未生成变式题，使用本地错题'); startQuiz(getFilteredErrors()); return; }
+    var items = exs.map(function(ex, i){
+      return { id: 'ai' + Date.now() + '_' + i, question: ex.question, userAnswer: '', correctAnswer: ex.answer || '', source: 'grammar', date: new Date().toISOString(), mastered: false };
+    });
+    showToast('AI 生成了 ' + items.length + ' 道变式题');
+    startQuiz(items);
+  })
+  .catch(function(){
+    showToast('AI 重练失败（需登录），使用本地错题');
+    startQuiz(getFilteredErrors());
+  });
+}
+
 function exitQuiz() {
   quizMode = false;
   quizErrors = [];
@@ -818,6 +844,7 @@ function renderMain() {
   if (filtered.length > 0) {
     html += '<div class="action-bar">';
     html += '<button class="btn primary" onclick="startQuiz(getFilteredErrors())">' + t('btn_retry_all') + ' (' + filtered.length + ')</button>';
+    html += '<button class="btn" onclick="startAIQuiz()">🤖 AI 重练</button>';
     html += '</div>';
   }
 

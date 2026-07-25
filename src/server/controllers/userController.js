@@ -26,7 +26,7 @@ const userController = {
       const progress = await prisma.learningProgress.findMany({
         where: {
           userId,
-          languageCode: lang,
+          language: lang,
         },
         orderBy: { updatedAt: 'desc' },
       }).catch(() => []);
@@ -86,6 +86,31 @@ const userController = {
         success: true,
         data: response,
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/user/progress
+   * REQ-04: 定级结果落库（upsert LearningProgress.level by userId+language）
+   */
+  async saveProgress(req, res, next) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+      const { language, level } = req.body || {};
+      if (!language || !level) {
+        return res.status(400).json({ success: false, error: 'language and level are required' });
+      }
+      const progress = await prisma.learningProgress.upsert({
+        where: { userId_language: { userId, language } },
+        update: { level },
+        create: { userId, language, level },
+      });
+      return res.json({ success: true, data: progress });
     } catch (error) {
       next(error);
     }

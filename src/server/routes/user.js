@@ -9,6 +9,7 @@ const userController = require('../controllers/userController');
 
 // GET /api/user/progress/:lang — 学习进度分层数据
 router.get('/progress/:lang', authenticate, userController.getProgress);
+router.post('/progress', authenticate, userController.saveProgress);
 
 // GET /api/user/profile — 用户基本信息
 router.get('/profile', authenticate, userController.getProfile);

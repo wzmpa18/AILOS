@@ -401,6 +401,7 @@ body {
     </div>
     <button class="btn-icon" title="导入" onclick="importJSON()">&#128194;</button>
     <button class="btn-icon" title="导出" onclick="exportJSON()">&#128190;</button>
+    <button class="btn-icon ai" title="AI 生成句子" onclick="generateAISentences()">&#129302;</button>
   </div>
 
   <!-- Category Tabs -->
@@ -1085,6 +1086,38 @@ body {
     renderAll();
   }
 
+  /* ============ AI 生成句子（蓝图铁律：内容 AI 生成） ============ */
+  function generateAISentences() {
+    var token = localStorage.getItem('yandao_token_v1');
+    var lang = localStorage.getItem('yandao_study_lang') || 'ja';
+    showToast('正在用 AI 生成句子...');
+    fetch('/api/blueprint/question?type=vocab&language=' + encodeURIComponent(lang) + '&level=beginner&count=6', {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var qs = (j && j.questions) || [];
+      if (!qs.length) { showToast('AI 暂未返回内容，已保留种子句库'); renderAll(); return; }
+      var customs = getCustomSentences();
+      qs.forEach(function(q){
+        var original = q.question || (q.options && q.options[0]) || '';
+        var translation = q.correctAnswer || q.answer || (q.options && q.options[0]) || '';
+        if (!original) return;
+        var exists = customs.some(function(c){ return c.original === original && c.language === lang; });
+        if (!exists) {
+          customs.push({ id: getNextId(), original: original, translation: translation, pronunciation: '', language: lang, category: 'ai' });
+        }
+      });
+      setCustomSentences(customs);
+      showToast('AI 生成了 ' + qs.length + ' 条句子');
+      renderAll();
+    })
+    .catch(function(){
+      showToast('AI 生成失败（需登录），已保留种子句库');
+      renderAll();
+    });
+  }
+
   function deleteSentence(id) {
     if (!confirm(t('confirmDelete'))) return;
     var customs = getCustomSentences();
@@ -1201,6 +1234,7 @@ body {
   window.closeAddModal = closeAddModal;
   window.saveCustomSentence = saveCustomSentence;
   window.deleteSentence = deleteSentence;
+  window.generateAISentences = generateAISentences;
   window.exportJSON = exportJSON;
   window.importJSON = importJSON;
 

@@ -820,7 +820,15 @@ async function handleSubmit() {
         try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
       }
       setTimeout(() => {
-        window.location.href = result.redirect || '/xuewaiyu/home.html';
+        let dest = result.redirect || '/xuewaiyu/home.html';
+      try {
+        // REQ-04 引导闸：未定级则先去定级，保证只测一次
+        if (!localStorage.getItem('yandao_level_assessment')) {
+          const studyLang = localStorage.getItem('yandao_study_lang') || 'ja';
+          dest = '/xuewaiyu/placement.html?lang=' + studyLang;
+        }
+      } catch (e) {}
+      window.location.href = dest;
       }, 1000);
     } else {
       showMsg(result.error || t('msg_operation_failed'), 'error');
@@ -854,7 +862,15 @@ async function handleSubmit() {
         try { localStorage.setItem('yandao_token_v1', result.token); } catch(e) {}
       }
       setTimeout(() => {
-        window.location.href = result.redirect || '/xuewaiyu/home.html';
+        let dest = result.redirect || '/xuewaiyu/home.html';
+      try {
+        // REQ-04 引导闸：未定级则先去定级，保证只测一次
+        if (!localStorage.getItem('yandao_level_assessment')) {
+          const studyLang = localStorage.getItem('yandao_study_lang') || 'ja';
+          dest = '/xuewaiyu/placement.html?lang=' + studyLang;
+        }
+      } catch (e) {}
+      window.location.href = dest;
       }, 1000);
     } else {
       showMsg(result.error || t('msg_operation_failed'), 'error');

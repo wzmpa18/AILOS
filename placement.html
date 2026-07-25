@@ -95,10 +95,44 @@
       document.getElementById('retryBtn').onclick = function () {
         idx = 0; score = 0; result.classList.add('hidden'); intro.classList.remove('hidden');
       };
+      function saveProgress(level, lang) {
+        var token = localStorage.getItem('yandao_token_v1');
+        if (!token) return;
+        fetch('/api/user/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ language: lang, level: level })
+        }).catch(function () {});
+      }
       document.getElementById('applyBtn').onclick = function () {
         try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
+        var token = localStorage.getItem('yandao_token_v1');
+        if (token) {
+          var lvl = document.getElementById('resLevel').textContent || 'A1';
+          try {
+            fetch('/api/blueprint/course?language=' + encodeURIComponent(lang) + '&level=' + encodeURIComponent(lvl), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ language: lang, level: lvl })
+            }).catch(function () {});
+          } catch (e) {}
+        }
         location.href = '/xuewaiyu/learn.html';
       };
+      // REQ-04 一次性：已定级则直接展示结果，不强制重测
+      try {
+        var prevAssess = localStorage.getItem('yandao_level_assessment');
+        if (prevAssess) {
+          var pa = JSON.parse(prevAssess);
+          if (pa && pa.level) {
+            intro.classList.add('hidden');
+            result.classList.remove('hidden');
+            document.getElementById('resLevel').textContent = pa.level;
+            document.getElementById('resDesc').textContent = '你已完成过水平测试（' + (pa.score != null ? '答对 ' + pa.score + '/' + QUESTIONS.length : '') + '），可重新测试或继续。';
+            document.getElementById('startBtn').textContent = '重新测试';
+          }
+        }
+      } catch (e) {}
 
       function render() {
         var item = QUESTIONS[idx];
@@ -130,6 +164,7 @@
         document.getElementById('resLevel').textContent = level;
         document.getElementById('resDesc').textContent = desc + '（答对 ' + score + '/' + QUESTIONS.length + '）';
         try { localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: lang, level: level, score: score, at: Date.now() })); } catch (e) {}
+        saveProgress(level, lang); // REQ-04 定级结果落库
       }
     })();
   </script>

@@ -486,6 +486,14 @@ var LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en
 var LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어' };
 var LANG_CODES = ['zh', 'en', 'ja', 'ko'];
 
+function studyLangName() {
+  var m = { ja:'日语', en:'英语', ko:'韩语', fr:'法语', es:'西班牙语', de:'德语' };
+  return m[localStorage.getItem('yandao_study_lang') || 'ja'] || '日语';
+}
+function storedLevel() {
+  try { var a = JSON.parse(localStorage.getItem('yandao_level_assessment')); return (a && a.level) ? a.level : 'beginner'; } catch(e){ return 'beginner'; }
+}
+
 function detectLang() {
   try { var s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
   var nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
@@ -1117,11 +1125,39 @@ function sendChatMessage() {
 
   renderChatMessages(conv);
 
-  // Simulate auto-reply after a delay
-  setTimeout(function() {
-    if (currentConvId !== conv.id) return;
-    autoReply(conv);
-  }, 1500 + Math.random() * 2000);
+  // T3：学习伙伴会话接 AI 伴读真实联通；其余会话本地兜底
+  if (conv.type === 'partner') {
+    var token = localStorage.getItem('yandao_token_v1');
+    if (token) {
+      fetch('/api/ai/tutor/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ message: text, languageContext: { nativeLang: '中文', targetLang: studyLangName(), userLevel: storedLevel() } })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var reply = (j && j.data && j.data.aiContent) ? j.data.aiContent : autoReplyText();
+        if (currentConvId !== conv.id) return;
+        conv.messages.push({ role: 'received', text: reply, text_en: reply, text_ja: reply, text_ko: reply, time: Date.now() });
+        conv.lastMessage = reply; conv.timestamp = Date.now();
+        saveData(); renderChatMessages(conv);
+      })
+      .catch(function(){ fallbackReply(); });
+      return;
+    }
+  }
+  fallbackReply();
+  function fallbackReply(){
+    setTimeout(function() {
+      if (currentConvId !== conv.id) return;
+      autoReply(conv);
+    }, 1500 + Math.random() * 2000);
+  }
+  function autoReplyText(){
+    var replies = { zh:['好的，收到！','明白了，谢谢！','嗯嗯，有道理！'], en:['Got it, thanks!','That makes sense!'], ja:['わかりました、ありがとう！','なるほど！'], ko:['알겠습니다, 감사합니다!','그렇군요!'] };
+    var arr = replies[currentLang] || replies['zh'];
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 }
 
 function autoReply(conv) {

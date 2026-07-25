@@ -651,6 +651,7 @@ body {
   <div class="game-back-bar">
     <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
     <span class="game-title">🎯 <span data-i18n="vocab_hunter">词汇猎手</span></span>
+    <button class="btn-ai" style="margin-left:auto;" onclick="startGameAI('vocab')">🤖 AI出题</button>
   </div>
   <div class="score-bar">
     <span class="score-label" data-i18n="score">得分</span>
@@ -667,6 +668,7 @@ body {
   <div class="game-back-bar">
     <button onclick="backToGrid()">&#8592; <span data-i18n="back">返回</span></button>
     <span class="game-title">🧱 <span data-i18n="grammar_blocks">语法方块</span></span>
+    <button class="btn-ai" style="margin-left:auto;" onclick="startGameAI('grammar')">🤖 AI出题</button>
   </div>
   <div class="score-bar">
     <span class="score-label" data-i18n="score">得分</span>
@@ -998,6 +1000,7 @@ function showGameGrid() {
 
 function backToGrid() {
   stopAllGames();
+  restoreDefaultBanks();
   showGameGrid();
 }
 
@@ -1017,8 +1020,52 @@ function startGame(gameId) {
   }
 }
 
-function stopAllGames() {
-  if (planetTimerId) { clearInterval(planetTimerId); planetTimerId = null; }
+/* ============ AI 出题模式（蓝图铁律：内容 AI 生成） ============ */
+const VOCAB_BANK_DEFAULT = [...vocabBank];
+const GRAMMAR_BANK_DEFAULT = [...grammarBank];
+let aiGameType = null;
+
+function restoreDefaultBanks() {
+  vocabBank = [...VOCAB_BANK_DEFAULT];
+  grammarBank = [...GRAMMAR_BANK_DEFAULT];
+  aiGameType = null;
+}
+
+async function startGameAI(gameId) {
+  const token = localStorage.getItem('yandao_token_v1');
+  const lang = localStorage.getItem('yandao_study_lang') || 'en';
+  const type = (gameId === 'grammar') ? 'grammar' : 'vocab';
+  showFeedback('🤖');
+  showToast('正在用 AI 生成题目...');
+  try {
+    const r = await fetch('/api/blueprint/question?type=' + type + '&language=' + encodeURIComponent(lang) + '&level=beginner&count=10', {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    });
+    const j = await r.json();
+    const qs = (j && j.questions) || [];
+    if (!qs.length) { showToast('AI 暂未返回题目，使用默认题库'); startGame(gameId); return; }
+    if (gameId === 'grammar') {
+      grammarBank = qs.map(q => ({
+        sentence: q.question,
+        blank: q.correctAnswer || (q.options && q.options[0]) || '',
+        options: q.options || []
+      }));
+    } else {
+      vocabBank = qs.map(q => ({
+        word: q.question,
+        zh: q.correctAnswer || (q.options && q.options[0]) || '',
+        options: q.options || []
+      }));
+    }
+    aiGameType = gameId;
+    startGame(gameId);
+  } catch (e) {
+    showToast('AI 出题失败（需登录），使用默认题库');
+    startGame(gameId);
+  }
+}
+
+function stopAllGames() {  if (planetTimerId) { clearInterval(planetTimerId); planetTimerId = null; }
   if (chainTimerId) { clearInterval(chainTimerId); chainTimerId = null; }
   vocabState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
   grammarState = { inProgress: false, questions: [], currentQ: 0, score: 0 };
@@ -1060,7 +1107,7 @@ function showFeedback(emoji) {
 }
 
 // ==================== GAME 1: VOCABULARY HUNTER ====================
-const vocabBank = [
+let vocabBank = [
   { word: 'Apple', zh: '苹果', options: ['苹果', '香蕉', '橙子', '葡萄'] },
   { word: 'Book', zh: '书', options: ['钢笔', '书', '纸', '桌子'] },
   { word: 'Cat', zh: '猫', options: ['狗', '猫', '鸟', '鱼'] },
@@ -1167,7 +1214,7 @@ function endVocabGame() {
 }
 
 // ==================== GAME 2: GRAMMAR BLOCKS ====================
-const grammarBank = [
+let grammarBank = [
   { sentence: 'She ___ to school every day.', blank: 'goes', options: ['go', 'goes', 'going', 'went'] },
   { sentence: 'They ___ playing football now.', blank: 'are', options: ['is', 'am', 'are', 'be'] },
   { sentence: 'I have ___ my homework.', blank: 'finished', options: ['finish', 'finishes', 'finished', 'finishing'] },

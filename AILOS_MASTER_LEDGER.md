@@ -571,7 +571,7 @@ Phase2 Epic1 AI核心模块：实现分级额度管控、统一错误降级、Ga
 文档版本：V7.1 Enterprise Freeze
 最后更新时间：2026-07-24 22:00
 负责人：TRAE
-当前全局状态：RC_READY_BUG_FIX（3个阻断Bug全部修复，待监理线上部署+四层验收）
+当前全局状态：RC_READY_WEB_ACCEPTANCE（G1–G5 本地实现+预览验收通过；监理2026-07-25 补句库/游戏/伴读/错题 AI 闭环；服务器部署 PENDING）
 当前Sprint：Sprint V6.2
 当前Phase：Bug修复 → 等待监理部署验收
 当前状态：
@@ -885,6 +885,46 @@ pm2 restart xuewaiyu-backend
 ### 风险等级：中（P0登录API 500阻塞）
 ### RC状态：RC_READY_ACCEPTANCE，等待人工验收
 ### 下一阶段：服务器部署修复 → 全链路回归复测
+
+=============================================================
+## 第21章 监理 2026-07-25 G1–G5 收尾核验与 AI 闭环（CodeBuddy/监理视角）
+> RC状态：RC_READY_WEB_ACCEPTANCE（本地实现+预览验收通过，服务器部署 PENDING）
+> 人工验收状态：PASS（本地）/ PENDING（线上）
+> 核验时间：2026-07-25
+> 角色：总工程师/监理（接管 TRAE 的 G1–G5 收尾，逐页实读代码+预览验证，未轻信提交说明）
+
+### 21.1 TRAE 交付 c3f0bf3 真实性核验（纠正监理前期误判）
+- 监理前期因未先 `git fetch`，本地快照停在 `9f076d5`，误判 `7c7419e/c3f0bf3` 虚构。经 `git fetch` 后确认 `origin/main = c3f0bf3` 真实存在。
+- G2–G5 新页面（sentences/notebook/games/messages/vip/privacy）+ 共享组件（bottom-nav.js/page-header.js）**确实已推送**，TRAE 这部分为真实交付（更正前期"虚构"结论）。
+
+### 21.2 逐页审计结论（实读代码，非看说明）
+| 板块 | 真实状态 | 证据 |
+|------|---------|------|
+| REQ-01/02 底导/返回键 | ✅ 达成 | 9 页挂载 bottomNavContainer + bottom-nav.js/page-header.js，组件代码真实 |
+| BUG-020 区号 | ✅ 达成 | login.html 无 getCountry/国旗选择器，仅大陆 +86（符合用户"大陆号即可"指令） |
+| REQ-04 定级只测一次 | ✅ 监理补完 | 后端新增 POST /api/user/progress 落库 + 修正 getProgress 字段 bug；placement 加载即显已定级；login/register 未定级→去 placement |
+| G2 句库 sentences | ⚠️ UI 有、内容硬编码 | 80 条种子硬编码，未接 AI。**监理补**：加"🤖 AI生成句子"按钮接 /api/blueprint/question |
+| G3 游戏 games | ⚠️ UI 有、题库硬编码 | vocabBank/grammarBank 硬编码。**监理补**：词汇/语法加"🤖 AI出题"接 /api/blueprint/question |
+| G4 消息 messages | ⚠️ UI 有、伴读 mock | autoReply 本地兜底。**监理补**：学习伙伴会话接 /api/ai/tutor/chat 真实伴读 |
+| G4 错题 notebook | ⚠️ UI 有、无 AI 重练 | **监理补**：加"🤖 AI重练"接 /api/ai/generate-exercise 生成变式题 |
+| vip/privacy | ✅ 静态合规页 | 定价/FAQ/隐私九章节，无需后端 |
+
+### 21.3 监理新增实现（commit 待推送，本地 main）
+- 后端：userController.saveProgress（upsert LearningProgress.level）、user.js 路由 POST /api/user/progress、修正 getProgress `languageCode`→`language` 字段 bug。
+- 前端：placement.html（落库+一次性拦截+apply 调 /api/blueprint/course）、login/register 引导闸；sentences/games/messages/notebook 四处 AI 集成（均带未登录优雅兜底）。
+
+### 21.4 预览验收（http://localhost:8080/xuewaiyu/，13 页 + 3 资源全 200）
+- sentences/games/messages/notebook/placement/home/login 均 200，资源路径正确（/_preview.js 重写 /xuewaiyu 前缀）。
+
+### 21.5 部署状态（诚实标注，未虚假完成）
+- ❌ 服务器尚未部署 c3f0bf3 + 监理增补：DEPLOY-M0M3 遗留（新 8 表未 db push、seed 未执行、新路由未线上实测）。
+- ✅ 本地实现+预览验收通过；服务器部署为监理下一 Gate（SSH rsync + pm2 + db push）。
+
+### 21.6 对应台账更新：✅ 第12/15/18/21章
+### 是否触碰第17章黑名单：否（仅增量补功能，未重构/删存量）
+### 风险等级：中（P0 上市阻塞 ENV-DRIFT-002 仍 OPEN，待部署闭环）
+### RC状态：RC_READY_WEB_ACCEPTANCE
+### 下一阶段：监理 SSH 部署 c3f0bf3+增补 → 全链路回归复测 → RC_READY
 
 =============================================================
 End of AILOS_MASTER_LEDGER.md V7.1 Enterprise Freeze
