@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -107,10 +107,13 @@
     .greeting h2 { font-size: 20px; font-weight: 700; }
     .greeting p { font-size: 13px; color: var(--text-secondary); }
     .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+    .lang-switch {
       padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
       background: var(--card-bg); font-size: 12px; cursor: pointer;
       color: var(--text-secondary); transition: all 0.2s;
     }
+    .lang-switch:hover { border-color: var(--primary); color: var(--primary); }
+    .lang-switch.active { background: var(--primary); color: white; border-color: var(--primary); }
 
     /* Stats Grid */
     .stats-grid {
@@ -150,6 +153,7 @@
       border-bottom: 1px solid var(--border);
     }
     .lang-item:last-child { border-bottom: none; }
+    .lang-flag { font-size: 24px; width: 36px; text-align: center; }
     .lang-info { flex: 1; }
     .lang-name { font-size: 14px; font-weight: 600; }
     .lang-level { font-size: 12px; color: var(--text-secondary); }
@@ -260,7 +264,7 @@
   </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260726a"></script>
+  <script src="/xuewaiyu/assets/common.js"></script>
 
   <div class="ai-quota-card" id="aiQuotaCard">
     <div class="ai-quota-header"><span class="ai-quota-title">今日AI额度</span><span class="ai-quota-icon">🤖</span></div>
@@ -373,6 +377,7 @@
         todayCheckedIn: '今日已打卡',
         checkInNow: '打卡',
         logout: '退出',
+        switchLang: '语言'
       },
       en: {
         loading: 'Loading your dashboard...',
@@ -411,6 +416,7 @@
         todayCheckedIn: 'Checked In Today',
         checkInNow: 'Check In',
         logout: 'Logout',
+        switchLang: 'Language'
       },
       ja: {
         loading: 'ダッシュボードを読み込み中...',
@@ -449,6 +455,7 @@
         todayCheckedIn: '本日チェックイン済み',
         checkInNow: 'チェックイン',
         logout: 'ログアウト',
+        switchLang: '言語'
       },
       ko: {
         loading: '대시보드 로딩 중...',
@@ -487,6 +494,7 @@
         todayCheckedIn: '오늘 출석 완료',
         checkInNow: '출석',
         logout: '로그아웃',
+        switchLang: '언어'
       }
     };
 
@@ -668,11 +676,22 @@
             '<p>' + t('overallLevel') + ': ' + (user.level || d.learningProfile?.overallLevel || '初学者') + '</p>' +
           '</div>' +
         '</div>' +
-        '<div class="header-right">' + '' + '</div>' +
+        '<div class="header-right">' + renderLangSwitches() + '</div>' +
       '</div>';
     }
 
-    
+    function renderLangSwitches() {
+      var langs = [
+        { code: 'zh', label: '中' },
+        { code: 'en', label: 'EN' },
+        { code: 'ja', label: '日' },
+        { code: 'ko', label: '한' }
+      ];
+      return langs.map(function(l) {
+        var active = l.code === currentLang ? ' active' : '';
+        return '<button class="lang-switch' + active + '" onclick="switchLang(\'' + l.code + '\')">' + l.label + '</button>';
+      }).join('');
+    }
 
     function renderStats(d) {
       // BUG-014 fix: 适配实际API返回格式 d.learning = { totalWords, totalMinutes, todayMinutes, streak }
@@ -790,6 +809,7 @@
         html += langs.map(function(l) {
           var p = l.progress || {};
           var progressPct = Math.min(100, Math.round((p.totalWords || 0) / 50 * 100));
+          return '<div class="lang-item"><div class="lang-flag">' + (langFlags[l.languageCode] || '🌐') + '</div><div class="lang-info"><div class="lang-name">' + (langNames[l.languageCode] || l.languageCode) + '</div><div class="lang-level">' + l.level + '</div><div class="progress-bar"><div class="progress-fill" style="width:' + progressPct + '%"></div></div></div><div class="lang-streak">🔥 ' + (p.currentStreak || 0) + ' ' + t('dayStreak') + '</div></div>';
         }).join('');
       }
       html += '</div>';
@@ -865,7 +885,11 @@
     }
 
     // ============ Helpers ============
-    
+    function switchLang(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      render();
+    }
 
     function formatTime(isoString) {
       if (!isoString) return '';
