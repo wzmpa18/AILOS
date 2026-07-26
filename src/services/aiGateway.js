@@ -613,6 +613,35 @@ class AIGateway {
       logger.debug('AIGateway', '资产落库失败', { error: error.message });
     }
   }
+  /**
+   * 清空指定用户的全部 AI 响应缓存（语言切换后强制失效，避免旧语言缓存命中）
+   * @param {string} userId
+   * @returns {Promise<number>} 删除的缓存键数量
+   */
+  async clearUserCache(userId) {
+    if (!redis || !userId) return 0;
+    try {
+      const pattern = `${CACHE_PREFIX}*:${userId}:*`;
+      let cursor = '0';
+      let deleted = 0;
+      do {
+        const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 200);
+        cursor = next;
+        if (keys && keys.length) {
+          await redis.del(...keys);
+          deleted += keys.length;
+        }
+      } while (cursor !== '0');
+      if (deleted > 0) {
+        logger.info('AIGateway', `清空用户 ${userId} 的 AI 缓存 ${deleted} 条（语言切换失效）`);
+      }
+      return deleted;
+    } catch (error) {
+      logger.warn('AIGateway', 'clearUserCache 失败（非致命）', { error: error.message });
+      return 0;
+    }
+  }
+
 }
 
 // ==================== 单例 ====================
