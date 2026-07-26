@@ -10,6 +10,33 @@
 (function () {
   'use strict';
 
+  // ---- 子路径部署适配（部署红线：全站统一部署在 /xuewaiyu/ 子目录下）----
+  // 当页面位于 /xuewaiyu/ 下时，把所有以 /api/ 开头的同源请求改写为 /xuewaiyu/api/，
+  // 满足"后端 API 也必须适配子路径前缀、禁止根路径引用导致 404"的硬性要求。
+  // 仅对绝对路径 /api/... 生效；其它前缀或非子路径部署环境完全不受影响（向后兼容）。
+  if (typeof window !== 'undefined' && window.location &&
+      window.location.pathname.indexOf('/xuewaiyu/') === 0) {
+    var AILOS_API_PREFIX = '/xuewaiyu';
+    var _origFetch = window.fetch ? window.fetch.bind(window) : null;
+    if (_origFetch) {
+      window.fetch = function (input, init) {
+        if (typeof input === 'string' && input.indexOf('/api/') === 0) {
+          input = AILOS_API_PREFIX + input;
+        }
+        return _origFetch(input, init);
+      };
+    }
+    var _origXhrOpen = window.XMLHttpRequest ? window.XMLHttpRequest.prototype.open : null;
+    if (_origXhrOpen) {
+      window.XMLHttpRequest.prototype.open = function (method, url) {
+        if (typeof url === 'string' && url.indexOf('/api/') === 0) {
+          arguments[1] = AILOS_API_PREFIX + url;
+        }
+        return _origXhrOpen.apply(this, arguments);
+      };
+    }
+  }
+
   var STUDY_KEY = 'yandao_study_lang';      // 统一学习语言(新真值源)
   var LEGACY_KEY = 'yandao_target_lang_v1'; // learn.html 旧 key(向后兼容)
 
