@@ -184,7 +184,45 @@
     document.body.appendChild(a);
   }
 
+  // ===== onboarding 强制守卫（宪法 Chapter 9：未完成双语言配置禁入业务页）=====
+  // 业务页白名单外的页面 + 已登录 + /api/onboarding/status 显示语言未配置 → 强制跳引导页
+  var GUARD_EXEMPT = ['login', 'register', 'onboarding', 'landing', 'guest',
+                      'terms', 'privacy', '404', 'placement'];
+  var GUARD_KEY = 'yandao_onboarding_ok_v1'; // 会话级缓存，减少重复请求
+
+  function isExemptPage() {
+    var p = location.pathname.toLowerCase();
+    for (var i = 0; i < GUARD_EXEMPT.length; i++) {
+      if (p.indexOf(GUARD_EXEMPT[i]) >= 0) return true;
+    }
+    return false;
+  }
+
+  function enforceOnboarding() {
+    if (isExemptPage()) return;
+    var token = getToken();
+    if (!token) return; // 未登录由各页自身鉴权处理
+    try {
+      if (sessionStorage.getItem(GUARD_KEY) === '1') return;
+    } catch (e) {}
+    fetch('/api/onboarding/status', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.data) return; // 接口异常不误伤（后端仍有 LANG_CONFIG_INCOMPLETE 硬阻断兜底）
+        var s = d.data;
+        var langOk = !!(s.language && s.language.code) && !!s.nativeLanguage;
+        if (langOk) {
+          try { sessionStorage.setItem(GUARD_KEY, '1'); } catch (e) {}
+          return;
+        }
+        // 双语言未配置 → 强制重定向引导页（禁止加载业务内容）
+        location.replace('/xuewaiyu/onboarding.html');
+      })
+      .catch(function () {});
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    enforceOnboarding();
     injectStyle();
     ensureNav();
     ensureBackBtn();
