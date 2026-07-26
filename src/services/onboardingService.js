@@ -246,6 +246,11 @@ class OnboardingService {
         err.status = 400; throw err;
       }
       const level = SELF_LEVEL_INDEX[selfLevel] !== undefined ? selfLevel : 'zero';
+      // 仅保留单一 active 目标语言：先停用其余 active 记录，避免 resolve() findFirst 命中旧语言导致“改了不生效”
+      await prisma.userLearningLanguage.updateMany({
+        where: { userId, status: 'active', NOT: { languageCode } },
+        data: { status: 'inactive' },
+      });
       await prisma.userLearningLanguage.upsert({
         where: { userId_languageCode: { userId, languageCode } },
         update: { level, status: 'active', priority: 0 },
