@@ -938,3 +938,52 @@ model SpeechEvaluationRecord {
   @@index([userId, createdAt])
   @@index([planId])
 }
+
+// ============================================================
+// P2 任务二：双语言一致性校验（GAP / 双宪法第十章）
+// 说明：以 ContextResolver 归一化规则为唯一基准，逐用户核对母语/目标语言语义一致性。
+// 纯 additive：不建立指向 User 的外键关系（避免改动 User 模型 / 反向关系校验），
+// userId 以普通字段存储，便于历史追溯与对账。
+// ============================================================
+
+// language_consistency_log — 每次校验的完整审计日志（对齐审计字段规范）
+model LanguageConsistencyLog {
+  id                 String   @id @default(uuid())
+  userId             String // 校验用户 ID
+  checkTime          DateTime @default(now()) // 校验执行时间
+  nativeLangCurrent  String? // 当前母语字段实际取值
+  nativeLangExpected String? // 母语预期归一化值
+  targetLangCurrent  String? // 当前目标语言字段实际取值
+  targetLangExpected String? // 目标语言预期归一化值
+  anomalyType        String // 正常 / 轻度漂移 / 重度冲突
+  handleResult       String // 已修复 / 待人工介入 / 无操作 / 窗口期保护
+  protectWindowFlag  Boolean  @default(false) // 是否处于用户修改保护窗口期
+  operator           String   @default("system") // system / admin:<userId>
+  detail             Json? // 各表取值明细、修复项、冲突原因等
+  runId              String? // 关联本次巡检批次
+
+  @@index([userId])
+  @@index([checkTime])
+  @@index([anomalyType])
+  @@index([runId])
+}
+
+// language_consistency_alert — 重度冲突告警（同步账簿「待处理告警清单」P2_ALERT）
+model LanguageConsistencyAlert {
+  id             String    @id @default(uuid()) // 唯一告警 ID
+  userId         String // 关联用户
+  conflictFields Json // 冲突字段清单
+  tableValues    Json // 当前各表取值
+  reason         String // 异常原因
+  status         String    @default("P2_ALERT") // P2_ALERT / RESOLVED
+  operator       String    @default("system") // 生成主体
+  resolvedBy     String? // 处置管理员
+  resolvedAt     DateTime? // 处置时间
+  resolveNote    String? // 处置备注 / 修复后真值
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}

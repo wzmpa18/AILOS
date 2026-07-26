@@ -54,4 +54,7 @@ router.use('/learn', require('./learn'));
 // Onboarding (蓝图 Stage 2/3/4 — 首次引导：身份/语言/定级/目标/伴读/30天计划)
 router.use('/onboarding', require('./onboarding'));
 
+// Admin (P2 任务二 — 双语言一致性校验 + 告警处置；管理员 allowlist 鉴权)
+router.use('/admin', require('./admin'));
+
 module.exports = router;

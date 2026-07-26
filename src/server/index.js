@@ -72,6 +72,12 @@ app.use(errorHandler);
 const PORT = config.port;
 const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT} in ${config.env} mode`);
+  // P2 任务二：启动每日双语言一致性巡检定时任务
+  try {
+    require('../jobs/languageConsistencyJob').start();
+  } catch (e) {
+    logger.error('启动一致性巡检任务失败:', e.message);
+  }
 });
 
 // Graceful shutdown
