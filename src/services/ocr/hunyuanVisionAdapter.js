@@ -17,6 +17,38 @@ const TIMEOUT = 60000;
 // 单张图片预估成本（元）— 可被 SystemConfig ocr.unit_cost_cny 覆盖（photoTranslateService 处理）
 const DEFAULT_UNIT_COST_CNY = 0.01;
 
+/**
+ * 带一次重试的调用：tokenhub 上游存在偶发 504 超时（实测 gateway_error 504001），
+ * OCR 请求幂等，超时/5xx/网络错误重试 1 次后仍失败才抛 502。
+ */
+async function _postWithRetry(payload) {
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await axios.post(API_URL, payload, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': `Bearer ${API_KEY}`,
+        },
+        timeout: TIMEOUT,
+        responseType: 'json',
+      });
+    } catch (e) {
+      lastErr = e;
+      const status = e.response?.status;
+      const retriable = !e.response || status >= 500 || status === 429 ||
+        String(e.response?.data?.error?.code || '').startsWith('504');
+      if (!retriable || attempt === 1) break;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+  }
+  const detail = lastErr.response?.data?.error?.message || lastErr.response?.data?.message || lastErr.message;
+  const err = new Error(`OCR vision 调用失败: ${String(detail).slice(0, 200)}`);
+  err.code = 'OCR_PROVIDER_ERROR';
+  err.status = 502;
+  throw err;
+}
+
 const OCR_SYSTEM_PROMPT =
   '你是一个 OCR 文字识别引擎。请逐字提取图片中的全部可见文字，保持原始语言与换行，' +
   '不要翻译、不要解释、不要添加任何额外内容。若图片无文字，仅输出 [NO_TEXT]。';
@@ -29,9 +61,7 @@ async function recognize({ imageBase64, mimeType = 'image/jpeg' }) {
     throw err;
   }
   const started = Date.now();
-  let resp;
-  try {
-    resp = await axios.post(API_URL, {
+  const resp = await _postWithRetry({
     model: MODEL,
     messages: [
       { role: 'system', content: OCR_SYSTEM_PROMPT },
@@ -45,21 +75,7 @@ async function recognize({ imageBase64, mimeType = 'image/jpeg' }) {
     ],
     temperature: 0,
     max_tokens: 2048,
-  }, {
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Authorization': `Bearer ${API_KEY}`,
-    },
-    timeout: TIMEOUT,
-    responseType: 'json',
   });
-  } catch (e) {
-    const detail = e.response?.data?.error?.message || e.response?.data?.message || e.message;
-    const err = new Error(`OCR vision 调用失败: ${String(detail).slice(0, 200)}`);
-    err.code = 'OCR_PROVIDER_ERROR';
-    err.status = 502;
-    throw err;
-  }
 
   const text = (resp.data?.choices?.[0]?.message?.content || '').trim();
   const noText = text === '[NO_TEXT]' || text === '';
