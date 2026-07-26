@@ -142,7 +142,8 @@ class AIGateway {
    */
   async chatWithMessages(messages, opts = {}) {
     const startTime = Date.now();
-    const { temperature = 0.7, maxTokens = 2048, userId, scene: explicitScene } = opts;
+    // skipAsset: 跳过资产检索与资产回存（如 photo_translate 结构化 JSON 输出，不适合作为学习资产复用）
+    const { temperature = 0.7, maxTokens = 2048, userId, scene: explicitScene, skipAsset = false } = opts;
 
     // 自动检测场景
     const scene = explicitScene || this._detectScene(messages);
@@ -164,7 +165,7 @@ class AIGateway {
 
     try {
       // 1. 资产检索
-      const assetResult = await this._searchAsset(scene, { input: this._extractUserInput(messages) }, ctx);
+      const assetResult = skipAsset ? null : await this._searchAsset(scene, { input: this._extractUserInput(messages) }, ctx);
       if (assetResult) {
         logEntry.assetHit = true;
         logEntry.latencyMs = Date.now() - startTime;
@@ -233,8 +234,10 @@ class AIGateway {
       logEntry.latencyMs = Date.now() - startTime;
       await this._logRequest(logEntry);
 
-      // 9. 资产落库（异步，不阻塞响应）
-      this._saveToAssets(messages, { content: outputText }, ctx, scene).catch(() => {});
+      // 9. 资产落库（异步，不阻塞响应；skipAsset 场景不回存）
+      if (!skipAsset) {
+        this._saveToAssets(messages, { content: outputText }, ctx, scene).catch(() => {});
+      }
 
       return {
         content: outputText,
