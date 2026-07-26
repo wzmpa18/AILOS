@@ -415,7 +415,11 @@ class AIGateway {
    */
   _buildCacheKey(scene, userId, params, languageContext) {
     const targetLang = languageContext?.primaryTargetLanguage || 'default';
-    const paramsHash = Buffer.from(JSON.stringify(params || {})).toString('base64').slice(0, 32);
+    // BUG-016 修复：原实现 base64(JSON).slice(0,32) 仅编码前 24 字节，
+    // 其中 {"messages":" 前缀占 13 字节，实际区分度只有 ~11 字节（约 3 个中文字符），
+    // 导致相同前缀的不同问题发生缓存键碰撞、返回错误答案。改用 sha256 全量哈希根治。
+    const crypto = require('crypto');
+    const paramsHash = crypto.createHash('sha256').update(JSON.stringify(params || {})).digest('hex').slice(0, 32);
     return `${CACHE_PREFIX}${scene}:${userId}:${targetLang}:${paramsHash}`;
   }
 
