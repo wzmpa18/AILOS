@@ -1015,26 +1015,6 @@
                 <span data-i18n="nav.back">返回首页</span>
             </a>
             <span class="nav-logo">AILOS</span>
-            <div class="lang-switcher">
-                <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    </svg>
-                    <span id="currentLangLabel">中文</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-                <div class="lang-dropdown" id="langDropdown">
-                    <button class="lang-option active" data-lang="zh" onclick="switchLang('zh')">中文</button>
-                    <button class="lang-option" data-lang="en" onclick="switchLang('en')">English</button>
-                    <button class="lang-option" data-lang="ja" onclick="switchLang('ja')">日本語</button>
-                    <button class="lang-option" data-lang="ko" onclick="switchLang('ko')">한국어</button>
-                    <button class="lang-option" data-lang="fr" onclick="switchLang('fr')">Français</button>
-                    <button class="lang-option" data-lang="es" onclick="switchLang('es')">Español</button>
-                    <button class="lang-option" data-lang="de" onclick="switchLang('de')">Deutsch</button>
-                </div>
-            </div>
         </div>
     </nav>
 
@@ -1499,28 +1479,11 @@
                 }
             });
 
-            // Update language label
-            const langNames = { zh: '中文', en: 'English', ja: '日本語', ko: '한국어', fr: 'Français', es: 'Español', de: 'Deutsch' };
-            document.getElementById('currentLangLabel').textContent = langNames[I18N.current] || '中文';
-
-            // Update dropdown active state
-            document.querySelectorAll('.lang-option').forEach(opt => {
-                opt.classList.toggle('active', opt.getAttribute('data-lang') === I18N.current);
-            });
-
             // Update document lang attribute
             document.documentElement.lang = I18N.current;
 
             // Update preset tags
             updatePresetTags();
-        }
-
-        function switchLang(lang) {
-            I18N.current = lang;
-            applyI18N();
-            closeLangDropdown();
-            // Save preference
-            try { localStorage.setItem('ailos_lang', lang); } catch (e) { /* ignore */ }
         }
 
         function updatePresetTags() {
@@ -1543,22 +1506,6 @@
                 }
             });
         }
-
-        function toggleLangDropdown() {
-            document.getElementById('langDropdown').classList.toggle('show');
-        }
-
-        function closeLangDropdown() {
-            document.getElementById('langDropdown').classList.remove('show');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const switcher = document.querySelector('.lang-switcher');
-            if (switcher && !switcher.contains(e.target)) {
-                closeLangDropdown();
-            }
-        });
 
         /* ==================== Toast ==================== */
         let toastTimer;

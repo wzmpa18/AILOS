@@ -977,3 +977,24 @@ End of AILOS_MASTER_LEDGER.md V7.1 Enterprise Freeze
 - 你看到的"失败邮件"≠ 仓库没更新 ≠ 服务器没更新。仓库已更新、服务器已是 4a34b25、线上全功能正常。
 - CI 红是质量门禁瞬时/格式问题，已加固为"非阻断"，后续不会再因 lint/format 发失败邮件；Build 仍为有效编译校验。
 - 若你本地 `node .bin/eslint` 跑出 exit 1，那是调用方式错误（.bin/eslint 是 shell 脚本，须用 `npx eslint` 或 `./node_modules/.bin/eslint.cmd`），并非代码真错。
+
+## 双宪法合规专项（2026-07-26）
+
+### 背景
+- 已嵌入宪法补充强制条款三则：①双语言全局绑定；②语言修改唯一入口=个人中心；③AI 网关双参数校验（母语+目标语言强制从用户配置读取、前端不可篡改、缺失拦截返回标准错误码、禁止静默默认）。
+- 宪法源：`E:\最新言道APP2026-7-16\AILOS项目双宪法全套合规开发文档.docx`（= 工作区 `_blueprint_dual.md`，产品宪法 v1.0.0 + 技术宪法 v1.0.0 合并版 v2.0.0）。
+
+### 首轮代码扫描结论（4 项核验）
+1. 个人中心语言面板：profile.html 为正确入口，但自身冗余 langSwitch 条；且 home/chat/learn 等 **22 个页面**在个人中心外含 per-page 语言切换（违反条款②，P0/P1）。
+2. user_profiles 双语言字段：schema 无 UserProfile 模型，双语言落在 GLOI 表 `UserLanguagePreference.nativeLanguage`+`UserLearningLanguage.languageCode`，与宪法 C.1 漂移（违反①，P2）。
+3. 语言上下文来源：AI 网关不读库；chat.html 用前端下拉框（「中文」「英语」标签）构造 context 直传 → 前端可篡改（违反③，P0）。
+4. 参数缺失拦截：网关 `|| 'ja'/||'zh-CN'` 静默默认；languageGuard 仅 log 不拦（违反③，P0）。
+
+### 本轮 P0 整改（已落盘）
+- P0-01：`ai-companion-builder.html` 删除 7 语种下拉框 + `switchLang/toggleLangDropdown/closeLangDropdown` + 外部点击关闭 + `applyI18N` 对已删元素引用；`grep switchLang` → 0 命中。
+- P0-02：`onboarding.html` 新增母语必填步骤 `stepNative`（与 step2 并列前置），身份步骤改指向 `stepNative`，断点续走强制先选母语，step2 加母语守卫，step3 提交携带 `nativeLanguage`；后端 `onboardingService.setLanguage` 支持可选 `nativeLanguage` 写入 `UserLanguagePreference`（真实双语言字段），`/language` 路由放宽为二选一必填，`getStatus` 返回 `nativeLanguage`。后端 lint 0 错误，调用链已同步。
+
+### 交付物与证据
+- 完整差距清单：`../_dual_constitution_gap_list.md`（工作区根目录；真实现状/违反条款/优先级/整改方案/工作量 + 方法论问答）。
+- 自测：P0-01 grep 0 命中；P0-02 后端 lint 0 错误、setLanguage 2 处调用同步。端到端待服务器部署验收。
+- 提交：见本仓库本次提交（git log 最新一条）。

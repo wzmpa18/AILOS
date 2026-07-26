@@ -87,6 +87,14 @@
       <div class="err" id="err1"></div>
     </div>
 
+    <!-- Step 1.5: 母语选择（必填，与目标语言并列前置） -->
+    <div class="card hidden" id="stepNative">
+      <h2>你的母语是？</h2>
+      <p class="sub">母语用于 AI 讲解与陪读语言。完成后修改入口仅在「个人中心」。</p>
+      <div class="grid2" id="nativeGrid"></div>
+      <div class="err" id="errNative"></div>
+    </div>
+
     <!-- Step 2: 选语言 -->
     <div class="card hidden" id="step2">
       <h2>你想学习哪门语言？</h2>
@@ -211,7 +219,7 @@
       { code:'zh', flag:'🇨🇳', name:'中文' }
     ];
     var TTS_LANG = { ja:'ja-JP', en:'en-US', ko:'ko-KR', fr:'fr-FR', es:'es-ES', de:'de-DE', zh:'zh-CN' };
-    var state = { lang:null, selfLevel:null, questions:[], answers:[], qIdx:0, assessedLevel:null };
+    var state = { lang:null, selfLevel:null, nativeLang:null, questions:[], answers:[], qIdx:0, assessedLevel:null };
 
     function api(path, method, body) {
       return fetch(API + path, {
@@ -234,7 +242,7 @@
       for (var i = 0; i < is.length; i++) is[i].className = i < n ? 'on' : '';
     }
     function show(id, dotN) {
-      ['stepLoading','step1','step2','step3','step4intro','step4quiz','step4result','step5','step6','step6result','step7','step7loading','step7result'].forEach(function (s) {
+      ['stepLoading','step1','stepNative','step2','step3','step4intro','step4quiz','step4result','step5','step6','step6result','step7','step7loading','step7result'].forEach(function (s) {
         document.getElementById(s).classList.add('hidden');
       });
       document.getElementById(id).classList.remove('hidden');
@@ -246,8 +254,10 @@
     // ============ 断点续走 ============
     api('/status').then(function (st) {
       if (st.onboardingComplete) { finishLocal(st); location.href = '/xuewaiyu/home'; return; }
+      if (st.nativeLanguage) { state.nativeLang = st.nativeLanguage; }
       if (st.language) { state.lang = st.language.code; }
       if (!st.identityType) return show('step1', 0);
+      if (!st.nativeLanguage) return show('stepNative', 1);
       if (!st.language) return show('step2', 1);
       if (!st.placementDone) return show('step3', 2);
       state.assessedLevel = st.assessedLevel;
@@ -262,7 +272,7 @@
       b.onclick = function () {
         setErr('err1');
         api('/identity', 'POST', { identityType: b.dataset.idt })
-          .then(function () { show('step2', 1); })
+          .then(function () { show('stepNative', 1); })
           .catch(function (e) { setErr('err1', e.message); });
       };
     });
@@ -274,6 +284,7 @@
       c.className = 'lang-card';
       c.innerHTML = '<span class="flag">' + l.flag + '</span>' + l.name;
       c.onclick = function () {
+        if (!state.nativeLang) { setErr('err2', '请先选择母语（上一步）'); return; }
         state.lang = l.code;
         setErr('err2');
         show('step3', 2);
@@ -281,12 +292,28 @@
       grid.appendChild(c);
     });
 
+    // ============ Step 1.5 母语（必填，与目标语言并列前置，实时写入用户配置） ============
+    var ngrid = document.getElementById('nativeGrid');
+    LANGS.forEach(function (l) {
+      var c = document.createElement('div');
+      c.className = 'lang-card';
+      c.innerHTML = '<span class="flag">' + l.flag + '</span>' + l.name;
+      c.onclick = function () {
+        state.nativeLang = l.code;
+        setErr('errNative');
+        // 实时写入用户配置（真实双语言字段：UserLanguagePreference.nativeLanguage）
+        api('/language', 'POST', { nativeLanguage: state.nativeLang }).catch(function () { /* 容错，语言步会随 target 一并提交 */ });
+        show('step2', 1);
+      };
+      ngrid.appendChild(c);
+    });
+
     // ============ Step 3 自评 ============
     document.querySelectorAll('#step3 .opt').forEach(function (b) {
       b.onclick = function () {
         state.selfLevel = b.dataset.lv;
         setErr('err3');
-        api('/language', 'POST', { languageCode: state.lang, selfLevel: state.selfLevel })
+        api('/language', 'POST', { languageCode: state.lang, selfLevel: state.selfLevel, nativeLanguage: state.nativeLang })
           .then(function () { show('step4intro', 3); })
           .catch(function (e) { setErr('err3', e.message); });
       };

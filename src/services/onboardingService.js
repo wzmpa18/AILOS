@@ -193,12 +193,13 @@ const FALLBACK_BANKS = {
 class OnboardingService {
   // -------- 状态查询（断点续走） --------
   async getStatus(userId) {
-    const [identity, langs, companion, planCount, goals] = await Promise.all([
+    const [identity, langs, companion, planCount, goals, pref] = await Promise.all([
       prisma.userIdentity.findUnique({ where: { userId } }),
       prisma.userLearningLanguage.findMany({ where: { userId, status: 'active' }, orderBy: { priority: 'asc' } }),
       prisma.companionProfile.findUnique({ where: { userId } }),
       prisma.dailyLearningPlan.count({ where: { userId } }),
       prisma.learningGoal.findMany({ where: { userId, status: 'active' }, orderBy: { createdAt: 'desc' }, take: 1 }),
+      prisma.userLanguagePreference.findUnique({ where: { userId } }),
     ]);
     const lang = langs[0] || null;
     const progress = lang
@@ -217,6 +218,7 @@ class OnboardingService {
         catchphrase: companion.catchphrase, greeting: companion.greeting, avatarEmoji: companion.avatarEmoji,
       } : null,
       planReady: planCount > 0,
+      nativeLanguage: pref?.nativeLanguage || null,
       onboardingComplete: !!(identity && lang && progress && companion && planCount > 0),
     };
   }
@@ -236,18 +238,32 @@ class OnboardingService {
   }
 
   // -------- Step 2: 选语言 + 自评级别 --------
-  async setLanguage(userId, languageCode, selfLevel) {
-    if (!LANGUAGE_LEVELS[languageCode]) {
-      const err = new Error(`Unsupported language: ${languageCode}. Supported: ${Object.keys(LANGUAGE_LEVELS).join(',')}`);
-      err.status = 400; throw err;
+  async setLanguage(userId, languageCode, selfLevel, nativeLanguage) {
+    const result = {};
+    if (languageCode) {
+      if (!LANGUAGE_LEVELS[languageCode]) {
+        const err = new Error(`Unsupported language: ${languageCode}. Supported: ${Object.keys(LANGUAGE_LEVELS).join(',')}`);
+        err.status = 400; throw err;
+      }
+      const level = SELF_LEVEL_INDEX[selfLevel] !== undefined ? selfLevel : 'zero';
+      await prisma.userLearningLanguage.upsert({
+        where: { userId_languageCode: { userId, languageCode } },
+        update: { level, status: 'active', priority: 0 },
+        create: { userId, languageCode, level, status: 'active', priority: 0 },
+      });
+      result.languageCode = languageCode;
+      result.selfLevel = level;
+      result.languageName = LANGUAGE_NAMES[languageCode];
     }
-    const level = SELF_LEVEL_INDEX[selfLevel] !== undefined ? selfLevel : 'zero';
-    await prisma.userLearningLanguage.upsert({
-      where: { userId_languageCode: { userId, languageCode } },
-      update: { level, status: 'active', priority: 0 },
-      create: { userId, languageCode, level, status: 'active', priority: 0 },
-    });
-    return { languageCode, selfLevel: level, languageName: LANGUAGE_NAMES[languageCode] };
+    if (nativeLanguage) {
+      await prisma.userLanguagePreference.upsert({
+        where: { userId },
+        update: { nativeLanguage, defaultExplanationLanguage: nativeLanguage },
+        create: { userId, nativeLanguage, defaultExplanationLanguage: nativeLanguage },
+      });
+      result.nativeLanguage = nativeLanguage;
+    }
+    return result;
   }
 
   // -------- Step 3: 定级测试出题（6选择+2听力+2发音） --------

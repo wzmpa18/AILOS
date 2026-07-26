@@ -42,9 +42,9 @@ router.post('/identity', authenticate, requireUser, async (req, res, next) => {
 
 router.post('/language', authenticate, requireUser, async (req, res, next) => {
   try {
-    const { languageCode, selfLevel } = req.body || {};
-    if (!languageCode) return res.status(400).json({ success: false, error: 'languageCode is required' });
-    const data = await svc.setLanguage(req.userId, languageCode, selfLevel);
+    const { languageCode, selfLevel, nativeLanguage } = req.body || {};
+    if (!languageCode && !nativeLanguage) return res.status(400).json({ success: false, error: 'languageCode or nativeLanguage is required' });
+    const data = await svc.setLanguage(req.userId, languageCode, selfLevel, nativeLanguage);
     res.json({ success: true, data });
   } catch (e) {
     if (e.status) return res.status(e.status).json({ success: false, error: e.message });
