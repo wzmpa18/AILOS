@@ -620,7 +620,7 @@ async function sendCode() {
   showMsg('', '');
 
   try {
-    const path = currentMethod === 'phone' ? '/sms/send' : '/email/send';
+    const path = currentMethod === 'phone' ? '/send-code' : '/send-email-code';
     const body = currentMethod === 'phone' ? { phone } : { email };
     await apiCall(path, body);
     showMsg(t('msg_code_sent'), 'success');

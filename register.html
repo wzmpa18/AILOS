@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -736,7 +736,7 @@ async function sendCode() {
   btn.disabled = true;
   btn.textContent = t('msg_sending');
 
-  const endpoint = isPhone ? '/sms/send' : '/email/send';
+  const endpoint = isPhone ? '/send-code' : '/send-email-code';
   const body = isPhone ? { phone: target, countryCode: code } : { email: target };
   const result = await apiCall(endpoint, body);
 

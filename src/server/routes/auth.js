@@ -1,8 +1,9 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
 router.post('/send-code', authController.sendSmsCode);
+router.post('/send-email-code', authController.sendEmailCode);
 router.post('/phone', authController.phoneAuth);
 router.post('/password', authController.passwordAuth);
 router.post('/register', authController.register);
