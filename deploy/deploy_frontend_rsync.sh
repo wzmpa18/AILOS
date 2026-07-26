@@ -29,36 +29,16 @@ else
   mkdir -p "$TARGET"
 fi
 
-# 2. 同步 HTML 文件（不含 backend 目录）
-echo "[2/5] 同步前端 HTML 文件..."
-HTML_FILES=(
-  "home.html"
-  "learn.html"
-  "chat.html"
-  "profile.html"
-  "review.html"
-  "login.html"
-  "register.html"
-  "guest.html"
-  "landing.html"
-  "language.html"
-  "ai-companion-builder.html"
-  "discover.html"
-  "growth-center.html"
-  "partner.html"
-  "ecosystem.html"
-  "rewards.html"
-  "terms.html"
-  "404.html"
-)
-
-for f in "${HTML_FILES[@]}"; do
-  if [ -f "${SOURCE_DIR}/${f}" ]; then
-    cp "${SOURCE_DIR}/${f}" "${TARGET}/${f}"
-    echo "  ✓ ${f}"
-  else
-    echo "  ⚠ ${f} 不存在，跳过"
-  fi
+# 2. 同步 HTML 文件（宪法 Appendix C.2 双目录强制同步：动态发现全部 HTML，
+#    杜绝硬编码白名单漏文件；排除 _live_* 线上快照证据文件）
+echo "[2/5] 同步前端 HTML 文件（动态发现）..."
+for src in "${SOURCE_DIR}"/*.html; do
+  f="$(basename "$src")"
+  case "$f" in
+    _live_*|_*) echo "  - 跳过快照/临时文件 ${f}"; continue ;;
+  esac
+  cp "$src" "${TARGET}/${f}"
+  echo "  ✓ ${f}"
 done
 
 # 3. 同步 public 目录
