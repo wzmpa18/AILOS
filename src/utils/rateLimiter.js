@@ -7,10 +7,10 @@ const logger = require('./logger');
 
 /**
  * 限流白名单（验收测试号 / 特权账号）。
- * 默认含验收测试号 13480010005；可用环境变量 RATE_LIMIT_WHITELIST 追加（逗号分隔）。
- * 白名单内的 key 直接放行，避免验收期间重复触发次数限制导致登录被阻断。
+ * 宪法 Appendix D-3：敏感配置一律环境变量注入，禁止硬编码到公开仓库。
+ * 完全由环境变量 RATE_LIMIT_WHITELIST 提供（逗号分隔），代码内零默认号码。
  */
-const RATE_LIMIT_WHITELIST = (process.env.RATE_LIMIT_WHITELIST || '13480010005')
+const RATE_LIMIT_WHITELIST = (process.env.RATE_LIMIT_WHITELIST || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
