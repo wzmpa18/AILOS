@@ -497,6 +497,96 @@ async function resolveAlert(alertId, adminUserId, note) {
   return list[idx];
 }
 
+
+// ---------------- 存量治理：多 active 学习语言去重（Chapter 10 存量数据治理）----------------
+// 规则：同一用户存在多条 status=active 的 UserLearningLanguage 时，
+//   仅保留主语言（priority 最小；并列时 updatedAt 最新）为 active，其余置 inactive。
+//   与 ContextResolver 读取规则（active + priority asc）保持一致，治理后读取无歧义。
+// 保护窗口期：任一 active 记录 1 小时内被修改 → 跳过该用户，仅记录日志（防止与用户操作竞态）。
+// 全程留痕 LanguageConsistencyLog；支持 dryRun 预演。
+async function dedupeActiveLanguages(opts = {}) {
+  const { operator = 'system', dryRun = false } = opts;
+  const { randomUUID } = require('crypto');
+  const runId = opts.runId || randomUUID();
+  const now = new Date();
+  const prisma = db();
+
+  const all = await prisma.userLearningLanguage.findMany({ where: { status: 'active' } });
+  const byUser = new Map();
+  for (const r of all) {
+    if (!byUser.has(r.userId)) byUser.set(r.userId, []);
+    byUser.get(r.userId).push(r);
+  }
+
+  const stats = { scannedActiveRows: all.length, users: byUser.size, multiActiveUsers: 0, governed: 0, windowSkipped: 0, deactivatedRows: 0, errors: 0 };
+  const details = [];
+
+  for (const [userId, rows] of byUser) {
+    if (rows.length <= 1) continue;
+    stats.multiActiveUsers += 1;
+
+    // 保护窗口期判定
+    const latest = Math.max(...rows.map((r) => new Date(r.updatedAt).getTime()));
+    const inWindow = now.getTime() - latest < PROTECT_WINDOW_MS;
+
+    // 保留项：priority 最小；并列时 updatedAt 最新
+    const sorted = [...rows].sort((a, b) =>
+      a.priority - b.priority || new Date(b.updatedAt) - new Date(a.updatedAt));
+    const keep = sorted[0];
+    const drop = sorted.slice(1);
+
+    const record = {
+      userId,
+      checkTime: now,
+      nativeLangCurrent: null,
+      nativeLangExpected: null,
+      targetLangCurrent: rows.map((r) => `${r.languageCode}#p${r.priority}`).join(','),
+      targetLangExpected: keep.languageCode,
+      anomalyType: '结构异常-多active',
+      handleResult: dryRun ? '预演-无操作' : (inWindow ? HANDLE.WINDOW : HANDLE.REPAIRED),
+      protectWindowFlag: inWindow,
+      operator,
+      detail: {
+        keep: { id: keep.id, code: keep.languageCode, priority: keep.priority, updatedAt: keep.updatedAt },
+        deactivate: drop.map((d) => ({ id: d.id, code: d.languageCode, priority: d.priority, updatedAt: d.updatedAt })),
+        rule: 'keep priority asc first (tie: updatedAt desc), others -> inactive',
+        dryRun,
+      },
+      runId,
+    };
+
+    if (inWindow) {
+      stats.windowSkipped += 1;
+      if (!dryRun) await persistLog(record);
+      details.push({ userId, action: 'WINDOW_SKIP', keep: keep.languageCode, drop: drop.map((d) => d.languageCode) });
+      continue;
+    }
+
+    if (!dryRun) {
+      try {
+        await prisma.userLearningLanguage.updateMany({
+          where: { id: { in: drop.map((d) => d.id) } },
+          data: { status: 'inactive' },
+        });
+        stats.deactivatedRows += drop.length;
+        stats.governed += 1;
+        await persistLog(record);
+      } catch (e) {
+        stats.errors += 1;
+        logger.error(`[langConsistency] 多active治理失败 user=${userId}:`, e.message);
+        continue;
+      }
+    } else {
+      stats.governed += 1;
+      stats.deactivatedRows += drop.length;
+    }
+    details.push({ userId, action: dryRun ? 'DRYRUN' : 'DEACTIVATED', keep: keep.languageCode, drop: drop.map((d) => d.languageCode) });
+  }
+
+  logger.info(`[langConsistency] 多active存量治理完成 runId=${runId} dryRun=${dryRun}`, stats);
+  return { runId, checkedAt: now.toISOString(), dryRun, stats, details };
+}
+
 module.exports = {
   // 常量
   PROTECT_WINDOW_MS,
@@ -510,6 +600,7 @@ module.exports = {
   // DB 绑定
   checkUser,
   checkAll,
+  dedupeActiveLanguages,
   applyRepairs,
   // 告警
   createAlert,
