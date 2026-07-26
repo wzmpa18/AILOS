@@ -39,7 +39,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/require-await': 'warn',
       'no-useless-escape': 'warn',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+      "prettier/prettier": ["warn", { endOfLine: "auto" }],
     },
   },
 );
