@@ -6,14 +6,29 @@ const redis = require('../config/redis');
 const logger = require('./logger');
 
 /**
+ * 限流白名单（验收测试号 / 特权账号）。
+ * 默认含验收测试号 13480010005；可用环境变量 RATE_LIMIT_WHITELIST 追加（逗号分隔）。
+ * 白名单内的 key 直接放行，避免验收期间重复触发次数限制导致登录被阻断。
+ */
+const RATE_LIMIT_WHITELIST = (process.env.RATE_LIMIT_WHITELIST || '13480010005')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/**
  * 检查速率限制
  * @param {string} key - 限制键（如手机号、IP）
  * @param {string} action - 动作类型
  * @param {number} maxAttempts - 最大尝试次数
  * @param {number} windowSeconds - 时间窗口（秒）
- * @returns {{ allowed: boolean, remaining: number, resetAt: number }}
+ * @returns {{ allowed: boolean, remaining: number, resetAt: number, whitelisted?: boolean }}
  */
 async function checkRateLimit(key, action, maxAttempts = 5, windowSeconds = 900) {
+  // 白名单直接放行（Phase 1.2：解除验收测试号登录阻断）
+  if (RATE_LIMIT_WHITELIST.includes(key)) {
+    return { allowed: true, remaining: maxAttempts, resetAt: 0, whitelisted: true };
+  }
+
   const redisKey = `ratelimit:${action}:${key}`;
 
   try {
