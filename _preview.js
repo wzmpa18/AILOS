@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = __dirname;
-const port = 8080;
+const port = 8090;
 const PREFIX = '/xuewaiyu';
 
 const mime = {
@@ -25,7 +25,12 @@ http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p.startsWith(PREFIX)) p = p.slice(PREFIX.length) || '/';
   if (p === '/') p = '/home.html';
-  const fp = path.join(root, p);
+  let fp = path.join(root, p);
+  // 兼容无扩展名路由：/xuewaiyu/home -> home.html（使站点内跳转可用）
+  if (!fs.existsSync(fp) && !path.extname(p)) {
+    const alt = path.join(root, p + '.html');
+    if (fs.existsSync(alt)) fp = alt;
+  }
   fs.readFile(fp, (e, buf) => {
     if (e) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
