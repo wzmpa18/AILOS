@@ -1,0 +1,187 @@
+{
+  "base": "https://www.yandao.vip/xuewaiyu",
+  "account": "13480010005",
+  "login_token_acquired": true,
+  "results": [
+    {
+      "device": "chrome_desktop",
+      "page": "home.html",
+      "url": "https://www.yandao.vip/xuewaiyu/home.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 128843,
+      "shot": "_webpreview\\chrome_desktop__home.html.png"
+    },
+    {
+      "device": "chrome_desktop",
+      "page": "chat.html",
+      "url": "https://www.yandao.vip/xuewaiyu/chat.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 36122,
+      "shot": "_webpreview\\chrome_desktop__chat.html.png"
+    },
+    {
+      "device": "chrome_desktop",
+      "page": "learn.html",
+      "url": "https://www.yandao.vip/xuewaiyu/learn.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 38835,
+      "shot": "_webpreview\\chrome_desktop__learn.html.png"
+    },
+    {
+      "device": "chrome_desktop",
+      "page": "profile.html",
+      "url": "https://www.yandao.vip/xuewaiyu/profile.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 51456,
+      "shot": "_webpreview\\chrome_desktop__profile.html.png"
+    },
+    {
+      "device": "chrome_desktop",
+      "page": "onboarding.html",
+      "url": "https://www.yandao.vip/xuewaiyu/onboarding.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 128834,
+      "shot": "_webpreview\\chrome_desktop__onboarding.html.png"
+    },
+    {
+      "device": "chrome_desktop",
+      "page": "language.html",
+      "url": "https://www.yandao.vip/xuewaiyu/language.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 178498,
+      "shot": "_webpreview\\chrome_desktop__language.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "home.html",
+      "url": "https://www.yandao.vip/xuewaiyu/home.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 442043,
+      "shot": "_webpreview\\chrome_mobile__home.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "chat.html",
+      "url": "https://www.yandao.vip/xuewaiyu/chat.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 126857,
+      "shot": "_webpreview\\chrome_mobile__chat.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "learn.html",
+      "url": "https://www.yandao.vip/xuewaiyu/learn.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 134085,
+      "shot": "_webpreview\\chrome_mobile__learn.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "profile.html",
+      "url": "https://www.yandao.vip/xuewaiyu/profile.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 150438,
+      "shot": "_webpreview\\chrome_mobile__profile.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "onboarding.html",
+      "url": "https://www.yandao.vip/xuewaiyu/onboarding.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 442043,
+      "shot": "_webpreview\\chrome_mobile__onboarding.html.png"
+    },
+    {
+      "device": "chrome_mobile",
+      "page": "language.html",
+      "url": "https://www.yandao.vip/xuewaiyu/language.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 307578,
+      "shot": "_webpreview\\chrome_mobile__language.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "home.html",
+      "url": "https://www.yandao.vip/xuewaiyu/home.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 89033,
+      "shot": "_webpreview\\firefox_desktop__home.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "chat.html",
+      "url": "https://www.yandao.vip/xuewaiyu/chat.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 32903,
+      "shot": "_webpreview\\firefox_desktop__chat.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "learn.html",
+      "url": "https://www.yandao.vip/xuewaiyu/learn.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 38334,
+      "shot": "_webpreview\\firefox_desktop__learn.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "profile.html",
+      "url": "https://www.yandao.vip/xuewaiyu/profile.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 55958,
+      "shot": "_webpreview\\firefox_desktop__profile.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "onboarding.html",
+      "url": "https://www.yandao.vip/xuewaiyu/onboarding.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 89033,
+      "shot": "_webpreview\\firefox_desktop__onboarding.html.png"
+    },
+    {
+      "device": "firefox_desktop",
+      "page": "language.html",
+      "url": "https://www.yandao.vip/xuewaiyu/language.html",
+      "status": 200,
+      "lc_controls": 0,
+      "lc_text_hit": false,
+      "shot_bytes": 91641,
+      "shot": "_webpreview\\firefox_desktop__language.html.png"
+    }
+  ]
+}
