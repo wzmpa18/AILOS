@@ -61,18 +61,13 @@
   .header-title {
     font-size: 18px; font-weight: 700; flex: 1;
   }
-  .lang-switch {
     display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px;
     scrollbar-width: none; -ms-overflow-style: none;
   }
-  .lang-switch::-webkit-scrollbar { display: none; }
-  .lang-flag {
     padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer;
     border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
     background: transparent; white-space: nowrap; flex-shrink: 0;
   }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
   .main-content { padding: 16px 20px; max-width: 600px; margin: 0 auto; }
 
@@ -317,7 +312,6 @@
       <a class="back-link" href="/xuewaiyu/home" data-i18n="nav_back">&#8592; 返回</a>
       <span class="header-title" data-i18n="page_title">错题本</span>
     </div>
-    <div class="lang-switch" id="langSwitch"></div>
   </div>
 
   <div class="main-content" id="app">
@@ -528,19 +522,9 @@ function detectLang() {
 var currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
-function renderLangSwitch() {
-  document.getElementById('langSwitch').innerHTML = Object.keys(LANG_NAMES).map(function(code) {
-    return '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>';
-  }).join('');
-}
 
-function switchLang(code) {
-  currentLang = code;
-  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
-  updateI18n();
-  renderLangSwitch();
-  render();
-}
+
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
@@ -957,7 +941,6 @@ function setFilter(filter) {
 
 // ==================== Init ====================
 function init() {
-  renderLangSwitch();
   updateI18n();
   render();
 }

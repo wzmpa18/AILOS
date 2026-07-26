@@ -6,6 +6,7 @@
 const prisma = require('../config/database');
 const { getAIGateway } = require('./aiGateway');
 const logger = require('../utils/logger');
+const contextResolver = require('./contextResolver'); // P2-T1: 双语言配置唯一真值源
 
 class AiTutorService {
   /**
@@ -62,7 +63,7 @@ class AiTutorService {
    * @returns {Promise<{userRecord, aiRecord, aiContent}>}
    */
   async chat(userId, message, opts = {}) {
-    const { goalId, languageContext } = opts;
+    const { goalId, userLevel: optUserLevel } = opts;
 
     // 1. 保存用户消息
     const userRecord = await this.saveDialogue(userId, {
@@ -80,10 +81,11 @@ class AiTutorService {
     }));
 
     // 3. 构建系统提示词
-    const ctx = languageContext || {};
-    const nativeLang = ctx.nativeLang || '中文';
-    const targetLang = ctx.targetLang || '英语';
-    const userLevel = ctx.userLevel || 'beginner';
+      // P2-T1: 双语言配置强制从库解析，禁止静默默认兜底（原 '中文'/'英语'）
+      const ctx = await contextResolver.resolve(userId);
+      const nativeLang = ctx.nativeLanguage;
+      const targetLang = ctx.primaryTargetLanguage;
+      const userLevel = optUserLevel || 'beginner';
 
     const systemPrompt = `你是AILOS，一位专业友好的${targetLang}语言导师。你的母语是${nativeLang}。
 规则：

@@ -19,10 +19,6 @@ ul{list-style:none}
 /* ============================================ */
 /* LANGUAGE BAR */
 /* ============================================ */
-.lang-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,10,26,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;padding:6px 12px;flex-wrap:wrap;gap:4px;min-height:44px}
-.lang-bar button{background:transparent;color:#a0a0b8;border:1px solid rgba(124,58,237,0.25);border-radius:20px;padding:4px 12px;font-size:12px;transition:all 0.25s;white-space:nowrap}
-.lang-bar button:hover{color:#e0d4ff;border-color:rgba(124,58,237,0.6);background:rgba(124,58,237,0.12)}
-.lang-bar button.active{background:linear-gradient(135deg,#7C3AED,#a855f7);color:#fff;border-color:#7C3AED;font-weight:600;box-shadow:0 2px 12px rgba(124,58,237,0.4)}
 
 /* ============================================ */
 /* SCREEN CONTAINER */
@@ -201,8 +197,6 @@ ul{list-style:none}
   .eco-cards{grid-template-columns:1fr}
   .course-cards{grid-template-columns:1fr}
   .hero-btns{flex-direction:column;align-items:center}
-  .lang-bar{gap:2px}
-  .lang-bar button{padding:3px 8px;font-size:11px}
   .compare-table{font-size:12px}
   .compare-table th,.compare-table td{padding:10px 8px}
   .sub-table{font-size:11px}
@@ -221,11 +215,6 @@ ul{list-style:none}
 </style>
 </head>
 <body>
-
-<!-- ============================================ -->
-<!-- LANGUAGE BAR -->
-<!-- ============================================ -->
-<nav class="lang-bar" id="langBar"></nav>
 
 <!-- ============================================ -->
 <!-- SCREEN 1: HERO (第1屏：主视觉) -->
@@ -1043,15 +1032,7 @@ function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) ? I18N[currentLang][key] : (I18N['zh'][key] || key);
 }
 
-function switchLang(lang) {
-  currentLang = lang;
-  document.documentElement.lang = LANG_MAP[lang] || 'zh-CN';
-  updateI18n();
-  updateSim();
-  renderLangBar();
-  // Update share modal stats
-  updateShareStats();
-}
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -1067,15 +1048,7 @@ function updateI18n() {
   });
 }
 
-function renderLangBar() {
-  const bar = document.getElementById('langBar');
-  if (!bar) return;
-  let html = '';
-  for (const [code, name] of Object.entries(LANG_NAMES)) {
-    html += '<button class="' + (code === currentLang ? 'active' : '') + '" onclick="switchLang(\'' + code + '\')">' + name + '</button>';
-  }
-  bar.innerHTML = html;
-}
+
 
 /* ============================================ */
 /* REVENUE SIMULATOR (区间预估，非固定保底) */
@@ -1238,7 +1211,6 @@ function init() {
   currentLang = detectLang();
   document.documentElement.lang = LANG_MAP[currentLang] || 'zh-CN';
   updateI18n();
-  renderLangBar();
   // Pre-generate invite code
   generateInviteCode();
   // Pause animations initially for elements out of view

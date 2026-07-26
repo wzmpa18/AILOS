@@ -63,16 +63,6 @@ body {
 .header-title {
   font-size: 18px; font-weight: 700; flex: 1;
 }
-.header-lang {
-  display: flex; gap: 2px; align-items: center;
-}
-.header-lang-btn {
-  padding: 2px 8px; border-radius: 12px; font-size: 11px; cursor: pointer;
-  border: 1.5px solid transparent; background: transparent;
-  color: var(--text-muted); transition: all .2s; white-space: nowrap;
-}
-.header-lang-btn:hover { background: var(--primary-light); color: var(--primary); }
-.header-lang-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
 /* Main Content */
 .main-content { padding: 16px 20px; max-width: 640px; margin: 0 auto; }
@@ -425,12 +415,6 @@ textarea.speech-input:focus { border-color: var(--primary); }
 <header class="header">
   <a class="back-link" href="/xuewaiyu/home">&larr; <span data-i18n="back">返回</span></a>
   <span class="header-title" data-i18n="title">30天口语速成</span>
-  <div class="header-lang" id="langSwitcher">
-    <button class="header-lang-btn" data-lang="zh">中</button>
-    <button class="header-lang-btn" data-lang="en">EN</button>
-    <button class="header-lang-btn" data-lang="ja">日</button>
-    <button class="header-lang-btn" data-lang="ko">韩</button>
-  </div>
 </header>
 
 <!-- Main Content -->
@@ -907,23 +891,8 @@ textarea.speech-input:focus { border-color: var(--primary); }
       var k = tb.getAttribute('data-i18n');
       if (k) tb.textContent = t(k);
     }
-    // Update lang switcher
-    var langBtns = document.querySelectorAll('#langSwitcher .header-lang-btn');
-    var currentLang = getLang();
-    for (var m = 0; m < langBtns.length; m++) {
-      langBtns[m].classList.toggle('active', langBtns[m].getAttribute('data-lang') === currentLang);
-    }
   }
 
-  function setLang(code) {
-    if (!I18N[code]) return;
-    try {
-      localStorage.setItem('yandao_study_lang', code);
-      if (window.AILOS && window.AILOS.setStudyLang) window.AILOS.setStudyLang(code);
-    } catch (e) {}
-    translateUI();
-    renderAll();
-  }
 
   // ==================== Token & API ====================
   function getToken() {
@@ -1811,12 +1780,6 @@ textarea.speech-input:focus { border-color: var(--primary); }
       }
     });
 
-    // Language switcher
-    document.getElementById('langSwitcher').addEventListener('click', function (e) {
-      if (e.target.classList.contains('header-lang-btn')) {
-        setLang(e.target.getAttribute('data-lang'));
-      }
-    });
   });
 
   // Expose globals for onclick handlers

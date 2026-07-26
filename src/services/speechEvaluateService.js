@@ -30,16 +30,11 @@ class SpeechEvaluateService {
         throw new Error('userId, transcript, referenceText, and targetLanguage are required');
       }
 
-      const languageContext = {
-        primaryTargetLanguage: targetLanguage,
-        explanationLanguage: 'zh-CN',
-      };
-
+      // P2-T1: 不在此构造 languageContext —— aiGateway 强制从库解析（忽略传入），取消 'zh-CN' 静默默认
       // 通过 aiGateway 进行口语评测
       const aiResponse = await aiGateway.call({
         scene: 'review',
         userId,
-        languageContext,
         params: {
           input: transcript,
           text: referenceText,

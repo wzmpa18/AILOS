@@ -67,16 +67,12 @@
   }
   .btn-home:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-  .lang-switch {
     display: flex; justify-content: center; gap: 4px; margin-bottom: 32px; flex-wrap: wrap;
   }
-  .lang-flag {
     padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer;
     border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
     background: transparent;
   }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
   .logo { margin-bottom: 24px; }
   .logo-text { font-size: 20px; font-weight: 800; color: var(--primary); }
@@ -96,7 +92,6 @@
     <div class="logo-text">AILOS</div>
   </div>
 
-  <div class="lang-switch" id="langSwitch"></div>
 
   <div class="error-num">404</div>
   <div class="error-icon">🔍</div>
@@ -159,18 +154,9 @@ function detectLang() {
 let currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
-function renderLangSwitch() {
-  document.getElementById('langSwitch').innerHTML = Object.keys(LANG_NAMES).map(code =>
-    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
-  ).join('');
-}
 
-function switchLang(code) {
-  currentLang = code;
-  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
-  updateI18n();
-  renderLangSwitch();
-}
+
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -181,7 +167,6 @@ function updateI18n() {
 }
 
 // ==================== Init ====================
-renderLangSwitch();
 updateI18n();
 </script>
 </body>

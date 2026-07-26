@@ -21,12 +21,16 @@ const logger = require('../utils/logger');
 const axios = require('axios');
 const config = require('../config');
 const { getSystemConfigService } = require('./systemConfigService');
-const { getLanguageGuard } = require('./languageGuard');
+const { getLanguageGuard, LangOutputMismatchError } = require('./languageGuard');
+const contextResolver = require('./contextResolver'); // GAP-03: 语言上下文唯一真值源（忽略前端，从库解析）
 
 // ==================== 配置 ====================
 
 const CACHE_TTL = 3600; // Redis 缓存 TTL（秒）
 const CACHE_PREFIX = 'ailos:ai:cache:';
+// 系统级默认生成语言（仅用于无用户上下文的系统调用，非用户配置、非前端可篡改）
+const SYSTEM_TARGET_LANG = process.env.SYSTEM_TARGET_LANG || 'ja';
+const SYSTEM_EXPLAIN_LANG = process.env.SYSTEM_EXPLAIN_LANG || 'zh-CN';
 
 class AIGateway {
   /**
@@ -38,7 +42,9 @@ class AIGateway {
    * @param {Object} params.params - 场景参数
    * @returns {Promise<{ result: any, source: string, assetHit: boolean, latencyMs: number }>}
    */
-  async call({ scene, userId, languageContext, params }) {
+  async call({ scene, userId, params }) {
+    // GAP-03/04: 语言上下文强制从数据库解析，直接忽略前端传入的任何 languageContext
+    const languageContext = await this._resolveLangCtx(userId);
     const startTime = Date.now();
     const logEntry = {
       userId,
@@ -91,9 +97,12 @@ class AIGateway {
       // 5. 调用腾讯混元（外部 API）
       const aiResult = await this._callAI(prompt, languageContext, scene);
 
-      // 6. Language Guard 输出校验
+      // 6. Language Guard 输出校验（GAP-04：语种不匹配直接拦截丢弃，不返回前端）
       const outputText = aiResult.choices?.[0]?.message?.content || '';
-      const outputCheck = guard.validateOutput(outputText, languageContext);
+      const outputCheck = guard.validateOutput(outputText, languageContext, scene);
+      if (outputCheck.langMismatch) {
+        throw new LangOutputMismatchError(outputCheck.reason || 'AI 输出语种与用户配置不符');
+      }
       if (!outputCheck.valid && outputCheck.needsRetry) {
         logger.warn('AIGateway', 'Language Guard 输出违规，需要重试', {
           userId, scene, violations: outputCheck.violations,
@@ -133,11 +142,12 @@ class AIGateway {
    */
   async chatWithMessages(messages, opts = {}) {
     const startTime = Date.now();
-    const { temperature = 0.7, maxTokens = 2048, userId, languageContext, scene: explicitScene } = opts;
+    const { temperature = 0.7, maxTokens = 2048, userId, scene: explicitScene } = opts;
 
     // 自动检测场景
     const scene = explicitScene || this._detectScene(messages);
-    const ctx = languageContext || this._extractLanguageContext(messages);
+    // GAP-03/04: 语言上下文强制从数据库解析，忽略前端传入的任何 languageContext
+    const ctx = await this._resolveLangCtx(userId);
 
     const logEntry = {
       userId,
@@ -204,9 +214,12 @@ class AIGateway {
 
       const aiResult = await this._callAI(aiMessages, { temperature, maxTokens });
 
-      // 6. Language Guard 输出校验
+      // 6. Language Guard 输出校验（GAP-04：语种不匹配直接拦截丢弃，不返回前端）
       const outputText = aiResult.content || '';
-      const outputCheck = guard.validateOutput(outputText, ctx);
+      const outputCheck = guard.validateOutput(outputText, ctx, scene);
+      if (outputCheck.langMismatch) {
+        throw new LangOutputMismatchError(outputCheck.reason || 'AI 输出语种与用户配置不符');
+      }
       if (!outputCheck.valid && outputCheck.needsRetry) {
         logger.warn('AIGateway', 'Language Guard 输出违规', { userId, scene, violations: outputCheck.violations });
       }
@@ -270,8 +283,8 @@ class AIGateway {
    */
   async _searchAsset(scene, params, languageContext) {
     try {
-      const targetLang = languageContext?.primaryTargetLanguage || 'ja';
-      const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+      const targetLang = languageContext.primaryTargetLanguage;
+      const explanationLang = languageContext.explanationLanguage;
 
       const assets = await prisma.learningContent.findMany({
         where: {
@@ -308,7 +321,7 @@ class AIGateway {
     const template = await prisma.aiPromptTemplate.findFirst({
       where: {
         scene,
-        languageCode: languageContext?.explanationLanguage || 'zh-CN',
+        languageCode: languageContext.explanationLanguage,
         status: 'active',
       },
       orderBy: { version: 'desc' },
@@ -328,7 +341,7 @@ class AIGateway {
       // 注入语言上下文
       if (languageContext) {
         prompt = prompt.replace('{{target_language}}', languageContext.primaryTargetLanguage || '');
-        prompt = prompt.replace('{{explanation_language}}', languageContext.explanationLanguage || 'zh-CN');
+        prompt = prompt.replace('{{explanation_language}}', languageContext.explanationLanguage);
       }
 
       return prompt;
@@ -342,8 +355,8 @@ class AIGateway {
    * 构建默认 Prompt
    */
   _buildDefaultPrompt(scene, params, languageContext) {
-    const targetLang = languageContext?.primaryTargetLanguage || 'ja';
-    const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+    const targetLang = languageContext.primaryTargetLanguage;
+    const explanationLang = languageContext.explanationLanguage;
 
     const basePrompts = {
       lesson_generate: `Generate a ${targetLang} language lesson. Explain in ${explanationLang}. Topic: ${params.topic || 'general'}. Level: ${params.level || 'beginner'}.`,
@@ -381,8 +394,8 @@ class AIGateway {
    * 根据场景构建系统提示词
    */
   _buildSystemPrompt(scene, languageContext) {
-    const targetLang = languageContext?.primaryTargetLanguage || 'ja';
-    const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+    const targetLang = languageContext.primaryTargetLanguage;
+    const explanationLang = languageContext.explanationLanguage;
 
     const prompts = {
       lesson_generate: `You are a professional ${targetLang} language teacher. Generate lessons in ${targetLang} with explanations in ${explanationLang}.`,
@@ -486,18 +499,24 @@ class AIGateway {
   }
 
   /**
-   * 从 messages 中提取语言上下文
+   * GAP-03/04：语言上下文唯一解析入口
+   * 真实用户：用 userId 从数据库读取双语言（忽略任何前端传入参数），缺失即抛标准错误。
+   * 系统 / 无 userId 调用：绝不信任前端，使用系统固定上下文。
+   * @param {string} userId
    */
-  _extractLanguageContext(messages) {
-    const systemMsg = messages.find(m => m.role === 'system');
-    const content = systemMsg ? systemMsg.content : '';
-    // 尝试从 Prompt 中提取语言信息
-    const nativeLangMatch = content.match(/母语是([^\s，。]+)/) || content.match(/native.*?is\s+(\w+)/i);
-    const targetLangMatch = content.match(/教用户学习([^\s，。]+)/) || content.match(/target.*?(\w+)/i) || content.match(/翻译成([^\s，。]+)/);
-    return {
-      primaryTargetLanguage: targetLangMatch ? targetLangMatch[1] : 'en',
-      explanationLanguage: nativeLangMatch ? nativeLangMatch[1] : 'zh-CN',
-    };
+  async _resolveLangCtx(userId) {
+    if (userId && userId !== 'system') {
+      // 缺失双语言配置时抛 LANG_CONFIG_INCOMPLETE（HTTP 400），禁止静默默认
+      return await contextResolver.resolve(userId);
+    }
+    return this._systemContext();
+  }
+
+  /**
+   * 系统级固定语言上下文（非用户配置、非前端可篡改），仅用于无用户上下文的系统调用
+   */
+  _systemContext() {
+    return { primaryTargetLanguage: SYSTEM_TARGET_LANG, explanationLanguage: SYSTEM_EXPLAIN_LANG };
   }
 
   /**
@@ -516,7 +535,7 @@ class AIGateway {
     const template = await prisma.aiPromptTemplate.findFirst({
       where: {
         scene,
-        languageCode: languageContext?.explanationLanguage || 'zh-CN',
+        languageCode: languageContext.explanationLanguage,
         status: 'active',
       },
       orderBy: { version: 'desc' },
@@ -529,7 +548,7 @@ class AIGateway {
         : (template.variables || []);
 
       const targetLang = languageContext?.primaryTargetLanguage || 'en';
-      const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+      const explanationLang = languageContext.explanationLanguage;
 
       // 替换模板变量
       prompt = prompt.replace(/\{\{target_language\}\}/g, targetLang);
@@ -560,7 +579,7 @@ class AIGateway {
   async _saveToAssets(messages, aiResponse, languageContext, scene) {
     try {
       const targetLang = languageContext?.primaryTargetLanguage || 'en';
-      const explanationLang = languageContext?.explanationLanguage || 'zh-CN';
+      const explanationLang = languageContext.explanationLanguage;
       const contentType = this._sceneToContentType(scene);
 
       await prisma.learningContent.create({

@@ -62,17 +62,12 @@
     display: none;
   }
 
-  .lang-switch {
     display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
   }
-  .lang-switch::-webkit-scrollbar { display: none; }
-  .lang-flag {
     padding: 3px 8px; border-radius: 14px; font-size: 11px; cursor: pointer;
     border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
     background: transparent; white-space: nowrap; flex-shrink: 0;
   }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
   /* ========== Main Layout ========== */
   .main-container {
@@ -82,7 +77,6 @@
   }
 
   /* ========== Language Context ========== */
-  .lang-context {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -90,26 +84,20 @@
     margin-top: 12px;
     flex-shrink: 0;
   }
-  .lang-context-header {
     font-size: 12px; font-weight: 600; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
   }
-  .lang-context-row {
     display: flex; gap: 8px; flex-wrap: wrap;
   }
-  .lang-context-item {
     flex: 1; min-width: 0;
   }
-  .lang-context-item label {
     display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;
   }
-  .lang-context-item select {
     width: 100%; padding: 8px 10px; border: 1.5px solid var(--border);
     border-radius: 8px; font-size: 13px; font-family: inherit;
     background: var(--bg); color: var(--text); cursor: pointer;
     transition: border-color .2s;
   }
-  .lang-context-item select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
 
   /* ========== Chat Area ========== */
   .chat-area {
@@ -297,11 +285,7 @@
     .navbar { padding: 0 10px; }
     .nav-back { font-size: 12px; }
     .nav-title { display: block; font-size: 14px; }
-    .lang-flag { padding: 2px 6px; font-size: 10px; }
     .main-container { padding: 0 10px; }
-    .lang-context { padding: 10px 12px; margin-top: 8px; }
-    .lang-context-row { gap: 4px; }
-    .lang-context-item select { font-size: 12px; padding: 6px 8px; }
     .msg-bubble { max-width: 92%; }
     .msg-content { font-size: 13px; padding: 10px 12px; }
     .guest-modal { padding: 28px 20px; }
@@ -311,8 +295,6 @@
     .btn-clear { width: 34px; height: 34px; }
   }
   @media (max-width: 375px) {
-    .lang-flag { padding: 2px 5px; font-size: 10px; }
-    .lang-context-row { flex-direction: column; gap: 6px; }
     .msg-bubble { max-width: 95%; }
   }
 
@@ -363,51 +345,12 @@
     <a class="nav-back" href="/xuewaiyu/landing.html" data-i18n="back_to_home">&#8592; 返回首页</a>
     <span class="nav-title" data-i18n="chat_title">AI 对话</span>
   </div>
-  <div class="lang-switch" id="langSwitch"></div>
 </nav>
 
 <!-- ==================== Main Content ==================== -->
 <div class="main-container">
-  <!-- Language Context -->
-  <div class="lang-context">
-    <div class="lang-context-header" data-i18n="lang_context_title">语言上下文</div>
-    <div class="lang-context-row">
-      <div class="lang-context-item">
-        <label data-i18n="native_lang">我的母语</label>
-        <select id="nativeLang" onchange="onContextChange()">
-          <option value="中文" data-i18n="lang_zh">中文</option>
-          <option value="English" data-i18n="lang_en">English</option>
-          <option value="日本語" data-i18n="lang_ja">日本語</option>
-          <option value="한국어" data-i18n="lang_ko">한국어</option>
-          <option value="Français" data-i18n="lang_fr">Français</option>
-          <option value="Español" data-i18n="lang_es">Español</option>
-          <option value="Deutsch" data-i18n="lang_de">Deutsch</option>
-        </select>
-      </div>
-      <div class="lang-context-item">
-        <label data-i18n="target_lang">目标学习语言</label>
-        <select id="targetLang" onchange="onContextChange()">
-          <option value="英语" data-i18n="lang_zh">English</option>
-          <option value="中文" data-i18n="lang_en">中文</option>
-          <option value="日本語" data-i18n="lang_ja">日本語</option>
-          <option value="한국어" data-i18n="lang_ko">한국어</option>
-          <option value="Français" data-i18n="lang_fr">Français</option>
-          <option value="Español" data-i18n="lang_es">Español</option>
-          <option value="Deutsch" data-i18n="lang_de">Deutsch</option>
-        </select>
-      </div>
-      <div class="lang-context-item">
-        <label data-i18n="user_level">我的水平</label>
-        <select id="userLevel" onchange="onContextChange()">
-          <option value="beginner" data-i18n="level_beginner">初级</option>
-          <option value="intermediate" data-i18n="level_intermediate">中级</option>
-          <option value="advanced" data-i18n="level_advanced">高级</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
   <!-- Banner -->
+
   <div class="banner hidden" id="banner"></div>
 
   <!-- Chat Area -->
@@ -745,23 +688,9 @@ var currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
 // ==================== Render Language Switch ====================
-function renderLangSwitch() {
-  var container = document.getElementById('langSwitch');
-  var html = '';
-  for (var i = 0; i < LANG_CODES.length; i++) {
-    var code = LANG_CODES[i];
-    html += '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>';
-  }
-  container.innerHTML = html;
-}
 
-function switchLang(code) {
-  currentLang = code;
-  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
-  updateI18n();
-  renderLangSwitch();
-  renderChatMessages();
-}
+
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
@@ -809,63 +738,13 @@ var isSending = false;
 var aiStatus = 'disconnected'; // disconnected | connecting | connected | configuring
 
 // ==================== Language Context ====================
-function getLanguageContext() {
-  var nativeLangEl = document.getElementById('nativeLang');
-  var targetLangEl = document.getElementById('targetLang');
-  var userLevelEl = document.getElementById('userLevel');
 
-  var nativeLangMap = {
-    '中文': 'zh', 'English': 'en', '日本語': 'ja', '한국어': 'ko',
-    'Français': 'fr', 'Español': 'es', 'Deutsch': 'de'
-  };
-  var targetLangMap = {
-    '英语': 'en', '中文': 'zh', '日本語': 'ja', '한국어': 'ko',
-    'Français': 'fr', 'Español': 'es', 'Deutsch': 'de'
-  };
 
-  return {
-    interfaceLang: currentLang,
-    nativeLang: nativeLangEl.value,
-    targetLang: targetLangEl.value,
-    nativeLangCode: nativeLangMap[nativeLangEl.value] || 'zh',
-    targetLangCode: targetLangMap[targetLangEl.value] || 'en',
-    userLevel: userLevelEl.value
-  };
-}
 
-function onContextChange() {
-  saveContext();
-}
 
-function saveContext() {
-  var ctx = getLanguageContext();
-  try {
-    localStorage.setItem('yandao_chat_context_v1', JSON.stringify({
-      nativeLang: ctx.nativeLang,
-      targetLang: ctx.targetLang,
-      userLevel: ctx.userLevel
-    }));
-  } catch(e) {}
-  // 把对话中选择的目标语言同步回全局统一学习语言
-  try { if (window.AILOS && ctx.targetLangCode) window.AILOS.setStudyLang(ctx.targetLangCode); } catch(e) {}
-}
 
-function loadContext() {
-  try {
-    var raw = localStorage.getItem('yandao_chat_context_v1');
-    if (raw) {
-      var ctx = JSON.parse(raw);
-      if (ctx.nativeLang) document.getElementById('nativeLang').value = ctx.nativeLang;
-      if (ctx.targetLang) document.getElementById('targetLang').value = ctx.targetLang;
-      if (ctx.userLevel) document.getElementById('userLevel').value = ctx.userLevel;
-    } else if (window.AILOS) {
-      // 未保存过对话上下文时，默认目标语言跟随全局统一学习语言
-      var sl = window.AILOS.getStudyLang();
-      var lbl = window.AILOS.CODE_TO_LABEL[sl] || sl;
-      if (lbl && document.getElementById('targetLang')) document.getElementById('targetLang').value = lbl;
-    }
-  } catch(e) {}
-}
+
+
 
 // ==================== Chat Messages ====================
 function loadMessages() {
@@ -1101,18 +980,11 @@ async function sendMessage() {
   showTypingIndicator();
   setAIStatus('connecting');
 
-  var ctx = getLanguageContext();
 
   try {
     var result = await apiCall('/chat', {
       userInput: text,
-      languageContext: {
-        interfaceLang: ctx.interfaceLang,
-        nativeLang: ctx.nativeLang,
-        targetLang: ctx.targetLang,
-        userLevel: ctx.userLevel
-      },
-      conversationId: conversationId
+            conversationId: conversationId
     });
 
     removeTypingIndicator();
@@ -1172,10 +1044,8 @@ function autoResizeTextarea() {
 
 // ==================== Init ====================
 function init() {
-  loadContext();
   loadMessages();
   loadConversationId();
-  renderLangSwitch();
   renderChatMessages();
   updateI18n();
   checkGuest();

@@ -1,4 +1,5 @@
 const learningContentService = require('../../services/learningContentService');
+const contextResolver = require('../../services/contextResolver'); // P2-T1: 双语言配置唯一真值源
 const logger = require('../../utils/logger');
 
 const learningContentController = {
@@ -9,8 +10,8 @@ const learningContentController = {
   async getContent(req, res, next) {
     try {
       const { type, language, difficulty, page, pageSize } = req.query;
-      const languageContext = req.language_context;
-      const targetLanguage = language || languageContext?.primaryTargetLanguage || 'ja';
+      // P2-T1: 目标语言优先取显式内容筛选；否则从库解析（禁止静默默认 'ja'）
+      const targetLanguage = language || (await contextResolver.resolve(req.userId)).primaryTargetLanguage;
 
       const result = await learningContentService.getContent({
         contentType: type,
@@ -33,9 +34,9 @@ const learningContentController = {
    */
   async getSummary(req, res, next) {
     try {
-      const languageContext = req.language_context;
       const { language } = req.query;
-      const targetLanguage = language || languageContext?.primaryTargetLanguage || 'ja';
+      // P2-T1: 目标语言优先取显式筛选；否则从库解析（禁止静默默认 'ja'）
+      const targetLanguage = language || (await contextResolver.resolve(req.userId)).primaryTargetLanguage;
 
       const summary = await learningContentService.getContentSummary(targetLanguage);
 

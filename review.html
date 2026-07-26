@@ -58,12 +58,6 @@
   .header-back:hover { background: var(--primary-light); }
   .header-back:active { transform: scale(0.95); }
   .header-title { font-size: 18px; font-weight: 700; flex: 1; }
-  .header-lang {
-    font-size: 13px; color: var(--text-secondary);
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 10px; cursor: pointer;
-    flex-shrink: 0;
-  }
 
   .container { max-width: 680px; margin: 0 auto; padding: 16px; }
 
@@ -322,7 +316,6 @@
   <div class="header">
     <a class="header-back" href="/xuewaiyu/home" title="返回">&#8592;</a>
     <span class="header-title" id="headerTitle">SRS 间隔复习</span>
-    <button class="header-lang" id="langBtn" title="切换语言">ZH</button>
   </div>
 
   <!-- Main Content -->
@@ -877,24 +870,7 @@
   // ============================================================================
   // Language Switcher
   // ============================================================================
-  function setupLangSwitcher() {
-    var btn = document.getElementById('langBtn');
-    var langNames = { zh: 'ZH', en: 'EN', ja: 'JA', ko: 'KO' };
-    var langOrder = ['zh', 'en', 'ja', 'ko'];
-
-    btn.textContent = langNames[currentLang] || 'ZH';
-
-    btn.addEventListener('click', function() {
-      var idx = langOrder.indexOf(currentLang);
-      idx = (idx + 1) % langOrder.length;
-      currentLang = langOrder[idx];
-      localStorage.setItem('xuewaiyu_lang', currentLang);
-      btn.textContent = langNames[currentLang];
-      document.getElementById('headerTitle').textContent = t('title');
-      document.getElementById('loadingText').textContent = t('loading');
-      renderContent();
-    });
-  }
+  
 
   // ============================================================================
   // Bottom Nav
@@ -926,7 +902,6 @@
   function init() {
     document.getElementById('headerTitle').textContent = t('title');
     document.getElementById('loadingText').textContent = t('loading');
-    setupLangSwitcher();
     renderBottomNav();
     renderApp();
   }

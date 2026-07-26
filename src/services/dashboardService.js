@@ -1,14 +1,17 @@
 const prisma = require('../config/database');
 const logger = require('../utils/logger');
+const languageService = require('./languageService'); // P2-T1: 个人中心设置读接口（从库解析语言）
+const contextResolver = require('./contextResolver'); // P2-T1: 双语言配置唯一真值源
 
 class DashboardService {
   /**
    * Get personalized dashboard data for a user
    * Aggregates: learning progress, ability model, recent activity, goals, profile
    */
-  async getDashboard(userId, languageContext) {
+  async getDashboard(userId, _languageContext) {
     try {
-      const primaryLanguage = languageContext?.primaryTargetLanguage || 'ja';
+      // P2-T1: 双语言配置强制经 ContextResolver 从库解析，禁止静默默认兜底（原 'ja'）
+      const { primaryTargetLanguage: primaryLanguage } = await contextResolver.resolve(userId);
 
       // Parallel fetch all dashboard data
       const [
@@ -66,19 +69,13 @@ class DashboardService {
   }
 
   async _getLearningLanguages(userId) {
-    const languages = await prisma.userLearningLanguage.findMany({
-      where: { userId, status: 'active' },
-      orderBy: { priority: 'asc' },
-      select: {
-        languageCode: true,
-        level: true,
-        priority: true
-      }
-    });
+    // P2-T1: 语言列表统一经 languageService（个人中心设置读接口，从库解析）获取，
+    // 禁止业务模块直读 userLearningLanguage 表。
+    const { targetLanguages } = await languageService.getUserLanguages(userId);
 
     // Fetch progress for each language
     const withProgress = await Promise.all(
-      languages.map(async (lang) => {
+      targetLanguages.map(async (lang) => {
         const progress = await prisma.learningProgress.findUnique({
           where: { userId_language: { userId, language: lang.languageCode } },
           select: {

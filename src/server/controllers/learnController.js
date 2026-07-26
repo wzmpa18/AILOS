@@ -14,8 +14,18 @@
  */
 const { getAIGateway } = require('../../services/aiGateway');
 const { getCostCircuitBreaker } = require('../../services/costCircuitBreaker');
+const contextResolver = require('../../services/contextResolver'); // P2-T1: 双语言配置唯一真值源
 const logger = require('../../utils/logger');
 const prisma = require('../../config/database');
+
+// P2-T1: 解释/说明语言强制从库解析；游客/无配置回落系统固定上下文（非用户可篡改维度）
+async function resolveExplanationLanguage(userId) {
+  try {
+    return (await contextResolver.resolve(userId)).explanationLanguage;
+  } catch (e) {
+    return 'zh-CN'; // 系统固定上下文（游客/无配置）
+  }
+}
 
 // ==================== 内容类型映射 ====================
 
@@ -307,6 +317,8 @@ const learnController = {
 
       // ===== Step 2: 资产库无匹配，走 AI 生成 =====
       const userId = req.userId || 'guest';
+      // P2-T1: 解释语言从库解析（游客回落系统固定上下文）
+      const explanationLanguage = await resolveExplanationLanguage(userId);
 
       // 使用成本熔断器保护
       const circuitBreaker = getCostCircuitBreaker();
@@ -316,7 +328,7 @@ const learnController = {
           targetLanguage: language,
           contentType,
           difficultyLevel: lvl,
-          language: req.language_context?.explanationLanguage || 'zh',
+          language: explanationLanguage,
         },
         async () => {
           // 构建 AI Prompt
@@ -333,7 +345,7 @@ const learnController = {
               userId,
               temperature: 0.7,
               maxTokens: 2048,
-              languageContext: { primaryTargetLanguage: language, explanationLanguage: 'zh-CN' },
+              // P2-T1: 不传 languageContext，aiGateway 强制从库解析（忽略传入），取消 'zh-CN' 静默默认
               scene: 'lesson_generate',
             }
           );

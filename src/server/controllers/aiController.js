@@ -5,6 +5,7 @@
 // ============================================================
 const { getAIGateway } = require('../../services/aiGateway');
 const aiQuotaService = require('../../services/aiQuotaService');
+const contextResolver = require('../../services/contextResolver'); // GAP-03: 语言从库解析
 const logger = require('../../utils/logger');
 const prisma = require('../../config/database');
 
@@ -25,10 +26,11 @@ async function chat(req, res) {
       return res.status(400).json({ success: false, error: 'Empty input' });
     }
 
-    const ctx = languageContext || {};
-    const nativeLang = ctx.nativeLang || '中文';
-    const targetLang = ctx.targetLang || '英语';
-    const userLevel = ctx.userLevel || 'beginner';
+    // GAP-03：双语言强制从数据库解析，前端传入的 languageContext 被忽略（杜绝篡改）
+    const lang = await contextResolver.resolve(req.userId);
+    const nativeLang = lang.nativeLanguage;
+    const targetLang = lang.targetLanguage;
+    const userLevel = (languageContext && languageContext.userLevel) || 'beginner';
 
     const systemPrompt = `你是一位专业的语言教师，名叫AILOS。你的母语是${nativeLang}，你要教用户学习${targetLang}。
 请严格遵守以下规则：
@@ -137,10 +139,12 @@ async function chat(req, res) {
       },
     }).catch(() => {});
 
-    res.status(errorType === 'QUOTA_EXHAUSTED' ? 429 : 502).json({
+    const status = err.httpStatus || (errorType === 'QUOTA_EXHAUSTED' ? 429 : 502);
+    res.status(status).json({
       success: false,
-      error: 'AI-CONNECTION-PENDING',
+      error: errorType,
       errorType,
+      code: err.code,
       message: message.zh,
       message_en: message.en,
     });
@@ -152,7 +156,7 @@ async function chat(req, res) {
 // ============================================================
 async function translate(req, res) {
   try {
-    const { text, sourceLang, targetLang } = req.body;
+    const { text, sourceLang } = req.body;
 
     if (!req.userId) {
       return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
@@ -161,8 +165,10 @@ async function translate(req, res) {
       return res.status(400).json({ success: false, error: 'Text is required' });
     }
 
-    const src = sourceLang || 'auto';
-    const tgt = targetLang || 'zh-CN';
+    // GAP-03：目标语言由库解析，前端 targetLang 被忽略
+    const lang = await contextResolver.resolve(req.userId);
+    const tgt = lang.targetLanguage;
+    const src = sourceLang || lang.explanationLanguage || 'auto';
 
     const systemPrompt = `你是一个专业翻译引擎。将用户输入的文本翻译成${tgt}。只返回翻译结果，不要添加任何解释。`;
 
@@ -185,7 +191,10 @@ async function translate(req, res) {
     });
   } catch (err) {
     logger.error('AI Translate Error:', err.message);
-    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '翻译服务暂不可用' });
+    const errorType = _classifyError(err);
+    const status = err.httpStatus || 502;
+    const message = _errorMessage(errorType);
+    res.status(status).json({ success: false, error: errorType, errorType, code: err.code, message: message.zh });
   }
 }
 
@@ -194,7 +203,7 @@ async function translate(req, res) {
 // ============================================================
 async function grammarCheck(req, res) {
   try {
-    const { text, language } = req.body;
+    const { text } = req.body;
 
     if (!req.userId) {
       return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
@@ -203,7 +212,9 @@ async function grammarCheck(req, res) {
       return res.status(400).json({ success: false, error: 'Text is required' });
     }
 
-    const lang = language || 'auto';
+    // GAP-03：被检查语言由库解析（用户目标语言），前端 language 被忽略
+    const langInfo = await contextResolver.resolve(req.userId);
+    const lang = langInfo.targetLanguage;
     const systemPrompt = `你是一个语法检查器。检查用户输入的${lang}文本，找出语法错误并给出修改建议。返回JSON格式：
 {
   "corrected": "修正后的完整文本",
@@ -235,7 +246,10 @@ async function grammarCheck(req, res) {
     });
   } catch (err) {
     logger.error('AI Grammar Check Error:', err.message);
-    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '语法检查服务暂不可用' });
+    const errorType = _classifyError(err);
+    const status = err.httpStatus || 502;
+    const message = _errorMessage(errorType);
+    res.status(status).json({ success: false, error: errorType, errorType, code: err.code, message: message.zh });
   }
 }
 
@@ -244,16 +258,15 @@ async function grammarCheck(req, res) {
 // ============================================================
 async function generateExercise(req, res) {
   try {
-    const { language, level, type, count } = req.body;
+    const { level, type, count } = req.body;
 
     if (!req.userId) {
       return res.status(401).json({ success: false, error: 'GUEST_BLOCKED' });
     }
-    if (!language) {
-      return res.status(400).json({ success: false, error: 'Language is required' });
-    }
 
-    const lang = language;
+    // GAP-03：出题语言由库解析（用户目标语言），前端 language 被忽略
+    const langInfo = await contextResolver.resolve(req.userId);
+    const lang = langInfo.targetLanguage;
     const lvl = level || 'beginner';
     const exType = type || 'vocabulary';
     const cnt = Math.min(count || 5, 10);
@@ -288,7 +301,10 @@ async function generateExercise(req, res) {
     });
   } catch (err) {
     logger.error('AI Generate Exercise Error:', err.message);
-    res.status(502).json({ success: false, error: 'AI-CONNECTION-PENDING', message: '出题服务暂不可用' });
+    const errorType = _classifyError(err);
+    const status = err.httpStatus || 502;
+    const message = _errorMessage(errorType);
+    res.status(status).json({ success: false, error: errorType, errorType, code: err.code, message: message.zh });
   }
 }
 
@@ -326,6 +342,8 @@ async function getQuota(req, res) {
 // Helpers
 // ============================================================
 function _classifyError(err) {
+  if (err.code === 'LANG_CONFIG_INCOMPLETE') return 'LANG_CONFIG_INCOMPLETE';
+  if (err.code === 'LANG_OUTPUT_MISMATCH') return 'LANG_OUTPUT_MISMATCH';
   if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') return 'TIMEOUT';
   if (err.response?.status === 429) return 'RATE_LIMITED';
   if (err.response?.status === 401 || err.response?.status === 403) return 'AUTH_FAILED';
@@ -335,6 +353,8 @@ function _classifyError(err) {
 
 function _errorMessage(type) {
   const messages = {
+    LANG_CONFIG_INCOMPLETE: { zh: '用户语言配置不完整，请先在个人中心完成母语与目标语言设置', en: 'Language config incomplete' },
+    LANG_OUTPUT_MISMATCH: { zh: 'AI 输出语种与您的语言配置不符，已被拦截', en: 'AI output language mismatch' },
     TIMEOUT: { zh: 'AI响应超时，请稍后重试', en: 'AI response timeout' },
     RATE_LIMITED: { zh: 'AI请求过于频繁，请稍后重试', en: 'Too many AI requests' },
     AUTH_FAILED: { zh: 'AI服务认证失败，请联系管理员', en: 'AI auth failed' },

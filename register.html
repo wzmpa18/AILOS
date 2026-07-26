@@ -53,13 +53,6 @@
   .logo-text { font-size: 24px; font-weight: 700; color: var(--primary); }
   .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
-  .lang-switch { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
-  .lang-btn {
-    padding: 5px 12px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border);
-    background: var(--card-bg); color: var(--text-secondary); cursor: pointer; transition: all .2s;
-  }
-  .lang-btn:hover { border-color: var(--primary); color: var(--primary); }
-  .lang-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
   .tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
   .tab {
@@ -178,7 +171,6 @@
     </div>
 
     <!-- Language Switch -->
-    <div class="lang-switch" id="langSwitch"></div>
 
     <!-- Benefits -->
     <div class="benefits">
@@ -522,29 +514,9 @@ function t(key) {
          (I18N['zh'] && I18N['zh'][key]) || key;
 }
 
-function renderLangSwitch() {
-  const langs = [
-    { code: 'zh', name: '中文' },
-    { code: 'en', name: 'English' },
-    { code: 'ja', name: '日本語' },
-    { code: 'ko', name: '한국어' },
-    { code: 'fr', name: 'Français' },
-    { code: 'es', name: 'Español' },
-    { code: 'de', name: 'Deutsch' },
-  ];
-  const container = document.getElementById('langSwitch');
-  container.innerHTML = langs.map(l =>
-    `<span class="lang-btn${l.code === currentLang ? ' active' : ''}" onclick="switchLang('${l.code}')">${l.name}</span>`
-  ).join('');
-}
 
-function switchLang(code) {
-  currentLang = code;
-  renderLangSwitch();
-  updateI18n();
-  renderForm();
-  updateTabTexts();
-}
+
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -977,7 +949,6 @@ document.addEventListener('keydown', function(e) {
 // ==================== Init ====================
 (function() {
   detectLang();
-  renderLangSwitch();
   updateI18n();
   switchMode('register');
 })();

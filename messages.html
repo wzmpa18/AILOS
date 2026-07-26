@@ -62,17 +62,12 @@
     font-size: 15px; font-weight: 700; color: var(--text);
   }
 
-  .lang-switch {
     display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
   }
-  .lang-switch::-webkit-scrollbar { display: none; }
-  .lang-flag {
     padding: 3px 8px; border-radius: 14px; font-size: 11px; cursor: pointer;
     border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
     background: transparent; white-space: nowrap; flex-shrink: 0;
   }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
   /* ========== Main Container ========== */
   .main-container {
@@ -329,7 +324,6 @@
     .navbar { padding: 0 10px; }
     .nav-back { font-size: 12px; }
     .nav-title { font-size: 14px; }
-    .lang-flag { padding: 2px 6px; font-size: 10px; }
     .main-container { padding: 0 10px; }
     .tab-item { padding: 5px 12px; font-size: 12px; }
     .conv-item { padding: 12px 10px; gap: 10px; }
@@ -358,7 +352,6 @@
       <a class="nav-back" href="/xuewaiyu/home" data-i18n="back_to_home">&#8592; 返回首页</a>
       <span class="nav-title" data-i18n="page_title">消息</span>
     </div>
-    <div class="lang-switch" id="langSwitch"></div>
   </nav>
 
   <!-- ==================== Main Container ==================== -->
@@ -503,24 +496,9 @@ function detectLang() {
 var currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
-function renderLangSwitch() {
-  var container = document.getElementById('langSwitch');
-  var html = '';
-  for (var i = 0; i < LANG_CODES.length; i++) {
-    var code = LANG_CODES[i];
-    html += '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>';
-  }
-  container.innerHTML = html;
-}
 
-function switchLang(code) {
-  currentLang = code;
-  try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
-  updateI18n();
-  renderLangSwitch();
-  renderConversationList();
-  renderSystemNotifications();
-}
+
+
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
@@ -1132,7 +1110,7 @@ function sendChatMessage() {
       fetch('/api/ai/tutor/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ message: text, languageContext: { nativeLang: '中文', targetLang: studyLangName(), userLevel: storedLevel() } })
+        body: JSON.stringify({ message: text })
       })
       .then(function(r){ return r.json(); })
       .then(function(j){
@@ -1211,7 +1189,6 @@ function initTabs() {
 // ==================== Init ====================
 function init() {
   loadData();
-  renderLangSwitch();
   initTabs();
   renderConversationList();
   renderSystemNotifications();

@@ -68,16 +68,6 @@ body {
 .header-back:hover { background: var(--primary-light); }
 .header-back:active { transform: scale(0.95); }
 .header-title { font-size: 18px; font-weight: 700; flex: 1; }
-.header-lang {
-  display: flex; gap: 2px; align-items: center;
-}
-.header-lang-btn {
-  padding: 2px 8px; border-radius: 12px; font-size: 11px; cursor: pointer;
-  border: 1.5px solid transparent; background: transparent;
-  color: var(--text-muted); transition: all .2s; white-space: nowrap;
-}
-.header-lang-btn:hover { background: var(--primary-light); color: var(--primary); }
-.header-lang-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
 .container { max-width: 680px; margin: 0 auto; padding: 16px; }
 
@@ -372,12 +362,6 @@ body {
 <div class="header">
   <a href="/xuewaiyu/home" class="header-back" title="返回">&#8592;</a>
   <span class="header-title" id="pageTitle">句库</span>
-  <div class="header-lang">
-    <button class="header-lang-btn active" data-lang="zh" onclick="switchLang('zh')">中</button>
-    <button class="header-lang-btn" data-lang="en" onclick="switchLang('en')">EN</button>
-    <button class="header-lang-btn" data-lang="ja" onclick="switchLang('ja')">日</button>
-    <button class="header-lang-btn" data-lang="ko" onclick="switchLang('ko')">韩</button>
-  </div>
 </div>
 
 <div class="container">
@@ -645,17 +629,6 @@ body {
     return (i18n[currentLang] && i18n[currentLang][key]) || (i18n['zh'][key]) || key;
   }
 
-  function switchLang(lang) {
-    currentLang = lang;
-    // Update header buttons
-    document.querySelectorAll('.header-lang-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-lang') === lang);
-    });
-    document.title = 'AILOS - ' + t('pageTitle');
-    applyI18nToDOM();
-    renderCategoryTabs();
-    renderAll();
-  }
 
   function applyI18nToDOM() {
     var el = document.getElementById('pageTitle');
@@ -1214,16 +1187,12 @@ body {
     }
 
     document.title = 'AILOS - ' + t('pageTitle');
-    document.querySelectorAll('.header-lang-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-lang') === currentLang);
-    });
     applyI18nToDOM();
     renderCategoryTabs();
     renderAll();
   }
 
   /* ============ Global Exports ============ */
-  window.switchLang = switchLang;
   window.selectCategory = selectCategory;
   window.filterSentences = filterSentences;
   window.speakDaily = speakDaily;
