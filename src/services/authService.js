@@ -122,7 +122,7 @@ class AuthService {
       const isValid = await comparePassword(password, user.passwordHash);
       if (!isValid) {
         const failedAttempts = user.failedLoginAttempts + 1;
-        const updateData = { failedLoginAttempts };
+        const updateData = { failedLoginAttempts: failedAttempts };
 
         if (failedAttempts >= 5) {
           updateData.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
