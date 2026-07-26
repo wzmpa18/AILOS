@@ -54,6 +54,34 @@ function scriptsForLang(lang) {
   }
 }
 
+// 从 AI 原始输出中抽取「内容文本」用于语种判定。
+// AI 网关常返回结构化 JSON（如 {response, example, translation}）或 ```json 代码块，
+// 若直接对整段 JSON 判定，英文键名(response/example/translation)会污染占比分母导致误杀。
+// 本函数解析 JSON 并仅收集其字符串「值」（剔除键名）；非 JSON 则原样返回。
+function extractContent(text) {
+  let s = String(text || '').trim();
+  if (!s) return s;
+  // 去除 markdown 代码块围栏
+  const fence = s.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fence) s = fence[1].trim();
+  if (!(s.startsWith('{') || s.startsWith('['))) return String(text || '');
+  try {
+    const obj = JSON.parse(s);
+    const vals = [];
+    const walk = (v) => {
+      if (v == null) return;
+      if (typeof v === 'string') vals.push(v);
+      else if (Array.isArray(v)) v.forEach(walk);
+      else if (typeof v === 'object') Object.values(v).forEach(walk); // 仅取值，忽略键名
+    };
+    walk(obj);
+    const joined = vals.join(' ').trim();
+    return joined || String(text || '');
+  } catch (e) {
+    return String(text || '');
+  }
+}
+
 // 统计文本中各书写系统的实义字符数（忽略空白、标点、数字、符号）
 function countScripts(text) {
   const c = { kana: 0, hangul: 0, cjk: 0, latin: 0 };
@@ -79,7 +107,8 @@ function countScripts(text) {
 function evaluateLangCompliance(text, targetLang, nativeLang) {
   const tset = scriptsForLang(targetLang);
   if (!tset) return { mismatch: false, ratio: 1, targetCount: 0, meaningful: 0 }; // 未知目标语，放行
-  const c = countScripts(text);
+  const content = extractContent(text); // 剔除 JSON 键名等结构噪声，仅判定内容
+  const c = countScripts(content);
   const meaningful = c.kana + c.hangul + c.cjk + c.latin;
   if (meaningful === 0) return { mismatch: false, ratio: 1, targetCount: 0, meaningful: 0 }; // 纯符号/空白，交由其它规则
 
@@ -165,6 +194,7 @@ module.exports = {
   validateOutput: (t, ctx, scene) => getLanguageGuard().validateOutput(t, ctx, scene),
   detectLanguage,
   evaluateLangCompliance,
+  extractContent,
   scriptsForLang,
   LangOutputMismatchError,
 };
