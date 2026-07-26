@@ -102,6 +102,8 @@ fi
 # ============================================================
 log "[4/7] 重启 PM2 后端..."
 pm2 restart xuewaiyu-backend --update-env 2>&1 | tail -3
+# 限流白名单环境变量（幂等注入：--update-env 不复源 .env.production，须显式 set 以免丢失）
+pm2 set xuewaiyu-backend:RATE_LIMIT_WHITELIST "${RATE_LIMIT_WHITELIST:-13480010005}" 2>&1 | tail -2
 sleep 3
 if pm2 list | grep -q "xuewaiyu-backend.*online"; then
   ok "PM2 后端 online"
@@ -121,6 +123,37 @@ if [ -f "${SCRIPT_DIR}/deploy_frontend_rsync.sh" ]; then
 else
   err "未找到 deploy_frontend_rsync.sh，跳过前端同步（后端仍已部署）"
 fi
+
+# ============================================================
+# ============================================================
+# 5.5 双目录一致性校验（根因修复：禁止后端更新而前端停留在旧版 / 半同步上线）
+# 前端源码与后端同仓（SOURCE_DIR=仓库根）；部署目标 FRONTEND_DIR=/www/xuewaiyu
+# 任一前端文件与源码(${NEW_COMMIT})不符即部署失败并告警
+# ============================================================
+log "[5.5] 双目录一致性校验（后端 ${NEW_COMMIT} <-> 前端静态）..."
+SOURCE_DIR="/www/xuewaiyu-backend"
+MISMATCH=0
+for sf in "${SOURCE_DIR}"/*.html; do
+  [ -e "$sf" ] || continue
+  f="$(basename "$sf")"; case "$f" in _*|*_live_*) continue;; esac
+  d="${FRONTEND_DIR}/${f}"
+  [ -f "$d" ] || { err "前端缺失: $f"; MISMATCH=1; continue; }
+  cmp -s "$sf" "$d" || { err "前端不一致: $f"; MISMATCH=1; }
+done
+for d in assets public; do
+  [ -d "${SOURCE_DIR}/$d" ] || continue
+  while IFS= read -r sf; do
+    rel="${sf#${SOURCE_DIR}/$d/}"; t="${FRONTEND_DIR}/$d/${rel}"
+    [ -f "$t" ] || { err "前端缺失: $d/$rel"; MISMATCH=1; continue; }
+    cmp -s "$sf" "$t" || { err "前端不一致: $d/$rel"; MISMATCH=1; }
+  done < <(find "${SOURCE_DIR}/$d" -type f)
+done
+if [ "$MISMATCH" = "1" ]; then
+  err "双目录不一致：前端静态未与源码(${NEW_COMMIT})同步，部署失败并告警"
+  echo "[AILOS 部署告警] 双目录不一致，前端静态与仓库源码(${NEW_COMMIT})不符" | mail -s "[AILOS 部署告警] 双目录不一致" "${DEPLOY_ALERT_MAIL:-root}" 2>/dev/null || true
+  exit 1
+fi
+ok "双目录一致：前端静态 == 仓库源码(${NEW_COMMIT})"
 
 # ============================================================
 # 6. Nginx 校验 + 重载（幂等）
