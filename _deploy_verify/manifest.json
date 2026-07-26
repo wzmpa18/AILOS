@@ -1,0 +1,76 @@
+{
+ "pc_chrome": [
+  {
+   "page": "login.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 42660
+  },
+  {
+   "page": "chat.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 37996
+  },
+  {
+   "page": "learn.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 40640
+  },
+  {
+   "page": "home.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 148458
+  },
+  {
+   "page": "profile.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 62009
+  }
+ ],
+ "mobile": [
+  {
+   "page": "login.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 78361
+  },
+  {
+   "page": "chat.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 124071
+  },
+  {
+   "page": "learn.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 131369
+  },
+  {
+   "page": "home.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 412068
+  },
+  {
+   "page": "profile.html",
+   "status": 200,
+   "lc_controls": 0,
+   "suspicious": 0,
+   "shot_bytes": 125618
+  }
+ ]
+}
