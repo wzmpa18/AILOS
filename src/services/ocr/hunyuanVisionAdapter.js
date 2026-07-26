@@ -10,7 +10,8 @@ const config = require('../../config');
 const BASE_URL = (config.hunyuan?.apiUrl || 'https://tokenhub.tencentmaas.com/v1').replace(/\/+$/, '');
 const API_URL = BASE_URL + '/chat/completions';
 const API_KEY = config.hunyuan?.apiKey || process.env.HUNYUAN_API_KEY;
-const MODEL = process.env.OCR_VISION_MODEL || 'hunyuan-t1-vision';
+// tokenhub 在线视觉模型（/v1/models 实测）：hy-vision-2.0-instruct（默认）/ hunyuan-t1-vision-20250916
+const MODEL = process.env.OCR_VISION_MODEL || 'hy-vision-2.0-instruct';
 const TIMEOUT = 60000;
 
 // 单张图片预估成本（元）— 可被 SystemConfig ocr.unit_cost_cny 覆盖（photoTranslateService 处理）
@@ -28,7 +29,9 @@ async function recognize({ imageBase64, mimeType = 'image/jpeg' }) {
     throw err;
   }
   const started = Date.now();
-  const resp = await axios.post(API_URL, {
+  let resp;
+  try {
+    resp = await axios.post(API_URL, {
     model: MODEL,
     messages: [
       { role: 'system', content: OCR_SYSTEM_PROMPT },
@@ -50,6 +53,13 @@ async function recognize({ imageBase64, mimeType = 'image/jpeg' }) {
     timeout: TIMEOUT,
     responseType: 'json',
   });
+  } catch (e) {
+    const detail = e.response?.data?.error?.message || e.response?.data?.message || e.message;
+    const err = new Error(`OCR vision 调用失败: ${String(detail).slice(0, 200)}`);
+    err.code = 'OCR_PROVIDER_ERROR';
+    err.status = 502;
+    throw err;
+  }
 
   const text = (resp.data?.choices?.[0]?.message?.content || '').trim();
   const noText = text === '[NO_TEXT]' || text === '';
