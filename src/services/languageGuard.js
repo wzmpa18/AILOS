@@ -60,9 +60,14 @@ function getLanguageGuard() {
       const expectedLang = ctx && ctx.primaryTargetLanguage;
       let langMismatch = false;
       if (expectedLang && scene && (scene === 'conversation' || scene === 'translate')) {
-        const detected = detectLanguage(text);
-        if (detected !== 'other' && detected !== expectedLang) {
-          langMismatch = true;
+        if (expectedLang === 'en') {
+          // 拉丁字母目标语：输出含拉丁字母（例句为英文）即合规；母语解释含中文不致误杀
+          langMismatch = !/[A-Za-z]/.test(text || '');
+        } else {
+          const detected = detectLanguage(text);
+          if (detected !== 'other' && detected !== expectedLang) {
+            langMismatch = true;
+          }
         }
       }
       const valid = violations.length === 0 && !langMismatch;
