@@ -1,0 +1,42 @@
+
+===== redis dfp BEFORE =====
+BEFORE_COUNT=5
+dfp:ipq:9.9.9.0/24:20260727
+dfp:acc:c58deb3f5d87e225ec248481bf04a0ec
+dfp:ipq:82.156.228.0/24:20260727
+dfp:trial:c58deb3f5d87e225ec248481bf04a0ec
+dfp:acc:e8056068c1347b15b409689b097ca007
+
+
+===== redis dfp DELETE =====
+5
+DEL_DONE
+
+
+===== redis dfp AFTER =====
+AFTER_COUNT=0
+
+
+===== DB cleanup + create test_ accounts =====
+ERR 
+Invalid `p.user.findMany()` invocation in
+/tmp/cleanup.js:7:30
+
+  4 const p = new PrismaClient();
+  5 (async () => {
+  6   const oldPhones = ['13800000101', '13800000102'];
+→ 7   const users = await p.user.findMany(
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+
+
+===== verify test_ accounts exist =====
+
+[ERR] bash: -c: line 1: unexpected EOF while looking for matching `''
+

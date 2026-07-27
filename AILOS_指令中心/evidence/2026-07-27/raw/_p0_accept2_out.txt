@@ -1,0 +1,9 @@
+
+===== tighten demo + balance reset =====
+TIGHTEN_A  {"success":true,"data":{"success":true,"consumedSec":5,"source":"trial","orderId":null,"logId":"c0bcac3c-8973-4124-a291-74748ef81c32","balanceAfterSec":270}}|HTTP_200
+TIGHTEN_B  {"success":true,"data":{"success":true,"consumedSec":5,"source":"trial","orderId":null,"logId":"c1e79c9b-401f-4cdf-a5ef-4b2943d5b04c","balanceAfterSec":285}}|HTTP_200
+TIGHTEN_A2 {"success":false,"error":"TRANSLATION_TIME_EXHAUSTED","message":"翻译时长不足，请购买套餐后继续使用"}|HTTP_402
+RESET_BALANCE_OK
+A_STATUS_AFTER_RESET {"success":true,"data":{"trial":{"totalSec":300,"usedSec":0,"remainingSec":300},"subscription":null,"paidPackage":{"remainingSec":0,"orders":[]}}}
+CLEANUP_DONE
+

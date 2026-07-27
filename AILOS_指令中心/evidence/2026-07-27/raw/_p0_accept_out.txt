@@ -1,0 +1,65 @@
+
+===== backend acceptance (formal domain) =====
+TOKA_LEN 229 TOKB_LEN 229
+A_STATUS_DEVA {"success":true,"data":{"trial":{"totalSec":300,"usedSec":0,"remainingSec":300},"subscription":null,"paidPackage":{"remainingSec":0,"orders":[]}}}
+A_CONSUME_DEVA {"success":true,"data":{"success":true,"consumedSec":10,"source":"trial","orderId":null,"logId":"6cd7c214-a91e-454b-9675-5e813130ece7","balanceAfterSec":290}}
+B_STATUS_DEVA {"success":true,"data":{"trial":{"totalSec":300,"usedSec":0,"remainingSec":0,"deviceRestricted":true,"restrictReason":"DEVICE_TRIAL_CLAIMED"},"subscription":null,"paidPackage":{"remainingSec":0,"orders":[]}}}
+B_CONSUME_DEVA {"success":false,"error":"TRANSLATION_TIME_EXHAUSTED","message":"翻译时长不足，请购买套餐后继续使用"}|HTTP_402
+B_STATUS_DEVB {"success":true,"data":{"trial":{"totalSec":300,"usedSec":0,"remainingSec":300},"subscription":null,"paidPackage":{"remainingSec":0,"orders":[]}}}
+B_CONSUME_DEVB {"success":true,"data":{"success":true,"consumedSec":10,"source":"trial","orderId":null,"logId":"73133809-32b4-4ecb-8810-8414be690da9","balanceAfterSec":290}}
+NOFP_BAN_STATUS {"success":true,"data":{"trial":{"totalSec":300,"usedSec":10,"remainingSec":0,"deviceRestricted":true,"restrictReason":"NOFP_BANNED"},"subscription":null,"paidPackage":{"remainingSec":0,"orders":[]}}}
+NOFP_TIGHTEN_CLAIM_1 {"success":true,"data":{"success":true,"consumedSec":5,"source":"trial","orderId":null,"logId":"09841e39-570a-4de7-b803-ea6938414134","balanceAfterSec":285}}|HTTP_200
+NOFP_TIGHTEN_CLAIM_2 {"success":true,"data":{"success":true,"consumedSec":5,"source":"trial","orderId":null,"logId":"bf4bd6dc-4f93-4950-896d-438ee3c771f4","balanceAfterSec":280}}|HTTP_200
+NOFP_TIGHTEN_CLAIM_3 {"success":true,"data":{"success":true,"consumedSec":5,"source":"trial","orderId":null,"logId":"b1c5ff1b-c112-4d59-b6ad-acf1cc2e6c92","balanceAfterSec":275}}|HTTP_200
+ERR 
+Invalid `prisma.user.updateMany()` invocation:
+
+{
+  where: {
+    phone: {
+      in: [
+        "test_fp_a",
+        "test_fp_b"
+      ]
+    }
+  },
+  data: {
+    trialUsedSec: 0,
+    ~~~~~~~~~~~~
+?   id?: String | StringFieldUpdateOperationsInput,
+?   uniqueId?: String | StringFieldUpdateOperationsInput,
+?   phone?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   email?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   passwordHash?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   wechatOpenId?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   wechatUnionId?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   nickname?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   avatar?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   birthDate?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   gender?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   membershipLevel?: String | StringFieldUpdateOperationsInput,
+?   membershipExpiry?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   xp?: Int | IntFieldUpdateOperationsInput,
+?   ownerType?: String | StringFieldUpdateOperationsInput,
+?   ownerId?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   directReferrer?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   originChannel?: String | StringFieldUpdateOperationsInput,
+?   inviteCode?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   referrer?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   isActive?: Boolean | BoolFieldUpdateOperationsInput,
+?   isVerified?: Boolean | BoolFieldUpdateOperationsInput,
+?   isGuest?: Boolean | BoolFieldUpdateOperationsInput,
+?   lastLoginAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   lastLoginIp?: String | NullableStringFieldUpdateOperationsInput | Null,
+?   failedLoginAttempts?: Int | IntFieldUpdateOperationsInput,
+?   lockedUntil?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   lastSyncAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   syncVersion?: Int | IntFieldUpdateOperationsInput,
+?   createdAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null
+  }
+}
+
+Unknown argument `trialUsedSec`. Available options are marked with ?.
+
