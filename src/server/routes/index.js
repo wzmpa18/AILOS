@@ -62,5 +62,6 @@ router.use('/billing', require('./billing'));
 
 // Translate (Stage11 子模块1 — 静态拍照翻译 + OCR 分层限流熔断)
 router.use('/translate', require('./translate'));
+router.use('/vocabulary', require('./vocabulary'));
 
 module.exports = router;
