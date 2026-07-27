@@ -30,7 +30,7 @@ function sendErr(res, err) {
 exports.photoTranslate = async (req, res) => {
   try {
     const { imageBase64, mimeType } = req.body || {};
-    const result = await getPhotoTranslateService().translatePhoto(req.user.id, { imageBase64, mimeType });
+    const result = await getPhotoTranslateService().translatePhoto(req.user.id, { imageBase64, mimeType }, req.deviceRisk || null);
     res.json({ success: true, data: result });
   } catch (err) {
     if (!err.status || err.status >= 500) {

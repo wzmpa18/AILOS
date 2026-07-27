@@ -7,7 +7,6 @@
  * 学习联动：生词→LearningContent(vocabulary)+ReviewQueue(word)；句型→grammar/sentence
  */
 
-const prisma = require('../config/database');
 const logger = require('../utils/logger');
 const contextResolver = require('./contextResolver');
 const { getOcrAdapter } = require('./ocr');
@@ -23,7 +22,7 @@ class PhotoTranslateService {
    * @param {string} userId
    * @param {{imageBase64:string, mimeType?:string}} input - 前端语言参数一律不收
    */
-  async translatePhoto(userId, { imageBase64, mimeType }) {
+  async translatePhoto(userId, { imageBase64, mimeType }, deviceRisk = null) {
     if (!imageBase64 || typeof imageBase64 !== 'string') {
       const err = new Error('imageBase64 required');
       err.status = 400; err.code = 'INVALID_IMAGE';
@@ -64,7 +63,7 @@ class PhotoTranslateService {
       //    实际扣减移至翻译成功之后（AI 失败不扣费），扣减失败不返回译文。
       const billingSvc = getBillingService();
       const estSec = Math.max(5, Math.ceil(ocr.text.length / 20));
-      const pre = await billingSvc.getStatus(userId);
+      const pre = await billingSvc.getStatus(userId, deviceRisk);
       const availableSec =
         (pre.trial ? pre.trial.remainingSec : 0) +
         (pre.subscription ? pre.subscription.remainingSec : 0) +
@@ -95,7 +94,7 @@ class PhotoTranslateService {
 
       // 3.5) 翻译成功 → 原子扣减（并发行锁；并发竞态下若此刻余额已被耗尽，
       //      consume 抛 402 → 进入 catch → 不返回译文（否决项 7：扣减失败拒绝返回结果）
-      const billing = await billingSvc.requireTranslationQuota(userId, { scene: 'photo', seconds: estSec });
+      const billing = await billingSvc.requireTranslationQuota(userId, { scene: 'photo', seconds: estSec, deviceRisk });
 
       // 4) 结算计量（成功）
       await quota.settle(logId, {

@@ -73,8 +73,8 @@ class BillingService {
     return b;
   }
 
-  /** 前端展示用：用户当前计费状态（只读，前端仅展示） */
-  async getStatus(userId) {
+  /** 前端展示用：用户当前计费状态（只读，前端仅展示）；deviceRisk 命中时试用显示为不可用（P1 设备指纹风控） */
+  async getStatus(userId, deviceRisk = null) {
     const b = await this.getOrInitBalance(userId);
     const now = new Date();
     const subActive = !!b.subExpiresAt && b.subExpiresAt > now;
@@ -91,11 +91,14 @@ class BillingService {
       return { packageType: o.packageType, remainingSec: remaining, expiresAt: o.expiresAt };
     });
 
+    const trialBlocked = !!(deviceRisk && deviceRisk.trialAllowed === false);
     return {
       trial: {
         totalSec: b.trialTotalSec,
         usedSec: b.trialUsedSec,
-        remainingSec: Math.max(0, b.trialTotalSec - b.trialUsedSec),
+        remainingSec: trialBlocked ? 0 : Math.max(0, b.trialTotalSec - b.trialUsedSec),
+        deviceRestricted: trialBlocked || undefined,
+        restrictReason: trialBlocked ? deviceRisk.reason : undefined,
       },
       subscription: subActive
         ? {
@@ -116,7 +119,7 @@ class BillingService {
    * @param {object} opt { scene='scan'|'conversation', seconds }
    * @returns {Promise<{consumedSec, source, orderId, logId, balanceAfterSec}>}
    */
-  async consume(userId, { scene = 'scan', seconds } = {}) {
+  async consume(userId, { scene = 'scan', seconds, deviceRisk = null } = {}) {
     if (!Number.isFinite(seconds) || seconds <= 0) {
       const e = new Error('无效时长');
       e.code = 'INVALID_DURATION';
@@ -125,7 +128,7 @@ class BillingService {
     }
     seconds = Math.round(seconds);
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       let b = await this.getOrInitBalance(userId, tx);
       // 并发防护（第三优先级 Task2）：对余额行加行级锁，串行化同一用户的并发扣减，
       // 防止 read-then-write 竞态导致重复扣减/漏扣（资损风险）
@@ -137,8 +140,9 @@ class BillingService {
       let source = null;
       let orderId = null;
 
-      // 1) 试用 5 分钟（终身一次，绑定 userId）
-      if (remain > 0 && b.trialUsedSec < b.trialTotalSec) {
+      // 1) 试用 5 分钟（终身一次，绑定 userId；P1 设备指纹风控命中时跳过试用 → 直接落订阅/按量包）
+      const trialBlocked = !!(deviceRisk && deviceRisk.trialAllowed === false);
+      if (remain > 0 && !trialBlocked && b.trialUsedSec < b.trialTotalSec) {
         const use = Math.min(remain, b.trialTotalSec - b.trialUsedSec);
         b.trialUsedSec += use;
         remain -= use;
@@ -210,6 +214,13 @@ class BillingService {
 
       return { success: true, consumedSec: seconds, source, orderId, logId: log.id, balanceAfterSec };
     });
+
+    // P1 设备指纹风控：试用实际扣减成功 → 登记设备 owner（终身一次）+ IP 前缀日计数
+    if (result.source === 'trial' && deviceRisk) {
+      const { getDeviceRiskService } = require('./deviceRiskService');
+      await getDeviceRiskService().registerTrialClaim(userId, deviceRisk);
+    }
+    return result;
   }
 
   /**
@@ -219,8 +230,8 @@ class BillingService {
    * @param {string} userId
    * @param {{scene?:'photo'|'scan'|'conversation', seconds:number}} opt
    */
-  async requireTranslationQuota(userId, { scene = 'scan', seconds } = {}) {
-    return this.consume(userId, { scene, seconds });
+  async requireTranslationQuota(userId, { scene = 'scan', seconds, deviceRisk = null } = {}) {
+    return this.consume(userId, { scene, seconds, deviceRisk });
   }
 
   /**

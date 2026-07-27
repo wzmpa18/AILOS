@@ -11,7 +11,6 @@
 //  - 目标语言 targetLanguage   -> UserLearningLanguage(languageCode, status=active, 最高优先级)
 // ============================================================
 const prisma = require('../config/database');
-const logger = require('../utils/logger');
 // 归一化规则唯一真源（供本组件与 P2 一致性校验共用，避免逻辑漂移）
 const { normalizeLang } = require('../utils/langNormalize');
 

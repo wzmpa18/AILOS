@@ -16,7 +16,7 @@ function fail(res, err) {
 // GET /api/billing/status  （亦作为 /api/translate/trial/status 别名）
 async function getStatus(req, res) {
   try {
-    const data = await billing.getStatus(req.userId);
+    const data = await billing.getStatus(req.userId, req.deviceRisk || null);
     res.json({ success: true, data });
   } catch (err) {
     fail(res, err);
@@ -52,7 +52,7 @@ async function buyPackage(req, res) {
 async function consume(req, res) {
   try {
     const { scene, seconds } = req.body || {};
-    const result = await billing.consume(req.userId, { scene: scene || 'scan', seconds: Number(seconds) });
+    const result = await billing.consume(req.userId, { scene: scene || 'scan', seconds: Number(seconds), deviceRisk: req.deviceRisk || null });
     res.json({ success: true, data: result });
   } catch (err) {
     fail(res, err);

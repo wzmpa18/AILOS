@@ -80,9 +80,25 @@ var token = null;
 try { token = localStorage.getItem('yandao_token_v1'); if(!token){var a=localStorage.getItem('auth_tokens');if(a){try{var p=JSON.parse(a);token=p.accessToken||p.token||a}catch(e){token=a}}} } catch(e) {}
 if (!token) { location.href = 'login.html?redirect=billing.html'; }
 
+var DEVICE_FP = (function () {
+  try {
+    var k = 'yandao_dfp_v1', v = localStorage.getItem(k);
+    if (v) return v;
+    var c = document.createElement('canvas'); c.width = 200; c.height = 50;
+    var x = c.getContext('2d'); x.textBaseline = 'top'; x.font = '14px Arial';
+    x.fillStyle = '#f60'; x.fillRect(10, 10, 60, 20); x.fillStyle = '#069'; x.fillText('yandao-fp', 2, 15);
+    var s = [navigator.userAgent, navigator.language, screen.width + 'x' + screen.height + 'x' + screen.colorDepth,
+      new Date().getTimezoneOffset(), navigator.hardwareConcurrency || '', navigator.platform || '', c.toDataURL()].join('|');
+    var h = 5381, h2 = 52711, i;
+    for (i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; }
+    for (i = s.length - 1; i >= 0; i--) { h2 = ((h2 << 5) + h2 + s.charCodeAt(i)) >>> 0; }
+    v = 'fp1-' + h.toString(16) + '-' + h2.toString(16) + '-' + s.length.toString(16);
+    localStorage.setItem(k, v); return v;
+  } catch (e) { return 'fp1-fallback-' + String((navigator.userAgent || '').length); }
+})();
 function api(path, opt) {
   opt = opt || {};
-  opt.headers = Object.assign({ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, opt.headers||{});
+  opt.headers = Object.assign({ 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'X-Device-Fp': DEVICE_FP }, opt.headers||{});
   return fetch('/api'+path, opt).then(function(r){ return r.json().then(function(j){ j.__http = r.status; return j; }); });
 }
 var toastTimer = null;

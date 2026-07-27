@@ -1,6 +1,4 @@
 const languageService = require('../../services/languageService');
-const logger = require('../../utils/logger');
-
 const languageController = {
   async getLanguages(req, res, next) {
     try {

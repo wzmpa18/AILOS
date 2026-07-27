@@ -1,6 +1,4 @@
 const authService = require('../../services/authService');
-const logger = require('../../utils/logger');
-
 const authController = {
   // Send SMS code
   async sendSmsCode(req, res, next) {

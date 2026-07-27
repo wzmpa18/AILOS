@@ -3,8 +3,6 @@
 // 学习报表 + XP 查询服务 — Module 02 Step 5
 // ============================================================
 const prisma = require('../config/database');
-const logger = require('../utils/logger');
-
 class ReportsService {
   /**
    * 学习摘要 — 今日/本周学习数据

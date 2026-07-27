@@ -24,7 +24,7 @@ redis.on('error', (error) => {
 
 // Graceful shutdown
 process.on('beforeExit', async () => {
-  try { await redis.quit(); } catch (e) {}
+  await redis.quit().catch(() => {});
 });
 
 module.exports = redis;

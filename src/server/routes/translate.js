@@ -8,8 +8,11 @@ const router = express.Router();
 const translateController = require('../controllers/translateController');
 const billingController = require('../controllers/billingController');
 const { authenticate } = require('../middleware/auth');
+const { attachDeviceRisk } = require('../middleware/deviceRisk');
 
 router.use(authenticate);
+// P1 设备指纹风控：附加 req.deviceRisk（试用闸门在 billingService 内强制执行，前端不可绕过）
+router.use(attachDeviceRisk);
 
 router.post('/photo', translateController.photoTranslate);
 router.get('/photo/quota', translateController.getQuota);

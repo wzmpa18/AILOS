@@ -5,7 +5,6 @@
 // ============================================================
 const prisma = require('../config/database');
 const { getAIGateway } = require('./aiGateway');
-const logger = require('../utils/logger');
 const contextResolver = require('./contextResolver'); // P2-T1: 双语言配置唯一真值源
 
 class AiTutorService {
