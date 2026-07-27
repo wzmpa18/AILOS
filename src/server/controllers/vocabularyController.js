@@ -11,7 +11,7 @@ exports.add = async (req, res) => {
 exports.batch = async (req, res) => {
   try {
     const body = req.body || {};
-    const items = Array.isArray(body.items) ? body.items : (Array.isArray(body) ? body : []);
+    const items = Array.isArray(body.items) ? body.items : (Array.isArray(body.words) ? body.words : (Array.isArray(body) ? body : []));
     const r = await svc.batchSync(req.user.id, items);
     res.json({ success: true, data: r });
   } catch (e) { sendErr(res, e); }

@@ -13,38 +13,58 @@ class VocabularyService {
     const lang = item.lang || (await this._userLang(userId));
     const reading = item.reading || '';
     const meaning = item.meaning || '';
-    const owned = await prisma.reviewQueue.findFirst({
-      where: { userId, contentType: isWord ? 'word' : 'sentence',
-        content: { contentType: 'vocabulary', sourceLanguage: lang, contentData: { path: ['word'], equals: text } } },
-      include: { content: true },
+    const rqType = isWord ? 'word' : 'sentence';
+    const lcType = isWord ? 'vocabulary' : 'grammar';
+    const jsonPath = isWord ? ['word'] : ['sentence'];
+    // ReviewQueue 与 LearningContent 无 Prisma 关联，两段查询去重
+    const candidates = await prisma.learningContent.findMany({
+      where: { contentType: lcType, sourceLanguage: lang, contentData: { path: jsonPath, equals: text } },
+      select: { id: true },
     });
-    if (owned) return { contentId: owned.contentId, reviewQueueId: owned.id, dueDate: owned.dueDate, existed: true };
+    if (candidates.length > 0) {
+      const owned = await prisma.reviewQueue.findFirst({
+        where: { userId, contentType: rqType, contentId: { in: candidates.map((c) => c.id) } },
+      });
+      if (owned) return { contentId: owned.contentId, reviewQueueId: owned.id, dueDate: owned.dueDate, existed: true };
+    }
     const contentData = isWord
       ? { origin: item.origin || 'manual', word: text, reading, meaning }
       : { origin: item.origin || 'manual', sentence: text, reading, meaning };
-    const content = await prisma.learningContent.create({
-      data: {
-        contentType: isWord ? 'vocabulary' : 'grammar',
-        sourceType: item.sourceType || 'MANUAL',
-        sourceLanguage: lang, targetLanguage: lang, explanationLanguage: item.nativeLang || lang,
-        status: 'published', qualityScore: 80, contentData,
-      },
-    });
-    const queue = await prisma.reviewQueue.create({ data: { userId, contentId: content.id, contentType: isWord ? 'word' : 'sentence' } });
+    // 复用已有内容（单源），无则创建
+    let content = candidates.length > 0 ? { id: candidates[0].id } : null;
+    if (!content) {
+      content = await prisma.learningContent.create({
+        data: {
+          contentType: lcType,
+          sourceType: item.sourceType || 'MANUAL',
+          sourceLanguage: lang, targetLanguage: lang, explanationLanguage: item.nativeLang || lang,
+          status: 'published', qualityScore: 80, contentData,
+        },
+      });
+    }
+    const queue = await prisma.reviewQueue.create({ data: { userId, contentId: content.id, contentType: rqType } });
     return { contentId: content.id, reviewQueueId: queue.id, dueDate: queue.dueDate, existed: false };
   }
   async listWords(userId, { lang } = {}) {
-    const rows = await prisma.reviewQueue.findMany({ where: { userId, contentType: 'word' }, include: { content: true }, orderBy: { createdAt: 'desc' } });
+    const rows = await prisma.reviewQueue.findMany({ where: { userId, contentType: 'word' }, orderBy: { createdAt: 'desc' } });
+    if (rows.length === 0) return [];
+    const contents = await prisma.learningContent.findMany({
+      where: { id: { in: rows.map((r) => r.contentId) }, contentType: 'vocabulary' },
+    });
+    const byId = new Map(contents.map((c) => [c.id, c]));
     return rows
-      .filter((r) => r.content && r.content.contentType === 'vocabulary')
-      .filter((r) => !lang || r.content.sourceLanguage === lang)
-      .map((r) => ({
-        id: r.contentId,
-        word: r.content.contentData && r.content.contentData.word,
-        reading: r.content.contentData && r.content.contentData.reading,
-        meaning: r.content.contentData && r.content.contentData.meaning,
-        lang: r.content.sourceLanguage, dueDate: r.dueDate, createdAt: r.createdAt,
-      }));
+      .filter((r) => byId.has(r.contentId))
+      .filter((r) => !lang || byId.get(r.contentId).sourceLanguage === lang)
+      .map((r) => {
+        const c = byId.get(r.contentId);
+        return {
+          id: r.contentId,
+          word: c.contentData && c.contentData.word,
+          reading: c.contentData && c.contentData.reading,
+          meaning: c.contentData && c.contentData.meaning,
+          lang: c.sourceLanguage, dueDate: r.dueDate, createdAt: r.createdAt,
+        };
+      });
   }
   async deleteWord(userId, contentId) {
     const del = await prisma.reviewQueue.deleteMany({ where: { userId, contentId, contentType: 'word' } });
