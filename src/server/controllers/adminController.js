@@ -20,10 +20,10 @@ async function buildAccountMap(userIds) {
   if (!userIds.length) return {};
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, account: true, phone: true },
+    select: { id: true, uniqueId: true, phone: true },
   });
   const m = {};
-  for (const u of users) m[u.id] = u.account || u.phone || u.id;
+  for (const u of users) m[u.id] = u.uniqueId || u.phone || u.id;
   return m;
 }
 
@@ -82,7 +82,7 @@ async function fetchOrders({ account, startDate, endDate, abnormal, type }) {
   let targetUserId = null;
   if (account) {
     const u = await prisma.user.findFirst({
-      where: { OR: [{ account }, { phone: account }, { email: account }] },
+      where: { OR: [{ uniqueId: account }, { phone: account }, { email: account }] },
       select: { id: true },
     });
     if (!u) return [];
@@ -157,9 +157,9 @@ async function searchUserBilling(req, res) {
     const { account } = req.query;
     if (!account) return res.status(400).json({ success: false, error: '缺少 account 参数' });
     const u = await prisma.user.findFirst({
-      where: { OR: [{ account }, { phone: account }, { email: account }] },
+      where: { OR: [{ uniqueId: account }, { phone: account }, { email: account }] },
       select: {
-        id: true, account: true, phone: true,
+        id: true, uniqueId: true, phone: true,
         membershipLevel: true, membershipExpiry: true,
         trialClaimedAt: true, trialDeviceFp: true, trialIpPrefix: true,
       },
@@ -182,7 +182,7 @@ async function searchUserBilling(req, res) {
     return res.json({
       success: true,
       user: {
-        account: u.account || u.phone,
+        account: u.uniqueId || u.phone,
         userId: u.id,
         membership: {
           level: u.membershipLevel || 'free',
@@ -219,8 +219,8 @@ async function adjustUserTime(req, res) {
       return res.status(400).json({ success: false, error: 'deltaSec 必须为正数' });
     }
     const u = await prisma.user.findFirst({
-      where: { OR: [{ account }, { phone: account }, { email: account }] },
-      select: { id: true, account: true },
+      where: { OR: [{ uniqueId: account }, { phone: account }, { email: account }] },
+      select: { id: true, uniqueId: true, phone: true },
     });
     if (!u) return res.status(404).json({ success: false, error: '用户不存在' });
     const before = await prisma.translationBillingBalance.findUnique({ where: { userId: u.id } });
