@@ -1068,4 +1068,20 @@ P0_GATE_FIX_COMPLETE
   ```
 - **验收结论**：可正常收藏生词、词汇本可查询、数据与用户绑定正确、批量同步一致、接口完整（增/删/查/批量）。✅ Task 5 完成
 - **剩余 Phase 2**：Task1 支付链路沙箱框架 / Task2 前端购买页 / Task4 会员权益映射。
+
+### 36.10 阶段二 Task 1/2/4：支付沙箱链路 + 前端购买页 + 会员时长权益映射（2026-07-27）
+
+> 提交 `3f86ba0`，标准 `deploy.sh` 部署全绿（备份 /www/backups/deploy_20260727_105847）。
+
+- **Task 1 支付链路沙箱框架**（对齐 membership 既有 order→callback 模式）：
+  - `billingService`: `createPaymentOrder`（下单 status=pending，不到账，返回沙箱 paymentUrl）、`confirmPaymentOrder`（事务：pending→paid 到账/failed，订阅在支付确认时刻起算并重算 expiresAt）、`getPaymentOrder`（仅本人可查）。
+  - 路由：`POST /api/billing/payment/create`、`POST /api/billing/payment/callback`（沙箱回调，仅本人订单；真实网关接入点=验签后调同一 confirm 方法）、`GET /api/billing/payment/status/:orderNo`。
+  - 真实验收：下单 pending→状态查询 pending→失败回调 failed→重复回调 409 ORDER_ALREADY_PROCESSED→二单成功回调 paid 且 paidRemaining 120→180→非法套餐 400→不存在订单 404。✅
+- **Task 2 前端购买页**：仓库根 `billing.html`（随 deploy.sh 前端同步至 /www/xuewaiyu）。功能：我的时长（试用/订阅/按量）展示、套餐目录（服务端唯一真值）、沙箱收银台弹窗（成功/失败双分支回调）、会员权益领取入口；token 复用站内 `yandao_token_v1`/`auth_tokens` 约定，未登录跳 login。外网验收：`http://82.156.228.87/xuewaiyu/billing.html` 与 `/billing.html` 均 200。✅
+- **Task 4 会员体系→时长权益映射**（宪法红线：零修改 membership 逻辑，仅只读 `User.membershipLevel/membershipExpiry`）：
+  - 服务端唯一真值映射表 `MEMBERSHIP_TIME_BENEFIT`：free=0 / basic=每月 60 单位(1h) / premium=每月 300 单位(5h)，赠送 30 天有效。
+  - 领取实现：生成 0 元已支付订单 `pay_grant_{level}_{YYYYMM}`（前缀 pay_ 复用既有 FIFO 扣减链，无需改 consume）；月度幂等（同月重复领取 409 GRANT_ALREADY_CLAIMED）。
+  - 路由：`GET /api/billing/membership-benefit`、`POST /api/billing/membership-benefit/claim`。
+  - 真实验收：free 用户 claimable=false；测试号临时置 basic（验后已还原 free/NULL）→ claimable=true → 领取到账 paidRemaining 180→240 → 重复领取 409。✅
+- **Phase 2 验收结论**：Task1~5 全部完成并经服务器真实验收；GitHub main = 服务器 = `3f86ba0`。等待阶段闸门放行后启动 Phase 3。
  
