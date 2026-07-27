@@ -335,7 +335,7 @@ document.getElementById('t_query').addEventListener('click', function(){
       + '</div><div class="stat">'
       + boxStat('累计消耗(秒)', u.consumedSec)
       + boxStat('会员等级', u.membership.level)
-      + boxStat('试用领取', u.trialClaimedAt?fmt(u.trialClaimedAt):'未领取')
+      + boxStat('试用领取', u.trialClaimed?'已领取':'未领取')
       + boxStat('设备指纹', u.trialDeviceFp||'-')
       + '</div>';
     adj.classList.remove('hidden');

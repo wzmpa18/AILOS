@@ -161,7 +161,6 @@ async function searchUserBilling(req, res) {
       select: {
         id: true, uniqueId: true, phone: true,
         membershipLevel: true, membershipExpiry: true,
-        trialClaimedAt: true, trialDeviceFp: true, trialIpPrefix: true,
       },
     });
     if (!u) return res.status(404).json({ success: false, error: '用户不存在' });
@@ -188,9 +187,7 @@ async function searchUserBilling(req, res) {
           level: u.membershipLevel || 'free',
           expiryAt: u.membershipExpiry,
         },
-        trialClaimedAt: u.trialClaimedAt,
-        trialDeviceFp: u.trialDeviceFp ? u.trialDeviceFp.slice(0, 8) + '****' : null,
-        trialIpPrefix: u.trialIpPrefix,
+        trialClaimed: !!b && toSec(b.trialUsedSec) > 0,
         remainingSec,
         trialRemainingSec: status.trial.remainingSec,
         subscriptionRemainingSec: status.subscription ? status.subscription.remainingSec : 0,
