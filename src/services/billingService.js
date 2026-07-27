@@ -190,6 +190,7 @@ class BillingService {
       });
 
       return { success: true, consumedSec: seconds, source, orderId, logId: log.id, balanceAfterSec };
+    });
   }
 
   /**
