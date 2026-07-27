@@ -1,9 +1,9 @@
 const { prisma } = require('../config/database');
-const { getContextResolver } = require('../utils/contextResolver');
+const contextResolver = require('./contextResolver');
 
 class VocabularyService {
   async _userLang(userId) {
-    try { const ctx = await getContextResolver().resolve(userId); return ctx.targetLanguage || 'ja'; }
+    try { const ctx = await contextResolver.resolve(userId); return ctx.targetLanguage || 'ja'; }
     catch (e) { return 'ja'; }
   }
   async addWord(userId, item) {
