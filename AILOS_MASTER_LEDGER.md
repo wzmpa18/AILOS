@@ -1109,112 +1109,96 @@ P0_GATE_FIX_COMPLETE
 
 ## 第37章: P2 基础运营管理后台交付与验收（2026-07-28 监理执行，用户授权 SSH）
 
-> 依据用户《P2「基础运营管理后台」刚性交付标准》：可浏览器访问的可视化 Web 管理页（非仅接口）、三大模块（订单查询导出 / 用户时长管理 / 异常订单标记）、权限隔离（普通用户 403）、登录 Session 唯一约束并发冲突强制修复，并附截图 / 并发日志 / 验收证据索引。
+> 依据用户《P2「基础运营管理后台」刚性交付标准》：可浏览器访问的可视化 Web 管理页（非仅接口）、三大模块（订单查询导出 / 用户时长管理 / 异常订单标记）、权限隔离（普通用户 403）、登录 Session 唯一约束并发冲突强制修复；并据《AILOS-GOV-20260728-001》治理指令，补强 P1 六项生产必备能力，并完成文档/证据/清理全闭环。本章严格按「交付基线 / 功能明细 / 故障复盘 / 流程硬化 / 验收结论 / 证据索引 / 遗留计划」7 模块结构化入账，作为项目唯一真值源节点结论。
 
-### 37.1 交付概览
+### 37.1 交付基线模块（Delivery Baseline）
 
 | 项 | 内容 |
 |---|---|
 | 正式访问路径 | `https://yandao.vip/xuewaiyu/admin.html`（nginx 托管静态页 + 同源 `/api/admin/*`） |
 | 管理员账号 | `13480010005` / `Test123456`（owner，已入 `admin.user_ids`）；专用 `test_admin@xuewaiyu.local` / `Admin2026!` |
 | 普通测试账号（应 403） | `test_normal@xuewaiyu.local` / `Normal2026!` |
-| 代码基线 | GitHub `main`，P2 提交链：`33c9f13`→`f62534e`→`e97179b`→`287c49e` |
-| 部署方式 | 统一 `deploy.sh`（备份→拉取→prisma migrate deploy→generate→PM2 重启→前端同步→nginx 重载→双闸门健康检查），无手工直改 |
+| 代码基线（完整提交链） | P2 基线：`33c9f13`→`f62534e`→`e97179b`→`287c49e`；P1 补强：`e05247d`；部署硬化：`c2dd449`；验收闭环+账簿入账：`aadc511` |
+| 最终交付形态 | 可视化后台 + 三大基础模块 + P1 六项补强（分页/审计详情/路由守卫/操作密码/登录审计/账号管控）全部上线且真实验收通过 |
+| 部署时间 | 2026-07-28（P2 基线 `287c49e` / P1 `e05247d` / 硬化 `c2dd449` / 闭环 `aadc511` 同日递进） |
+| 部署执行方式 | 统一 `deploy.sh`（备份→`git fetch`+`reset --hard origin/main`→`prisma migrate deploy`→`generate`→PM2 重启→前端同步→nginx 重载→双闸门健康检查→迁移自检闸门→账簿版本校验→副本 MD5 校验），无手工直改 |
 | Lint | ESLint 最小规则（`no-undef`/`no-unused-vars`/`no-var`/`prefer-const`）0 error / 0 warning |
 
-### 37.2 三大模块落地
+### 37.2 功能明细模块（Function Details）
 
+#### 37.2.1 三大基础模块
 1. **订单查询与导出**：`GET /api/admin/orders`（按 account / 时间区间 / 异常状态过滤；返回订单号、账号、套餐类型、金额、支付状态、创建/支付时间）；`GET /api/admin/orders/export` 输出带 BOM 的 UTF-8 CSV（`Content-Disposition: attachment`）。
 2. **用户时长管理**：`GET /api/admin/users/billing?account=` 返回剩余/已消耗/会员/试用记录 + **管理员调整池（adminTimeSec）**；`POST /api/admin/users/billing/adjust` 支持 add/deduct，前端原生 `confirm()` 二次确认，服务端审计日志（操作员/时间/原因/前后值）。
 3. **异常订单标记**：`POST /api/admin/orders/:id/abnormal` 标记/取消 + 备注，按异常状态过滤，全部写入 `AdminOperationLog`。
 4. **操作日志**：`GET /api/admin/operation-logs` 独立审计表（操作类型/账号/前后值/操作人/时间/IP）。
 
-### 37.3 权限隔离（403 闸门）
-
+#### 37.2.2 权限隔离（403 闸门）
 - 复用既有 `adminAuth.requireAdmin`（`admin.user_ids` 系统配置 / `ADMIN_USER_IDS` 环境变量）。
 - 真实验证：管理员登录 → `/api/admin/me` 返回 `200 isAdmin=true`；普通账号 `test_normal` 登录 `200` 但访问 `/api/admin/me` 返回 **403**。
 
-### 37.4 登录 Session 并发冲突修复（强制项）
-
-- **根因**：`src/utils/jwt.js` 旧实现访问/刷新 token 未带 `jti`，同账号并发登录生成的 token 在 `Session` 唯一约束上偶发 `P2002`（唯一约束冲突）致登录 500。
+#### 37.2.3 登录 Session 并发冲突修复（强制项）
+- **根因**：`src/utils/jwt.js` 旧实现访问/刷新 token 未带 `jti`，同账号并发登录生成的 token 在 `Session` 唯一约束上偶发 `P2002` 致登录 500。
 - **修复**：`generateTokens` 为 access / refresh 各注入 `jti = crypto.randomBytes(8).toString('hex')`，并发登录不再产生可冲突的确定性 token（仅改 token 载荷，未触碰 User 认证 / membership 逻辑，符合宪法 1.1）。
-- **并发验证日志（服务器本机，真实账号，8 并发直接调用 `authService.passwordAuth`）**：
-  ```
-  SEQ_DISTINCT true            // 顺序两次登录 refreshToken 互异
-  CONCURRENT_TOTAL 8
-  CONCURRENT_OK 8
-  CONCURRENT_DISTINCT_TOKENS 8 // 8/8 成功且无 P2002，8 个互异 token
-  ```
-- 证据文件：`_p2_sessionproof_out.txt`（工作区根）。
+- **并发验证**：顺序两次登录 refreshToken 互异；8 并发直接调用 `authService.passwordAuth`，`CONCURRENT_OK 8`、`CONCURRENT_DISTINCT_TOKENS 8`（无 P2002）。
 
-### 37.5 真实验收证据索引（工作区 `c:/Users/ZhuanZ/CodeBuddy/20260723000852`）
+#### 37.2.4 P1-1 全列表分页机制
+- **分页规则**：订单 / 用户 / 操作日志 / 登录审计四类列表统一分页；后端 `parsePage(q)` 解析 `page`/`pageSize`，默认 `20` 条/页，最大 `100`。
+- **覆盖范围**：`GET /api/admin/orders`、`/api/admin/users`、`/api/admin/operation-logs`、`/api/admin/login-logs` 均返回 `{count, total, page, pageSize, data}`；前端默认 20/页并支持页码跳转，大数据量无超时。
 
-| 证据 | 文件 | 结论 |
-|---|---|---|
-| 可视化页面截图（登录/订单/时长/调整确认/已调整/异常/日志） | `shots/01_login.png` … `shots/07_logs.png` | 浏览器可访问、四模块可见可交互 |
-| 全模块 API 验收 | `_p2_finalaccept_out.txt` | LOGIN/ADMIN_ME/ORDERS(4)/EXPORT(csv+BOM)/BILLING/ADJUST(before→after)/MARK_ABNORMAL/ABNORMAL_FILTER/UNMARK/LOGS(13) 均 200 |
-| Session 并发修复 | `_p2_sessionproof_out.txt` | 8/8 并发、token 互异、无 P2002 |
-| 部署回执 | `_p2_redeploy3_out.txt` | GATE1 健康 200、GATE2 页面 200、commit `287c49e` |
-| 域名可达性 | `curl https://yandao.vip/xuewaiyu/admin.html` → 200（含运营管理后台/订单查询/用户时长/异常/操作日志 全部模块标签） | 正式路径可用 |
+#### 37.2.5 P1-2 操作日志全量审计
+- **落库**：`AdminOperationLog` 记录调整 / 异常标记前后值（`before`/`after` JSON）。
+- **前端展示**：操作日志列表行可展开查看变更详情（字段、操作人、时间、IP），before/after 数值直接可见。
 
-### 37.6 P0 残留闭环声明
+#### 37.2.6 P1-3 前端路由鉴权守卫
+- **未登录重定向**：`admin.html` 加载时先校验 token，未登录直接重定向至登录页。
+- **失效跳转**：登录失效（401）自动跳转登录页；后端 `authenticate, requireAdmin` 双重守卫所有 `/api/admin/*`。
 
-- P0 闸门整改已于第36章闭环（`P0_GATE_FIX_COMPLETE`，阶段二解锁）。本轮 P2 经同一硬化 `deploy.sh` 标准部署、无手工热修复，未触碰 P0 已修复链路（语言缓存失效 / 入参 400 / 迁移合规），**无 P0 回归风险**。
-- 四层验收方法沿用：接口 curl（localhost:3000）+ 数据库（Prisma 直查）+ 浏览器无痕全链路（Playwright 真域截图）+ AI 网关状态（未涉及）。
+#### 37.2.7 P1-4 敏感操作二次校验
+- **校验范围**：时长调整（`adjustUserTime`）、订单异常标记（`markOrderAbnormal`）、账号禁用/启用/重置密码。
+- **后端逻辑**：`verifyOpPassword(opPassword)` 比对 SystemConfig `admin.op_password`（默认 `Admin@2026`）；错误返回 **403**。
+- **前端**：敏感操作弹窗输入操作密码后提交。
 
-### 37.7 交付回执
+#### 37.2.8 P1-5 管理员登录审计
+- **LoginLog 表结构**：`id`(uuid) / `adminId` / `account` / `ip` / `userAgent` / `createdAt`；索引 `adminId` / `account` / `createdAt`。
+- **记录字段**：每次管理员登录成功写入时间 / IP / 设备（userAgent）。
+- **查询能力**：`GET /api/admin/login-logs`，支持按账号、时间筛选。
 
-```
-P2_ADMIN_PANEL_DELIVERED
-- 可视化 Web 管理页：✅ https://yandao.vip/xuewaiyu/admin.html（200，四模块可见）
-- 模块1 订单查询/导出：✅ 含 BOM CSV
-- 模块2 用户时长管理+调整池+二次确认+审计：✅
-- 模块3 异常订单标记+过滤+日志：✅
-- 权限 403 闸门：✅ 普通用户 403
-- Session 并发冲突修复：✅ 8/8 互异 token，无 P2002
-- 代码/账簿/证据同步：✅ main + 第37章
-```
+#### 37.2.9 P1-6 用户账号基础管控
+- **禁用/启用**：`User.disabled` 状态位；`POST /api/admin/users/status` 切换；禁用后登录链路 `passwordAuth` 短路返回 `ACCOUNT_DISABLED`→**401**，无法使用核心功能。
+- **重置密码**：`POST /api/admin/users/reset-password` 生成随机密码（或指定），清空该用户 Session，操作全量留痕。
+- **权限影响**：仅管理员可操作，普通用户访问上述端点返回 403。
 
-### 37.8 已知缺口清单（6 项 P1 级补强 + 优化项）
+### 37.3 故障复盘模块（Fault Retrospective）
 
-> 以下 6 项属 P2 生产级必备补强（非新增需求），全部完成方判定 P2 正式闭环（详见后文 P1 执行章节）。当前 P2 仅达「基础可用」，下述缺口在生产环境仍属风险敞口。
+**故障现象（首轮部署后运维级验收发现）**
+- P1-5（登录审计写 `LoginLog`）、P1-6（`disabled` 字段读写）在运行时直接 **500**；P1 实质未闭环。
+- `prisma migrate status` 显示迁移 `20260728000000_p1_admin_reinforce` 仍为 **pending**；`prisma db execute` 查 `LoginLog` 报 `P1014 The underlying table for model LoginLog does not exist`；`_prisma_migrations` 表仅记录前两次迁移（baseline_full、p2_admin）。
 
-| 序号 | 缺口项 | 当前状态 | 刚性验收标准（目标态） |
-|---|---|---|---|
-| P1-1 | 全列表分页机制 | 订单/用户/操作日志列表均**无分页**，一次性返回全量，大数据量存在超时/卡顿风险 | 三类列表全部分页，默认 20 条/页，支持页码跳转，大数据量无超时 |
-| P1-2 | 操作日志全量审计 | `AdminOperationLog` 已记录调整/异常标记，但**页面不可直接查看 before/after 变更详情** | 所有数据变更操作页面内可直接查看 before/after 数值 |
-| P1-3 | 前端路由鉴权守卫 | `admin.html` 未登录即可打开（仅接口 403），**暴露后台 DOM 结构与字段** | 未登录访问 `admin.html` 直接重定向登录页；登录失效自动跳转 |
-| P1-4 | 敏感操作二次校验 | 时长调整为纯前端 `confirm()`，**后端无管理员操作密码校验** | 时长调整/账号禁用/订单状态变更三类高风险操作后端增管理员操作密码校验，前端弹窗输入 |
-| P1-5 | 管理员登录审计 | **无独立登录日志**（仅有操作日志） | 新增登录日志：时间/IP/设备，支持按账号、时间查询 |
-| P1-6 | 用户账号基础管控 | **无禁用/启用/重置密码能力** | 支持禁用/启用、重置密码；禁用账号无法登录/使用核心功能；操作全量留痕 |
+**根因定位**
+- `deploy.sh` 迁移步骤无中断机制：第 38 行 `npx prisma migrate deploy 2>&1 | tail -5` 在该次部署日志中**无任何输出**；`set -uo pipefail` 未含 `set -e`，`migrate deploy` 即使静默失败也不会中断部署。
+- 健康闸门 GATE1/GATE2 仅校验健康与页面可达，**不校验 schema 版本**，故「schema 未跟上代码」类缺陷被放行。
 
-**优化项（非阻塞，列管）**
-- O-1：调整池 `adminTimeSec` 展示已上线，但缺少「调整历史时间线」可视化。
-- O-2：`export` CSV 建议支持按当前过滤条件导出（现导出全量）。
-- O-3：操作日志 `IP` 字段依赖请求头，反向代理下需确认取 `X-Forwarded-For` 真实 IP。
-
-### 37.9 后续修复计划（P1 补强执行路线）
-
-1. **前置纪律**：P0 流程整改（本章补齐）通过前，不启动任何 P1 功能代码。
-2. **P1 执行顺序**：P1-3 路由守卫（安全前置）→ P1-5 登录审计 → P1-4 敏感操作密码校验 → P1-1 分页 → P1-2 审计详情可视化 → P1-6 账号管控。
-3. **每完成一项**：本地改代码 → `deploy.sh` 标准部署 → 真域验收 → 回写本账簿对应小节 → `git commit` 推送 → 同步服务器副本。
-4. **闭环判据**：6 项 P1 全部落地 + 正式域名可操作验证 + 权限/安全机制生效 + 证据入仓 + 服务器副本时间戳同步 → 输出 `P2_FINAL_CLOSED`，解锁下一阶段（全量异常场景测试）。
-5. **宪法一致性说明**：P1-6 账号禁用/重置密码将最小侵入方式实现（仅新增 `disabled` 状态位与 `resetPassword` 管理端点，登录链路仅增加该状态位短路判断，不改写认证/membership 主体逻辑），全程留痕，符合宪法 1.1「允许加字段、禁改认证主体」边界；若评审认定越界则回退为仅审计+告警。
-
-### 37.10 P1 迁移补应用 + 全功能真实验收闭环（2026-07-28 补录）
-
-> 本章 37.1~37.9 记录了 P0 整改与 P1 六项补强的代码交付（commit `e05247d`，部署锚点已注册）。但首轮 `deploy.sh` 部署后，运维级验收发现**一个阻断级缺陷**：数据库迁移 `20260728000000_p1_admin_reinforce` 虽已随 `e05247d` 入库，却**未被应用到生产库**——`prisma migrate status` 显示其仍为 pending，`LoginLog` 表与 `User.disabled` 列在数据库中均不存在。后果：P1-5（登录审计写入 `LoginLog`）、P1-6（`disabled` 字段读取/更新）在运行时会直接 500，P1 实质未闭环。
-
-**缺陷根因（依据部署日志 + 服务器实测）**
-- `deploy.sh` 第 38 行 `npx prisma migrate deploy 2>&1 | tail -5` 在该次部署日志中**无任何输出**，且 `set -uo pipefail` 未含 `set -e`，`migrate deploy` 即使静默失败也不会中断部署；闸门 GATE1/GATE2 仅校验健康与页面可达，不校验 schema 版本，故缺陷被放行。
-- 修复前实测：`prisma db execute` 查询 `LoginLog` 报 `P1014 The underlying table for model LoginLog does not exist`；`_prisma_migrations` 表仅记录前两次迁移（baseline_full、p2_admin）。
-
-**修复动作（已在生产库执行，幂等）**
-- 在服务器 `/www/xuewaiyu-backend` 直接执行 `bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate deploy'`。
+**修复过程**
+- 在服务器 `/www/xuewaiyu-backend` 直接执行 `bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate deploy'`（幂等，未新增任何代码/迁移文件，符合「禁 db push、仅 migrate deploy」纪律）。
 - 结果：`Applying migration 20260728000000_p1_admin_reinforce ... All migrations have been successfully applied.`；复检 `migrate status` = `Database schema is up to date!`。
-- 该迁移文件夹本就在 `origin/main`（`e05247d`），属已入库代码；本次仅为把已入库迁移**补应用到生产库**，未新增任何代码/迁移文件，符合「禁 db push、仅 migrate deploy」纪律。
 
-**真实验收（服务端 localhost:3000 端到端，账号已恢复初始态）**
+**验证结果**
+- 11 项端到端验收全绿（详见 §37.5）；`LoginLog` 表真实写入、`User.disabled` 列真实存在，缺陷闭环。
+
+### 37.4 流程硬化模块（Process Hardening）
+
+> 部署流程迭代记录，作为《项目双宪法》第七章「审计台账规则」的落地防线。
+
+- **闸门1 · 迁移自检（commit `c2dd449`）**：`migrate deploy` 后执行 `prisma migrate status`，若输出含 `not yet been applied` 则判定部署失败并触发回滚（写入明确错误日志），杜绝「schema 未跟上代码」被 GATE 放行。
+- **闸门2 · 账簿版本校验（本治理整改新增）**：部署捕获 HEAD commit 哈希，`grep` 总账 `AILOS_MASTER_LEDGER.md`；若未检索到该 commit 记录，直接中断部署并触发回滚，从部署环节堵死「代码上线、文档未更」的漏洞（落实 3.1 代码-文档同提交）。
+- **闸门3 · 副本 MD5 校验（本治理整改新增）**：部署收尾比对仓库账簿与 `/www/AILOS_MASTER_LEDGER.md` 的 MD5；不一致判部署未完成，强制补同步后收尾（落实 3.6 服务器副本同步）。
+- **提交纪律（落实 3.1）**：代码-文档同 commit；commit 格式 `[阶段-模块][类型] 内容说明 + 账簿更新章节`，例：`[P2-Admin][Fix] 迁移补应用 + 账簿第37章更新`。
+
+### 37.5 验收结论模块（Acceptance Conclusion）
+
+**测试账号**：管理员 `13480010005`/`Test123456`；普通 `test_normal@xuewaiyu.local`/`Normal2026!`（验收后已恢复为启用态 + 原密码 `Normal2026!`，无残留副作用）。
+
+**P1 六项补强端到端验收（服务端 localhost:3000，11 项全绿）**
 
 | 验证项 | 请求 | 结果 | 对应 P1 |
 |---|---|---|---|
@@ -1230,16 +1214,44 @@ P2_ADMIN_PANEL_DELIVERED
 | 重置密码 | `POST /api/admin/users/reset-password` | 200, 返回新密码 | P1-6 |
 | 重置后登录 | `POST /api/auth/password`(原密码) | 200 | P1-6 |
 
-- 验收脚本：`_p1_accept.js`（服务端运行）→ 证据 `_p1_accept_out.json`（全绿，已入仓）。
-- 测试账号 `test_normal@xuewaiyu.local` 已恢复为启用态 + 密码 `Normal2026!`，无残留副作用。
+**P2 基线验收（三大模块 + 403 + Session 并发，引用 §37.1/§37.2）**
+- 可视化页面 200（四模块可见）；订单查询/导出（含 BOM CSV）；用户时长管理+调整池+二次确认+审计；异常订单标记+过滤+日志；权限 403 闸门（普通用户 403）；Session 并发 8/8 互异 token 无 P2002。
+- 全量 API 验收：`LOGIN/ADMIN_ME/ORDERS(4)/EXPORT/BILLING/ADJUST(before→after)/MARK_ABNORMAL/ABNORMAL_FILTER/UNMARK/LOGS(13)` 均 200。
 
-**根因闭环（deploy.sh 硬化，防复发）**
-- 在 `deploy.sh` 的 `migrate deploy` 之后新增**迁移自检闸门**：执行 `prisma migrate status`，若输出含 `not yet been applied` 则判定部署失败并触发回滚（写入明确错误日志），使「schema 未跟上代码」类缺陷在部署内即可拦截，杜绝再次被 GATE1/GATE2 放行。
-- 该硬化已随本次同步提交入仓（见下方 commit 记录）。
+**验收覆盖声明**：登录鉴权、审计写入、分页列表、操作密码、账号管控全链路均已真实验证；测试账号已恢复初始状态。
 
-**证据索引（已入 git 仓）**
-- `_p1_diag_out.txt`：迁移文件夹树 + 迁移前 `migrate status`(pending) + 表缺失证明。
-- `_p1_apply_out.txt`：`migrate deploy` 应用过程 + 应用后 `up to date`。
-- `_p1_accept_out.json`：11 项端到端验收全绿。
+### 37.6 证据索引模块（Evidence Index）
 
-**P2 阶段闭环判定**：自本次迁移补应用 + 全功能真实验收通过起，P1 六项补强（P1-1 分页 / P1-2 审计详情 / P1-3 路由守卫 / P1-4 操作密码 / P1-5 登录审计 / P1-6 账号管控）全部上线且功能验证通过，演进为 **`P2_FINAL_CLOSED`（待本账簿更新 + 证据入仓 + 服务器副本同步三项收尾后正式生效）**。
+> 全部证据统一归档于 `delivery-evidence/p2_admin/`，按「功能验收 / 故障排查 / 部署回执」三类存放，路径精确到文件名，总账索引可一一对应（落实 3.4）。
+
+**功能验收类 `delivery-evidence/p2_admin/function_acceptance/`**
+- `p1_e2e_acceptance.json`：P1 六项补强 11 项端到端验收全绿日志。
+- `p2_finalaccept_log.txt`：P2 三大模块 + 403 + Session 全量 API 验收日志。
+- `session_concurrency.txt`：Session 并发 8/8 互异 token、无 P2002 验证日志。
+- `shots/01_login.png` … `shots/07_logs.png`：可视化页面截图（登录/订单/时长/调整确认/已调整/异常/日志）。
+
+**故障排查类 `delivery-evidence/p2_admin/troubleshooting/`**
+- `p1_migration_diag.txt`：迁移文件夹树 + 迁移前 `migrate status`(pending) + 表缺失证明（P1014）。
+- `p1_migration_apply.txt`：`migrate deploy` 应用过程 + 应用后 `up to date`。
+
+**部署回执类 `delivery-evidence/p2_admin/deploy_record/`**
+- `p2_redeploy_receipt.txt`：部署回执（GATE1 健康 200、GATE2 页面 200、commit `287c49e`）。
+- `deploy_sh_hardening.md`：deploy.sh 迁移自检 + 账簿版本校验 + 副本 MD5 校验三闸门说明（commit `c2dd449` + 本治理整改）。
+
+### 37.7 遗留与计划模块（Legacy & Plan）
+
+**优化项（非阻塞，列管）**
+- O-1：调整池 `adminTimeSec` 展示已上线，但缺少「调整历史时间线」可视化。
+- O-2：`export` CSV 建议支持按当前过滤条件导出（现导出全量）。
+- O-3：操作日志 `IP` 字段依赖请求头，反向代理下需确认取 `X-Forwarded-For` 真实 IP。
+
+**下一阶段任务**
+- **全量异常场景测试**：P2_FINAL_CLOSED 解锁后启动；覆盖异常登录、越权尝试、并发边界、数据超量等场景。
+
+**前置依赖**
+- 无阻塞依赖；P1 六项补强已上线且验收通过，下一阶段可直接启动。
+
+**预期启动节点**
+- 本治理整改闭环（总账 7 模块 + 专项报告 + 证据归档 + 临时文件清理 + 服务器副本 MD5 同步）通过后，立即解锁。
+
+**P2 阶段闭环判定**：自迁移补应用 + 全功能真实验收通过 + 本治理整改文档/证据/清理全闭环起，P2 阶段演进为 **`P2_FINAL_CLOSED`**，正式解锁下一阶段「全量异常场景测试」开发权限。
