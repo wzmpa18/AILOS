@@ -1689,7 +1689,7 @@ P0_GATE_FIX_COMPLETE
   - 真实验收：free 用户 claimable=false；测试号临时置 basic（验后已还原 free/NULL）→ claimable=true → 领取到账 paidRemaining 180→240 → 重复领取 409。✅
 - **Phase 2 验收结论**：Task1~5 全部完成并经服务器真实验收；GitHub main = 服务器 = `3f86ba0`。等待阶段闸门放行后启动 Phase 3。
 
-### 36.11 P0 生产事故报告：登录后首页 500（2026-07-27）
+### 36.11 P0 生产事故报告：登录后首页 500（2026-07-27）（详见第八章 8.5 正式版）
 
 - **故障现象**：用户登录/引导完成后跳转 `GET /xuewaiyu/home` 出现 nginx 500 白屏（IP 站点 `http://82.156.228.87`）。
 - **影响时长**：访问日志可见真实用户 500 自 2026-07-27 11:29:31 起，至 11:40 左右修复上线，约 **11 分钟**（正式域名 yandao.vip 不受影响——其配置中已有 `location = /xuewaiyu/home` 精确规则）。
@@ -1709,3 +1709,56 @@ P0_GATE_FIX_COMPLETE
 - **闸门 1（服务启动健康检查）**：PM2 重启后须 `online` **且** `/api/health` 返回 200，任一不满足 → `rollback()` 自动回滚（git reset 旧版本 + prisma generate + 前端静态从本次备份还原 + PM2 重启）。
 - **闸门 2（核心页面可用性校验）**：静态同步 + nginx reload 后，逐一校验 `index/login/home/chat/learn/profile/billing` 等核心页面及无扩展名路径 `/xuewaiyu/home` 的 HTTP 状态，任一非 200 → 自动回滚。禁止手工热修复跳过检查。
 - **实测**：加固后完整执行一遍 `deploy.sh`，两道闸门全部通过，部署全绿（备份 `/www/backups/deploy_20260727_114336`）。
+
+---
+
+## 八、综合强制执行指令闭环记录（2026-07-27）
+
+### 8.1 第一优先级：P0 生产 500 故障处置（✅ 已恢复，正式事故报告）
+
+- **故障现象**：登录/引导完成后跳转 `GET /xuewaiyu/home`（IP 站点）→ nginx 500 白屏。
+- **影响时长**：约 11 分钟（access log 首条真实用户 500：2026-07-27 11:29:31；修复上线约 11:40）。正式域名 yandao.vip 不受影响（其配置已有 `location = /xuewaiyu/home` 精确规则）。
+- **根因**（错误日志铁证 `rewrite or internal redirection cycle while internally redirecting to "/xuewaiyu/index.html"`）：
+  1. 前端 login/onboarding 跳转无扩展名路径 `/xuewaiyu/home`；
+  2. IP 站点 `82.156.228.87.conf` 缺少该路径精确规则，落入 `try_files $uri $uri/ /xuewaiyu/index.html` 兜底；
+  3. 兜底目标 `index.html` 从未存在（仓库根无此文件）→ 内部重定向死循环 → 500。后端全程健康（pm2 online、/api/health 200），纯 nginx 路由缺口。
+- **修复**：
+  1. 仓库补建 `index.html` 兜底页（按 token 分流 home/login），提交 `c53c7ba`，标准 `deploy.sh` 上线；
+  2. `82.156.228.87.conf` 补 `location = /xuewaiyu/home`（改前备份 `.bak_*`、`nginx -t` 通过才 reload、失败自动还原）；
+  3. 复验：IP 端 11 路径全 200；正式域名 `https://yandao.vip/xuewaiyu/` 下 index/home/chat/learn/profile/billing/photo/notebook/login/onboarding 与 `/xuewaiyu/home` 全 200。
+- **预防措施**：deploy.sh 双自检闸门 + 自动回滚（见 8.6），核心页面校验显式覆盖 `/xuewaiyu/home` 无扩展名路径。
+
+### 8.2 任务 1：3 项底层技术隐患闭环（✅）
+
+- **1.1 语言切换缓存失效**：完整链路实证——ja 下对话产生缓存键 `ailos:ai:cache:conversation:{uid}:ja:*` → `PUT /api/language` 切 ko（200）→ 用户缓存键即刻清零（redis scan 残留 0）→ 立即对话输出韩语（韩文字符>0、假名 0，无旧缓存命中）→ 还原 ja。清除实现 `aiGateway.clearUserCache(userId)` 直连最小复现 deleted=1。
+- **1.2 语言接口入参强校验**：`targetLanguages` 传字符串/元素非字符串/非法语种 `xx`/空数组 4 组非法入参全部返回 **400** + 明确中文提示（`目标语言列表不能为空、每项需为字符串`、`不支持的语言代码: xx`），无 500、无异常堆栈。
+- **1.3 治理规则一致性**：onboarding `priority:0` 与个人中心 `languageService priority:i`（主语言=0）与治理规则「保留 priority 最小 active」100% 匹配；抽样 3 用户（74fdf81a/df440e3c/e2c3ffa1）各自仅 1 条 active 且 priority=0；全库多 active 用户数 **0**。
+
+### 8.3 任务 2：全量正式迁移文件（✅，按强制顺序执行）
+
+1. 生产库全量备份 → 专用目录 `/www/backups/db_archive/full_dump_20260727_114554.sql`（601,724 bytes）；
+2. `prisma migrate diff --from-url $DATABASE_URL --to-schema-datamodel schema.prisma` → **输出 `-- This is an empty migration.`（生产库与 Schema 完全一致）**；
+3. 基线迁移 `prisma/migrations/20260727000000_baseline_full/migration.sql`（45 张 CREATE TABLE，含计费三表 `TranslationBillingBalance/TranslationPackageOrder/TranslationBillingLog` 与词汇本依赖表 `LearningContent/ReviewQueue`）；
+4. `_prisma_migrations` 全量查询：`20260727000000_baseline_full | 2026-07-27 03:07:24 | steps=1`，记录完整可追溯；
+5. 铁律固化：deploy.sh 默认 `MIGRATE_MODE=migrate` 走 `prisma migrate deploy`；未执行任何 reset/force-reset/删记录高危操作。
+
+### 8.4 任务 3：账簿归一（✅）
+
+- 原 `AILOS_MASTER_LEDGER.md` 全部内容并入本账簿第七章（原目录结构保持），冗余账簿文件已 `git rm` 删除（提交 `56db6ba`）；
+- 全仓（除 node_modules/.git）检索 `AILOS_MASTER_LEDGER` 命中数 = **0**（docs/报告/SOP 中引用统一改写为《AILOS_总账账簿.md》）；
+- 本账簿现包含：阶段二全部交付记录（第七章 36.x）+ 本次故障记录（8.1/8.5）+ 整改记录（8.2~8.6）。
+
+### 8.5 任务 4：免费试用「终身一次」强校验（✅）
+
+- **服务端唯一真值**：试用状态存 `TranslationBillingBalance(userId 唯一)` 的 `trialUsedSec/trialTotalSec`，任何接口不读前端缓存/Cookie/localStorage；新用户 `getOrInitBalance` 初始化 `TRIAL_TOTAL_SEC=300`（5 分钟）。
+- **实测**：将测试号试用置为耗尽 → 全新登录会话（等效换设备/换浏览器/清缓存，客户端零本地状态）查询 `/api/billing/status` → `trial.remainingSec=0` **不可重置**；`trialUsedSec` 只增不减（consume 事务内 increment）。验后测试数据已还原。
+
+### 8.6 任务 5：双事故根因 + deploy.sh 自检自动回滚（✅）
+
+- **事故报告 A（词汇本部署崩溃，2026-07-27 上午）**：根因 = `vocabularyService.js` 误引不存在的 `../utils/contextResolver` 且用错导出名 → 服务启动即抛 MODULE_NOT_FOUND → PM2 crash-loop 74 次。修复三连 `286bfd6`（导入路径）/`d3743e5`（prisma 默认导入）/`79f640d`（去除不存在的 Prisma 关联，重写两段查询）。教训：新服务文件上线前必须 `node --check` + 本地 require 冒烟；已由闸门 1 兜底。
+- **事故报告 B（首页 500）**：见 8.1。教训：无扩展名路由必须在所有 server 块成对配置；已由闸门 2 显式校验 `/xuewaiyu/home` 兜底。
+- **deploy.sh 两道自检闸门 + 自动回滚**（提交 `9348f2f` → `ce22675` → `45042d0`）：
+  - 闸门 1（服务启动健康）：PM2 online **且** `/api/health`=200，否则 `rollback()`；
+  - 闸门 2（核心页面可用性）：index/login/home/chat/learn/profile/billing 等 + `/xuewaiyu/home` 全 200，否则 `rollback()`；
+  - `rollback()`：回滚至持久锚点 `/www/backups/last_good_commit`（两闸门全过才登记）+ prisma generate + 前端静态还原 + PM2 异常态拉起 + 30s 健康轮询；
+  - **真实故障演练 2 轮**：注入 `throw new Error('DEPLOY_DRILL_CRASH')` 坏提交 → deploy.sh 闸门 1 检出 → 自动回滚。第 1 轮暴露"回滚目标=坏提交"缺陷（服务器本地提交场景 CURRENT_COMMIT 失真）→ 引入 last_good_commit 锚点后第 2 轮演练：**退出码 1、代码精确回到 ce22675、坏提交 revert 后主线恢复全绿**。演练提交均已 revert 留痕（`cde1c5c/19396cf/8a6e373/b04389a`）。
