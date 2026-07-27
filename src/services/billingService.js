@@ -190,7 +190,17 @@ class BillingService {
       });
 
       return { success: true, consumedSec: seconds, source, orderId, logId: log.id, balanceAfterSec };
-    });
+  }
+
+  /**
+   * 统一翻译时长闸门（供所有翻译场景复用：拍照/实时扫描/对话）
+   * 校验并原子扣减时长；不足直接抛 402（拒绝服务，不返回译文）。
+   * 等价于 consure()，保留语义化命名以便各翻译路由统一调用。
+   * @param {string} userId
+   * @param {{scene?:'photo'|'scan'|'conversation', seconds:number}} opt
+   */
+  async requireTranslationQuota(userId, { scene = 'scan', seconds } = {}) {
+    return this.consume(userId, { scene, seconds });
   }
 
   /**

@@ -13,6 +13,7 @@ const contextResolver = require('./contextResolver');
 const { getOcrAdapter } = require('./ocr');
 const { getOcrQuotaService } = require('./ocrQuotaService');
 const { getAIGateway } = require('./aiGateway');
+const { getBillingService } = require('./billingService');
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // base64 解码后 5MB 上限
 
@@ -58,7 +59,11 @@ class PhotoTranslateService {
         throw err;
       }
 
-      // 3) 翻译 + 母语解析（走 AI 网关：语言从库解析、LanguageGuard 输出校验、计量入 aiRequestLog）
+      // 3) 翻译时长闸门（调用前校验+扣减；不足 402 拒绝；禁先用后扣）
+      const estSec = Math.max(5, Math.ceil(ocr.text.length / 20));
+      const billing = await getBillingService().requireTranslationQuota(userId, { scene: 'photo', seconds: estSec });
+
+      // 4) 翻译 + 母语解析（走 AI 网关：语言从库解析、LanguageGuard 输出校验、计量入 aiRequestLog）
       const gateway = getAIGateway();
       const sysPrompt =
         `你是言道翻译引擎。用户母语=${langCtx.nativeLanguage}，目标语言=${langCtx.targetLanguage}。` +
@@ -94,6 +99,7 @@ class PhotoTranslateService {
         languageContext: { native: langCtx.nativeLanguage, target: langCtx.targetLanguage },
         ocr: { provider: ocr.provider, confidence: ocr.confidence },
         quota: { dailyFreeLimit: status.dailyFreeLimit, used: status.used, remaining: status.remaining },
+        billing: { consumedSec: billing.consumedSec, source: billing.source, balanceAfterSec: billing.balanceAfterSec },
       };
     } catch (err) {
       // OCR/翻译失败 → 释放配额（failed 不计入）
