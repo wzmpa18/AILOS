@@ -2052,3 +2052,100 @@ curl -s -X POST https://yandao.vip/api/billing/consume -H 'Content-Type: applica
 1. 前端指纹为浏览器特征哈希（canvas/UA/屏幕/时区），可被高级攻击者伪造或清除 localStorage 重置——因此服务端叠加「IP /24 前缀日频控（5 次/日）」兜底；指纹+IP 双维度下批量薅取成本显著抬高，但无法做到绝对防御（行业通例）。
 2. 无指纹请求（老客户端/纯 API）不硬拦（避免误伤存量用户），仅受 IP 前缀频控约束。
 3. `chat.html`/`learn.html` 等页面暂未注入指纹头（不涉及试用领取场景，translate/billing 两条计费路由已全覆盖）。
+
+
+# 第十三章 · 第三阶段 P1 设备指纹风控 P0 级整改闭环（2026-07-27）
+
+> 触发：P1 终审不予直接放行，指出「核心生效链路缺失 / 生产数据污染 / 风控可绕过 / 交付半吊子」四类问题，要求完成 6 项 P0 整改后方可解锁 P2。
+> 整改代码 commit `cc144b6`（分支 feature 直推 main，ff 合并），硬化 `deploy.sh` 部署双闸门通过（GATE1 health=200 / GATE2 pages_ok=1），锚点已登记（deploy_20260727_210456_2542168.log）。
+> 本次整改同步修正了第十二章 12.6 第 2、3 条边界说明（无指纹绕过、前端未全量注入）。
+
+---
+
+## 13.1 P0-1 前端设备指纹集成（真实生效，核心整改）
+
+**问题**：P1 仅后端实现风控，验收靠 curl 手动加 `X-Device-Fp` 头；普通用户访问不携带指纹，风控等于摆设。
+
+**整改**：
+1. 新增 `assets/devicefp.js`（5134 B）：浏览器打开任意页面自动采集稳定指纹（canvas+WebGL+UA+屏幕+时区+并发数 djb2 双向哈希，`localStorage.yd_device_fp_v1` 持久化），**全局 monkey-patch `window.fetch` 与 `XMLHttpRequest`**，对所有 `/api` 业务请求（试用状态/时长扣减/拍照翻译/会员权益领取等全部接口）自动注入 `X-Device-Fp` 头；仅注入同源 `/api` 请求，静态资源/第三方请求绝不污染；脚本自身故障不影响页面其它功能。
+2. 通过字节安全的注入（保留 CRLF）将 `<script src="/xuewaiyu/assets/devicefp.js"></script>` 注入**全部 44 个 HTML 页面**（`billing.html`/`photo.html`/`index.html`/`login.html`/`chat.html`/`learn.html`/`admin/*` 等），并随 `deploy.sh` 的 `FRONTEND_SYNC` 部署到正式域名。
+3. 原第十二章 12.6 第 3 条「`chat.html`/`learn.html` 未注入」已不成立——现已全量注入。
+
+**验证**：
+- 无头 harness（mock 浏览器全局后加载 `devicefp.js`）证明：`/api` 调用携带 `X-Device-Fp`、静态调用不携带、XHR 调用也携带（`_p0_fp_test` 输出见 `evidence/2026-07-27/raw/_p0_fp_test_out.txt`）。
+- 正式域名实际服务页面已带该脚本：`curl https://yandao.vip/xuewaiyu/billing.html | grep devicefp.js` → `assets/devicefp.js`（已核验）。
+- **诚实披露**：无头 harness 验证的是「前端代码确实注入头」的代码级证明；真实浏览器 Network 抓图由评审方按 13.6 指引自行复现（本环境无法启动图形浏览器，不伪造截图）。
+
+## 13.2 P0-2 测试数据全量清理（杜绝生产污染）
+
+**来源说明**：`13800000101` / `13800000102` 为 P1 验收时**直接 prisma 插入的测试账号**，非真实用户号码、未获授权，属生产脏数据，必须清除。
+
+**清理动作（前后对比）**：
+- Redis：`dfp:*` 测试键由 **5 → 0**（含 `dfp:acc:`/`dfp:trial:`/`dfp:ipq:`/`dfp:ipm:` 及 IP 前缀计数；清理前 5 键、清理后 0 键，见 `evidence/2026-07-27/raw/_p0_redis_cleanup_out.txt`）。
+- DB：删除 `13800000101`/`13800000102` 两账号及其 `translationBillingLog`/`translationBillingBalance`/`translationPackageOrder` 关联记录（见 `evidence/2026-07-27/raw/_p0_db_cleanup_out.txt`：`DELETED_USER 13800000101` / `DELETED_USER 13800000102`；旧账号计数复核 = 0）。
+- 整改后**全量 dfp 键 = 0、旧账号 = 0**，已留痕。
+
+**铁律落地**：新建测试账号统一 `test_` 前缀（禁止使用真实手机号段）：
+- `test_fp_a`（昵称 设备指纹验证A）、`test_fp_b`（设备指纹验证B），密码 `FpTest2026`，登录标识 `account=test_fp_a`（phone 字段承载，非真实号段）。
+- 用途：供 13.6 浏览器指引复现「首账号可领、次账号被拦、换设备可领」。按铁律，验证完成后 24 小时内须清理；本环境已预留清理脚本，交付后由值班员执行。
+
+## 13.3 P0-3 无指纹绕过加固（自动降级机制）
+
+**问题**：P1 主动披露「无指纹请求不硬拦」等于留下明确绕过口子（攻击者构造不带指纹请求 + IP 代理池即可突破设备维度）。
+
+**整改（`src/services/deviceRiskService.js` 重写）**：新增全局无指纹占比自动降级——
+- 每日全局统计 `dfp:nofp:global:{day}`（无指纹领取数）与 `dfp:tot:global:{day}`（总领取数，含带指纹）；`ratio = nofp / tot`。
+- `GLOBAL_DEGRADATION_FLOOR = 30`：**样本下限**——当日总领取 < 30 时不触发降级（防单点早期误伤），但每 /24 IP 前缀日上限 5 仍生效。
+- `ratio > NOFP_RATIO_TIGHTEN(0.10)` → 单 /24 IP 前缀日上限由 5 **收紧为 2**；
+- `ratio > NOFP_RATIO_BAN(0.20)` → **全局熔断**，禁止一切无指纹领取（`NOFP_BANNED`）。
+- 阈值默认值 **5 次/日/IP /24** 的合理性：真实用户走设备维度（每设备终身一次），几乎不触发 IP 计数；5 仅作老客户端/纯 API 的宽松兜底。由于前端现已对所有浏览器自动发指纹，真实用户无指纹占比 ≈ 0，任何显著无指纹流量均视作接口直连/代理池（可疑），占比上升即触发收紧→熔断，构成「单点宽松 + 全局收紧」双重防线。
+
+**验收（正式域名，见 `evidence/2026-07-27/raw/_p0_accept_out.txt` 与 `_p0_accept2_out.txt`）**：
+- 占比模拟 = 30/100（>20%）：无指纹查状态 → `deviceRestricted:true, restrictReason:"NOFP_BANNED"`（全局熔断生效）。
+- 占比模拟 = 12/100（10%~20%）：同 /24 前缀下 A 领取(200)→B 领取(200)→A 再领(**402 TRANSLATION_TIME_EXHAUSTED**)（上限收紧为 2 生效）。
+- 语义说明：IP 前缀计数器按「去重账号数/日」计（含 per-user+per-IP+per-day 去重标记），故「日 2 次」= 同一 /24 前缀下最多 2 个不同账号可经无指纹通道领取；核心防薅仍由「每设备终身一次 + 单设备 2 账号绑定」承载。
+
+**诚实边界**：即便全局熔断无指纹通道，攻击者仍可用合法指纹——但每设备终身一次 + 2 账号绑定已封顶；无指纹通道仅为遗留/直连接口兜底，现已背靠占比熔断。属行业通例的成本抬高型防御，非绝对防御。
+
+## 13.4 P0-4 Lint 告警强制收敛
+
+- 本轮清理 14 条 `no-unused-vars` 告警（涉及 checkinController / learnController / aiGateway / aiQuotaService / authService / intentRouter / languageGuard / onboardingService / reviewsService / smsService / speechEvaluateService）：删除未用导入/变量、未用参数重命名为 `_*`。
+- **结果**：`eslint src --ext .js` = **0 warnings / 0 errors**（原 14 → 0，满足 ≤5 硬性要求，且超额归零）。
+- 后续铁律：每个 PR 告警只减不增；P2 阶段结束必须全清零（已 0，持续保持）。
+
+## 13.5 P0-5 浏览器验证指引（可复现，非技术人员可操作）
+
+已写入附件 `evidence/2026-07-27/raw/_p0_browser_verify_guide.md`，要点：
+- 正式域名入口：`https://yandao.vip/xuewaiyu/billing.html`（试用/计费页）；测试账号 `test_fp_a` / `test_fp_b`，密码 `FpTest2026`。
+- 分步：① A 登录 → 开发者工具 Network 可见所有 `/api` 请求带 `X-Device-Fp`；② A 查状态 remainingSec>0（可领）；③ 退出换 B 登录、**同浏览器同设备**查状态 → `deviceRestricted:true, restrictReason:DEVICE_TRIAL_CLAIMED`（次账号被拦）；④ B 换另一浏览器/无痕窗口（新设备指纹）查状态 → remainingSec>0（换设备可领）。
+- 抓图要求：Network 面板截图证明请求头自动携带 + 状态接口返回受控，作为风控对普通用户自然生效的实证。
+
+## 13.6 P0-6 node_modules 误提交残留确认
+
+- `git log --all -- node_modules` 在 main 历史中**无任何记录**；`git ls-files | grep node_modules` = 0。
+- 部署 `deploy.sh` 的 `FRONTEND_SYNC` 仅 rsync `*.html / assets / admin / frontend / public`，**不含 node_modules**，且 `node_modules` 在 `.gitignore` 中。
+- 整改过程中曾因 `npm install eslint` 改动 `package-lock.json`、以及注入脚本误触 node_modules 内 html——均已 `git checkout --` 回退（package-lock 已复原），node_modules 内 html 注入也已回退，磁盘与历史均干净。
+
+---
+
+## 13.7 整改验收回执（模板回填）
+
+```
+P1_RECTIFICATION_COMPLETE
+- 前端指纹集成：✅ 全部 44 页面自动携带（无头 harness 证明 + 正式域名页面 grep 实证；真实浏览器抓图见 13.5 指引）
+- 测试数据清理：✅ 旧账号 13800000101/13800000102 及关联计费记录全删；Redis dfp:* 5→0；新建 test_ 前缀账号
+- 风控兜底加固：✅ 无指纹占比自动降级（>10%→日2次；>20%→全局熔断 NOFP_BANNED）已落地并验收；策略与局限已入本第十三章
+- Lint告警收敛：✅ 当前剩余 0 条（≤5，超额归零）
+- 浏览器验证指引：✅ 已入账簿附件 evidence/2026-07-27/raw/_p0_browser_verify_guide.md
+- node_modules遗留：✅ 已确认 main 历史干净、部署不含 node_modules、误触已回退
+- 账簿同步：✅ 已更新至第十三章，commit cc144b6
+- P2启动权限：🟢 申请启动（P0 六项全部闭环，建议解锁 P2 基础运营管理后台）
+```
+
+## 13.8 诚实边界总览（更新第十二章 12.6）
+
+1. 指纹可被高级攻击者伪造/重置 localStorage——服务端叠加 IP /24 前缀频控 + 全局无指纹占比熔断兜底，批量薅取成本显著抬高，非绝对防御（行业通例）。
+2. **已闭环**：原「无指纹不硬拦」改为全局占比自动降级（收紧/熔断），不再留可预见的批量绕过口子。
+3. **已闭环**：前端已全量注入指纹头，风控对普通用户自然生效，非仅测试命令生效。
+4. 测试账号 `test_fp_a`/`test_fp_b` 为临时验证数据，按铁律须在验证完成后 24h 内清理（已留清理脚本）。
+
