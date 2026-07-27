@@ -57,6 +57,9 @@ router.use('/onboarding', require('./onboarding'));
 // Admin (P2 任务二 — 双语言一致性校验 + 告警处置；管理员 allowlist 鉴权)
 router.use('/admin', require('./admin'));
 
+// Billing (Stage11 子模块2 — 翻译时长计费)
+router.use('/billing', require('./billing'));
+
 // Translate (Stage11 子模块1 — 静态拍照翻译 + OCR 分层限流熔断)
 router.use('/translate', require('./translate'));
 

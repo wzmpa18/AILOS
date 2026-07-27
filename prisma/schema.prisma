@@ -84,6 +84,9 @@ model User {
   speechEvaluations       SpeechEvaluationRecord[]
   companionProfile        CompanionProfile?
   ocrUsageLogs            OcrUsageLog[]
+  translationBalance     TranslationBillingBalance?
+  packageOrders          TranslationPackageOrder[]
+  billingLogs            TranslationBillingLog[]
 
   @@index([phone])
   @@index([email])
@@ -1008,5 +1011,50 @@ model LanguageConsistencyAlert {
 
   @@index([userId])
   @@index([status])
+  @@index([createdAt])
+}
+
+
+// Stage11 子模块2 — 翻译时长计费（附件 L v1.0.3）
+model TranslationBillingBalance {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trialTotalSec Int      @default(300)
+  trialUsedSec  Int      @default(0)
+  subType       String?  // 'daily' | 'weekly' | 'monthly'
+  subExpiresAt  DateTime?
+  subUsedSec    Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  @@index([userId])
+}
+
+model TranslationPackageOrder {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderNo      String   @unique
+  packageType  String   // pay_1h|pay_10h|pay_30h|pay_100h|daily|weekly|monthly
+  minutesTotal Int
+  minutesUsed  Int      @default(0)
+  priceCny     Float
+  expiresAt    DateTime
+  status       String   @default("paid") // paid|refunded|expired
+  createdAt    DateTime @default(now())
+  @@index([userId])
+}
+
+model TranslationBillingLog {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scene           String   // photo(免费)|scan|conversation|trial
+  consumedSec     Int
+  source          String   // trial|subscription|paid_package
+  orderId         String?
+  balanceAfterSec Int
+  createdAt       DateTime @default(now())
+  @@index([userId])
   @@index([createdAt])
 }

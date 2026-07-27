@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const translateController = require('../controllers/translateController');
+const billingController = require('../controllers/billingController');
 const { authenticate } = require('../middleware/auth');
 
 router.use(authenticate);
@@ -13,5 +14,9 @@ router.use(authenticate);
 router.post('/photo', translateController.photoTranslate);
 router.get('/photo/quota', translateController.getQuota);
 router.post('/notebook', translateController.addToNotebook);
+
+// 子模块2 计费链路（附件 L 2.3 命名对齐）：套餐购买 / 试用状态查询
+router.post('/package/buy', billingController.buyPackage);
+router.get('/trial/status', billingController.getStatus);
 
 module.exports = router;
