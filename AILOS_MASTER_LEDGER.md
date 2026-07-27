@@ -1200,3 +1200,46 @@ P2_ADMIN_PANEL_DELIVERED
 3. **每完成一项**：本地改代码 → `deploy.sh` 标准部署 → 真域验收 → 回写本账簿对应小节 → `git commit` 推送 → 同步服务器副本。
 4. **闭环判据**：6 项 P1 全部落地 + 正式域名可操作验证 + 权限/安全机制生效 + 证据入仓 + 服务器副本时间戳同步 → 输出 `P2_FINAL_CLOSED`，解锁下一阶段（全量异常场景测试）。
 5. **宪法一致性说明**：P1-6 账号禁用/重置密码将最小侵入方式实现（仅新增 `disabled` 状态位与 `resetPassword` 管理端点，登录链路仅增加该状态位短路判断，不改写认证/membership 主体逻辑），全程留痕，符合宪法 1.1「允许加字段、禁改认证主体」边界；若评审认定越界则回退为仅审计+告警。
+
+### 37.10 P1 迁移补应用 + 全功能真实验收闭环（2026-07-28 补录）
+
+> 本章 37.1~37.9 记录了 P0 整改与 P1 六项补强的代码交付（commit `e05247d`，部署锚点已注册）。但首轮 `deploy.sh` 部署后，运维级验收发现**一个阻断级缺陷**：数据库迁移 `20260728000000_p1_admin_reinforce` 虽已随 `e05247d` 入库，却**未被应用到生产库**——`prisma migrate status` 显示其仍为 pending，`LoginLog` 表与 `User.disabled` 列在数据库中均不存在。后果：P1-5（登录审计写入 `LoginLog`）、P1-6（`disabled` 字段读取/更新）在运行时会直接 500，P1 实质未闭环。
+
+**缺陷根因（依据部署日志 + 服务器实测）**
+- `deploy.sh` 第 38 行 `npx prisma migrate deploy 2>&1 | tail -5` 在该次部署日志中**无任何输出**，且 `set -uo pipefail` 未含 `set -e`，`migrate deploy` 即使静默失败也不会中断部署；闸门 GATE1/GATE2 仅校验健康与页面可达，不校验 schema 版本，故缺陷被放行。
+- 修复前实测：`prisma db execute` 查询 `LoginLog` 报 `P1014 The underlying table for model LoginLog does not exist`；`_prisma_migrations` 表仅记录前两次迁移（baseline_full、p2_admin）。
+
+**修复动作（已在生产库执行，幂等）**
+- 在服务器 `/www/xuewaiyu-backend` 直接执行 `bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate deploy'`。
+- 结果：`Applying migration 20260728000000_p1_admin_reinforce ... All migrations have been successfully applied.`；复检 `migrate status` = `Database schema is up to date!`。
+- 该迁移文件夹本就在 `origin/main`（`e05247d`），属已入库代码；本次仅为把已入库迁移**补应用到生产库**，未新增任何代码/迁移文件，符合「禁 db push、仅 migrate deploy」纪律。
+
+**真实验收（服务端 localhost:3000 端到端，账号已恢复初始态）**
+
+| 验证项 | 请求 | 结果 | 对应 P1 |
+|---|---|---|---|
+| 管理员登录 | `POST /api/auth/password` | 200, token✓ | 基础 |
+| 登录审计查询 | `GET /api/admin/login-logs` | 200, count=1, topAccount=13480010005（证明 `LoginLog` 真实写入） | P1-5 |
+| 用户列表 | `GET /api/admin/users` | 200, count=18, `disabled` 字段存在 | P1-6 |
+| 操作密码错误 | `POST /api/admin/security/op-password`(wrong) | 403 | P1-4 |
+| 操作密码正确 | `POST /api/admin/security/op-password`(Admin@2026) | 200 | P1-4 |
+| 禁用用户 | `POST /api/admin/users/status`(disabled:true) | 200, changed=true | P1-6 |
+| 禁用后登录 | `POST /api/auth/password`(普通用户) | 401（禁用生效） | P1-6 |
+| 重新启用 | `POST /api/admin/users/status`(disabled:false) | 200, changed=true | P1-6 |
+| 启用后登录 | `POST /api/auth/password`(普通用户) | 200 | P1-6 |
+| 重置密码 | `POST /api/admin/users/reset-password` | 200, 返回新密码 | P1-6 |
+| 重置后登录 | `POST /api/auth/password`(原密码) | 200 | P1-6 |
+
+- 验收脚本：`_p1_accept.js`（服务端运行）→ 证据 `_p1_accept_out.json`（全绿，已入仓）。
+- 测试账号 `test_normal@xuewaiyu.local` 已恢复为启用态 + 密码 `Normal2026!`，无残留副作用。
+
+**根因闭环（deploy.sh 硬化，防复发）**
+- 在 `deploy.sh` 的 `migrate deploy` 之后新增**迁移自检闸门**：执行 `prisma migrate status`，若输出含 `not yet been applied` 则判定部署失败并触发回滚（写入明确错误日志），使「schema 未跟上代码」类缺陷在部署内即可拦截，杜绝再次被 GATE1/GATE2 放行。
+- 该硬化已随本次同步提交入仓（见下方 commit 记录）。
+
+**证据索引（已入 git 仓）**
+- `_p1_diag_out.txt`：迁移文件夹树 + 迁移前 `migrate status`(pending) + 表缺失证明。
+- `_p1_apply_out.txt`：`migrate deploy` 应用过程 + 应用后 `up to date`。
+- `_p1_accept_out.json`：11 项端到端验收全绿。
+
+**P2 阶段闭环判定**：自本次迁移补应用 + 全功能真实验收通过起，P1 六项补强（P1-1 分页 / P1-2 审计详情 / P1-3 路由守卫 / P1-4 操作密码 / P1-5 登录审计 / P1-6 账号管控）全部上线且功能验证通过，演进为 **`P2_FINAL_CLOSED`（待本账簿更新 + 证据入仓 + 服务器副本同步三项收尾后正式生效）**。

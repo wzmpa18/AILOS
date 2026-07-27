@@ -1,0 +1,34 @@
+=== BEFORE: migrate status ===
+Datasource "db": PostgreSQL database "xuewaiyu", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+Following migration have not yet been applied:
+20260728000000_p1_admin_reinforce
+
+To apply migrations in development run prisma migrate dev.
+To apply migrations in production run prisma migrate deploy.
+=== RUN migrate deploy ===
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "xuewaiyu", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20260728000000_p1_admin_reinforce`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260728000000_p1_admin_reinforce/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+=== AFTER: migrate status ===
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "xuewaiyu", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Database schema is up to date!
+=== verify LoginLog + disabled ===
+Script executed successfully.
+=== key check done ===
