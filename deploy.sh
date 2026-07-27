@@ -46,12 +46,12 @@ if echo "$MIG_STAT" | grep -qi "not yet been applied"; then
   schema_ok=0
 fi
 
-# === 账簿版本校验闸门（落实 3.2，防代码上线、文档未更）===
+# === 账簿版本校验闸门（落实 3.1/3.2，防代码上线、文档未更）===
 HEAD_COMMIT=$(git rev-parse HEAD)
 echo "DEPLOY HEAD: $HEAD_COMMIT"
 ledger_ok=1
-if ! grep -q "$HEAD_COMMIT" AILOS_MASTER_LEDGER.md; then
-  echo "!! LEDGER NOT SYNCED: commit $HEAD_COMMIT not found in AILOS_MASTER_LEDGER.md"
+if ! git diff-tree --no-commit-id --name-only -r "$HEAD_COMMIT" | grep -q 'AILOS_MASTER_LEDGER.md'; then
+  echo "!! LEDGER NOT SYNCED: HEAD commit $HEAD_COMMIT did not update AILOS_MASTER_LEDGER.md"
   ledger_ok=0
 fi
 
