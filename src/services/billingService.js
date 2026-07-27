@@ -34,10 +34,14 @@ const SUB_CAP = { daily: DAILY_CAP_SEC, weekly: WEEKLY_CAP_SEC, monthly: MONTHLY
 // 会员体系 → 翻译时长权益映射（服务端唯一真值；Phase2 Task4）
 // 注意：不修改 membership 逻辑，仅只读 User.membershipLevel/membershipExpiry 做映射
 // grantUnits 与 TranslationPackageOrder.minutesTotal 同单位（与 PACKAGE_CATALOG.minutes 语义一致）
+// 利润硬约束核算（附件 L：套餐利润≥3倍。算力成本上界=按量包零售 19元/h ÷ 3 ≈ 6.33元/h）：
+//   basic  月费28元, 赠1h → 成本上界 6.33元, 利润倍数 28/6.33 ≈ 4.4x ✓
+//   premium月费58元, 赠2h → 成本上界12.67元, 利润倍数 58/12.67 ≈ 4.6x ✓
+//  （原 premium 5h 方案利润倍数仅 1.8x 违反硬约束，已于 2026-07-27 整改为 2h）
 const MEMBERSHIP_TIME_BENEFIT = {
   free:    { grantUnits: 0,   label: '免费用户：无每月赠送时长' },
   basic:   { grantUnits: 60,  label: '基础会员：每月赠送 1 小时翻译时长' },
-  premium: { grantUnits: 300, label: '高级会员：每月赠送 5 小时翻译时长' },
+  premium: { grantUnits: 120, label: '高级会员：每月赠送 2 小时翻译时长' },
 };
 const GRANT_VALIDITY_DAYS = 30; // 赠送时长 30 天内有效
 
