@@ -405,6 +405,30 @@
       </div>
     </div>
 
+    <!-- My Services Card（第三优先级 Task1/Task4：我的账户/我的服务入口） -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">💼</span>
+        <span>我的服务</span>
+      </div>
+      <a href="/xuewaiyu/billing.html" style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line,rgba(128,128,128,.15));color:inherit;text-decoration:none">
+        <span style="font-size:22px">⏱️</span>
+        <span style="flex:1">
+          <span style="display:block;font-weight:600">我的翻译时长</span>
+          <small id="svcQuotaText" style="color:var(--sub,#9aa3b2)">加载中…</small>
+        </span>
+        <span style="color:var(--sub,#9aa3b2)">›</span>
+      </a>
+      <a href="/xuewaiyu/vocabulary.html" style="display:flex;align-items:center;gap:12px;padding:12px 4px;color:inherit;text-decoration:none">
+        <span style="font-size:22px">📚</span>
+        <span style="flex:1">
+          <span style="display:block;font-weight:600">我的词汇本</span>
+          <small id="svcVocabText" style="color:var(--sub,#9aa3b2)">收藏的生词都在这里</small>
+        </span>
+        <span style="color:var(--sub,#9aa3b2)">›</span>
+      </a>
+    </div>
+
     <!-- Language Preferences Card -->
     <div class="card">
       <div class="card-header">
@@ -1486,11 +1510,40 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
   if (e.target === this) closeDeleteModal();
 });
 
+// ==================== My Services（我的翻译时长/词汇本） ====================
+function fmtDur(sec) {
+  sec = Math.max(0, sec || 0);
+  if (sec >= 3600) return (sec / 3600).toFixed(1) + ' 小时';
+  if (sec >= 60) return Math.floor(sec / 60) + ' 分钟';
+  return sec + ' 秒';
+}
+async function loadMyServices() {
+  try {
+    const res = await apiCall('GET', '/billing/status');
+    if (res && res.success) {
+      const d = res.data;
+      const total = (d.trial ? d.trial.remainingSec : 0)
+        + (d.subscription ? d.subscription.remainingSec : 0)
+        + (d.paidPackage ? d.paidPackage.remainingSec : 0);
+      const el = document.getElementById('svcQuotaText');
+      if (el) el.textContent = '剩余 ' + fmtDur(total) + (total <= 0 ? '，点击购买' : '');
+    }
+  } catch (e) { /* 游客/未登录静默 */ }
+  try {
+    const res = await apiCall('GET', '/vocabulary');
+    if (res && res.success) {
+      const el = document.getElementById('svcVocabText');
+      if (el) el.textContent = '已收藏 ' + (res.data || []).length + ' 个生词';
+    }
+  } catch (e) { /* 静默 */ }
+}
+
 // ==================== Init ====================
 function init() {
   renderLangSwitch();
   updateI18n();
   loadUserProfile();
+  loadMyServices();
 }
 
 init();

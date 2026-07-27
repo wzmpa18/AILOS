@@ -122,7 +122,12 @@ class BillingService {
     seconds = Math.round(seconds);
 
     return prisma.$transaction(async (tx) => {
-      const b = await this.getOrInitBalance(userId, tx);
+      let b = await this.getOrInitBalance(userId, tx);
+      // 并发防护（第三优先级 Task2）：对余额行加行级锁，串行化同一用户的并发扣减，
+      // 防止 read-then-write 竞态导致重复扣减/漏扣（资损风险）
+      await tx.$queryRaw`SELECT id FROM "TranslationBillingBalance" WHERE "userId" = ${userId} FOR UPDATE`;
+      // 加锁后重读最新余额（锁前读取可能已过期）
+      b = await tx.translationBillingBalance.findUnique({ where: { userId } });
       const now = new Date();
       let remain = seconds;
       let source = null;
@@ -439,6 +444,16 @@ class BillingService {
     const now = new Date();
     const grantType = `pay_grant_${level}_${monthKey}`;
     const orderNo = 'GR' + now.getTime() + Math.random().toString(36).slice(2, 8).toUpperCase();
+    // 有效期规则（第三优先级 Task3）：赠送时长随会员周期同步失效——
+    // 取「30 天」与「会员到期时间」二者更早者；会员过期后未使用时长不可用；续费后进入新周期可再领取
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { membershipExpiry: true },
+    });
+    let expiresAt = new Date(now.getTime() + GRANT_VALIDITY_DAYS * 86400000);
+    if (user && user.membershipExpiry && user.membershipExpiry < expiresAt) {
+      expiresAt = user.membershipExpiry;
+    }
     const order = await prisma.translationPackageOrder.create({
       data: {
         userId,
@@ -446,17 +461,81 @@ class BillingService {
         packageType: grantType,
         minutesTotal: grantUnits,
         priceCny: 0,
-        expiresAt: new Date(now.getTime() + GRANT_VALIDITY_DAYS * 86400000),
+        expiresAt,
         status: 'paid',
       },
     });
-    logger.info('Membership grant claimed', { userId, level, grantType, grantUnits });
+    logger.info('Membership grant claimed', { userId, level, grantType, grantUnits, expiresAt });
     return {
       orderNo: order.orderNo,
       level,
       grantUnits,
       expiresAt: order.expiresAt,
+      expiryRule: '赠送时长随会员周期同步失效（取30天与会员到期的更早者）',
     };
+  }
+
+  // ==========================================================
+  // 第三优先级 Task5 — 管理员对账：订单按日/按月导出与统计
+  // ==========================================================
+
+  /**
+   * 订单导出（管理员）：granularity=day|month, date=YYYY-MM-DD|YYYY-MM
+   * 返回订单明细 + 汇总（按状态计数、总金额、总时长单位）
+   */
+  async exportOrders({ granularity = 'day', date } = {}) {
+    if (!['day', 'month'].includes(granularity)) {
+      const e = new Error('granularity 必须为 day 或 month');
+      e.code = 'INVALID_GRANULARITY';
+      e.status = 400;
+      throw e;
+    }
+    let start, end;
+    if (granularity === 'day') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
+        const e = new Error('day 粒度 date 须为 YYYY-MM-DD');
+        e.code = 'INVALID_DATE';
+        e.status = 400;
+        throw e;
+      }
+      start = new Date(`${date}T00:00:00+08:00`);
+      end = new Date(start.getTime() + 86400000);
+    } else {
+      if (!/^\d{4}-\d{2}$/.test(date || '')) {
+        const e = new Error('month 粒度 date 须为 YYYY-MM');
+        e.code = 'INVALID_DATE';
+        e.status = 400;
+        throw e;
+      }
+      start = new Date(`${date}-01T00:00:00+08:00`);
+      const m = start.getMonth();
+      end = new Date(start);
+      end.setMonth(m + 1);
+    }
+    const orders = await prisma.translationPackageOrder.findMany({
+      where: { createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const summary = { total: orders.length, byStatus: {}, paidAmountCny: 0, paidUnits: 0 };
+    const rows = orders.map((o) => {
+      summary.byStatus[o.status] = (summary.byStatus[o.status] || 0) + 1;
+      if (o.status === 'paid') {
+        summary.paidAmountCny += Number(o.priceCny) || 0;
+        summary.paidUnits += o.minutesTotal || 0;
+      }
+      return {
+        orderNo: o.orderNo,
+        userId: o.userId,
+        packageType: o.packageType,
+        status: o.status,
+        priceCny: Number(o.priceCny) || 0,
+        minutesTotal: o.minutesTotal,
+        minutesUsed: o.minutesUsed,
+        expiresAt: o.expiresAt,
+        createdAt: o.createdAt,
+      };
+    });
+    return { granularity, date, rangeStart: start, rangeEnd: end, summary, orders: rows };
   }
 
   /** 定时清理：订阅过期清零 + 按量包超期标记作废（可被 cron 调用） */

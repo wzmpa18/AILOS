@@ -124,8 +124,36 @@ async function claimMembershipBenefit(req, res) {
   }
 }
 
+// ===== 第三优先级 Task5 — 管理员对账导出 =====
+
+// GET /api/billing/admin/orders/export?granularity=day|month&date=YYYY-MM-DD|YYYY-MM&format=json|csv
+// 须 authenticate + requireAdmin
+async function adminExportOrders(req, res) {
+  try {
+    const { granularity, date, format } = req.query || {};
+    const data = await billing.exportOrders({ granularity, date });
+    if (format === 'csv') {
+      const head = 'orderNo,userId,packageType,status,priceCny,minutesTotal,minutesUsed,expiresAt,createdAt';
+      const lines = data.orders.map((o) =>
+        [o.orderNo, o.userId, o.packageType, o.status, o.priceCny, o.minutesTotal, o.minutesUsed,
+         o.expiresAt ? new Date(o.expiresAt).toISOString() : '',
+         o.createdAt ? new Date(o.createdAt).toISOString() : ''].join(',')
+      );
+      const csv = '\uFEFF' + [head].concat(lines).join('\n')
+        + `\n# summary,total=${data.summary.total},paidAmountCny=${data.summary.paidAmountCny},paidUnits=${data.summary.paidUnits}`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="orders_${data.granularity}_${data.date}.csv"`);
+      return res.send(csv);
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
 module.exports = {
   getStatus, getCatalog, buyPackage, consume,
   createPayment, paymentCallback, paymentStatus,
   membershipBenefit, claimMembershipBenefit,
+  adminExportOrders,
 };

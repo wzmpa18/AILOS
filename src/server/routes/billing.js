@@ -24,4 +24,8 @@ router.get('/payment/status/:orderNo', billingController.paymentStatus);
 router.get('/membership-benefit', billingController.membershipBenefit);
 router.post('/membership-benefit/claim', billingController.claimMembershipBenefit);
 
+// 第三优先级 Task5 — 管理员对账：订单按日/按月导出（JSON/CSV）
+const { requireAdmin } = require('../middleware/adminAuth');
+router.get('/admin/orders/export', requireAdmin, billingController.adminExportOrders);
+
 module.exports = router;

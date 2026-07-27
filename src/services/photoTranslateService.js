@@ -59,9 +59,21 @@ class PhotoTranslateService {
         throw err;
       }
 
-      // 3) 翻译时长闸门（调用前校验+扣减；不足 402 拒绝；禁先用后扣）
+      // 3) 计费闸门·预检（第三优先级 Task2 原子性加固）：
+      //    余额不足 → 402 拒绝，不调用 AI（不产生成本）；
+      //    实际扣减移至翻译成功之后（AI 失败不扣费），扣减失败不返回译文。
+      const billingSvc = getBillingService();
       const estSec = Math.max(5, Math.ceil(ocr.text.length / 20));
-      const billing = await getBillingService().requireTranslationQuota(userId, { scene: 'photo', seconds: estSec });
+      const pre = await billingSvc.getStatus(userId);
+      const availableSec =
+        (pre.trial ? pre.trial.remainingSec : 0) +
+        (pre.subscription ? pre.subscription.remainingSec : 0) +
+        (pre.paidPackage ? pre.paidPackage.remainingSec : 0);
+      if (availableSec < estSec) {
+        const err = new Error('翻译时长不足，请购买套餐后继续使用');
+        err.status = 402; err.code = 'TRANSLATION_TIME_EXHAUSTED';
+        throw err;
+      }
 
       // 4) 翻译 + 母语解析（走 AI 网关：语言从库解析、LanguageGuard 输出校验、计量入 aiRequestLog）
       const gateway = getAIGateway();
@@ -80,6 +92,10 @@ class PhotoTranslateService {
       ], { userId, scene: 'photo_translate', temperature: 0.3, maxTokens: 1500, skipAsset: true });
 
       const parsed = this._parseResult(ai.content);
+
+      // 3.5) 翻译成功 → 原子扣减（并发行锁；并发竞态下若此刻余额已被耗尽，
+      //      consume 抛 402 → 进入 catch → 不返回译文（否决项 7：扣减失败拒绝返回结果）
+      const billing = await billingSvc.requireTranslationQuota(userId, { scene: 'photo', seconds: estSec });
 
       // 4) 结算计量（成功）
       await quota.settle(logId, {
@@ -141,42 +157,15 @@ class PhotoTranslateService {
    * @param {{type:'word'|'sentence', word?:string, reading?:string, meaning?:string, sentence?:string}} item
    */
   async addToNotebook(userId, item) {
-    const langCtx = await contextResolver.resolve(userId);
-    const isWord = item.type !== 'sentence';
-    const text = isWord ? (item.word || '').trim() : (item.sentence || '').trim();
-    if (!text) {
-      const err = new Error(isWord ? 'word required' : 'sentence required');
-      err.status = 400; err.code = 'INVALID_ITEM';
-      throw err;
-    }
-
-    const content = await prisma.learningContent.create({
-      data: {
-        contentType: isWord ? 'vocabulary' : 'grammar',
-        sourceType: 'AI_GENERATED',
-        sourceLanguage: langCtx.targetLanguage,
-        targetLanguage: langCtx.targetLanguage,
-        explanationLanguage: langCtx.nativeLanguage,
-        status: 'published',
-        qualityScore: 80,
-        contentData: {
-          origin: 'photo_translate',
-          word: isWord ? text : undefined,
-          sentence: isWord ? undefined : text,
-          reading: item.reading || '',
-          meaning: item.meaning || '',
-        },
-      },
+    // 第三优先级 Task4：统一委托 vocabularyService（单源去重 + 与 /api/vocabulary 数据完全一致）
+    const { getVocabularyService } = require('./vocabularyService');
+    const r = await getVocabularyService().addWord(userId, {
+      ...item,
+      origin: 'photo_translate',
+      sourceType: 'AI_GENERATED',
     });
-    const queue = await prisma.reviewQueue.create({
-      data: {
-        userId,
-        contentId: content.id,
-        contentType: isWord ? 'word' : 'sentence',
-      },
-    });
-    logger.info('PhotoTranslate', '收藏入库', { userId, type: isWord ? 'word' : 'sentence', contentId: content.id });
-    return { contentId: content.id, reviewQueueId: queue.id, dueDate: queue.dueDate };
+    logger.info('PhotoTranslate', '收藏入库', { userId, type: item.type === 'sentence' ? 'sentence' : 'word', contentId: r.contentId, existed: r.existed });
+    return r;
   }
 }
 

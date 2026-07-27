@@ -46,6 +46,9 @@ class VocabularyService {
     return { contentId: content.id, reviewQueueId: queue.id, dueDate: queue.dueDate, existed: false };
   }
   async listWords(userId, { lang } = {}) {
+    // 语种隔离（第三优先级 Task4）：默认按用户当前目标语言过滤；lang='all' 显式查看全部
+    if (!lang) lang = await this._userLang(userId);
+    if (lang === 'all') lang = null;
     const rows = await prisma.reviewQueue.findMany({ where: { userId, contentType: 'word' }, orderBy: { createdAt: 'desc' } });
     if (rows.length === 0) return [];
     const contents = await prisma.learningContent.findMany({
