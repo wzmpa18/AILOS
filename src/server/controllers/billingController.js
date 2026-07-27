@@ -151,9 +151,35 @@ async function adminExportOrders(req, res) {
   }
 }
 
+// 第三阶段收尾 Item3(1)：GET /api/admin/orders/export
+// 参数：startDate,endDate（YYYY-MM-DD，默认当日）；format=csv|json
+// 须 authenticate + requireAdmin（普通用户 403 ADMIN_REQUIRED；未登录 401）
+async function adminExportOrdersRange(req, res) {
+  try {
+    const { startDate, endDate, format } = req.query || {};
+    const data = await billing.exportOrdersByRange({ startDate, endDate });
+    if (format === 'csv') {
+      const head = 'orderNo,userId,packageType,priceCny,status,createdAt,paidAt';
+      const lines = data.orders.map((o) =>
+        [o.orderNo, o.userId, o.packageType, o.priceCny, o.status,
+          o.createdAt ? new Date(o.createdAt).toISOString() : '',
+          o.paidAt ? new Date(o.paidAt).toISOString() : ''].join(','));
+      const csv = '\uFEFF' + [head].concat(lines).join('\n')
+        + `\n# summary,total=${data.summary.total},paidAmountCny=${data.summary.paidAmountCny},paidUnits=${data.summary.paidUnits}`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="admin_orders_${data.startDate}_${data.endDate}.csv"`);
+      return res.send(csv);
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
 module.exports = {
   getStatus, getCatalog, buyPackage, consume,
   createPayment, paymentCallback, paymentStatus,
   membershipBenefit, claimMembershipBenefit,
   adminExportOrders,
+  adminExportOrdersRange,
 };

@@ -542,6 +542,54 @@ class BillingService {
     return { granularity, date, rangeStart: start, rangeEnd: end, summary, orders: rows };
   }
 
+  /**
+   * 订单导出（管理员，按日期区间）—— 第三阶段收尾 Item3(1)
+   * 参数：startDate/endDate（YYYY-MM-DD），默认均为当日
+   * 返回订单明细 + 汇总；CSV 字段：订单号/用户ID/套餐类型/金额/支付状态/创建时间/支付时间
+   */
+  async exportOrdersByRange({ startDate, endDate } = {}) {
+    const fmtDay = (d) => new Date(d).toISOString().slice(0, 10);
+    const today = fmtDay(new Date());
+    const s = startDate || today;
+    const e = endDate || today;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const err = new Error('startDate 须为 YYYY-MM-DD');
+      err.code = 'INVALID_DATE'; err.status = 400; throw err;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e)) {
+      const err = new Error('endDate 须为 YYYY-MM-DD');
+      err.code = 'INVALID_DATE'; err.status = 400; throw err;
+    }
+    const start = new Date(`${s}T00:00:00+08:00`);
+    const end = new Date(`${e}T23:59:59.999+08:00`);
+    if (start > end) {
+      const err = new Error('startDate 不能晚于 endDate');
+      err.code = 'INVALID_DATE'; err.status = 400; throw err;
+    }
+    const orders = await prisma.translationPackageOrder.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const summary = { total: orders.length, byStatus: {}, paidAmountCny: 0, paidUnits: 0 };
+    const rows = orders.map((o) => {
+      summary.byStatus[o.status] = (summary.byStatus[o.status] || 0) + 1;
+      if (o.status === 'paid') {
+        summary.paidAmountCny += Number(o.priceCny) || 0;
+        summary.paidUnits += o.minutesTotal || 0;
+      }
+      return {
+        orderNo: o.orderNo,
+        userId: o.userId,
+        packageType: o.packageType,
+        priceCny: Number(o.priceCny) || 0,
+        status: o.status,
+        createdAt: o.createdAt,
+        paidAt: o.status === 'paid' ? o.updatedAt : null,
+      };
+    });
+    return { startDate: s, endDate: e, summary, orders: rows };
+  }
+
   /** 定时清理：订阅过期清零 + 按量包超期标记作废（可被 cron 调用） */
   async expireStale() {
     const now = new Date();

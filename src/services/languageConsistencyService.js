@@ -301,7 +301,7 @@ async function createAlert(userId, alertPayload) {
 async function appendAlertToLedger(alert) {
   try {
     const ledgerPath = process.env.AILOS_LEDGER_PATH
-      || path.join(__dirname, '..', '..', '..', 'AILOS_总账账簿.md');
+      || path.join(__dirname, '..', '..', 'AILOS_指令中心', 'AILOS_总账账簿.md');
     if (!fs.existsSync(ledgerPath)) {
       logger.info('[langConsistency] 账簿文件不存在，跳过账簿联动（告警已入持久化存储）');
       return false;
