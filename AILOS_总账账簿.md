@@ -1762,3 +1762,58 @@ P0_GATE_FIX_COMPLETE
   - 闸门 2（核心页面可用性）：index/login/home/chat/learn/profile/billing 等 + `/xuewaiyu/home` 全 200，否则 `rollback()`；
   - `rollback()`：回滚至持久锚点 `/www/backups/last_good_commit`（两闸门全过才登记）+ prisma generate + 前端静态还原 + PM2 异常态拉起 + 30s 健康轮询；
   - **真实故障演练 2 轮**：注入 `throw new Error('DEPLOY_DRILL_CRASH')` 坏提交 → deploy.sh 闸门 1 检出 → 自动回滚。第 1 轮暴露"回滚目标=坏提交"缺陷（服务器本地提交场景 CURRENT_COMMIT 失真）→ 引入 last_good_commit 锚点后第 2 轮演练：**退出码 1、代码精确回到 ce22675、坏提交 revert 后主线恢复全绿**。演练提交均已 revert 留痕（`cde1c5c/19396cf/8a6e373/b04389a`）。
+
+---
+
+## 九、阶段二交付缺项补齐 + 正式域名全量验收（2026-07-27）
+
+> 提交链：`f3e4a33`（缺项补齐主体）→ `0646ab9`（利润约束整改）。全部经标准 `deploy.sh`（双自检闸门通过）。
+
+### 9.1 任务 1：前端购买链路合规化（✅）
+
+- **单入口**：根路径 `/billing.html` 已 301 → `/xuewaiyu/billing.html`（82.156.228.87.conf 与 yandao.vip.conf 的真实服务 server 块均已配置；nginx -t 校验后经 /etc/init.d/nginx reload 生效——排查发现直接 nginx -s reload 不能命中宝塔 master，已修正 reload 方式并留痕）。正式域名验证：https://yandao.vip/billing.html → 301。
+- **个人中心入口**：profile.html 新增「我的服务」卡片——「我的翻译时长」（实时显示剩余时长，点击跳购买页）与「我的词汇本」（显示收藏数，跳 vocabulary.html），样式与既有卡片统一。
+- **体验闭环**：billing.html 沙箱收银台成功/失败双分支均有 toast 明示，成功后 loadStatus() 自动刷新余额。
+
+### 9.2 任务 2：计费闸门加固与规则对齐（✅）
+
+- **扣减规则**：拍照翻译按次扣减 max(5, ceil(识别字数/20)) 秒；预检余额不足 → 402 不调用 AI（不产生成本）。
+- **原子性/时序整改**：扣减时点从「OCR 后、AI 前」改为「AI 翻译成功后」——OCR 失败不扣费（回归实证 422 且余额 430→430）；AI 失败不扣费；扣减失败不返回译文（否决项 7）。
+- **并发防护**：consume() 事务内对余额行 SELECT ... FOR UPDATE 行级锁 + 锁后重读。实测并发 5 请求 ×10s：成功 5、失败 0、实扣 50s == 期望 50s，无重复扣减、无漏扣。
+- **统一中间件**：新建 src/server/middleware/translationQuota.js（requireTranslationQuota(scene)），预检+挂载 req.billingGate.consume(seconds)，实时对话（conversation）/AR 扫描（scan）场景直接复用。
+
+### 9.3 任务 3：会员权益规则明确化（✅）
+
+- **有效期规则**：赠送时长 expiresAt = min(领取时+30天, membershipExpiry)——随会员周期同步失效、过期未用不可用、续费进入新周期可再领。实测：置 premium 3 天后到期 → 领取单 expiresAt 距今 3.3 天 ✓。
+- **利润硬约束核验**（附件 L 套餐利润≥3 倍；算力成本上界 = 按量包零售 19 元/h ÷ 3 ≈ 6.33 元/h）：
+  - basic 月费 28 元、赠 1h → 28/6.33 ≈ 4.4x ✓
+  - premium 月费 58 元、赠 2h → 58/12.67 ≈ 4.6x ✓
+  - 整改记录：原 premium 赠 5h 方案利润倍数仅 1.8x 违反硬约束 → 0646ab9 降为 2h 并附核算注释，域名侧复验 mapping 生效。
+- **幂等**：同周期重复领取 → 409 GRANT_ALREADY_CLAIMED（实测）。测试数据已还原并清理 grant 订单。
+
+### 9.4 任务 4：词汇本完整 MVP（用户可用级）（✅）
+
+- **前端入口**：photo.html 每条词/句已有「+ 词汇本」按钮；个人中心新增「我的词汇本」入口；新建 vocabulary.html（列表/语种切换/取消收藏/空态引导），正式域名 200。
+- **单源归一**：photoTranslateService.addToNotebook 改为委托 vocabularyService.addWord——photo 收藏与 /api/vocabulary 同源同去重（重复收藏 existed:true 实测）。
+- **语种隔离**：GET /api/vocabulary 默认按当前目标语言过滤（lang=all 显式放开）。实测：ja 添加「隔離テスト」+ ko 添加「격리」→ 默认列表仅 ja、?lang=ko 仅격리、?lang=all 两者均含 ✓。
+- **绑定与同步**：数据经 ReviewQueue 绑定 userId，服务端存储跨设备一致；未带 token 401。
+
+### 9.5 任务 5：支付链路基础能力（✅）
+
+- **对账导出**：GET /api/billing/admin/orders/export?granularity=day|month&date=...&format=json|csv（authenticate + requireAdmin）。实测：日/月导出含明细与汇总（total/byStatus/paidAmountCny/paidUnits）；CSV 带 BOM 与 summary 尾行；权限验证——管理员名单临时清空后 403、无 token 401、恢复后 200（admin.user_ids 已还原）。
+- **生产切换文档**：docs/支付生产切换方案.md——到账唯一入口 confirmPaymentOrder（状态机幂等），生产仅需配置 + notify 验签薄适配层，业务代码零改动；含金额校验/幂等/对账/演练清单。
+
+### 9.6 第四优先级：正式域名全量验收（✅ 唯一验收基准 https://yandao.vip/xuewaiyu/）
+
+- **页面**：/xuewaiyu/、/xuewaiyu/home、index/login/onboarding/home/chat/learn/profile/billing/photo/notebook/vocabulary 共 13 路径全 200；/billing.html 301 单入口。
+- **API（域名侧真实 token）**：health/billing.status/packages/membership-benefit/vocabulary/language 全 200。
+- **支付沙箱端到端（域名侧）**：create→orderNo→callback success→paid→status paid（测试订单已清理）。
+- **词汇本 CRUD（域名侧）**：add existed:false → 列表可查 → delete true。
+- **计费回归（域名侧）**：OCR 空白图 422 OCR_NO_TEXT 且余额不变。
+- 请求日志证据存 /www/wwwlogs/yandao-app.access.log（billing.html/vocabulary.html 200 记录在案）。
+
+### 9.7 遗留与说明
+
+- photo-translate.html 为误查文件名，真实页面 photo.html（正式域名 200），非缺陷。
+- 服务器临时脚本 /tmp/g*.sh 为验收采证用，不入仓；本地 _g*.py 采证脚本留存工作区。
+- 第三阶段（P2：设备指纹/管理后台/异常测试/CI）等待放行清单核验后启动。
