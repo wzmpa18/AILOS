@@ -176,7 +176,7 @@ class BillingService {
       const balanceAfterSec =
         Math.max(0, b.trialTotalSec - b.trialUsedSec) +
         (b.subExpiresAt > now ? Math.max(0, (SUB_CAP[b.subType] || 0) - b.subUsedSec) : 0) +
-        paidRemainingSecOf(tx, userId, now);
+        (await paidRemainingSecOf(tx, userId, now));
 
       const log = await tx.translationBillingLog.create({
         data: {
