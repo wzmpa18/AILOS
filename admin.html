@@ -2,435 +2,514 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
+<meta name="robots" content="noindex,nofollow" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>言道 AILOS · 运营管理后台</title>
-<!-- P0 设备指纹：普通用户访问自动携带 X-Device-Fp 请求头 -->
-<script src="/xuewaiyu/assets/devicefp.js"></script>
+<title>运营管理后台 · 言道</title>
 <style>
-  :root{--bg:#0f1422;--card:#1a2235;--line:#2a3550;--txt:#e6ebf5;--mut:#93a0bd;--pri:#4f8cff;--ok:#37c97f;--warn:#f0a93b;--bad:#ef5e6b;--chip:#243049}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt)}
-  header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:var(--card);border-bottom:1px solid var(--line)}
-  header h1{font-size:17px;margin:0;font-weight:600}
-  .who{font-size:13px;color:var(--mut)}
-  .wrap{max-width:1100px;margin:0 auto;padding:22px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
-  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
-  .tab{padding:9px 16px;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:9px;cursor:pointer;font-size:14px}
-  .tab.active{background:var(--pri);color:#fff;border-color:var(--pri)}
-  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
-  label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}
-  input,select,textarea{padding:9px 11px;background:#0f1626;border:1px solid var(--line);color:var(--txt);border-radius:8px;font-size:14px;min-width:150px}
-  textarea{min-width:280px;min-height:64px}
-  button{padding:9px 16px;border:none;border-radius:8px;background:var(--pri);color:#fff;cursor:pointer;font-size:14px}
-  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
-  button.danger{background:var(--bad)}
-  button.warn{background:var(--warn);color:#1a1300}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-  th{color:var(--mut);font-weight:600}
-  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;background:var(--chip);color:var(--txt)}
-  .pill.ok{background:rgba(55,201,127,.18);color:var(--ok)}
-  .pill.bad{background:rgba(239,94,107,.18);color:var(--bad)}
-  .pill.warn{background:rgba(240,169,59,.18);color:var(--warn)}
-  .stat{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
-  .stat .box{flex:1;min-width:140px;background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:14px}
-  .stat .box b{font-size:22px;display:block}
-  .stat .box span{font-size:12px;color:var(--mut)}
-  .msg{font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:12px;display:none}
-  .msg.err{background:rgba(239,94,107,.15);color:var(--bad);display:block}
-  .msg.ok{background:rgba(55,201,127,.15);color:var(--ok);display:block}
-  .login{max-width:380px;margin:90px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
-  .login h2{margin:0 0 18px;font-size:19px}
-  .muted{color:var(--mut);font-size:12px;line-height:1.7}
-  .hidden{display:none}
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
-  .modal{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;width:420px;max-width:92vw}
-  .modal h3{margin:0 0 14px}
-  .actions{display:flex;gap:8px;margin-top:6px}
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6fa; color: #1f2937; }
+  header { background: #1e293b; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header .title { font-size: 16px; font-weight: 700; }
+  header .ops button { margin-left: 8px; }
+  .wrap { max-width: 1100px; margin: 16px auto; padding: 0 16px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tabs button { border: 1px solid #d1d5db; background: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .tabs button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+  label { display: block; font-size: 13px; margin: 8px 0 4px; color: #374151; }
+  input, textarea, select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 160px; }
+  button.primary { background: #2563eb; color: #fff; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; }
+  button.danger { background: #dc2626; color: #fff; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; }
+  button.ghost { background: #fff; border: 1px solid #d1d5db; padding: 9px 16px; border-radius: 6px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #e5e7eb; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; }
+  .pager { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
+  .stat { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 6px; padding: 4px 8px; margin: 4px 4px 0 0; font-size: 13px; }
+  .hidden { display: none !important; }
+  .tag-ok { color: #16a34a; font-weight: 600; }
+  .tag-bad { color: #dc2626; font-weight: 600; }
+  #loginView { max-width: 380px; margin: 80px auto; }
+  #toast { position: fixed; top: 16px; right: 16px; background: #111827; color: #fff; padding: 10px 14px; border-radius: 8px; display: none; z-index: 50; font-size: 13px; }
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 60; }
+  .modal { background: #fff; padding: 20px; border-radius: 10px; width: 320px; }
+  .detail { font-size: 12px; color: #475569; background: #f8fafc; padding: 6px 8px; border-radius: 6px; margin-top: 4px; }
+  .before { color: #dc2626; } .after { color: #16a34a; }
+  a.dl { color: #2563eb; }
 </style>
 </head>
 <body>
-<div id="app">
-  <!-- 登录视图 -->
-  <div class="login" id="loginView">
-    <h2>运营管理后台登录</h2>
-    <div class="msg" id="loginMsg"></div>
-    <div class="row" style="margin-bottom:12px">
-      <div><label>管理员账号</label><input id="acc" placeholder="如 test_admin@xuewaiyu.local" style="width:100%"/></div>
+  <div id="loginView" class="hidden">
+    <div class="card">
+      <div class="title" style="font-size:18px;font-weight:700;margin-bottom:12px;">运营管理后台登录</div>
+      <label>管理员账号（手机 / 邮箱）</label>
+      <input id="acc" placeholder="如 13480010005" />
+      <label>密码</label>
+      <input id="pwd" type="password" placeholder="登录密码" />
+      <div style="margin-top:14px;"><button class="primary" id="loginBtn" style="width:100%;">登录</button></div>
+      <div id="loginErr" style="color:#dc2626;font-size:13px;margin-top:8px;"></div>
     </div>
-    <div class="row" style="margin-bottom:16px">
-      <div><label>密码</label><input id="pwd" type="password" placeholder="密码" style="width:100%"/></div>
-    </div>
-    <button id="loginBtn" style="width:100%">登录</button>
-    <p class="muted" style="margin-top:14px">仅管理员账号可进入；普通账号登录后将返回 403 无权限。</p>
   </div>
 
-  <!-- 主视图 -->
-  <div id="mainView" class="hidden">
+  <div id="app" class="hidden">
     <header>
-      <h1>言道 AILOS · 运营管理后台</h1>
-      <div class="who"><span id="whoName"></span> · <a href="#" id="logout" style="color:var(--mut)">退出</a></div>
+      <div class="title">运营管理后台</div>
+      <div class="ops">
+        <button class="ghost" id="opPwdBtn">修改操作密码</button>
+        <button class="ghost" id="logoutBtn">退出</button>
+      </div>
     </header>
     <div class="wrap">
-      <div class="tabs">
-        <button class="tab active" data-t="orders">订单查询 / 导出</button>
-        <button class="tab" data-t="time">用户时长管理</button>
-        <button class="tab" data-t="abn">异常订单标记</button>
-        <button class="tab" data-t="logs">操作日志</button>
+      <div class="tabs" id="tabs">
+        <button data-tab="orders" class="active">订单查询/导出</button>
+        <button data-tab="billing">用户时长管理</button>
+        <button data-tab="abnormal">异常订单标记</button>
+        <button data-tab="oplogs">操作日志</button>
+        <button data-tab="loginlogs">登录审计</button>
+        <button data-tab="users">用户管理</button>
       </div>
-
-      <!-- 订单 -->
-      <section id="p_orders">
-        <div class="card">
-          <div class="row">
-            <div><label>用户账号</label><input id="o_account" placeholder="留空=全部"/></div>
-            <div><label>开始日期</label><input id="o_start" type="date"/></div>
-            <div><label>结束日期</label><input id="o_end" type="date"/></div>
-            <div><label>订单类型</label><select id="o_type"><option value="all">全部</option><option value="package">翻译时长包</option><option value="membership">会员</option></select></div>
-            <div><label>异常状态</label><select id="o_abn"><option value="">全部</option><option value="1">仅异常</option><option value="0">仅正常</option></select></div>
-            <button id="o_query">查询</button>
-            <button class="ghost" id="o_export">导出 CSV</button>
-          </div>
-          <div class="msg" id="o_msg"></div>
-          <div style="overflow:auto;max-height:460px">
-            <table id="o_table"><thead><tr>
-              <th>订单号</th><th>账号</th><th>类型</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th><th>支付时间</th><th>异常</th><th>操作</th>
-            </tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 用户时长 -->
-      <section id="p_time" class="hidden">
-        <div class="card">
-          <div class="row">
-            <div><label>用户账号</label><input id="t_account" placeholder="如 13480010005"/></div>
-            <button id="t_query">查询</button>
-          </div>
-          <div class="msg" id="t_msg"></div>
-          <div id="t_result"></div>
-          <div id="t_adjust" class="hidden" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
-            <h3 style="margin:0 0 12px;font-size:15px">手动调整时长（需二次确认）</h3>
-            <div class="row">
-              <div><label>操作</label><select id="t_op"><option value="add">增加</option><option value="deduct">扣减</option></select></div>
-              <div><label>调整秒数</label><input id="t_delta" type="number" min="1" placeholder="如 600"/></div>
-              <div><label>调整原因（必填）</label><input id="t_reason" placeholder="运营操作原因"/></div>
-              <button id="t_submit">提交调整</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 异常订单 -->
-      <section id="p_abn" class="hidden">
-        <div class="card">
-          <p class="muted">在「订单查询」页筛选「仅异常」可定位异常订单；下方按异常状态列出全部异常订单。</p>
-          <div class="row"><button id="abn_query">加载异常订单</button></div>
-          <div class="msg" id="abn_msg"></div>
-          <div style="overflow:auto;max-height:460px">
-            <table id="abn_table"><thead><tr><th>订单号</th><th>账号</th><th>类型</th><th>套餐</th><th>金额</th><th>状态</th><th>异常备注</th><th>操作</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 日志 -->
-      <section id="p_logs" class="hidden">
-        <div class="card">
-          <div class="row"><button id="log_query">加载操作日志</button></div>
-          <div class="msg" id="log_msg"></div>
-          <div style="overflow:auto;max-height:520px">
-            <table id="log_table"><thead><tr><th>时间</th><th>管理员</th><th>动作</th><th>对象</th><th>原因 / 详情</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </section>
+      <div id="mainView"></div>
     </div>
   </div>
-</div>
 
-<div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <h3>异常订单标记</h3>
-    <div class="msg" id="modalMsg"></div>
-    <div class="row">
-      <div><label>标记状态</label><select id="m_abn"><option value="true">标记为异常</option><option value="false">取消异常</option></select></div>
-    </div>
-    <div><label>备注说明</label><textarea id="m_note" placeholder="异常原因 / 处置说明"></textarea></div>
-    <div class="actions" style="justify-content:flex-end;margin-top:14px">
-      <button class="ghost" id="m_cancel">取消</button>
-      <button id="m_save">保存</button>
+  <div id="opModal" class="modal-mask">
+    <div class="modal">
+      <div style="font-weight:700;margin-bottom:10px;">敏感操作验证</div>
+      <div id="opModalText" style="font-size:13px;color:#475569;margin-bottom:8px;"></div>
+      <label>操作密码</label>
+      <input id="opPwdInput" type="password" placeholder="请输入管理员操作密码" />
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="ghost" id="opCancel">取消</button>
+        <button class="primary" id="opConfirm">确认</button>
+      </div>
     </div>
   </div>
-</div>
+
+  <div id="toast"></div>
 
 <script>
-// ---- 设备指纹（与全站一致：自动生成并注入请求头） ----
-function genFp(){
-  var n=[];var s='abcdef0123456789';
-  for(var i=0;i<32;i++) n.push(s[Math.floor(Math.random()*16)]);
-  return n.join('');
-}
-var DEVICE_FP = localStorage.getItem('xuewaiyu_device_fp') || genFp();
-localStorage.setItem('xuewaiyu_device_fp', DEVICE_FP);
+const API = '/api';
+const TOKEN_KEY = 'ailos_admin_token';
+let currentTab = 'orders';
+let opResolve = null;
 
-// 统一请求封装：自动携带设备指纹 + 管理员 Token
-function api(path, opts){
-  opts = opts || {};
-  opts.headers = opts.headers || {};
-  opts.headers['Content-Type'] = 'application/json';
-  opts.headers['X-Device-Fp'] = DEVICE_FP;
-  var tk = localStorage.getItem('ailos_admin_token');
-  if(tk) opts.headers['Authorization'] = 'Bearer ' + tk;
-  return fetch('/api' + path, opts).then(function(r){
-    return r.json().then(function(d){ return {status:r.status, data:d}; });
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function setToken(t){ localStorage.setItem(TOKEN_KEY, t); }
+function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
+
+function toast(msg, isErr){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  el.style.background = isErr ? '#b91c1c' : '#111827';
+  setTimeout(()=>{ el.style.display='none'; }, 2600);
+}
+
+function deviceFp(){
+  try {
+    let fp = localStorage.getItem('admin_fp');
+    if(!fp){ fp = 'fp_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('admin_fp', fp); }
+    return fp;
+  } catch(e){ return 'fp_fallback'; }
+}
+
+async function api(method, path, body){
+  const headers = { 'Content-Type': 'application/json', 'X-Device-Fp': deviceFp() };
+  const tk = getToken();
+  if(tk) headers['Authorization'] = 'Bearer ' + tk;
+  const opt = { method, headers };
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(API + path, opt);
+  if(r.status === 401){
+    // 登录失效自动跳转登录页
+    toast('登录已失效，请重新登录', true);
+    showLogin();
+    throw new Error('UNAUTH');
+  }
+  const ct = r.headers.get('content-type') || '';
+  if(ct.includes('application/json')){
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    return j;
+  }
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return r;
+}
+
+// 操作密码弹窗，返回 Promise<string>
+function askOpPassword(text){
+  return new Promise((resolve)=>{
+    opResolve = resolve;
+    document.getElementById('opModalText').textContent = text || '此操作需输入管理员操作密码';
+    document.getElementById('opPwdInput').value = '';
+    document.getElementById('opModal').style.display = 'flex';
+    document.getElementById('opPwdInput').focus();
   });
 }
+document.getElementById('opConfirm').onclick = ()=>{
+  const v = document.getElementById('opPwdInput').value;
+  document.getElementById('opModal').style.display = 'none';
+  if(opResolve) opResolve(v);
+  opResolve = null;
+};
+document.getElementById('opCancel').onclick = ()=>{
+  document.getElementById('opModal').style.display = 'none';
+  if(opResolve) opResolve(null);
+  opResolve = null;
+};
 
-var ADMIN = { token:null, userId:null };
-
-// ---- 登录 ----
-function doLogin(){
-  var acc = document.getElementById('acc').value.trim();
-  var pwd = document.getElementById('pwd').value;
-  var msg = document.getElementById('loginMsg'); msg.className='msg';
-  if(!acc || !pwd){ msg.className='msg err'; msg.textContent='请输入账号与密码'; return; }
-  api('/auth/password', {method:'POST', body:JSON.stringify({account:acc, password:pwd})})
-    .then(function(r){
-      if(r.status===200 && r.data && r.data.tokens && r.data.tokens.accessToken){
-        localStorage.setItem('ailos_admin_token', r.data.tokens.accessToken);
-        ADMIN.token = r.data.tokens.accessToken;
-        return api('/admin/me');
-      }
-      msg.className='msg err';
-      msg.textContent = (r.data && r.data.error) ? r.data.error : '登录失败';
-      throw new Error('login fail');
-    })
-    .then(function(r){
-      if(r.status===200 && r.data.isAdmin){
-        ADMIN.userId = r.data.userId;
-        showMain();
-      } else {
-        localStorage.removeItem('ailos_admin_token');
-        msg.className='msg err';
-        msg.textContent = '无管理员权限（403）：该账号不是管理员，禁止进入后台。';
-      }
-    })
-    .catch(function(e){ if(e.message!=='login fail'){ console.error(e); } });
+// ---------- 鉴权守卫（P1-3） ----------
+async function bootstrap(){
+  const tk = getToken();
+  if(!tk){ showLogin(); return; }
+  try {
+    const me = await api('GET', '/admin/me');
+    if(me && me.isAdmin){ enterApp(); }
+    else { showLogin(); toast('当前账号无管理员权限', true); }
+  } catch(e){
+    if(e.message !== 'UNAUTH') showLogin();
+  }
 }
-
-function showMain(){
+function showLogin(){
+  clearToken();
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+}
+function enterApp(){
   document.getElementById('loginView').classList.add('hidden');
-  document.getElementById('mainView').classList.remove('hidden');
-  document.getElementById('whoName').textContent = '管理员 ' + ADMIN.userId.slice(0,8);
-  loadOrders();
+  document.getElementById('app').classList.remove('hidden');
+  renderTabs();
+  switchTab('orders');
 }
 
-function logout(){
-  localStorage.removeItem('ailos_admin_token');
-  location.reload();
-}
-
-// ---- Tab 切换 ----
-document.querySelectorAll('.tab').forEach(function(t){
-  t.addEventListener('click', function(){
-    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
-    t.classList.add('active');
-    var map = {orders:'p_orders', time:'p_time', abn:'p_abn', logs:'p_logs'};
-    Object.values(map).forEach(function(id){ document.getElementById(id).classList.add('hidden'); });
-    document.getElementById(map[t.dataset.t]).classList.remove('hidden');
-  });
-});
-
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('logout').addEventListener('click', function(e){e.preventDefault();logout();});
-
-// ---- 订单查询 ----
-function loadOrders(){
-  var q = new URLSearchParams();
-  var a = document.getElementById('o_account').value.trim();
-  var s = document.getElementById('o_start').value;
-  var e = document.getElementById('o_end').value;
-  var t = document.getElementById('o_type').value;
-  var ab = document.getElementById('o_abn').value;
-  if(a) q.set('account', a);
-  if(s) q.set('startDate', s);
-  if(e) q.set('endDate', e);
-  if(t && t!=='all') q.set('type', t);
-  if(ab) q.set('abnormal', ab);
-  var msg = document.getElementById('o_msg'); msg.className='msg';
-  api('/admin/orders?' + q.toString()).then(function(r){
-    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
-    var rows = r.data.data || [];
-    var tb = document.querySelector('#o_table tbody'); tb.innerHTML='';
-    rows.forEach(function(o){
-      var tr = document.createElement('tr');
-      var st = statusPill(o.status);
-      var ab = o.abnormal ? '<span class="pill bad">异常</span>' : '<span class="pill">正常</span>';
-      tr.innerHTML = '<td>'+esc(o.orderNo)+'</td><td>'+esc(o.account||'')+'</td><td>'+esc(o.type==='package'?'时长包':'会员')+'</td><td>'+esc(o.packageType||'')+'</td><td>'+esc(o.amount)+'</td><td>'+st+'</td><td>'+esc(fmt(o.createdAt))+'</td><td>'+esc(fmt(o.paidAt))+'</td><td>'+ab+'</td><td><button class="ghost" data-id="'+o.id+'" data-type="'+o.type+'">标记</button></td>';
-      tb.appendChild(tr);
+document.getElementById('loginBtn').onclick = async ()=>{
+  const acc = document.getElementById('acc').value.trim();
+  const pwd = document.getElementById('pwd').value;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const r = await fetch(API + '/auth/password', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'X-Device-Fp': deviceFp() },
+      body: JSON.stringify({ account: acc, password: pwd, deviceInfo:{ ipAddress:'', userAgent: navigator.userAgent } })
     });
-    msg.className='msg ok'; msg.textContent='共 '+rows.length+' 条订单';
+    const j = await r.json();
+    if(!r.ok){ document.getElementById('loginErr').textContent = j.error || '登录失败'; return; }
+    setToken(j.tokens.accessToken);
+    const me = await api('GET', '/admin/me');
+    if(me && me.isAdmin){ enterApp(); }
+    else { showLogin(); document.getElementById('loginErr').textContent = '当前账号无管理员权限'; }
+  } catch(e){ document.getElementById('loginErr').textContent = e.message; }
+};
+
+document.getElementById('logoutBtn').onclick = ()=>{ showLogin(); toast('已退出登录'); };
+document.getElementById('opPwdBtn').onclick = async ()=>{
+  const oldP = prompt('请输入原操作密码：');
+  if(oldP === null) return;
+  const newP = prompt('请输入新操作密码（至少6位）：');
+  if(newP === null) return;
+  try {
+    const j = await api('POST', '/admin/security/op-password', { oldPassword: oldP, newPassword: newP });
+    toast(j.message || '操作密码已更新');
+  } catch(e){ toast(e.message, true); }
+};
+
+// ---------- 标签页 ----------
+function renderTabs(){
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    b.onclick = ()=> switchTab(b.dataset.tab);
   });
 }
-function statusPill(s){
-  var map={paid:['ok','已支付'],PAID:['ok','已支付'],pending:['warn','待支付'],PENDING:['warn','待支付'],failed:['bad','失败'],FAILED:['bad','失败'],refunded:['warn','已退款'],REFUNDED:['warn','已退款'],expired:['bad','已过期'],EXPIRED:['bad','已过期']};
-  var m=map[s]||['',''];
-  return '<span class="pill '+m[0]+'">'+m[1]+'</span>';
+function switchTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('#tabs button').forEach(b=> b.classList.toggle('active', b.dataset.tab===tab));
+  const v = document.getElementById('mainView');
+  if(tab==='orders') v.innerHTML = ordersHtml();
+  else if(tab==='billing') v.innerHTML = billingHtml();
+  else if(tab==='abnormal') v.innerHTML = abnormalHtml();
+  else if(tab==='oplogs') v.innerHTML = oplogsHtml();
+  else if(tab==='loginlogs') v.innerHTML = loginlogsHtml();
+  else if(tab==='users') v.innerHTML = usersHtml();
+  loadTab(tab);
+}
+function loadTab(tab){
+  if(tab==='orders') loadOrders();
+  else if(tab==='billing') {/* 需手动查询 */}
+  else if(tab==='abnormal') {/* 需手动标记 */}
+  else if(tab==='oplogs') loadOplogs();
+  else if(tab==='loginlogs') loadLoginLogs();
+  else if(tab==='users') loadUsers();
 }
 
-document.getElementById('o_query').addEventListener('click', loadOrders);
-document.getElementById('o_export').addEventListener('click', function(){
-  var q = new URLSearchParams();
-  var a = document.getElementById('o_account').value.trim();
-  var s = document.getElementById('o_start').value;
-  var e = document.getElementById('o_end').value;
-  var t = document.getElementById('o_type').value;
-  var ab = document.getElementById('o_abn').value;
-  if(a) q.set('account', a);
-  if(s) q.set('startDate', s);
-  if(e) q.set('endDate', e);
-  if(t && t!=='all') q.set('type', t);
-  if(ab) q.set('abnormal', ab);
-  var tk = localStorage.getItem('ailos_admin_token');
-  var url = '/api/admin/orders/export?' + q.toString();
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  xhr.setRequestHeader('X-Device-Fp', DEVICE_FP);
-  if(tk) xhr.setRequestHeader('Authorization','Bearer '+tk);
-  xhr.responseType = 'blob';
-  xhr.onload = function(){
-    if(xhr.status===200){
-      var b = xhr.response;
-      var link = document.createElement('a');
-      link.href = URL.createObjectURL(b);
-      link.download = 'orders_'+Date.now()+'.csv';
-      link.click();
-    } else { alert('导出失败：'+xhr.status); }
-  };
-  xhr.send();
-});
-
-document.querySelector('#o_table tbody').addEventListener('click', function(ev){
-  var btn = ev.target.closest('button[data-id]');
-  if(btn){ openModal(btn.dataset.id, btn.dataset.type); }
-});
-
-// ---- 用户时长 ----
-document.getElementById('t_query').addEventListener('click', function(){
-  var a = document.getElementById('t_account').value.trim();
-  var msg = document.getElementById('t_msg'); msg.className='msg';
-  if(!a){ msg.className='msg err'; msg.textContent='请输入用户账号'; return; }
-  api('/admin/users/billing?account='+encodeURIComponent(a)).then(function(r){
-    var box = document.getElementById('t_result');
-    var adj = document.getElementById('t_adjust');
-    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; box.innerHTML=''; adj.classList.add('hidden'); return; }
-    var u = r.data.user;
-    msg.className='msg ok'; msg.textContent='查询成功';
-    box.innerHTML =
-      '<div class="stat">'
-      + boxStat('剩余时长(秒)', u.remainingSec)
-      + boxStat('管理员调整池(秒)', u.adminTimeSec)
-      + boxStat('试用剩余', u.trialRemainingSec)
-      + boxStat('订阅剩余', u.subscriptionRemainingSec)
-      + boxStat('按量包剩余', u.paidRemainingSec)
-      + '</div><div class="stat">'
-      + boxStat('累计消耗(秒)', u.consumedSec)
-      + boxStat('会员等级', u.membership.level)
-      + boxStat('试用领取', u.trialClaimed?'已领取':'未领取')
-      + boxStat('设备指纹', u.trialDeviceFp||'-')
-      + '</div>';
-    adj.classList.remove('hidden');
-  });
-});
-function boxStat(k,v){ return '<div class="box"><b>'+esc(String(v))+'</b><span>'+esc(k)+'</span></div>'; }
-
-document.getElementById('t_submit').addEventListener('click', function(){
-  var a = document.getElementById('t_account').value.trim();
-  var op = document.getElementById('t_op').value;
-  var delta = document.getElementById('t_delta').value;
-  var reason = document.getElementById('t_reason').value.trim();
-  var msg = document.getElementById('t_msg'); msg.className='msg';
-  if(!delta || Number(delta)<=0){ msg.className='msg err'; msg.textContent='调整秒数必须为正数'; return; }
-  if(!reason){ msg.className='msg err'; msg.textContent='必须填写调整原因'; return; }
-  var tip = (op==='add'?'增加':'扣减') + ' ' + delta + ' 秒（账号 '+a+'）';
-  if(!confirm('二次确认：'+tip+'\n原因：'+reason+'\n确认提交？')) return;
-  api('/admin/users/billing/adjust', {method:'POST', body:JSON.stringify({account:a, op:op, deltaSec:Number(delta), reason:reason})})
-    .then(function(r){
-      if(r.status===200){ msg.className='msg ok'; msg.textContent='调整成功：'+r.data.beforeSec+' → '+r.data.afterSec+' 秒（管理员调整池）'; }
-      else { msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'调整失败'; }
-    });
-});
-
-// ---- 异常订单 ----
-var CURRENT = { id:null, type:null };
-function openModal(id, type){
-  CURRENT.id = id; CURRENT.type = type;
-  document.getElementById('m_note').value='';
-  document.getElementById('m_abn').value='true';
-  document.getElementById('modalMsg').className='msg';
-  document.getElementById('modalBg').style.display='flex';
+function pager(total, page, pageSize, onPage){
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  return `<div class="pager">
+    <button class="ghost" ${page<=1?'disabled':''} data-pg="${page-1}">上一页</button>
+    <span>第 ${page} / ${pages} 页（共 ${total} 条）</span>
+    <button class="ghost" ${page>=pages?'disabled':''} data-pg="${page+1}">下一页</button>
+  </div>`;
 }
-document.getElementById('m_cancel').addEventListener('click', function(){ document.getElementById('modalBg').style.display='none'; });
-document.getElementById('m_save').addEventListener('click', function(){
-  var note = document.getElementById('m_note').value.trim();
-  var ab = document.getElementById('m_abn').value === 'true';
-  var mm = document.getElementById('modalMsg'); mm.className='msg';
-  api('/admin/orders/'+CURRENT.id+'/abnormal', {method:'POST', body:JSON.stringify({type:CURRENT.type, abnormal:ab, note:note})})
-    .then(function(r){
-      if(r.status===200){ mm.className='msg ok'; mm.textContent='已保存'; setTimeout(function(){ document.getElementById('modalBg').style.display='none'; loadOrders(); }, 700); }
-      else { mm.className='msg err'; mm.textContent=(r.data&&r.data.error)||'保存失败'; }
-    });
-});
-document.getElementById('abn_query').addEventListener('click', function(){
-  var msg = document.getElementById('abn_msg'); msg.className='msg';
-  api('/admin/orders?abnormal=1').then(function(r){
-    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
-    var rows = r.data.data||[];
-    var tb = document.querySelector('#abn_table tbody'); tb.innerHTML='';
-    rows.forEach(function(o){
-      var tr=document.createElement('tr');
-      tr.innerHTML='<td>'+esc(o.orderNo)+'</td><td>'+esc(o.account||'')+'</td><td>'+esc(o.type==='package'?'时长包':'会员')+'</td><td>'+esc(o.packageType||'')+'</td><td>'+esc(o.amount)+'</td><td>'+statusPill(o.status)+'</td><td>'+esc(o.abnormalNote||'')+'</td><td><button class="ghost" data-id="'+o.id+'" data-type="'+o.type+'">标记</button></td>';
-      tb.appendChild(tr);
-    });
-    msg.className='msg ok'; msg.textContent='异常订单 '+rows.length+' 条';
+function bindPager(container, onPage){
+  container.querySelectorAll('[data-pg]').forEach(b=>{
+    b.onclick = ()=> { const p = parseInt(b.dataset.pg,10); if(p>=1) onPage(p); };
   });
-});
-document.querySelector('#abn_table tbody').addEventListener('click', function(ev){
-  var btn = ev.target.closest('button[data-id]');
-  if(btn){ openModal(btn.dataset.id, btn.dataset.type); }
+}
+
+// ---------- 1. 订单查询/导出（P1-1 分页） ----------
+function ordersHtml(){
+  return `<div class="card">
+    <div class="row">
+      <div><label>账号</label><input id="o_account" placeholder="手机/邮箱，可空"/></div>
+      <div><label>开始日期</label><input id="o_start" type="date"/></div>
+      <div><label>结束日期</label><input id="o_end" type="date"/></div>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <div><label>异常筛选</label>
+        <select id="o_abnormal"><option value="">全部</option><option value="1">仅异常</option><option value="0">仅正常</option></select>
+      </div>
+      <div><label>类型</label>
+        <select id="o_type"><option value="">全部</option><option value="package">套餐</option><option value="membership">会员</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end;"><button class="primary" id="o_query">查询</button>
+        <a class="dl" id="o_export" style="margin-left:12px;align-self:flex-end;">导出CSV</a></div>
+    </div>
+    <div id="o_table" style="margin-top:12px;"></div>
+  </div>`;
+}
+async function loadOrders(page=1){
+  const account = document.getElementById('o_account').value.trim();
+  const startDate = document.getElementById('o_start').value;
+  const endDate = document.getElementById('o_end').value;
+  const abnormal = document.getElementById('o_abnormal').value;
+  const type = document.getElementById('o_type').value;
+  const q = new URLSearchParams({ page, pageSize: 20, account, startDate, endDate, abnormal, type });
+  const el = document.getElementById('o_table');
+  el.innerHTML = '加载中…';
+  try {
+    const j = await api('GET', '/admin/orders?' + q.toString());
+    const rows = (j.data||[]).map(o=>`<tr>
+      <td>${o.orderNo||''}</td><td>${o.account||''}</td><td>${o.type==='membership'?'会员':(o.packageType||'套餐')}</td>
+      <td>${o.amount||''}</td><td>${o.status||''}</td>
+      <td>${o.abnormal?'<span class="tag-bad">异常</span>':'正常'}</td>
+      <td>${o.createdAt?(new Date(o.createdAt).toLocaleString()):''}</td></tr>`).join('');
+    el.innerHTML = `<table><thead><tr><th>订单号</th><th>账号</th><th>类型</th><th>金额</th><th>状态</th><th>异常</th><th>创建时间</th></tr></thead><tbody>${rows||'<tr><td colspan=7>无数据</td></tr>'}</tbody></table>` + pager(j.total||0, j.page||1, j.pageSize||20, loadOrders);
+    bindPager(el, loadOrders);
+  } catch(e){ el.innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id==='o_query') loadOrders(1);
+  if(e.target && e.target.id==='o_export'){
+    const account = document.getElementById('o_account')?document.getElementById('o_account').value.trim():'';
+    const startDate = document.getElementById('o_start').value;
+    const endDate = document.getElementById('o_end').value;
+    const abnormal = document.getElementById('o_abnormal').value;
+    const type = document.getElementById('o_type').value;
+    const q = new URLSearchParams({ account, startDate, endDate, abnormal, type });
+    window.open(API + '/admin/orders/export?' + q.toString(), '_blank');
+  }
 });
 
-// ---- 操作日志 ----
-document.getElementById('log_query').addEventListener('click', function(){
-  var msg = document.getElementById('log_msg'); msg.className='msg';
-  api('/admin/operation-logs').then(function(r){
-    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
-    var rows = r.data.data||[];
-    var tb = document.querySelector('#log_table tbody'); tb.innerHTML='';
-    rows.forEach(function(o){
-      var tr=document.createElement('tr');
-      var detail = (o.reason||'') + (o.detail? ' '+JSON.stringify(o.detail):'');
-      tr.innerHTML='<td>'+esc(fmt(o.createdAt))+'</td><td>'+esc(o.adminId.slice(0,8))+'</td><td>'+esc(o.action)+'</td><td>'+esc(o.targetType+'/'+o.targetId.slice(0,8))+'</td><td>'+esc(detail)+'</td>';
-      tb.appendChild(tr);
-    });
-    msg.className='msg ok'; msg.textContent='操作日志 '+rows.length+' 条';
-  });
+// ---------- 2. 用户时长管理（含调整，P1-4 操作密码） ----------
+function billingHtml(){
+  return `<div class="card">
+    <div class="row">
+      <div><label>账号</label><input id="t_account" placeholder="手机/邮箱"/></div>
+      <div><button class="primary" id="t_search" style="align-self:flex-end;">查询</button></div>
+    </div>
+    <div id="t_result" style="margin-top:12px;"></div>
+  </div>`;
+}
+async function doBillingSearch(){
+  const account = document.getElementById('t_account').value.trim();
+  const el = document.getElementById('t_result');
+  if(!account){ toast('请输入账号', true); return; }
+  el.innerHTML = '加载中…';
+  try{
+    const j = await api('GET', '/admin/users/billing?account=' + encodeURIComponent(account));
+    const u = j.user;
+    el.innerHTML = `
+      <div class="stat">账号: ${u.account}</div>
+      <div class="stat">会员: ${u.membership.level}</div>
+      <div class="stat">剩余时长(秒): ${u.remainingSec}</div>
+      <div class="stat">管理员调整池(秒): ${u.adminTimeSec}</div>
+      <div class="stat">试用剩余: ${u.trialRemainingSec}</div>
+      <div class="stat">已消耗(秒): ${u.consumedSec}</div>
+      <div style="margin-top:14px;">
+        <label>调整方向</label>
+        <select id="t_op"><option value="add">增加</option><option value="deduct">扣减</option></select>
+        <label>调整秒数</label><input id="t_delta" type="number" placeholder="如 300"/>
+        <label>原因</label><input id="t_reason" placeholder="调整原因（必填）"/>
+        <div style="margin-top:10px;"><button class="danger" id="t_submit">提交调整（需操作密码）</button></div>
+        <div id="t_msg" style="margin-top:8px;"></div>
+      </div>`;
+    document.getElementById('t_submit').onclick = submitAdjust;
+  }catch(e){ el.innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+async function submitAdjust(){
+  const account = document.getElementById('t_account').value.trim();
+  const op = document.getElementById('t_op').value;
+  const deltaSec = document.getElementById('t_delta').value;
+  const reason = document.getElementById('t_reason').value;
+  if(!reason){ toast('请填写原因', true); return; }
+  let opPassword = null;
+  try { opPassword = await askOpPassword('调整用户时长属于敏感操作，请输入操作密码'); } catch(e){}
+  if(opPassword === null) { toast('已取消'); return; }
+  try{
+    const j = await api('POST', '/admin/users/billing/adjust', { account, op, deltaSec: Number(deltaSec), reason, opPassword });
+    document.getElementById('t_msg').innerHTML = `<span class="tag-ok">调整成功：${j.beforeSec} → ${j.afterSec} 秒</span>`;
+    doBillingSearch();
+  }catch(e){ document.getElementById('t_msg').innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+document.addEventListener('click', (e)=>{ if(e.target && e.target.id==='t_search') doBillingSearch(); });
+
+// ---------- 3. 异常订单标记（P1-4 操作密码） ----------
+function abnormalHtml(){
+  return `<div class="card">
+    <label>订单 ID</label><input id="a_id" placeholder="订单记录 id"/>
+    <label>订单类型</label><select id="a_type"><option value="package">套餐</option><option value="membership">会员</option></select>
+    <label>标记状态</label><select id="a_ab"><option value="true">标记为异常</option><option value="false">取消异常</option></select>
+    <label>备注</label><input id="a_note" placeholder="备注"/>
+    <div style="margin-top:10px;"><button class="danger" id="a_submit">提交标记（需操作密码）</button></div>
+    <div id="a_msg" style="margin-top:8px;"></div>
+  </div>`;
+}
+document.addEventListener('click', async (e)=>{
+  if(e.target && e.target.id==='a_submit'){
+    const id = document.getElementById('a_id').value.trim();
+    const type = document.getElementById('a_type').value;
+    const abnormal = document.getElementById('a_ab').value === 'true';
+    const note = document.getElementById('a_note').value;
+    if(!id){ toast('请输入订单 ID', true); return; }
+    let opPassword = null;
+    try { opPassword = await askOpPassword('异常标记属于敏感操作，请输入操作密码'); } catch(err){}
+    if(opPassword === null){ toast('已取消'); return; }
+    try{
+      const j = await api('POST', '/admin/orders/'+id+'/abnormal', { type, abnormal, note, opPassword });
+      document.getElementById('a_msg').innerHTML = `<span class="tag-ok">操作成功，当前异常：${j.abnormal}</span>`;
+    }catch(err){ document.getElementById('a_msg').innerHTML = '<span class="tag-bad">'+err.message+'</span>'; }
+  }
 });
 
-// ---- 工具 ----
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-function fmt(d){ if(!d) return ''; try{ return new Date(d).toLocaleString('zh-CN'); }catch(e){ return d; } }
+// ---------- 4. 操作日志（P1-1 分页 + P1-2 审计详情） ----------
+function oplogsHtml(){
+  return `<div class="card"><div id="op_table"></div></div>`;
+}
+async function loadOplogs(page=1){
+  const el = document.getElementById('op_table');
+  el.innerHTML = '加载中…';
+  try{
+    const j = await api('GET', '/admin/operation-logs?page='+page+'&pageSize=20');
+    const rows = (j.data||[]).map(o=>`<tr>
+      <td>${o.action}</td><td>${o.targetType}</td><td>${o.targetId||''}</td>
+      <td>${o.reason||''}</td><td>${fmtDetail(o)}</td>
+      <td>${o.createdAt?(new Date(o.createdAt).toLocaleString()):''}</td></tr>`).join('');
+    el.innerHTML = `<table><thead><tr><th>动作</th><th>对象</th><th>对象ID</th><th>原因</th><th>变更详情</th><th>时间</th></tr></thead><tbody>${rows||'<tr><td colspan=6>无数据</td></tr>'}</tbody></table>` + pager(j.total||0, j.page||1, j.pageSize||20, loadOplogs);
+    bindPager(el, loadOplogs);
+  }catch(e){ el.innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+function fmtDetail(o){
+  const d = o.detail; if(!d) return '';
+  if(o.action==='ADJUST_TIME'){
+    return `<div class="detail">方向 ${d.op} ${d.deltaSec}秒<br><span class="before">前 ${d.beforeSec}</span> → <span class="after">后 ${d.afterSec}</span> 秒</div>`;
+  }
+  if(o.action==='SET_USER_STATUS'){
+    return `<div class="detail">禁用状态：<span class="before">${d.beforeDisabled}</span> → <span class="after">${d.afterDisabled}</span></div>`;
+  }
+  if(o.action==='MARK_ABNORMAL'){
+    return `<div class="detail">类型 ${d.type}；异常标记：${d.abnormal}</div>`;
+  }
+  if(o.action==='RESET_PASSWORD'){
+    return `<div class="detail">重置密码</div>`;
+  }
+  return `<div class="detail">${JSON.stringify(d)}</div>`;
+}
 
-// 自动校验是否已登录
-(function(){
-  var tk = localStorage.getItem('ailos_admin_token');
-  if(!tk) return;
-  ADMIN.token = tk;
-  api('/admin/me').then(function(r){
-    if(r.status===200 && r.data.isAdmin){ ADMIN.userId=r.data.userId; showMain(); }
-    else { localStorage.removeItem('ailos_admin_token'); }
-  }).catch(function(){ localStorage.removeItem('ailos_admin_token'); });
-})();
+// ---------- 5. 登录审计（P1-5） ----------
+function loginlogsHtml(){
+  return `<div class="card">
+    <div class="row">
+      <div><label>账号</label><input id="l_account" placeholder="可空"/></div>
+      <div><label>开始日期</label><input id="l_start" type="date"/></div>
+      <div><label>结束日期</label><input id="l_end" type="date"/></div>
+      <div style="display:flex;align-items:flex-end;"><button class="primary" id="l_query">查询</button></div>
+    </div>
+    <div id="l_table" style="margin-top:12px;"></div>
+  </div>`;
+}
+async function loadLoginLogs(page=1){
+  const account = document.getElementById('l_account').value.trim();
+  const startDate = document.getElementById('l_start').value;
+  const endDate = document.getElementById('l_end').value;
+  const q = new URLSearchParams({ page, pageSize: 20, account, startDate, endDate });
+  const el = document.getElementById('l_table');
+  el.innerHTML = '加载中…';
+  try{
+    const j = await api('GET', '/admin/login-logs?' + q.toString());
+    const rows = (j.data||[]).map(o=>`<tr>
+      <td>${o.account||''}</td><td>${o.ip||''}</td><td>${o.userAgent||''}</td>
+      <td>${o.createdAt?(new Date(o.createdAt).toLocaleString()):''}</td></tr>`).join('');
+    el.innerHTML = `<table><thead><tr><th>账号</th><th>IP</th><th>设备/UA</th><th>时间</th></tr></thead><tbody>${rows||'<tr><td colspan=4>无数据</td></tr>'}</tbody></table>` + pager(j.total||0, j.page||1, j.pageSize||20, loadLoginLogs);
+    bindPager(el, loadLoginLogs);
+  }catch(e){ el.innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+document.addEventListener('click', (e)=>{ if(e.target && e.target.id==='l_query') loadLoginLogs(1); });
+
+// ---------- 6. 用户管理（P1-6 禁用/启用/重置 + P1-4 操作密码） ----------
+function usersHtml(){
+  return `<div class="card">
+    <div class="row">
+      <div><label>账号搜索</label><input id="u_account" placeholder="手机/邮箱，可空"/></div>
+      <div style="display:flex;align-items:flex-end;"><button class="primary" id="u_query">查询</button></div>
+    </div>
+    <div id="u_table" style="margin-top:12px;"></div>
+  </div>`;
+}
+async function loadUsers(page=1){
+  const account = document.getElementById('u_account').value.trim();
+  const q = new URLSearchParams({ page, pageSize: 20, account });
+  const el = document.getElementById('u_table');
+  el.innerHTML = '加载中…';
+  try{
+    const j = await api('GET', '/admin/users?' + q.toString());
+    const rows = (j.data||[]).map(u=>`<tr>
+      <td>${u.uniqueId||u.phone||''}</td><td>${u.phone||''}</td><td>${u.email||''}</td>
+      <td>${u.membershipLevel||''}</td>
+      <td>${u.disabled?'<span class="tag-bad">已禁用</span>':'<span class="tag-ok">正常</span>'}</td>
+      <td>
+        <button class="ghost u-toggle" data-id="${u.id}" data-dis="${u.disabled}">${u.disabled?'启用':'禁用'}</button>
+        <button class="ghost u-reset" data-id="${u.id}">重置密码</button>
+      </td></tr>`).join('');
+    el.innerHTML = `<table><thead><tr><th>账号</th><th>手机</th><th>邮箱</th><th>会员</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows||'<tr><td colspan=6>无数据</td></tr>'}</tbody></table>` + pager(j.total||0, j.page||1, j.pageSize||20, loadUsers);
+    bindPager(el, loadUsers);
+    el.querySelectorAll('.u-toggle').forEach(b=> b.onclick = ()=> toggleUser(b.dataset.id, b.dataset.dis==='true'));
+    el.querySelectorAll('.u-reset').forEach(b=> b.onclick = ()=> resetUser(b.dataset.id));
+  }catch(e){ el.innerHTML = '<span class="tag-bad">'+e.message+'</span>'; }
+}
+document.addEventListener('click', (e)=>{ if(e.target && e.target.id==='u_query') loadUsers(1); });
+async function toggleUser(id, currentlyDisabled){
+  const target = currentlyDisabled ? false : true;
+  let opPassword = null;
+  try { opPassword = await askOpPassword((target?'禁用':'启用') + '账号属于敏感操作，请输入操作密码'); } catch(err){}
+  if(opPassword === null){ toast('已取消'); return; }
+  try{
+    const j = await api('POST', '/admin/users/status', { userId: id, disabled: target, opPassword, reason: (target?'管理员禁用':'管理员启用') });
+    toast('账号状态已更新：' + (j.disabled?'已禁用':'已启用'));
+    loadUsers();
+  }catch(e){ toast(e.message, true); }
+}
+async function resetUser(id){
+  let opPassword = null;
+  try { opPassword = await askOpPassword('重置密码属于敏感操作，请输入操作密码'); } catch(err){}
+  if(opPassword === null){ toast('已取消'); return; }
+  if(!confirm('确认重置该用户密码？旧密码将失效且现有会话被清除。')) return;
+  try{
+    const j = await api('POST', '/admin/users/reset-password', { userId: id, opPassword });
+    alert('新密码已生成（请妥善交付用户）：\n' + j.newPassword);
+    toast('密码已重置');
+  }catch(e){ toast(e.message, true); }
+}
+
+// 启动：路由守卫
+bootstrap();
 </script>
 </body>
 </html>

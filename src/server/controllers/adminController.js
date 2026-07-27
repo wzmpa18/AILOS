@@ -6,6 +6,8 @@
 const prisma = require('../../config/database');
 const logger = require('../../utils/logger');
 const { getBillingService } = require('../../services/billingService');
+const { getSystemConfigService } = require('../../services/systemConfigService');
+const { hashPassword } = require('../../utils/crypto');
 
 // ---------- 工具 ----------
 function toSec(v) {
@@ -14,6 +16,30 @@ function toSec(v) {
 
 function fmtTime(d) {
   return d ? new Date(d).toISOString() : '';
+}
+
+// 分页解析：默认 20 条/页（P1-1）
+function parsePage(q) {
+  let page = parseInt((q && q.page) || '1', 10); if (!(page >= 1)) page = 1;
+  let pageSize = parseInt((q && q.pageSize) || '20', 10); if (!(pageSize >= 1)) pageSize = 20; if (pageSize > 100) pageSize = 100;
+  return { page, pageSize, skip: (page - 1) * pageSize };
+}
+
+// 敏感操作密码校验（P1-4）：默认 Admin@2026，首次使用写入 SystemConfig
+const DEFAULT_OP_PASSWORD = 'Admin@2026';
+async function verifyOpPassword(opPassword) {
+  if (!opPassword) return false;
+  const cfg = getSystemConfigService();
+  let stored = await cfg.get('admin.op_password', null);
+  if (!stored) { await cfg.set('admin.op_password', DEFAULT_OP_PASSWORD); stored = DEFAULT_OP_PASSWORD; }
+  return String(opPassword) === String(stored);
+}
+
+function randPwd(len = 12) {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let s = '';
+  for (let i = 0; i < len; i++) s += c[Math.floor(Math.random() * c.length)];
+  return s;
 }
 
 async function buildAccountMap(userIds) {
@@ -117,7 +143,10 @@ async function listOrders(req, res) {
   try {
     const { account, startDate, endDate, abnormal, type } = req.query;
     const data = await fetchOrders({ account, startDate, endDate, abnormal, type });
-    return res.json({ success: true, count: data.length, data });
+    const { page, pageSize, skip } = parsePage(req.query);
+    const total = data.length;
+    const paged = data.slice(skip, skip + pageSize);
+    return res.json({ success: true, count: total, total, page, pageSize, data: paged });
   } catch (e) {
     logger.error('[admin] listOrders 失败:', e.message);
     return res.status(500).json({ success: false, error: '订单查询失败' });
@@ -208,7 +237,8 @@ async function searchUserBilling(req, res) {
 // ---------- 2b. 用户时长管理：手动调整 ----------
 async function adjustUserTime(req, res) {
   try {
-    const { account, op, deltaSec, reason } = req.body || {};
+    const { account, op, deltaSec, reason, opPassword } = req.body || {};
+    if (!await verifyOpPassword(opPassword)) return res.status(403).json({ success: false, error: '操作密码错误' });
     if (!account || !op || !reason) {
       return res.status(400).json({ success: false, error: 'account / op / reason 均为必填' });
     }
@@ -259,7 +289,8 @@ async function adjustUserTime(req, res) {
 async function markOrderAbnormal(req, res) {
   try {
     const id = req.params.id;
-    const { type, abnormal, note } = req.body || {};
+    const { type, abnormal, note, opPassword } = req.body || {};
+    if (!await verifyOpPassword(opPassword)) return res.status(403).json({ success: false, error: '操作密码错误' });
     const model = type === 'membership' ? prisma.membershipOrder : prisma.translationPackageOrder;
     const existing = await model.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ success: false, error: '订单不存在' });
@@ -289,10 +320,12 @@ async function markOrderAbnormal(req, res) {
 // ---------- 4. 操作日志 ----------
 async function listOperationLogs(req, res) {
   try {
-    const logs = await prisma.adminOperationLog.findMany({
-      orderBy: { createdAt: 'desc' }, take: 200,
-    });
-    return res.json({ success: true, count: logs.length, data: logs });
+    const { page, pageSize, skip } = parsePage(req.query);
+    const [total, logs] = await Promise.all([
+      prisma.adminOperationLog.count(),
+      prisma.adminOperationLog.findMany({ orderBy: { createdAt: 'desc' }, skip, take: pageSize }),
+    ]);
+    return res.json({ success: true, count: total, total, page, pageSize, data: logs });
   } catch (e) {
     logger.error('[admin] listOperationLogs 失败:', e.message);
     return res.status(500).json({ success: false, error: '查询失败' });
@@ -308,6 +341,128 @@ async function getMe(req, res) {
   }
 }
 
+// ---------- 5. 登录审计（P1-5） ----------
+async function listLoginLogs(req, res) {
+  try {
+    const { account, startDate, endDate } = req.query;
+    const where = {};
+    if (account) where.account = account;
+    if (startDate) { where.createdAt = where.createdAt || {}; where.createdAt.gte = new Date(startDate); }
+    if (endDate) { where.createdAt = where.createdAt || {}; where.createdAt.lte = new Date(endDate + 'T23:59:59.999Z'); }
+    const { page, pageSize, skip } = parsePage(req.query);
+    const [total, logs] = await Promise.all([
+      prisma.loginLog.count({ where }),
+      prisma.loginLog.findMany({
+        where, orderBy: { createdAt: 'desc' }, skip, take: pageSize,
+        select: { id: true, adminId: true, account: true, ip: true, userAgent: true, createdAt: true },
+      }),
+    ]);
+    return res.json({ success: true, count: total, total, page, pageSize, data: logs });
+  } catch (e) {
+    logger.error('[admin] listLoginLogs 失败:', e.message);
+    return res.status(500).json({ success: false, error: '查询失败' });
+  }
+}
+
+// ---------- 6. 用户账号管控（P1-6） ----------
+async function listUsers(req, res) {
+  try {
+    const { account } = req.query;
+    const where = {};
+    if (account) {
+      where.OR = [
+        { uniqueId: { contains: account } },
+        { phone: { contains: account } },
+        { email: { contains: account } },
+      ];
+    }
+    const { page, pageSize, skip } = parsePage(req.query);
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where, orderBy: { createdAt: 'desc' }, skip, take: pageSize,
+        select: {
+          id: true, uniqueId: true, phone: true, email: true, nickname: true,
+          membershipLevel: true, disabled: true, createdAt: true,
+        },
+      }),
+    ]);
+    return res.json({ success: true, count: total, total, page, pageSize, data: users });
+  } catch (e) {
+    logger.error('[admin] listUsers 失败:', e.message);
+    return res.status(500).json({ success: false, error: '查询失败' });
+  }
+}
+
+async function setUserStatus(req, res) {
+  try {
+    const { userId, account, disabled, opPassword, reason } = req.body || {};
+    if (!await verifyOpPassword(opPassword)) return res.status(403).json({ success: false, error: '操作密码错误' });
+    let u;
+    if (userId) u = await prisma.user.findUnique({ where: { id: userId } });
+    else if (account) u = await prisma.user.findFirst({ where: { OR: [{ uniqueId: account }, { phone: account }, { email: account }] } });
+    if (!u) return res.status(404).json({ success: false, error: '用户不存在' });
+    const beforeDisabled = !!u.disabled;
+    const afterDisabled = !!disabled;
+    if (beforeDisabled === afterDisabled) return res.json({ success: true, changed: false, disabled: afterDisabled, message: '状态未变化' });
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: u.id }, data: { disabled: afterDisabled } }),
+      prisma.adminOperationLog.create({
+        data: {
+          adminId: req.userId, action: 'SET_USER_STATUS', targetType: 'USER', targetId: u.id,
+          reason: reason || null, detail: { beforeDisabled, afterDisabled },
+        },
+      }),
+    ]);
+    return res.json({ success: true, changed: true, disabled: afterDisabled, beforeDisabled, afterDisabled });
+  } catch (e) {
+    logger.error('[admin] setUserStatus 失败:', e.message);
+    return res.status(500).json({ success: false, error: '操作失败' });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const { userId, account, opPassword, newPassword } = req.body || {};
+    if (!await verifyOpPassword(opPassword)) return res.status(403).json({ success: false, error: '操作密码错误' });
+    let u;
+    if (userId) u = await prisma.user.findUnique({ where: { id: userId } });
+    else if (account) u = await prisma.user.findFirst({ where: { OR: [{ uniqueId: account }, { phone: account }, { email: account }] } });
+    if (!u) return res.status(404).json({ success: false, error: '用户不存在' });
+    const gen = (newPassword && newPassword.length >= 6) ? newPassword : randPwd();
+    const hash = await hashPassword(gen);
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: u.id }, data: { passwordHash: hash, failedLoginAttempts: 0, lockedUntil: null } }),
+      prisma.session.deleteMany({ where: { userId: u.id } }),
+      prisma.adminOperationLog.create({
+        data: {
+          adminId: req.userId, action: 'RESET_PASSWORD', targetType: 'USER', targetId: u.id,
+          reason: null, detail: { reset: true },
+        },
+      }),
+    ]);
+    return res.json({ success: true, newPassword: gen, message: '密码已重置，请妥善交付用户' });
+  } catch (e) {
+    logger.error('[admin] resetPassword 失败:', e.message);
+    return res.status(500).json({ success: false, error: '操作失败' });
+  }
+}
+
+async function changeOpPassword(req, res) {
+  try {
+    const { oldPassword, newPassword } = req.body || {};
+    const cfg = getSystemConfigService();
+    const stored = (await cfg.get('admin.op_password', null)) || DEFAULT_OP_PASSWORD;
+    if (String(oldPassword) !== String(stored)) return res.status(403).json({ success: false, error: '原操作密码错误' });
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ success: false, error: '新操作密码至少 6 位' });
+    await cfg.set('admin.op_password', newPassword);
+    return res.json({ success: true, message: '操作密码已更新' });
+  } catch (e) {
+    logger.error('[admin] changeOpPassword 失败:', e.message);
+    return res.status(500).json({ success: false, error: '操作失败' });
+  }
+}
+
 module.exports = {
   listOrders,
   exportOrders,
@@ -316,4 +471,9 @@ module.exports = {
   markOrderAbnormal,
   listOperationLogs,
   getMe,
+  listLoginLogs,
+  listUsers,
+  setUserStatus,
+  resetPassword,
+  changeOpPassword,
 };

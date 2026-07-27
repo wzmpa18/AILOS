@@ -40,4 +40,15 @@ router.post('/orders/:id/abnormal', authenticate, requireAdmin, adminController.
 // 操作日志
 router.get('/operation-logs', authenticate, requireAdmin, adminController.listOperationLogs);
 
+// P1-5 管理员登录审计
+router.get('/login-logs', authenticate, requireAdmin, adminController.listLoginLogs);
+
+// P1-6 用户账号管理
+router.get('/users', authenticate, requireAdmin, adminController.listUsers);
+router.post('/users/status', authenticate, requireAdmin, adminController.setUserStatus);
+router.post('/users/reset-password', authenticate, requireAdmin, adminController.resetPassword);
+
+// P1-4 操作密码管理
+router.post('/security/op-password', authenticate, requireAdmin, adminController.changeOpPassword);
+
 module.exports = router;

@@ -84,8 +84,11 @@ const authController = {
       res.json({ success: true, ...result });
     } catch (error) {
       // SUP-03 fix: 无效凭证返回 401（非 500）
-      if (error.message === 'Invalid credentials' || error.message === 'User not found') {
-        return res.status(401).json({ success: false, error: error.message });
+      if (['Invalid credentials', 'User not found', 'ACCOUNT_DISABLED'].includes(error.message)) {
+        return res.status(401).json({
+          success: false,
+          error: error.message === 'ACCOUNT_DISABLED' ? '账号已被禁用，无法登录' : error.message,
+        });
       }
       next(error);
     }

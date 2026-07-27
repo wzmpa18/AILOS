@@ -42,6 +42,7 @@ model User {
   isActive   Boolean @default(true)
   isVerified Boolean @default(false)
   isGuest    Boolean @default(false)
+  disabled   Boolean @default(false) // P1-6 账号禁用：禁用后无法登录与使用核心功能
 
   // Security
   lastLoginAt         DateTime?
@@ -1085,5 +1086,19 @@ model AdminOperationLog {
 
   @@index([adminId])
   @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// P1-5 管理员登录审计日志
+model LoginLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  account   String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([account])
   @@index([createdAt])
 }
