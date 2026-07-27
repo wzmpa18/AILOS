@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // src/server/controllers/adminController.js
 // P2 基础运营管理后台：订单查询/导出、用户时长管理、异常订单标记、操作日志
 // 复用现有管理员 allowlist 鉴权（requireAdmin）；不侵入 User 认证 / membership 逻辑
@@ -188,6 +188,7 @@ async function searchUserBilling(req, res) {
           expiryAt: u.membershipExpiry,
         },
         trialClaimed: !!b && toSec(b.trialUsedSec) > 0,
+        adminTimeSec: b ? toSec(b.adminTimeSec) : 0,
         remainingSec,
         trialRemainingSec: status.trial.remainingSec,
         subscriptionRemainingSec: status.subscription ? status.subscription.remainingSec : 0,

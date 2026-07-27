@@ -329,6 +329,7 @@ document.getElementById('t_query').addEventListener('click', function(){
     box.innerHTML =
       '<div class="stat">'
       + boxStat('剩余时长(秒)', u.remainingSec)
+      + boxStat('管理员调整池(秒)', u.adminTimeSec)
       + boxStat('试用剩余', u.trialRemainingSec)
       + boxStat('订阅剩余', u.subscriptionRemainingSec)
       + boxStat('按量包剩余', u.paidRemainingSec)
