@@ -74,4 +74,4 @@ NEW_COMMIT=$(git rev-parse HEAD)
 echo "$NEW_COMMIT" > "$ANCHOR"
 /etc/init.d/nginx reload 2>/dev/null || true
 echo "DEPLOY OK new_commit=$NEW_COMMIT anchor_registered"
-echo "=== DEPLOY END ===
+echo "=== DEPLOY END ==="
