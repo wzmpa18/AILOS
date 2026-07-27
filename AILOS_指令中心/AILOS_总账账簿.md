@@ -1962,3 +1962,93 @@ ROLLBACK OK -> 034a29a
 | 5 | 无遗留 P0/P1 级收尾缺口 | ✅ | P0 生产 500 已修复；本轮回填 6 项收尾缺口；11.4 所列均为非阻断发现 |
 
 > 历史不实声明闭环：① 总账账簿未纳入 git 跟踪（第十章已记）；② deploy.sh 闸门/回滚声明失实（本章 11.1 已记）。两项均主动纠正并归档，后续交付声明须与 git 实际状态严格一致。
+
+
+---
+
+# 第十二章 · 第三阶段 P1：设备指纹风控落地（2026-07-27）
+
+## 12.1 任务与结论
+
+- **任务**：免费试用防薅——从「单用户绑定」升级为「设备 + 用户双维度绑定」（第三阶段启动指令 P1，第一优先级）。
+- **结论**：✅ 已落地并通过正式域名（https://yandao.vip）真实验收；同步清理 10 条 Lint 告警（24 → 14，满足「每任务 ≥8 条」硬性规则）。
+
+## 12.2 技术实现（commit `8d919a7`，分支 feature/device-fingerprint → main，ff 合并）
+
+| 组件 | 说明 |
+|---|---|
+| `src/services/deviceRiskService.js`（新增） | 指纹 SHA-256 归一化（前 32 hex）；IP /24 前缀提取（XFF 优先）；Redis 键：`dfp:acc:{fp}`（设备绑定账号 SET，上限 2，180 天滑动 TTL）、`dfp:trial:{fp}`（设备试用 owner，SET NX 终身一次）、`dfp:ipq:{prefix}:{yyyymmdd}`（IP 前缀日频控，上限 5，兜底无指纹绕过）；Redis 故障 fail-open 不阻断业务 |
+| `src/server/middleware/deviceRisk.js`（新增） | `attachDeviceRisk` 挂载于 translate/billing 路由 authenticate 之后，读取 `X-Device-Fp` 头 → `req.deviceRisk`；闸门真值在服务端 billingService 内强制执行，前端头仅是信号，不可绕过 |
+| `src/services/billingService.js` | `consume()` 试用分支受 `deviceRisk.trialAllowed` 闸门控制（命中→跳过试用→落订阅/按量包→不足则 402）；试用实际扣减成功后 `registerTrialClaim` 登记 owner；`getStatus()` 对受限设备返回 `remainingSec=0 + deviceRestricted + restrictReason` |
+| 前端 `photo.html` / `billing.html` | canvas+UA+屏幕+时区+并发数 指纹（djb2 双向哈希），localStorage `yandao_dfp_v1` 持久化，随 `X-Device-Fp` 头发送 |
+
+**风控规则**：① 单设备最多绑定 2 个账号（第 3 个账号在该设备上试用一律禁止，`DEVICE_ACCOUNT_LIMIT`）；② 同设备试用终身一次（首个实际扣减试用的账号成为 owner，其余账号 `DEVICE_TRIAL_CLAIMED`）；③ 单 /24 IP 前缀每日试用领取上限 5（`IP_PREFIX_LIMIT`，防无指纹与批量伪造指纹）；④ 兼容：owner 本人不受影响、换设备（新指纹）不受影响、订阅/按量包付费路径完全不受限。
+
+## 12.3 正式域名验收（原始证据，UTC 2026-07-27T12:29:04Z ~ 12:29:10Z）
+
+测试账号：A=13800000101 / B=13800000102（密码 FpTest2026，正式域名登录 200）；C=13480010005。
+同设备指纹：`fp1-accept-device-0727-A`（服务端归一化 `c58deb3f5d87e225ec248481bf04a0ec`）。
+
+| # | 场景 | 请求 | 实际返回（原始） | 判定 |
+|---|---|---|---|---|
+| S1a | A 首账号查状态 | GET /api/billing/status + fp | `trial:{totalSec:300,usedSec:0,remainingSec:300}` | ✅ 可领 |
+| S1b | A 扣减 30s | POST /api/billing/consume {seconds:30} | `{consumedSec:30,source:"trial",balanceAfterSec:270}` | ✅ 真实走试用 |
+| S2a | B 次账号同设备查状态 | GET /api/billing/status + 同 fp | `trial:{usedSec:0,remainingSec:0,deviceRestricted:true,restrictReason:"DEVICE_TRIAL_CLAIMED"}` | ✅ 不可领 |
+| S2b | B 同设备扣减 | POST /api/billing/consume | 402 `TRANSLATION_TIME_EXHAUSTED`（未走试用、未扣任何余额） | ✅ 拦截 |
+| S3a | B 换新设备（新 fp） | GET /api/billing/status | `trial:{remainingSec:300}` | ✅ 正常用户多设备不受影响 |
+| S4a | C 第三账号同设备 | GET /api/billing/status + 同 fp | `deviceRestricted:true,restrictReason:"DEVICE_ACCOUNT_LIMIT"` | ✅ 绑定超限 |
+| S5a | B 同设备 trial/status 别名 | GET /api/translate/trial/status | 同 S2a 受控 | ✅ 别名路由同受控 |
+
+**Redis 实态**：`dfp:acc:c58deb…` = {A.id, B.id}（2 账号）；`dfp:trial:c58deb…` = A.id（owner）。
+**DB 实态**：A `trialUsedSec=30`，B `trialUsedSec=0`（B 从未扣到试用）。
+**原始风控日志**（logs/combined.log，winston JSON）：
+
+```
+{"fpHash":"c58deb3f5d87e225ec248481bf04a0ec","ipPrefix":"82.156.228.0/24","level":"info","message":"[DeviceRisk] 设备试用领取登记","timestamp":"2026-07-27T12:29:06.870Z","userId":"5db37847-76c1-4edd-ad9e-0537637c642d"}
+{"fpHash":"c58deb3f5d87e225ec248481bf04a0ec","ipPrefix":"82.156.228.0/24","level":"warn","message":"[DeviceRisk] 同设备试用已被其他账号领取，试用禁止","ownerUserId":"5db37847-...","timestamp":"2026-07-27T12:29:07.745Z","userId":"d96a919a-..."}
+{"boundAccounts":2,"fpHash":"c58deb3f5d87e225ec248481bf04a0ec","level":"warn","message":"[DeviceRisk] 设备绑定账号数超限，试用禁止","timestamp":"2026-07-27T12:29:09.588Z","userId":"df440e3c-..."}
+```
+
+完整原始记录见附件 `evidence/2026-07-27/raw/_p1_accept_out.txt`。
+
+## 12.4 可复现 curl（正式域名，可直接复制运行）
+
+```bash
+# 1. 登录账号A（首账号）
+curl -s -X POST https://yandao.vip/api/auth/password -H 'Content-Type: application/json' \
+  -d '{"account":"13800000101","password":"FpTest2026"}'
+# → tokens.accessToken 记为 $TOKA
+
+# 2. A 同设备查试用（应 remainingSec>0 可领）
+curl -s https://yandao.vip/api/billing/status -H "Authorization: Bearer $TOKA" \
+  -H 'X-Device-Fp: fp1-demo-device-001'
+
+# 3. A 扣减试用（应 source=trial，并登记该设备 owner=A）
+curl -s -X POST https://yandao.vip/api/billing/consume -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKA" -H 'X-Device-Fp: fp1-demo-device-001' -d '{"scene":"scan","seconds":10}'
+
+# 4. 登录账号B（次账号），同设备指纹查询（应 deviceRestricted=true, DEVICE_TRIAL_CLAIMED）
+curl -s -X POST https://yandao.vip/api/auth/password -H 'Content-Type: application/json' \
+  -d '{"account":"13800000102","password":"FpTest2026"}'
+curl -s https://yandao.vip/api/billing/status -H "Authorization: Bearer $TOKB" \
+  -H 'X-Device-Fp: fp1-demo-device-001'
+
+# 5. B 同设备强行扣减（应 402 TRANSLATION_TIME_EXHAUSTED）
+curl -s -X POST https://yandao.vip/api/billing/consume -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKB" -H 'X-Device-Fp: fp1-demo-device-001' -d '{"scene":"scan","seconds":10}'
+```
+
+判定逻辑：`data.trial.deviceRestricted=true` 即该设备试用被风控禁止，`restrictReason` ∈ {DEVICE_TRIAL_CLAIMED, DEVICE_ACCOUNT_LIMIT, IP_PREFIX_LIMIT}；扣减接口在无可用时长时返回 402。
+
+## 12.5 流程合规
+
+- 分支隔离：`feature/device-fingerprint` 基于 Lint 全绿 main（a3da5cc）创建，ff 合并入 main（`8d919a7`），无业务混提；期间纠正一次 node_modules 软链误提交（amend 修正后强推 feature 分支，未污染 main）。
+- 部署铁律：经硬化版 `deploy.sh` 部署，GATE1 health=200 / GATE2 pages_ok=1 双闸门通过，锚点已登记（deploy log `deploy_20260727_202638_2526816.log`）。
+- Lint：`npx eslint src` = **0 errors / 14 warnings**（上轮 24 → 14，本任务清理 10 条：6 个未用 logger 导入、errorHandler `_next`、membership 未用导入、redis.js 空 catch、photoTranslateService 未用 prisma）。
+- 环境基线：所有验收均在 https://yandao.vip 正式域名执行（登录/状态/扣减/别名路由）；Redis/DB 实态核验在服务器本机（数据层无域名概念）。
+
+## 12.6 诚实边界说明
+
+1. 前端指纹为浏览器特征哈希（canvas/UA/屏幕/时区），可被高级攻击者伪造或清除 localStorage 重置——因此服务端叠加「IP /24 前缀日频控（5 次/日）」兜底；指纹+IP 双维度下批量薅取成本显著抬高，但无法做到绝对防御（行业通例）。
+2. 无指纹请求（老客户端/纯 API）不硬拦（避免误伤存量用户），仅受 IP 前缀频控约束。
+3. `chat.html`/`learn.html` 等页面暂未注入指纹头（不涉及试用领取场景，translate/billing 两条计费路由已全覆盖）。
