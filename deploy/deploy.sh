@@ -31,10 +31,12 @@ err(){ echo "  ✗ $*"; }
 # 回滚范围：后端代码(git) + prisma client + PM2 + 前端静态(本次备份)
 # ============================================================
 rollback(){
-  err "★ 触发自动回滚 -> ${CURRENT_COMMIT:-unknown}"
+  # 回滚目标优先取"最近一次成功部署版本"（避免服务器本地提交场景下 CURRENT_COMMIT==坏提交）
+  ROLLBACK_TARGET=$(cat /www/backups/last_good_commit 2>/dev/null || echo "${CURRENT_COMMIT:-unknown}")
+  err "★ 触发自动回滚 -> ${ROLLBACK_TARGET}"
   cd "$BACKEND_DIR"
-  if [ -n "${CURRENT_COMMIT:-}" ] && [ "${CURRENT_COMMIT}" != "unknown" ]; then
-    git reset --hard "${CURRENT_COMMIT}" 2>&1 | tail -1
+  if [ -n "${ROLLBACK_TARGET}" ] && [ "${ROLLBACK_TARGET}" != "unknown" ]; then
+    git reset --hard "${ROLLBACK_TARGET}" 2>&1 | tail -1
     npx prisma generate 2>&1 | tail -1
   fi
   if [ -d "${BACKUP_ROOT}/xuewaiyu_frontend.bak" ]; then
@@ -43,10 +45,12 @@ rollback(){
   fi
   pm2 restart xuewaiyu-backend --update-env 2>&1 | tail -1
   sleep 3
-  if pm2 list | grep -q "xuewaiyu-backend.*online"; then
-    ok "回滚完成，PM2 online（版本 ${CURRENT_COMMIT:-unknown}）"
+  sleep 2
+  RB_H=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/health 2>/dev/null || echo 000)
+  if pm2 list | grep -q "xuewaiyu-backend.*online" && [ "$RB_H" = "200" ]; then
+    ok "回滚完成，PM2 online 且 /api/health 200（版本 ${ROLLBACK_TARGET}）"
   else
-    err "回滚后 PM2 仍未 online，需立即人工介入！"
+    err "回滚后仍不健康（PM2/health=${RB_H}），需立即人工介入！"
   fi
 }
 
@@ -233,6 +237,10 @@ for ep in "/api/content" "/api/ai/quota" "/api/checkin/status" "/api/reviews/due
   S=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000${ep}" 2>/dev/null || echo 000)
   if [ "$S" = "200" ] || [ "$S" = "401" ]; then ok "${ep} → ${S}"; else err "${ep} → ${S}"; fi
 done
+
+# 两道闸门全部通过：登记"最近一次成功部署版本"（自动回滚的可信目标）
+echo "${NEW_COMMIT}" > /www/backups/last_good_commit
+ok "last_good_commit 已登记: ${NEW_COMMIT}"
 
 echo ""
 echo "============================================"
