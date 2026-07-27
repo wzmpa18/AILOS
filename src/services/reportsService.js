@@ -47,7 +47,7 @@ class ReportsService {
 
     // 连续签到天数 — 从 checkinController 获取（Checkin 模型使用 Int userId，与 UUID 不兼容，需通过 /api/checkin 接口获取）
     // TODO: 统一 Checkin.userId 为 UUID String 后，直接查询
-    let streak = 0;
+    const streak = 0;
 
     // 最近学习事件数
     const recentEvents = await prisma.learningEvent.count({
