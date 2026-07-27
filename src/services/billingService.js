@@ -31,6 +31,16 @@ const PACKAGE_CATALOG = {
 
 const SUB_CAP = { daily: DAILY_CAP_SEC, weekly: WEEKLY_CAP_SEC, monthly: MONTHLY_CAP_SEC };
 
+// 会员体系 → 翻译时长权益映射（服务端唯一真值；Phase2 Task4）
+// 注意：不修改 membership 逻辑，仅只读 User.membershipLevel/membershipExpiry 做映射
+// grantUnits 与 TranslationPackageOrder.minutesTotal 同单位（与 PACKAGE_CATALOG.minutes 语义一致）
+const MEMBERSHIP_TIME_BENEFIT = {
+  free:    { grantUnits: 0,   label: '免费用户：无每月赠送时长' },
+  basic:   { grantUnits: 60,  label: '基础会员：每月赠送 1 小时翻译时长' },
+  premium: { grantUnits: 300, label: '高级会员：每月赠送 5 小时翻译时长' },
+};
+const GRANT_VALIDITY_DAYS = 30; // 赠送时长 30 天内有效
+
 function pad2(n) { return String(n).padStart(2, '0'); }
 
 class BillingService {
@@ -252,6 +262,201 @@ class BillingService {
         expiresAt,
       };
     });
+  }
+
+  // ==========================================================
+  // Phase2 Task1 — 支付链路沙箱框架（对齐 membership 的 order → callback 模式）
+  // 下单(pending) → 支付网关(沙箱模拟) → 回调确认(paid + 权益到账) / 失败(failed)
+  // ==========================================================
+
+  /** 创建待支付订单（不到账）。返回沙箱支付链接。 */
+  async createPaymentOrder(userId, packageType) {
+    const cat = PACKAGE_CATALOG[packageType];
+    if (!cat) {
+      const e = new Error('未知套餐类型');
+      e.code = 'INVALID_PACKAGE';
+      e.status = 400;
+      throw e;
+    }
+    const now = new Date();
+    const orderNo = 'TR' + now.getTime() + Math.random().toString(36).slice(2, 8).toUpperCase();
+    // expiresAt 占位（支付确认时按支付时间重算）
+    const placeholder = new Date(now.getTime() + 86400000);
+    const order = await prisma.translationPackageOrder.create({
+      data: {
+        userId,
+        orderNo,
+        packageType,
+        minutesTotal: cat.minutes,
+        priceCny: cat.priceCny,
+        expiresAt: placeholder,
+        status: 'pending',
+      },
+    });
+    logger.info('Billing payment order created', { userId, orderNo, packageType });
+    return {
+      orderNo: order.orderNo,
+      packageType,
+      kind: cat.kind,
+      priceCny: cat.priceCny,
+      status: 'pending',
+      // 沙箱支付链接：真实网关接入时替换为网关收银台 URL
+      paymentUrl: `/api/billing/payment/sandbox/${order.orderNo}`,
+      sandbox: true,
+    };
+  }
+
+  /** 支付回调确认（沙箱：由沙箱收银台/联调调用；真实网关接入时验签后调用同一方法） */
+  async confirmPaymentOrder(orderNo, { paymentId = null, result = 'success' } = {}) {
+    const now = new Date();
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.translationPackageOrder.findUnique({ where: { orderNo } });
+      if (!order) {
+        const e = new Error('订单不存在');
+        e.code = 'ORDER_NOT_FOUND';
+        e.status = 404;
+        throw e;
+      }
+      if (order.status !== 'pending') {
+        const e = new Error('订单已处理');
+        e.code = 'ORDER_ALREADY_PROCESSED';
+        e.status = 409;
+        throw e;
+      }
+      if (result !== 'success') {
+        const failed = await tx.translationPackageOrder.update({
+          where: { id: order.id },
+          data: { status: 'failed' },
+        });
+        logger.info('Billing payment failed', { orderNo, paymentId });
+        return { orderNo: failed.orderNo, status: 'failed' };
+      }
+      const cat = PACKAGE_CATALOG[order.packageType];
+      const expiresAt =
+        cat.kind === 'pay'
+          ? new Date(now.getTime() + cat.validityDays * 86400000)
+          : new Date(now.getTime() + cat.durationDays * 86400000);
+      const paid = await tx.translationPackageOrder.update({
+        where: { id: order.id },
+        data: { status: 'paid', expiresAt },
+      });
+      if (cat.kind === 'sub') {
+        const b = await this.getOrInitBalance(order.userId, tx);
+        await tx.translationBillingBalance.update({
+          where: { id: b.id },
+          data: { subType: order.packageType, subExpiresAt: expiresAt, subUsedSec: 0 },
+        });
+      }
+      logger.info('Billing payment confirmed', { orderNo, paymentId, packageType: order.packageType });
+      return {
+        orderNo: paid.orderNo,
+        packageType: paid.packageType,
+        kind: cat.kind,
+        minutesTotal: paid.minutesTotal,
+        priceCny: paid.priceCny,
+        expiresAt,
+        status: 'paid',
+      };
+    });
+  }
+
+  /** 订单状态查询（仅本人） */
+  async getPaymentOrder(userId, orderNo) {
+    const order = await prisma.translationPackageOrder.findUnique({ where: { orderNo } });
+    if (!order || order.userId !== userId) {
+      const e = new Error('订单不存在');
+      e.code = 'ORDER_NOT_FOUND';
+      e.status = 404;
+      throw e;
+    }
+    return {
+      orderNo: order.orderNo,
+      packageType: order.packageType,
+      status: order.status,
+      priceCny: order.priceCny,
+      minutesTotal: order.minutesTotal,
+      expiresAt: order.expiresAt,
+      createdAt: order.createdAt,
+    };
+  }
+
+  // ==========================================================
+  // Phase2 Task4 — 会员体系 → 翻译时长权益映射
+  // 只读 membership 字段，不改任何 membership 逻辑（宪法红线）
+  // ==========================================================
+
+  /** 会员时长权益映射表 + 当前用户权益与本月领取状态 */
+  async getMembershipBenefit(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { membershipLevel: true, membershipExpiry: true },
+    });
+    if (!user) {
+      const e = new Error('用户不存在');
+      e.code = 'USER_NOT_FOUND';
+      e.status = 404;
+      throw e;
+    }
+    const now = new Date();
+    const isExpired = user.membershipExpiry && user.membershipExpiry < now;
+    const effectiveLevel = isExpired ? 'free' : (user.membershipLevel || 'free');
+    const benefit = MEMBERSHIP_TIME_BENEFIT[effectiveLevel] || MEMBERSHIP_TIME_BENEFIT.free;
+    const monthKey = `${now.getFullYear()}${pad2(now.getMonth() + 1)}`;
+    const grantType = `pay_grant_${effectiveLevel}_${monthKey}`;
+    const claimed = benefit.grantUnits > 0
+      ? await prisma.translationPackageOrder.findFirst({ where: { userId, packageType: grantType } })
+      : null;
+    return {
+      mapping: Object.entries(MEMBERSHIP_TIME_BENEFIT).map(([level, m]) => ({
+        level, grantUnits: m.grantUnits, label: m.label, validityDays: GRANT_VALIDITY_DAYS,
+      })),
+      current: {
+        level: effectiveLevel,
+        grantUnits: benefit.grantUnits,
+        claimable: benefit.grantUnits > 0 && !claimed,
+        claimedThisMonth: !!claimed,
+        monthKey,
+      },
+    };
+  }
+
+  /** 领取本月会员赠送时长（生成 0 元已支付按量包，命名 pay_grant_* 复用 FIFO 扣减链） */
+  async claimMembershipGrant(userId) {
+    const info = await this.getMembershipBenefit(userId);
+    const { level, grantUnits, claimable, monthKey } = info.current;
+    if (grantUnits <= 0) {
+      const e = new Error('当前会员等级无赠送时长');
+      e.code = 'NO_MEMBERSHIP_BENEFIT';
+      e.status = 400;
+      throw e;
+    }
+    if (!claimable) {
+      const e = new Error('本月赠送时长已领取');
+      e.code = 'GRANT_ALREADY_CLAIMED';
+      e.status = 409;
+      throw e;
+    }
+    const now = new Date();
+    const grantType = `pay_grant_${level}_${monthKey}`;
+    const orderNo = 'GR' + now.getTime() + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const order = await prisma.translationPackageOrder.create({
+      data: {
+        userId,
+        orderNo,
+        packageType: grantType,
+        minutesTotal: grantUnits,
+        priceCny: 0,
+        expiresAt: new Date(now.getTime() + GRANT_VALIDITY_DAYS * 86400000),
+        status: 'paid',
+      },
+    });
+    logger.info('Membership grant claimed', { userId, level, grantType, grantUnits });
+    return {
+      orderNo: order.orderNo,
+      level,
+      grantUnits,
+      expiresAt: order.expiresAt,
+    };
   }
 
   /** 定时清理：订阅过期清零 + 按量包超期标记作废（可被 cron 调用） */

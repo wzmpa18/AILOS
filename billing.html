@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>翻译时长充值 - 言道</title>
+<style>
+  :root { --pri:#4f46e5; --bg:#f6f7fb; --card:#fff; --txt:#1f2430; --sub:#6b7280; --ok:#16a34a; --warn:#d97706; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--txt); padding-bottom:40px; }
+  .nav { position:sticky; top:0; z-index:10; background:#fff; display:flex; align-items:center; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .nav .back { font-size:15px; color:var(--pri); text-decoration:none; margin-right:12px; }
+  .nav h1 { font-size:17px; font-weight:600; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .card h2 { font-size:15px; margin-bottom:10px; color:var(--txt); }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:14px; }
+  .row .k { color:var(--sub); }
+  .row .v { font-weight:600; }
+  .v.ok { color:var(--ok); } .v.warn { color:var(--warn); }
+  .pkg { display:flex; justify-content:space-between; align-items:center; border:1px solid #e5e7eb; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .pkg .t { font-size:14px; font-weight:600; }
+  .pkg .d { font-size:12px; color:var(--sub); margin-top:3px; }
+  .pkg .p { font-size:15px; color:var(--pri); font-weight:700; margin-right:12px; }
+  .btn { border:0; border-radius:10px; padding:9px 16px; font-size:13px; font-weight:600; color:#fff; background:var(--pri); cursor:pointer; }
+  .btn:disabled { background:#c7cbe0; cursor:default; }
+  .btn.ghost { background:#eef0fb; color:var(--pri); }
+  .tip { font-size:12px; color:var(--sub); line-height:1.6; }
+  .toast { position:fixed; left:50%; bottom:70px; transform:translateX(-50%); background:rgba(31,36,48,.92); color:#fff; font-size:13px; padding:10px 18px; border-radius:10px; opacity:0; transition:.25s; pointer-events:none; max-width:86%; text-align:center; }
+  .toast.show { opacity:1; }
+  .mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
+  .mask.show { display:flex; }
+  .modal { background:#fff; border-radius:16px; padding:22px; width:86%; max-width:360px; }
+  .modal h3 { font-size:16px; margin-bottom:8px; }
+  .modal p { font-size:13px; color:var(--sub); line-height:1.7; margin-bottom:16px; }
+  .modal .acts { display:flex; gap:10px; }
+  .modal .acts .btn { flex:1; padding:11px 0; }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:#fef3c7; color:#92400e; margin-left:6px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a class="back" href="profile.html">‹ 返回</a><h1>翻译时长充值<span class="badge">沙箱支付</span></h1></div>
+<div class="wrap">
+  <div class="card" id="statusCard">
+    <h2>我的时长</h2>
+    <div id="statusBody" class="tip">加载中…</div>
+  </div>
+
+  <div class="card" id="benefitCard">
+    <h2>会员时长权益</h2>
+    <div id="benefitBody" class="tip">加载中…</div>
+  </div>
+
+  <div class="card">
+    <h2>按量时长包<span class="tip">（365 天有效，先到期先扣）</span></h2>
+    <div id="payList" class="tip">加载中…</div>
+  </div>
+
+  <div class="card">
+    <h2>订阅套餐</h2>
+    <div id="subList" class="tip">加载中…</div>
+    <p class="tip">单日套餐 24 小时内累计上限 6 小时；月套餐 30 天累计上限 30 小时；超出部分自动扣按量时长包。</p>
+  </div>
+</div>
+
+<div class="mask" id="payMask">
+  <div class="modal">
+    <h3>沙箱收银台</h3>
+    <p id="payDesc"></p>
+    <div class="acts">
+      <button class="btn ghost" id="payCancel">支付失败(模拟)</button>
+      <button class="btn" id="payOk">支付成功(模拟)</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var token = null;
+try { token = localStorage.getItem('yandao_token_v1'); if(!token){var a=localStorage.getItem('auth_tokens');if(a){try{var p=JSON.parse(a);token=p.accessToken||p.token||a}catch(e){token=a}}} } catch(e) {}
+if (!token) { location.href = 'login.html?redirect=billing.html'; }
+
+function api(path, opt) {
+  opt = opt || {};
+  opt.headers = Object.assign({ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, opt.headers||{});
+  return fetch('/api'+path, opt).then(function(r){ return r.json().then(function(j){ j.__http = r.status; return j; }); });
+}
+var toastTimer = null;
+function toast(msg) {
+  var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+function fmtSec(s) {
+  s = Math.max(0, s|0);
+  if (s >= 3600) return (s/3600).toFixed(1) + ' 小时';
+  if (s >= 60) return Math.floor(s/60) + ' 分钟';
+  return s + ' 秒';
+}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('zh-CN') : '-'; }
+
+function loadStatus() {
+  api('/billing/status').then(function(res){
+    if (!res.success) { document.getElementById('statusBody').textContent = '加载失败：' + (res.message||res.error); return; }
+    var d = res.data, h = '';
+    h += '<div class="row"><span class="k">试用剩余（终身一次）</span><span class="v '+(d.trial.remainingSec>0?'ok':'warn')+'">'+fmtSec(d.trial.remainingSec)+'</span></div>';
+    if (d.subscription) {
+      h += '<div class="row"><span class="k">订阅（'+d.subscription.type+'）剩余</span><span class="v ok">'+fmtSec(d.subscription.remainingSec)+'</span></div>';
+      h += '<div class="row"><span class="k">订阅到期</span><span class="v">'+fmtDate(d.subscription.expiresAt)+'</span></div>';
+    } else {
+      h += '<div class="row"><span class="k">订阅套餐</span><span class="v warn">未订阅</span></div>';
+    }
+    h += '<div class="row"><span class="k">按量时长包剩余</span><span class="v '+(d.paidPackage.remainingSec>0?'ok':'warn')+'">'+fmtSec(d.paidPackage.remainingSec)+'</span></div>';
+    document.getElementById('statusBody').innerHTML = h;
+  }).catch(function(){ document.getElementById('statusBody').textContent = '网络异常'; });
+}
+
+function loadBenefit() {
+  api('/billing/membership-benefit').then(function(res){
+    if (!res.success) { document.getElementById('benefitBody').textContent = '加载失败：' + (res.message||res.error); return; }
+    var d = res.data, c = d.current, h = '';
+    d.mapping.forEach(function(m){
+      h += '<div class="row"><span class="k">'+m.label+'</span>'+(m.level===c.level?'<span class="v ok">当前等级</span>':'')+'</div>';
+    });
+    if (c.grantUnits > 0) {
+      if (c.claimable) {
+        h += '<div style="margin-top:8px"><button class="btn" id="claimBtn">领取本月赠送时长</button></div>';
+      } else {
+        h += '<div class="row"><span class="k">本月赠送</span><span class="v ok">已领取</span></div>';
+      }
+    }
+    document.getElementById('benefitBody').innerHTML = h;
+    var btn = document.getElementById('claimBtn');
+    if (btn) btn.onclick = function(){
+      btn.disabled = true;
+      api('/billing/membership-benefit/claim', { method:'POST', body:'{}' }).then(function(r){
+        toast(r.success ? '领取成功，已到账' : (r.message||r.error));
+        loadBenefit(); loadStatus();
+      });
+    };
+  }).catch(function(){ document.getElementById('benefitBody').textContent = '网络异常'; });
+}
+
+var pendingOrder = null;
+function openPay(order, pkg) {
+  pendingOrder = order;
+  document.getElementById('payDesc').textContent = pkg.label + ' — ￥' + pkg.priceCny + '。订单号 ' + order.orderNo + '。这是沙箱环境，点击按钮模拟支付网关回调。';
+  document.getElementById('payMask').classList.add('show');
+}
+function closePay() { document.getElementById('payMask').classList.remove('show'); pendingOrder = null; }
+function settle(result) {
+  if (!pendingOrder) return;
+  var orderNo = pendingOrder.orderNo;
+  api('/billing/payment/callback', { method:'POST', body: JSON.stringify({ orderNo: orderNo, result: result }) })
+    .then(function(r){
+      if (r.success && r.data.status === 'paid') toast('支付成功，时长已到账');
+      else if (r.success) toast('订单已标记支付失败');
+      else toast(r.message || r.error);
+      closePay(); loadStatus();
+    }).catch(function(){ toast('网络异常'); });
+}
+document.getElementById('payOk').onclick = function(){ settle('success'); };
+document.getElementById('payCancel').onclick = function(){ settle('failed'); };
+
+function buy(pkg) {
+  api('/billing/payment/create', { method:'POST', body: JSON.stringify({ packageType: pkg.packageType }) })
+    .then(function(r){
+      if (!r.success) { toast(r.message || r.error); return; }
+      openPay(r.data, pkg);
+    }).catch(function(){ toast('网络异常'); });
+}
+
+function loadCatalog() {
+  api('/billing/packages').then(function(res){
+    if (!res.success) return;
+    var pay = '', sub = '';
+    res.data.forEach(function(p){
+      var desc = p.kind === 'pay' ? ('含 '+p.minutes+' 分钟 · '+p.validityDays+' 天有效') : (p.durationDays+' 天订阅');
+      var item = '<div class="pkg"><div><div class="t">'+p.label+'</div><div class="d">'+desc+'</div></div>'+
+        '<div style="display:flex;align-items:center"><span class="p">￥'+p.priceCny+'</span>'+
+        '<button class="btn" data-pkg="'+p.packageType+'">购买</button></div></div>';
+      if (p.kind === 'pay') pay += item; else sub += item;
+    });
+    document.getElementById('payList').innerHTML = pay || '暂无';
+    document.getElementById('subList').innerHTML = sub || '暂无';
+    var map = {};
+    res.data.forEach(function(p){ map[p.packageType] = p; });
+    document.querySelectorAll('button[data-pkg]').forEach(function(b){
+      b.onclick = function(){ buy(map[b.getAttribute('data-pkg')]); };
+    });
+  });
+}
+
+loadStatus(); loadBenefit(); loadCatalog();
+</script>
+</body>
+</html>

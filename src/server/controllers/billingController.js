@@ -59,4 +59,73 @@ async function consume(req, res) {
   }
 }
 
-module.exports = { getStatus, getCatalog, buyPackage, consume };
+// ===== Phase2 Task1 — 支付沙箱链路 =====
+
+// POST /api/billing/payment/create  body: { packageType }
+async function createPayment(req, res) {
+  try {
+    const { packageType } = req.body || {};
+    if (!packageType) {
+      return fail(res, Object.assign(new Error('缺少 packageType'), { status: 400, code: 'INVALID_PACKAGE' }));
+    }
+    const order = await billing.createPaymentOrder(req.userId, packageType);
+    res.json({ success: true, data: order, message: '订单已创建，请完成支付（沙箱）' });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+// POST /api/billing/payment/callback  body: { orderNo, paymentId?, result: 'success'|'failed' }
+// 沙箱模拟网关回调；真实网关接入时在此之前加验签
+async function paymentCallback(req, res) {
+  try {
+    const { orderNo, paymentId, result } = req.body || {};
+    if (!orderNo) {
+      return fail(res, Object.assign(new Error('缺少 orderNo'), { status: 400, code: 'INVALID_ORDER' }));
+    }
+    // 沙箱安全约束：仅允许本人订单回调（真实网关换成验签）
+    await billing.getPaymentOrder(req.userId, orderNo);
+    const data = await billing.confirmPaymentOrder(orderNo, { paymentId, result: result || 'success' });
+    res.json({ success: true, data });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+// GET /api/billing/payment/status/:orderNo
+async function paymentStatus(req, res) {
+  try {
+    const data = await billing.getPaymentOrder(req.userId, req.params.orderNo);
+    res.json({ success: true, data });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+// ===== Phase2 Task4 — 会员时长权益映射 =====
+
+// GET /api/billing/membership-benefit
+async function membershipBenefit(req, res) {
+  try {
+    const data = await billing.getMembershipBenefit(req.userId);
+    res.json({ success: true, data });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+// POST /api/billing/membership-benefit/claim
+async function claimMembershipBenefit(req, res) {
+  try {
+    const data = await billing.claimMembershipGrant(req.userId);
+    res.json({ success: true, data, message: '本月会员赠送时长已到账' });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+module.exports = {
+  getStatus, getCatalog, buyPackage, consume,
+  createPayment, paymentCallback, paymentStatus,
+  membershipBenefit, claimMembershipBenefit,
+};
