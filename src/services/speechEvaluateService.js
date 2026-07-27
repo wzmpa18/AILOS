@@ -173,7 +173,7 @@ class SpeechEvaluateService {
    * @param {string} targetLanguage - 目标语言
    * @returns {Object} 结构化的评测结果
    */
-  _parseEvaluation(aiResult, transcript, referenceText, targetLanguage) {
+  _parseEvaluation(aiResult, transcript, referenceText, _targetLanguage) {
     try {
       const content = aiResult.choices?.[0]?.message?.content || aiResult.content || aiResult;
 

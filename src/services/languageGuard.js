@@ -154,7 +154,7 @@ function _matchSensitive(text) {
 
 function getLanguageGuard() {
   return {
-    validateInput(text, ctx) {
+    validateInput(text, _ctx) {
       const violations = _matchSensitive(text);
       return { violationCount: violations.length, violations };
     },

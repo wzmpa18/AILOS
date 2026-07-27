@@ -575,11 +575,11 @@ class AuthService {
   }
 
   sanitizeUser(user) {
-    const { passwordHash, ...sanitized } = user;
+    const { passwordHash: _ph, ...sanitized } = user;
     return sanitized;
   }
 
-  async getWechatUserInfo(code) {
+  async getWechatUserInfo(_code) {
     return {
       openid: 'mock_wechat_openid_' + generateRandomString(8),
       unionid: 'mock_wechat_unionid_' + generateRandomString(8),

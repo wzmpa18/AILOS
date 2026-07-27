@@ -42,18 +42,6 @@ const CONTENT_TYPE_MAP = {
   course: 'course',
 };
 
-/**
- * 数据库 contentType -> 前端类型
- */
-const REVERSE_TYPE_MAP = {
-  vocabulary: 'vocab',
-  grammar: 'grammar',
-  reading: 'reading',
-  listening: 'listening',
-  quiz: 'quiz',
-  lesson: 'lesson',
-  course: 'course',
-};
 
 /**
  * 每种内容类型的默认数量

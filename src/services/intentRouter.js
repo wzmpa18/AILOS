@@ -239,7 +239,7 @@ class IntentRouter {
    * @param {string} userInput - 原始用户输入
    * @returns {string} 意图类型
    */
-  _parseIntent(aiResult, userInput) {
+  _parseIntent(aiResult, _userInput) {
     try {
       const content = aiResult.choices?.[0]?.message?.content || aiResult.content || aiResult;
 

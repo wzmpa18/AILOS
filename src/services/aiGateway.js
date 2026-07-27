@@ -20,7 +20,6 @@ const redis = require('../config/redis');
 const logger = require('../utils/logger');
 const axios = require('axios');
 const config = require('../config');
-const { getSystemConfigService } = require('./systemConfigService');
 const { getLanguageGuard, LangOutputMismatchError } = require('./languageGuard');
 const contextResolver = require('./contextResolver'); // GAP-03: 语言上下文唯一真值源（忽略前端，从库解析）
 

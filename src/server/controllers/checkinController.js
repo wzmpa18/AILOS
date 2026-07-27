@@ -61,7 +61,7 @@ const checkinController = {
       }
 
       // 写入签到记录
-      const checkin = await prisma.checkin.create({
+      await prisma.checkin.create({
         data: {
           userId,
           checkinDate: today,
