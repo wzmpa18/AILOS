@@ -26,6 +26,30 @@ log(){ echo "[$(date +%H:%M:%S)] $*"; }
 ok(){ echo "  ✓ $*"; }
 err(){ echo "  ✗ $*"; }
 
+# ============================================================
+# 自动回滚（P0 事故整改：任何部署后自检失败必须自动回滚，禁止手工热修复）
+# 回滚范围：后端代码(git) + prisma client + PM2 + 前端静态(本次备份)
+# ============================================================
+rollback(){
+  err "★ 触发自动回滚 -> ${CURRENT_COMMIT:-unknown}"
+  cd "$BACKEND_DIR"
+  if [ -n "${CURRENT_COMMIT:-}" ] && [ "${CURRENT_COMMIT}" != "unknown" ]; then
+    git reset --hard "${CURRENT_COMMIT}" 2>&1 | tail -1
+    npx prisma generate 2>&1 | tail -1
+  fi
+  if [ -d "${BACKUP_ROOT}/xuewaiyu_frontend.bak" ]; then
+    cp -r "${BACKUP_ROOT}/xuewaiyu_frontend.bak/." "${FRONTEND_DIR}/"
+    ok "前端静态已从 ${BACKUP_ROOT} 还原"
+  fi
+  pm2 restart xuewaiyu-backend --update-env 2>&1 | tail -1
+  sleep 3
+  if pm2 list | grep -q "xuewaiyu-backend.*online"; then
+    ok "回滚完成，PM2 online（版本 ${CURRENT_COMMIT:-unknown}）"
+  else
+    err "回滚后 PM2 仍未 online，需立即人工介入！"
+  fi
+}
+
 echo "============================================"
 echo " AILOS 统一部署 deploy.sh"
 echo " 时间: $(date)"
@@ -108,9 +132,18 @@ sleep 3
 if pm2 list | grep -q "xuewaiyu-backend.*online"; then
   ok "PM2 后端 online"
 else
-  err "PM2 后端未 online，回滚: git reset --hard ${CURRENT_COMMIT} && pm2 restart xuewaiyu-backend"
+  err "PM2 后端未 online —— 自动回滚（自检闸门 1：服务启动健康检查）"
+  rollback
   exit 1
 fi
+# 自检闸门 1b：进程 online 不代表可服务，必须健康接口 200
+H_BOOT=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/health 2>/dev/null || echo 000)
+if [ "$H_BOOT" != "200" ]; then
+  err "/api/health → ${H_BOOT}（非200）—— 自动回滚"
+  rollback
+  exit 1
+fi
+ok "自检闸门 1 通过：PM2 online 且 /api/health → 200"
 
 # ============================================================
 # 5. 前端静态同步（复用既有 deploy_frontend_rsync.sh）
@@ -165,6 +198,30 @@ if nginx -t 2>/dev/null; then
 else
   err "Nginx -t 失败，配置未改动（保留旧配置）"
 fi
+
+# ============================================================
+# 6.5 自检闸门 2：核心页面可用性校验（P0 首页500事故整改）
+# 静态同步 + nginx reload 后，逐一校验核心页面 HTTP 状态；
+# 任一页面非 200 → 自动回滚，禁止手工热修复跳过检查。
+# ============================================================
+log "[6.5] 自检闸门 2：核心页面可用性校验..."
+PAGE_FAIL=0
+CORE_PAGES="index.html login.html home.html chat.html learn.html profile.html billing.html photo-translate.html"
+for p in $CORE_PAGES; do
+  # 仅校验仓库中实际存在的页面，避免误报
+  [ -f "${BACKEND_DIR}/${p}" ] || continue
+  PC=$(curl -s -o /dev/null -w "%{http_code}" -m 10 -H "Host: 82.156.228.87" "http://127.0.0.1/xuewaiyu/${p}" 2>/dev/null || echo 000)
+  if [ "$PC" = "200" ]; then ok "/xuewaiyu/${p} → 200"; else err "/xuewaiyu/${p} → ${PC}"; PAGE_FAIL=1; fi
+done
+# 无扩展名跳转路径（登录/引导完成后的真实用户路径，本次500事故的直接触发点）
+HC=$(curl -s -o /dev/null -w "%{http_code}" -m 10 -H "Host: 82.156.228.87" "http://127.0.0.1/xuewaiyu/home" 2>/dev/null || echo 000)
+if [ "$HC" = "200" ]; then ok "/xuewaiyu/home → 200"; else err "/xuewaiyu/home → ${HC}"; PAGE_FAIL=1; fi
+if [ "$PAGE_FAIL" = "1" ]; then
+  err "核心页面可用性校验失败 —— 自动回滚"
+  rollback
+  exit 1
+fi
+ok "自检闸门 2 通过：核心页面全部 200"
 
 # ============================================================
 # 7. 健康校验（权力项：必须 200）
