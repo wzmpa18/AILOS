@@ -117,14 +117,14 @@ class LanguageService {
           },
           update: {
             status: 'active',
-            priority: i + 1,
+            priority: i,
             level: 'A1',
           },
           create: {
             userId,
             languageCode: targetLanguages[i],
             level: 'A1',
-            priority: i + 1,
+            priority: i,
             status: 'active',
           },
         });
