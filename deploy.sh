@@ -46,6 +46,15 @@ if echo "$MIG_STAT" | grep -qi "not yet been applied"; then
   schema_ok=0
 fi
 
+# === 账簿版本校验闸门（落实 3.2，防代码上线、文档未更）===
+HEAD_COMMIT=$(git rev-parse HEAD)
+echo "DEPLOY HEAD: $HEAD_COMMIT"
+ledger_ok=1
+if ! grep -q "$HEAD_COMMIT" AILOS_MASTER_LEDGER.md; then
+  echo "!! LEDGER NOT SYNCED: commit $HEAD_COMMIT not found in AILOS_MASTER_LEDGER.md"
+  ledger_ok=0
+fi
+
 pm2 restart "$APP_NAME" || pm2 start src/server/index.js --name "$APP_NAME" --instances 1
 sleep 8
 
@@ -65,7 +74,21 @@ for p in "${PAGES[@]}"; do
 done
 echo "GATE2 pages_ok=$gate2"
 
-if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ] || [ "$schema_ok" != "1" ]; then
+# === 副本 MD5 校验闸门（落实 3.6，服务器副本同步强制校验）===
+REPO_MD5=$(md5sum AILOS_MASTER_LEDGER.md | awk '{print $1}')
+WWW_MD5=$(md5sum /www/AILOS_MASTER_LEDGER.md 2>/dev/null | awk '{print $1}')
+md5_ok=1
+if [ "$REPO_MD5" != "$WWW_MD5" ]; then
+  echo "!! MD5 MISMATCH repo=$REPO_MD5 www=$WWW_MD5 -> syncing"
+  cp AILOS_MASTER_LEDGER.md /www/AILOS_MASTER_LEDGER.md
+  WWW_MD5=$(md5sum /www/AILOS_MASTER_LEDGER.md | awk '{print $1}')
+fi
+if [ "$REPO_MD5" != "$WWW_MD5" ]; then
+  echo "!! MD5 SYNC FAILED"
+  md5_ok=0
+fi
+
+if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ] || [ "$schema_ok" != "1" ]; then || [ "$ledger_ok" != "1" ] || [ "$md5_ok" != "1" ]; then
   echo "!! GATES FAILED -> ROLLBACK to anchor"
   if [ ! -f "$ANCHOR" ]; then echo "!! NO ANCHOR, abort"; exit 2; fi
   TARGET=$(cat "$ANCHOR")
