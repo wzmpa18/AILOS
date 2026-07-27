@@ -1,4 +1,3 @@
-throw new Error('DEPLOY_DRILL_CRASH');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
