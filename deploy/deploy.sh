@@ -43,14 +43,23 @@ rollback(){
     cp -r "${BACKUP_ROOT}/xuewaiyu_frontend.bak/." "${FRONTEND_DIR}/"
     ok "前端静态已从 ${BACKUP_ROOT} 还原"
   fi
-  pm2 restart xuewaiyu-backend --update-env 2>&1 | tail -1
-  sleep 3
-  sleep 2
-  RB_H=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/health 2>/dev/null || echo 000)
-  if pm2 list | grep -q "xuewaiyu-backend.*online" && [ "$RB_H" = "200" ]; then
-    ok "回滚完成，PM2 online 且 /api/health 200（版本 ${ROLLBACK_TARGET}）"
+  # 进程恢复（坏版本 crash-loop 后 PM2 进程可能处于 errored/stopped 异常态）
+  pm2 restart xuewaiyu-backend --update-env 2>&1 | tail -1 \
+    || pm2 start xuewaiyu-backend 2>&1 | tail -1 \
+    || (cd "$BACKEND_DIR" && pm2 start ecosystem.config.js 2>&1 | tail -1)
+  # 健康等待：最多 30s 轮询
+  RB_H=000
+  for i in $(seq 1 10); do
+    sleep 3
+    RB_H=$(curl -s -o /dev/null -w "%{http_code}" -m 5 http://localhost:3000/api/health 2>/dev/null || echo 000)
+    [ "$RB_H" = "200" ] && break
+    # 中途若进程掉线再拉一次
+    pm2 list | grep -q "xuewaiyu-backend.*online" || pm2 restart xuewaiyu-backend --update-env > /dev/null 2>&1
+  done
+  if [ "$RB_H" = "200" ]; then
+    ok "回滚完成，/api/health 200（版本 ${ROLLBACK_TARGET}）"
   else
-    err "回滚后仍不健康（PM2/health=${RB_H}），需立即人工介入！"
+    err "回滚后 30s 内仍不健康（health=${RB_H}），需立即人工介入！"
   fi
 }
 
