@@ -67,7 +67,7 @@ class BillingService {
     let b = await tx.translationBillingBalance.findUnique({ where: { userId } });
     if (!b) {
       b = await tx.translationBillingBalance.create({
-        data: { userId, trialTotalSec: TRIAL_TOTAL_SEC, trialUsedSec: 0, subUsedSec: 0 },
+        data: { userId, trialTotalSec: TRIAL_TOTAL_SEC, trialUsedSec: 0, subUsedSec: 0, adminTimeSec: 0 },
       });
     }
     return b;
@@ -92,6 +92,7 @@ class BillingService {
     });
 
     const trialBlocked = !!(deviceRisk && deviceRisk.trialAllowed === false);
+    paidRemainingSec += b.adminTimeSec || 0;
     return {
       trial: {
         totalSec: b.trialTotalSec,
@@ -183,6 +184,14 @@ class BillingService {
         }
       }
 
+      // 4) 管理员手动调整时长（纳入消耗扣减链，确保调整真实生效）
+      if (remain > 0 && b.adminTimeSec > 0) {
+        const use = Math.min(remain, b.adminTimeSec);
+        b.adminTimeSec -= use;
+        remain -= use;
+        if (!source) source = 'admin';
+      }
+
       if (remain > 0) {
         // 时长不足 —— 拒绝翻译（否决项 7：扣减失败直接拒绝返回译文）
         const err = new Error('翻译时长不足，请购买套餐后继续使用');
@@ -193,13 +202,14 @@ class BillingService {
 
       await tx.translationBillingBalance.update({
         where: { id: b.id },
-        data: { trialUsedSec: b.trialUsedSec, subUsedSec: b.subUsedSec },
+        data: { trialUsedSec: b.trialUsedSec, subUsedSec: b.subUsedSec, adminTimeSec: b.adminTimeSec },
       });
 
       const balanceAfterSec =
         Math.max(0, b.trialTotalSec - b.trialUsedSec) +
         (b.subExpiresAt > now ? Math.max(0, (SUB_CAP[b.subType] || 0) - b.subUsedSec) : 0) +
-        (await paidRemainingSecOf(tx, userId, now));
+        (await paidRemainingSecOf(tx, userId, now)) +
+        b.adminTimeSec;
 
       const log = await tx.translationBillingLog.create({
         data: {

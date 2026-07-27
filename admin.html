@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>言道 AILOS · 运营管理后台</title>
+<!-- P0 设备指纹：普通用户访问自动携带 X-Device-Fp 请求头 -->
+<script src="/xuewaiyu/assets/devicefp.js"></script>
+<style>
+  :root{--bg:#0f1422;--card:#1a2235;--line:#2a3550;--txt:#e6ebf5;--mut:#93a0bd;--pri:#4f8cff;--ok:#37c97f;--warn:#f0a93b;--bad:#ef5e6b;--chip:#243049}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:var(--card);border-bottom:1px solid var(--line)}
+  header h1{font-size:17px;margin:0;font-weight:600}
+  .who{font-size:13px;color:var(--mut)}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{padding:9px 16px;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:9px;cursor:pointer;font-size:14px}
+  .tab.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+  label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}
+  input,select,textarea{padding:9px 11px;background:#0f1626;border:1px solid var(--line);color:var(--txt);border-radius:8px;font-size:14px;min-width:150px}
+  textarea{min-width:280px;min-height:64px}
+  button{padding:9px 16px;border:none;border-radius:8px;background:var(--pri);color:#fff;cursor:pointer;font-size:14px}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  button.danger{background:var(--bad)}
+  button.warn{background:var(--warn);color:#1a1300}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--mut);font-weight:600}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;background:var(--chip);color:var(--txt)}
+  .pill.ok{background:rgba(55,201,127,.18);color:var(--ok)}
+  .pill.bad{background:rgba(239,94,107,.18);color:var(--bad)}
+  .pill.warn{background:rgba(240,169,59,.18);color:var(--warn)}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+  .stat .box{flex:1;min-width:140px;background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .stat .box b{font-size:22px;display:block}
+  .stat .box span{font-size:12px;color:var(--mut)}
+  .msg{font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:12px;display:none}
+  .msg.err{background:rgba(239,94,107,.15);color:var(--bad);display:block}
+  .msg.ok{background:rgba(55,201,127,.15);color:var(--ok);display:block}
+  .login{max-width:380px;margin:90px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
+  .login h2{margin:0 0 18px;font-size:19px}
+  .muted{color:var(--mut);font-size:12px;line-height:1.7}
+  .hidden{display:none}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;width:420px;max-width:92vw}
+  .modal h3{margin:0 0 14px}
+  .actions{display:flex;gap:8px;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 登录视图 -->
+  <div class="login" id="loginView">
+    <h2>运营管理后台登录</h2>
+    <div class="msg" id="loginMsg"></div>
+    <div class="row" style="margin-bottom:12px">
+      <div><label>管理员账号</label><input id="acc" placeholder="如 test_admin" style="width:100%"/></div>
+    </div>
+    <div class="row" style="margin-bottom:16px">
+      <div><label>密码</label><input id="pwd" type="password" placeholder="密码" style="width:100%"/></div>
+    </div>
+    <button id="loginBtn" style="width:100%">登录</button>
+    <p class="muted" style="margin-top:14px">仅管理员账号可进入；普通账号登录后将返回 403 无权限。</p>
+  </div>
+
+  <!-- 主视图 -->
+  <div id="mainView" class="hidden">
+    <header>
+      <h1>言道 AILOS · 运营管理后台</h1>
+      <div class="who"><span id="whoName"></span> · <a href="#" id="logout" style="color:var(--mut)">退出</a></div>
+    </header>
+    <div class="wrap">
+      <div class="tabs">
+        <button class="tab active" data-t="orders">订单查询 / 导出</button>
+        <button class="tab" data-t="time">用户时长管理</button>
+        <button class="tab" data-t="abn">异常订单标记</button>
+        <button class="tab" data-t="logs">操作日志</button>
+      </div>
+
+      <!-- 订单 -->
+      <section id="p_orders">
+        <div class="card">
+          <div class="row">
+            <div><label>用户账号</label><input id="o_account" placeholder="留空=全部"/></div>
+            <div><label>开始日期</label><input id="o_start" type="date"/></div>
+            <div><label>结束日期</label><input id="o_end" type="date"/></div>
+            <div><label>订单类型</label><select id="o_type"><option value="all">全部</option><option value="package">翻译时长包</option><option value="membership">会员</option></select></div>
+            <div><label>异常状态</label><select id="o_abn"><option value="">全部</option><option value="1">仅异常</option><option value="0">仅正常</option></select></div>
+            <button id="o_query">查询</button>
+            <button class="ghost" id="o_export">导出 CSV</button>
+          </div>
+          <div class="msg" id="o_msg"></div>
+          <div style="overflow:auto;max-height:460px">
+            <table id="o_table"><thead><tr>
+              <th>订单号</th><th>账号</th><th>类型</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th><th>支付时间</th><th>异常</th><th>操作</th>
+            </tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 用户时长 -->
+      <section id="p_time" class="hidden">
+        <div class="card">
+          <div class="row">
+            <div><label>用户账号</label><input id="t_account" placeholder="如 13480010005"/></div>
+            <button id="t_query">查询</button>
+          </div>
+          <div class="msg" id="t_msg"></div>
+          <div id="t_result"></div>
+          <div id="t_adjust" class="hidden" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+            <h3 style="margin:0 0 12px;font-size:15px">手动调整时长（需二次确认）</h3>
+            <div class="row">
+              <div><label>操作</label><select id="t_op"><option value="add">增加</option><option value="deduct">扣减</option></select></div>
+              <div><label>调整秒数</label><input id="t_delta" type="number" min="1" placeholder="如 600"/></div>
+              <div><label>调整原因（必填）</label><input id="t_reason" placeholder="运营操作原因"/></div>
+              <button id="t_submit">提交调整</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 异常订单 -->
+      <section id="p_abn" class="hidden">
+        <div class="card">
+          <p class="muted">在「订单查询」页筛选「仅异常」可定位异常订单；下方按异常状态列出全部异常订单。</p>
+          <div class="row"><button id="abn_query">加载异常订单</button></div>
+          <div class="msg" id="abn_msg"></div>
+          <div style="overflow:auto;max-height:460px">
+            <table id="abn_table"><thead><tr><th>订单号</th><th>账号</th><th>类型</th><th>套餐</th><th>金额</th><th>状态</th><th>异常备注</th><th>操作</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 日志 -->
+      <section id="p_logs" class="hidden">
+        <div class="card">
+          <div class="row"><button id="log_query">加载操作日志</button></div>
+          <div class="msg" id="log_msg"></div>
+          <div style="overflow:auto;max-height:520px">
+            <table id="log_table"><thead><tr><th>时间</th><th>管理员</th><th>动作</th><th>对象</th><th>原因 / 详情</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>异常订单标记</h3>
+    <div class="msg" id="modalMsg"></div>
+    <div class="row">
+      <div><label>标记状态</label><select id="m_abn"><option value="true">标记为异常</option><option value="false">取消异常</option></select></div>
+    </div>
+    <div><label>备注说明</label><textarea id="m_note" placeholder="异常原因 / 处置说明"></textarea></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button class="ghost" id="m_cancel">取消</button>
+      <button id="m_save">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- 设备指纹（与全站一致：自动生成并注入请求头） ----
+function genFp(){
+  var n=[];var s='abcdef0123456789';
+  for(var i=0;i<32;i++) n.push(s[Math.floor(Math.random()*16)]);
+  return n.join('');
+}
+var DEVICE_FP = localStorage.getItem('xuewaiyu_device_fp') || genFp();
+localStorage.setItem('xuewaiyu_device_fp', DEVICE_FP);
+
+// 统一请求封装：自动携带设备指纹 + 管理员 Token
+function api(path, opts){
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  opts.headers['Content-Type'] = 'application/json';
+  opts.headers['X-Device-Fp'] = DEVICE_FP;
+  var tk = localStorage.getItem('ailos_admin_token');
+  if(tk) opts.headers['Authorization'] = 'Bearer ' + tk;
+  return fetch('/api' + path, opts).then(function(r){
+    return r.json().then(function(d){ return {status:r.status, data:d}; });
+  });
+}
+
+var ADMIN = { token:null, userId:null };
+
+// ---- 登录 ----
+function doLogin(){
+  var acc = document.getElementById('acc').value.trim();
+  var pwd = document.getElementById('pwd').value;
+  var msg = document.getElementById('loginMsg'); msg.className='msg';
+  if(!acc || !pwd){ msg.className='msg err'; msg.textContent='请输入账号与密码'; return; }
+  api('/auth/password', {method:'POST', body:JSON.stringify({account:acc, password:pwd})})
+    .then(function(r){
+      if(r.status===200 && r.data && r.data.tokens && r.data.tokens.accessToken){
+        localStorage.setItem('ailos_admin_token', r.data.tokens.accessToken);
+        ADMIN.token = r.data.tokens.accessToken;
+        return api('/admin/me');
+      }
+      msg.className='msg err';
+      msg.textContent = (r.data && r.data.error) ? r.data.error : '登录失败';
+      throw new Error('login fail');
+    })
+    .then(function(r){
+      if(r.status===200 && r.data.isAdmin){
+        ADMIN.userId = r.data.userId;
+        showMain();
+      } else {
+        localStorage.removeItem('ailos_admin_token');
+        msg.className='msg err';
+        msg.textContent = '无管理员权限（403）：该账号不是管理员，禁止进入后台。';
+      }
+    })
+    .catch(function(e){ if(e.message!=='login fail'){ console.error(e); } });
+}
+
+function showMain(){
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('mainView').classList.remove('hidden');
+  document.getElementById('whoName').textContent = '管理员 ' + ADMIN.userId.slice(0,8);
+  loadOrders();
+}
+
+function logout(){
+  localStorage.removeItem('ailos_admin_token');
+  location.reload();
+}
+
+// ---- Tab 切换 ----
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    var map = {orders:'p_orders', time:'p_time', abn:'p_abn', logs:'p_logs'};
+    Object.values(map).forEach(function(id){ document.getElementById(id).classList.add('hidden'); });
+    document.getElementById(map[t.dataset.t]).classList.remove('hidden');
+  });
+});
+
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('logout').addEventListener('click', function(e){e.preventDefault();logout();});
+
+// ---- 订单查询 ----
+function loadOrders(){
+  var q = new URLSearchParams();
+  var a = document.getElementById('o_account').value.trim();
+  var s = document.getElementById('o_start').value;
+  var e = document.getElementById('o_end').value;
+  var t = document.getElementById('o_type').value;
+  var ab = document.getElementById('o_abn').value;
+  if(a) q.set('account', a);
+  if(s) q.set('startDate', s);
+  if(e) q.set('endDate', e);
+  if(t && t!=='all') q.set('type', t);
+  if(ab) q.set('abnormal', ab);
+  var msg = document.getElementById('o_msg'); msg.className='msg';
+  api('/admin/orders?' + q.toString()).then(function(r){
+    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
+    var rows = r.data.data || [];
+    var tb = document.querySelector('#o_table tbody'); tb.innerHTML='';
+    rows.forEach(function(o){
+      var tr = document.createElement('tr');
+      var st = statusPill(o.status);
+      var ab = o.abnormal ? '<span class="pill bad">异常</span>' : '<span class="pill">正常</span>';
+      tr.innerHTML = '<td>'+esc(o.orderNo)+'</td><td>'+esc(o.account||'')+'</td><td>'+esc(o.type==='package'?'时长包':'会员')+'</td><td>'+esc(o.packageType||'')+'</td><td>'+esc(o.amount)+'</td><td>'+st+'</td><td>'+esc(fmt(o.createdAt))+'</td><td>'+esc(fmt(o.paidAt))+'</td><td>'+ab+'</td><td><button class="ghost" data-id="'+o.id+'" data-type="'+o.type+'">标记</button></td>';
+      tb.appendChild(tr);
+    });
+    msg.className='msg ok'; msg.textContent='共 '+rows.length+' 条订单';
+  });
+}
+function statusPill(s){
+  var map={paid:['ok','已支付'],PAID:['ok','已支付'],pending:['warn','待支付'],PENDING:['warn','待支付'],failed:['bad','失败'],FAILED:['bad','失败'],refunded:['warn','已退款'],REFUNDED:['warn','已退款'],expired:['bad','已过期'],EXPIRED:['bad','已过期']};
+  var m=map[s]||['',''];
+  return '<span class="pill '+m[0]+'">'+m[1]+'</span>';
+}
+
+document.getElementById('o_query').addEventListener('click', loadOrders);
+document.getElementById('o_export').addEventListener('click', function(){
+  var q = new URLSearchParams();
+  var a = document.getElementById('o_account').value.trim();
+  var s = document.getElementById('o_start').value;
+  var e = document.getElementById('o_end').value;
+  var t = document.getElementById('o_type').value;
+  var ab = document.getElementById('o_abn').value;
+  if(a) q.set('account', a);
+  if(s) q.set('startDate', s);
+  if(e) q.set('endDate', e);
+  if(t && t!=='all') q.set('type', t);
+  if(ab) q.set('abnormal', ab);
+  var tk = localStorage.getItem('ailos_admin_token');
+  var url = '/api/admin/orders/export?' + q.toString();
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.setRequestHeader('X-Device-Fp', DEVICE_FP);
+  if(tk) xhr.setRequestHeader('Authorization','Bearer '+tk);
+  xhr.responseType = 'blob';
+  xhr.onload = function(){
+    if(xhr.status===200){
+      var b = xhr.response;
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(b);
+      link.download = 'orders_'+Date.now()+'.csv';
+      link.click();
+    } else { alert('导出失败：'+xhr.status); }
+  };
+  xhr.send();
+});
+
+document.querySelector('#o_table tbody').addEventListener('click', function(ev){
+  var btn = ev.target.closest('button[data-id]');
+  if(btn){ openModal(btn.dataset.id, btn.dataset.type); }
+});
+
+// ---- 用户时长 ----
+document.getElementById('t_query').addEventListener('click', function(){
+  var a = document.getElementById('t_account').value.trim();
+  var msg = document.getElementById('t_msg'); msg.className='msg';
+  if(!a){ msg.className='msg err'; msg.textContent='请输入用户账号'; return; }
+  api('/admin/users/billing?account='+encodeURIComponent(a)).then(function(r){
+    var box = document.getElementById('t_result');
+    var adj = document.getElementById('t_adjust');
+    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; box.innerHTML=''; adj.classList.add('hidden'); return; }
+    var u = r.data.user;
+    msg.className='msg ok'; msg.textContent='查询成功';
+    box.innerHTML =
+      '<div class="stat">'
+      + boxStat('剩余时长(秒)', u.remainingSec)
+      + boxStat('试用剩余', u.trialRemainingSec)
+      + boxStat('订阅剩余', u.subscriptionRemainingSec)
+      + boxStat('按量包剩余', u.paidRemainingSec)
+      + '</div><div class="stat">'
+      + boxStat('累计消耗(秒)', u.consumedSec)
+      + boxStat('会员等级', u.membership.level)
+      + boxStat('试用领取', u.trialClaimedAt?fmt(u.trialClaimedAt):'未领取')
+      + boxStat('设备指纹', u.trialDeviceFp||'-')
+      + '</div>';
+    adj.classList.remove('hidden');
+  });
+});
+function boxStat(k,v){ return '<div class="box"><b>'+esc(String(v))+'</b><span>'+esc(k)+'</span></div>'; }
+
+document.getElementById('t_submit').addEventListener('click', function(){
+  var a = document.getElementById('t_account').value.trim();
+  var op = document.getElementById('t_op').value;
+  var delta = document.getElementById('t_delta').value;
+  var reason = document.getElementById('t_reason').value.trim();
+  var msg = document.getElementById('t_msg'); msg.className='msg';
+  if(!delta || Number(delta)<=0){ msg.className='msg err'; msg.textContent='调整秒数必须为正数'; return; }
+  if(!reason){ msg.className='msg err'; msg.textContent='必须填写调整原因'; return; }
+  var tip = (op==='add'?'增加':'扣减') + ' ' + delta + ' 秒（账号 '+a+'）';
+  if(!confirm('二次确认：'+tip+'\n原因：'+reason+'\n确认提交？')) return;
+  api('/admin/users/billing/adjust', {method:'POST', body:JSON.stringify({account:a, op:op, deltaSec:Number(delta), reason:reason})})
+    .then(function(r){
+      if(r.status===200){ msg.className='msg ok'; msg.textContent='调整成功：'+r.data.beforeSec+' → '+r.data.afterSec+' 秒（管理员调整池）'; }
+      else { msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'调整失败'; }
+    });
+});
+
+// ---- 异常订单 ----
+var CURRENT = { id:null, type:null };
+function openModal(id, type){
+  CURRENT.id = id; CURRENT.type = type;
+  document.getElementById('m_note').value='';
+  document.getElementById('m_abn').value='true';
+  document.getElementById('modalMsg').className='msg';
+  document.getElementById('modalBg').style.display='flex';
+}
+document.getElementById('m_cancel').addEventListener('click', function(){ document.getElementById('modalBg').style.display='none'; });
+document.getElementById('m_save').addEventListener('click', function(){
+  var note = document.getElementById('m_note').value.trim();
+  var ab = document.getElementById('m_abn').value === 'true';
+  var mm = document.getElementById('modalMsg'); mm.className='msg';
+  api('/admin/orders/'+CURRENT.id+'/abnormal', {method:'POST', body:JSON.stringify({type:CURRENT.type, abnormal:ab, note:note})})
+    .then(function(r){
+      if(r.status===200){ mm.className='msg ok'; mm.textContent='已保存'; setTimeout(function(){ document.getElementById('modalBg').style.display='none'; loadOrders(); }, 700); }
+      else { mm.className='msg err'; mm.textContent=(r.data&&r.data.error)||'保存失败'; }
+    });
+});
+document.getElementById('abn_query').addEventListener('click', function(){
+  var msg = document.getElementById('abn_msg'); msg.className='msg';
+  api('/admin/orders?abnormal=1').then(function(r){
+    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
+    var rows = r.data.data||[];
+    var tb = document.querySelector('#abn_table tbody'); tb.innerHTML='';
+    rows.forEach(function(o){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+esc(o.orderNo)+'</td><td>'+esc(o.account||'')+'</td><td>'+esc(o.type==='package'?'时长包':'会员')+'</td><td>'+esc(o.packageType||'')+'</td><td>'+esc(o.amount)+'</td><td>'+statusPill(o.status)+'</td><td>'+esc(o.abnormalNote||'')+'</td><td><button class="ghost" data-id="'+o.id+'" data-type="'+o.type+'">标记</button></td>';
+      tb.appendChild(tr);
+    });
+    msg.className='msg ok'; msg.textContent='异常订单 '+rows.length+' 条';
+  });
+});
+document.querySelector('#abn_table tbody').addEventListener('click', function(ev){
+  var btn = ev.target.closest('button[data-id]');
+  if(btn){ openModal(btn.dataset.id, btn.dataset.type); }
+});
+
+// ---- 操作日志 ----
+document.getElementById('log_query').addEventListener('click', function(){
+  var msg = document.getElementById('log_msg'); msg.className='msg';
+  api('/admin/operation-logs').then(function(r){
+    if(r.status!==200){ msg.className='msg err'; msg.textContent=(r.data&&r.data.error)||'查询失败'; return; }
+    var rows = r.data.data||[];
+    var tb = document.querySelector('#log_table tbody'); tb.innerHTML='';
+    rows.forEach(function(o){
+      var tr=document.createElement('tr');
+      var detail = (o.reason||'') + (o.detail? ' '+JSON.stringify(o.detail):'');
+      tr.innerHTML='<td>'+esc(fmt(o.createdAt))+'</td><td>'+esc(o.adminId.slice(0,8))+'</td><td>'+esc(o.action)+'</td><td>'+esc(o.targetType+'/'+o.targetId.slice(0,8))+'</td><td>'+esc(detail)+'</td>';
+      tb.appendChild(tr);
+    });
+    msg.className='msg ok'; msg.textContent='操作日志 '+rows.length+' 条';
+  });
+});
+
+// ---- 工具 ----
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function fmt(d){ if(!d) return ''; try{ return new Date(d).toLocaleString('zh-CN'); }catch(e){ return d; } }
+
+// 自动校验是否已登录
+(function(){
+  var tk = localStorage.getItem('ailos_admin_token');
+  if(!tk) return;
+  ADMIN.token = tk;
+  api('/admin/me').then(function(r){
+    if(r.status===200 && r.data.isAdmin){ ADMIN.userId=r.data.userId; showMain(); }
+    else { localStorage.removeItem('ailos_admin_token'); }
+  }).catch(function(){ localStorage.removeItem('ailos_admin_token'); });
+})();
+</script>
+</body>
+</html>

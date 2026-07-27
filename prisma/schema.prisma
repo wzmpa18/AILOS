@@ -213,6 +213,11 @@ model MembershipOrder {
   status String // pending, paid, failed, refunded
   paidAt DateTime?
 
+  abnormal         Boolean  @default(false)
+  abnormalNote     String?
+  abnormalMarkedAt DateTime?
+  abnormalMarkedBy String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1025,6 +1030,7 @@ model TranslationBillingBalance {
   subType       String?  // 'daily' | 'weekly' | 'monthly'
   subExpiresAt  DateTime?
   subUsedSec    Int      @default(0)
+  adminTimeSec  Int      @default(0) // 管理员手动调整时长（增加/扣减），纳入剩余时长与消耗扣减
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
   @@index([userId])
@@ -1041,6 +1047,11 @@ model TranslationPackageOrder {
   priceCny     Float
   expiresAt    DateTime
   status       String   @default("paid") // paid|refunded|expired
+  paidAt       DateTime?
+  abnormal         Boolean  @default(false)
+  abnormalNote     String?
+  abnormalMarkedAt DateTime?
+  abnormalMarkedBy String?
   createdAt    DateTime @default(now())
   @@index([userId])
 }
@@ -1056,5 +1067,23 @@ model TranslationBillingLog {
   balanceAfterSec Int
   createdAt       DateTime @default(now())
   @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// P2 基础运营管理后台：独立操作审计日志（与业务表解耦，全程可审计）
+// ============================================================
+model AdminOperationLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  action      String   // ADJUST_TIME | MARK_ABNORMAL
+  targetType  String   // USER | ORDER
+  targetId    String
+  reason      String?
+  detail      Json?
+  createdAt   DateTime @default(now())
+
+  @@index([adminId])
+  @@index([targetType, targetId])
   @@index([createdAt])
 }
