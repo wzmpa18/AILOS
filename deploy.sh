@@ -37,6 +37,15 @@ npm install --omit=dev 2>&1 | tail -2
 npx prisma generate 2>&1 | tail -2
 npx prisma migrate deploy 2>&1 | tail -5
 
+# === 迁移自检闸门（防 schema 未跟上代码被 GATE 放行）===
+MIG_STAT=$(bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate status 2>&1' | tail -8)
+echo "$MIG_STAT"
+schema_ok=1
+if echo "$MIG_STAT" | grep -qi "not yet been applied"; then
+  echo "!! MIGRATION PENDING: schema not up to date"
+  schema_ok=0
+fi
+
 pm2 restart "$APP_NAME" || pm2 start src/server/index.js --name "$APP_NAME" --instances 1
 sleep 8
 
@@ -56,7 +65,7 @@ for p in "${PAGES[@]}"; do
 done
 echo "GATE2 pages_ok=$gate2"
 
-if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ]; then
+if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ] || [ "$schema_ok" != "1" ]; then
   echo "!! GATES FAILED -> ROLLBACK to anchor"
   if [ ! -f "$ANCHOR" ]; then echo "!! NO ANCHOR, abort"; exit 2; fi
   TARGET=$(cat "$ANCHOR")
