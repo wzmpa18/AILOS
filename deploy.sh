@@ -88,7 +88,7 @@ if [ "$REPO_MD5" != "$WWW_MD5" ]; then
   md5_ok=0
 fi
 
-if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ] || [ "$schema_ok" != "1" ]; then || [ "$ledger_ok" != "1" ] || [ "$md5_ok" != "1" ]; then
+if [ "$health_ok" != "1" ] || [ "$gate2" != "1" ] || [ "$schema_ok" != "1" ] || [ "$ledger_ok" != "1" ] || [ "$md5_ok" != "1" ]; then
   echo "!! GATES FAILED -> ROLLBACK to anchor"
   if [ ! -f "$ANCHOR" ]; then echo "!! NO ANCHOR, abort"; exit 2; fi
   TARGET=$(cat "$ANCHOR")
