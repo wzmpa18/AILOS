@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "base": "https://yandao.vip/api",
+    "at": "2026-07-28T00:15:55.254Z"
+  },
+  "cases": {
+    "T-01": {
+      "expect": "5 请求全部成功，总扣 300s，无超扣/漏扣/重复扣，DB 与接口一致",
+      "httpOk": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "dbTrialUsedSec": 300,
+      "dbLogCount": 5,
+      "dbLogTotalSec": 300,
+      "apiTrialRemaining": 0,
+      "pass": true
+    },
+    "T-02": {
+      "expect": "仅首次扣减生效（-30s），后续返回幂等标识，余额仅变化一次",
+      "statuses": [
+        200,
+        200,
+        200
+      ],
+      "idempotentFlags": [
+        null,
+        true,
+        true
+      ],
+      "dbAdminTimeSecAfter": 60,
+      "actualDeducted": 30,
+      "pass": true
+    },
+    "T-03": {
+      "expect": "402 + 事务完整回滚：按量包 minutesUsed 仍为 0，无部分扣减，无账单日志",
+      "status": 402,
+      "code": "TRANSLATION_TIME_EXHAUSTED",
+      "orderMinutesUsedAfter": 0,
+      "trialUsedAfter": 300,
+      "logCount": 0,
+      "pass": true
+    },
+    "T-04": {
+      "expect": "退款端点存在：订单转 refunded、时长精准回退、审计留痕",
+      "adminLogin": 200,
+      "refundStatus": 200,
+      "refundBody": {
+        "success": true,
+        "data": {
+          "orderNo": "P3T031785197757328",
+          "packageType": "pay_1h",
+          "status": "refunded",
+          "revokedSec": 60,
+          "refundCny": 19
+        },
+        "message": "退款完成，未使用时长已回收"
+      },
+      "pass": true
+    },
+    "T-05": {
+      "expect": "402 标准提示；余额保持 30s 不变、不为负",
+      "status": 402,
+      "error": "TRANSLATION_TIME_EXHAUSTED",
+      "dbAdminTimeSecAfter": 30,
+      "pass": true
+    },
+    "T-06": {
+      "expect": "402 + 引导购买提示；无静默扣减其他时长池",
+      "status": 402,
+      "error": "TRANSLATION_TIME_EXHAUSTED",
+      "trialUsed": 300,
+      "adminTimeSec": 0,
+      "pass": true
+    },
+    "UNIT-CHECK": {
+      "expect": "购买 pay_1h(60分钟) 后 remainingSec 应为 3600，且可消费 61s",
+      "buyStatus": 200,
+      "orderNo": "TR1785197759715LNKS08",
+      "apiPaidRemainingSec": 3600,
+      "consume61Status": 200,
+      "pass": true
+    }
+  },
+  "summary": {
+    "T-01": "PASS",
+    "T-02": "PASS",
+    "T-03": "PASS",
+    "T-04": "PASS",
+    "T-05": "PASS",
+    "T-06": "PASS",
+    "UNIT-CHECK": "PASS"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "base": "https://yandao.vip/api",
+    "at": "2026-07-27T23:58:15.757Z"
+  },
+  "cases": {
+    "T-01": {
+      "expect": "5 请求全部成功，总扣 300s，无超扣/漏扣/重复扣，DB 与接口一致",
+      "httpOk": 5,
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "dbTrialUsedSec": 300,
+      "dbLogCount": 5,
+      "dbLogTotalSec": 300,
+      "apiTrialRemaining": 0,
+      "pass": true
+    },
+    "T-02": {
+      "expect": "仅首次扣减生效（-30s），后续返回幂等标识，余额仅变化一次",
+      "statuses": [
+        200,
+        200,
+        200
+      ],
+      "idempotentFlags": [
+        null,
+        null,
+        null
+      ],
+      "dbAdminTimeSecAfter": 0,
+      "actualDeducted": 90,
+      "pass": false
+    },
+    "T-03": {
+      "expect": "402 + 事务完整回滚：按量包 minutesUsed 仍为 0，无部分扣减，无账单日志",
+      "status": 402,
+      "code": "TRANSLATION_TIME_EXHAUSTED",
+      "orderMinutesUsedAfter": 0,
+      "trialUsedAfter": 300,
+      "logCount": 0,
+      "pass": true
+    },
+    "T-04": {
+      "expect": "退款端点存在：订单转 refunded、时长精准回退、审计留痕",
+      "adminLogin": 200,
+      "refundStatus": 404,
+      "refundBody": {
+        "success": false,
+        "error": "Route not found",
+        "path": "/api/admin/orders/79f5115e-985b-44d7-a048-4e5e8782398f/refund"
+      },
+      "pass": false
+    },
+    "T-05": {
+      "expect": "402 标准提示；余额保持 30s 不变、不为负",
+      "status": 402,
+      "error": "TRANSLATION_TIME_EXHAUSTED",
+      "dbAdminTimeSecAfter": 30,
+      "pass": true
+    },
+    "T-06": {
+      "expect": "402 + 引导购买提示；无静默扣减其他时长池",
+      "status": 402,
+      "error": "TRANSLATION_TIME_EXHAUSTED",
+      "trialUsed": 300,
+      "adminTimeSec": 0,
+      "pass": true
+    },
+    "UNIT-CHECK": {
+      "expect": "购买 pay_1h(60分钟) 后 remainingSec 应为 3600，且可消费 61s",
+      "buyStatus": 200,
+      "orderNo": "TR1785196700200J9VCR1",
+      "apiPaidRemainingSec": 60,
+      "consume61Status": 402,
+      "pass": false
+    }
+  },
+  "summary": {
+    "T-01": "PASS",
+    "T-02": "FAIL",
+    "T-03": "PASS",
+    "T-04": "FAIL",
+    "T-05": "PASS",
+    "T-06": "PASS",
+    "UNIT-CHECK": "FAIL"
+  }
+}

@@ -1311,6 +1311,28 @@ P0_GATE_FIX_COMPLETE
 - **修复**：`deploy.sh` prisma 两行统一改为 `bash -c 'set -a; . ./.env.production; set +a; npx prisma ...'`；随本节账簿更新同 commit 入库并重新走标准部署验证。
 - **附带发现**：回滚锚点 `/www/backups/last_good_commit` 停留在 `e05247d`（P0 治理/文档提交未走 deploy.sh，锚点未刷新），本次部署成功后锚点将自动刷新至新 HEAD。
 
-### 38.1.5 修复验证（回归全绿后补录本节结论）
+### 38.1.5 修复验证与阶段一闭环结论（2026-07-28）
 
-- 待回归：T-01~T-06 + UNIT-CHECK 复测全绿；证据 `delivery-evidence/p3_exception_test/stage1_billing/`。
+**修复部署链**：`65582a9`（三缺陷修复+迁移+账簿38.1）→ `c9c5282`（DEF-P3-04 deploy.sh env 注入+账簿38.1.4）→ 标准 `deploy.sh` 部署成功（`DEPLOY OK new_commit=c9c5282`，迁移 `20260728120000_p3_billing_idempotency_unit_fix` 真实应用，五闸门全过，回滚锚点刷新至 `c9c5282`）。**这是 deploy.sh 历史上首次全自动完成数据库迁移。**
+
+**回归结果（T-01~T-06 + UNIT-CHECK，7/7 全绿，域名端到端 + DB 双向核验）**
+
+| 场景 | 回归结果 | 关键数据 |
+|---|---|---|
+| T-01 并发扣减 | ✅ PASS | 5×200；DB=300s、5 条日志合计 300s、API remaining=0 |
+| T-02 幂等防护 | ✅ PASS | 3 连发仅首扣 30s；第 2/3 次返回 `idempotent:true`；池 90→60 仅变化一次 |
+| T-03 事务回滚 | ✅ PASS | 402；按量包 minutesUsed=0、零日志 |
+| T-04 退款回退 | ✅ PASS | refund 200：`status=refunded, revokedSec=60, refundCny=19`；AdminOperationLog 留痕 |
+| T-05 余额不足 | ✅ PASS | 402；余额 30s 不变 |
+| T-06 试用耗尽 | ✅ PASS | 402；各池零变动 |
+| UNIT-CHECK | ✅ PASS | 买 pay_1h 后 `remainingSec=3600`，消费 61s 成功 |
+
+**阶段一判定**：✅ 通过。P0×3（DEF-P3-01/03/04）+ P1×1（DEF-P3-02）全部修复闭环，无遗留。
+**测试数据**：`test_p3_*@xuewaiyu.local` 7 账号为 test_ 前缀隔离数据，P3 全程复用，测试收尾统一清理（38.6 记录）。
+
+**阶段一证据索引**（`delivery-evidence/p3_exception_test/stage1_billing/`）
+- `S1_T01-T06_first_run.json`：首轮测试输出（3 FAIL 现场）
+- `S1_T01-T06_regression_all_green.json`：修复后回归 7/7 全绿输出
+- `S1_DEF-P3-04_gate_rollback_deploy.log`：闸门拦截+自动回滚的部署日志
+- `S1_deploy_ok_c9c5282.log`：修复后部署成功日志
+- 测试脚本：`scripts/test/p3_stage1.js`（仓内归档）
