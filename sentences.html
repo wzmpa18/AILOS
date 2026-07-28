@@ -352,7 +352,6 @@ body {
 .fab:hover { background: var(--primary-hover); transform: scale(1.05); }
 .fab:active { transform: scale(0.92); }
 </style>
-<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
 
@@ -762,14 +761,108 @@ body {
   ];
 
   /* ============ State ============ */
-  var STORAGE_KEY_CUSTOM = 'ailos_sentences_custom';
+  var STORAGE_KEY_CUSTOM = 'ailos_sentences_custom_v2';    // v2: language-scoped
   var STORAGE_KEY_FAVORITES = 'ailos_sentences_favorites';
   var STORAGE_KEY_DAILY_DATE = 'ailos_sentences_daily_date';
   var STORAGE_KEY_DAILY_ID = 'ailos_sentences_daily_id';
+  var STORAGE_KEY_LAST_LANG = 'ailos_sentences_last_lang';
 
   var currentCategory = 'all';
   var currentSearch = '';
   var dailySentence = null;
+  var studyLang = 'ja';                    // 默认日语（AILOS.getStudyLang() 覆盖）
+  var apiSentences = [];                   // 来自 /api/content 的远端数据
+  var apiLoaded = false;                   // API 是否已加载
+
+  /* ============ Language Helpers (接入 AILOS 统一入口) ============ */
+  function getStudyLang() {
+    // 强制走 AILOS 统一入口，禁止直接读 localStorage
+    if (window.AILOS && typeof window.AILOS.getStudyLang === 'function') {
+      return window.AILOS.getStudyLang();
+    }
+    // 兜底：URL参数 > legacy localStorage > 默认日语
+    var urlLang = (location.search.match(/[?&]lang=([a-z]{2})/i) || [])[1];
+    if (urlLang && i18n[urlLang]) return urlLang;
+    try { var l = localStorage.getItem('yandao_study_lang'); if (l && i18n[l]) return l; } catch(e) {}
+    try { var l2 = localStorage.getItem('yandao_target_lang_v1'); if (l2 && i18n[l2]) return l2; } catch(e) {}
+    return 'ja';
+  }
+
+  function onLanguageChanged() {
+    var newLang = getStudyLang();
+    if (newLang === studyLang && apiLoaded) return; // 无变化且已加载
+    studyLang = newLang;
+    apiLoaded = false;
+    apiSentences = [];
+    // 清理旧语种缓存
+    clearLanguageCache();
+    // 刷新 UI
+    applyI18nToDOM();
+    renderAll();
+    // 重新从 API 拉取
+    fetchFromContentAPI();
+  }
+
+  function clearLanguageCache() {
+    // 清理每日一句缓存（换语言后必须重新选）
+    localStorage.removeItem(STORAGE_KEY_DAILY_DATE);
+    localStorage.removeItem(STORAGE_KEY_DAILY_ID);
+    localStorage.setItem(STORAGE_KEY_LAST_LANG, studyLang);
+  }
+
+  /* ============ API Integration: /api/content ============ */
+  function getAuthToken() {
+    if (window.AILOS && typeof window.AILOS.getToken === 'function') {
+      return window.AILOS.getToken();
+    }
+    try { return localStorage.getItem('yandao_token_v1') || ''; } catch(e) { return ''; }
+  }
+
+  function fetchFromContentAPI() {
+    var token = getAuthToken();
+    if (!token) {
+      // 未登录：只用种子数据（仍按语言过滤）
+      apiSentences = [];
+      apiLoaded = true;
+      renderAll();
+      return;
+    }
+
+    fetch('/api/content?page=1&limit=200', {
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(j) {
+      var items = (j && j.items) || [];
+      // 转换 LearningContent → 句库卡片格式
+      apiSentences = items.map(function(item, idx) {
+        var cd = item.contentData || {};
+        return {
+          id: 'api_' + (item.id || idx),
+          original: cd.original || cd.text || cd.sentence || cd.question || '',
+          translation: cd.translation || cd.trans || cd.answer || '',
+          pronunciation: cd.pronunciation || cd.pron || cd.romaji || '',
+          language: item.targetLanguage || cd.targetLanguage || cd.language || studyLang,
+          category: item.contentType || cd.category || 'daily',
+          sourceType: item.sourceType || 'AI_GENERATED',
+          sourceLanguage: item.sourceLanguage || cd.sourceLanguage || 'zh'
+        };
+      }).filter(function(s) { return s.original; }); // 过滤空记录
+
+      apiLoaded = true;
+      console.log('[Sentences] API loaded ' + apiSentences.length + ' items for lang=' + studyLang);
+      renderAll();
+    })
+    .catch(function(err) {
+      console.warn('[Sentences] API fetch failed, using seed data only:', err.message);
+      apiSentences = [];
+      apiLoaded = true;
+      renderAll();
+    });
+  }
 
   function getCustomSentences() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM)) || []; } catch(e) { return []; }
@@ -794,7 +887,16 @@ body {
   }
 
   function getAllSentences() {
-    return seedSentences.concat(getCustomSentences());
+    // API 数据优先（后端 ContextResolver 已按 targetLanguage 过滤），种子数据兜底
+    var all = apiSentences.concat(seedSentences).concat(getCustomSentences());
+    // 去重（按 original + translation）
+    var seen = {};
+    return all.filter(function(s) {
+      var key = (s.original || '') + '|||' + (s.translation || '');
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
   }
 
   function getNextId() {
@@ -812,16 +914,27 @@ body {
     var today = new Date().toISOString().split('T')[0];
     var storedDate = localStorage.getItem(STORAGE_KEY_DAILY_DATE);
     var storedId = localStorage.getItem(STORAGE_KEY_DAILY_ID);
-    if (storedDate === today && storedId) {
-      var found = getAllSentences().find(function(s) { return s.id === storedId; });
-      if (found) return found;
+    // 语言变了则清除旧缓存
+    var lastLang = localStorage.getItem(STORAGE_KEY_LAST_LANG);
+    if (lastLang !== studyLang || !storedDate || storedDate !== today || !storedId) {
+      if (lastLang !== studyLang) {
+        localStorage.removeItem(STORAGE_KEY_DAILY_DATE);
+        localStorage.removeItem(STORAGE_KEY_DAILY_ID);
+        localStorage.setItem(STORAGE_KEY_LAST_LANG, studyLang);
+      }
     }
-    var all = getAllSentences();
+    if (storedDate === today && storedId && lastLang === studyLang) {
+      var found = getAllSentences().find(function(s) { return s.id === storedId; });
+      if (found && found.language === studyLang) return found;
+    }
+    // Only pick from current language sentences
+    var all = getAllSentences().filter(function(s) { return s.language === studyLang; });
     if (all.length === 0) return null;
-    var idx = Math.floor(Math.abs(hashCode(today)) % all.length);
+    var idx = Math.floor(Math.abs(hashCode(today + studyLang)) % all.length);
     var picked = all[idx];
     localStorage.setItem(STORAGE_KEY_DAILY_DATE, today);
     localStorage.setItem(STORAGE_KEY_DAILY_ID, picked.id);
+    localStorage.setItem(STORAGE_KEY_LAST_LANG, studyLang);
     return picked;
   }
 
@@ -951,6 +1064,14 @@ body {
       return true;
     });
 
+    /* ====== 核心修正：按 studyLang 过滤，禁止串语 ====== */
+    filtered = filtered.filter(function(s) {
+      if (!s.language) return false;          // 无 language 字段的数据丢弃
+      if (s.language === 'auto') return true; // AI 生成的保留（studyLang 与生成时一致）
+      return s.language === studyLang;        // 必须匹配当前目标语言
+    });
+    /* ================================================== */
+
     if (filtered.length === 0) {
       list.innerHTML = '';
       empty.style.display = 'block';
@@ -1017,7 +1138,7 @@ body {
     document.getElementById('inpOriginal').value = '';
     document.getElementById('inpTranslation').value = '';
     document.getElementById('inpPronunciation').value = '';
-    document.getElementById('inpLanguage').value = 'zh';
+    document.getElementById('inpLanguage').value = studyLang;  // 默认当前学习语言
     document.getElementById('inpCategory').value = 'daily';
     document.getElementById('addModal').style.display = 'flex';
     document.getElementById('modalTitle').textContent = t('modalTitle');
@@ -1062,8 +1183,8 @@ body {
 
   /* ============ AI 生成句子（蓝图铁律：内容 AI 生成） ============ */
   function generateAISentences() {
-    var token = localStorage.getItem('yandao_token_v1');
-    var lang = localStorage.getItem('yandao_study_lang') || 'ja';
+    var token = getAuthToken();
+    var lang = studyLang;  // 统一入口：当前学习语言
     showToast('正在用 AI 生成句子...');
     fetch('/api/blueprint/question?type=vocab&language=' + encodeURIComponent(lang) + '&level=beginner&count=6', {
       headers: token ? { 'Authorization': 'Bearer ' + token } : {}
@@ -1177,20 +1298,48 @@ body {
 
   /* ============ Init ============ */
   function init() {
-    // Detect language from URL or browser
+    /* ====== 核心修正：UI语言 与 学习语言 分离，统一走 AILOS 入口 ====== */
+    // UI 语言（界面显示文案）
     var urlLang = (location.search.match(/[?&]lang=([a-z]{2})/i) || [])[1];
     if (urlLang && i18n[urlLang]) {
       currentLang = urlLang;
     } else {
-      // Try browser language
       var navLang = (navigator.language || navigator.userLanguage || '').substring(0, 2);
       if (i18n[navLang]) currentLang = navLang;
+    }
+
+    // 学习/目标语言（用于句库内容过滤）：强制走 AILOS 统一入口
+    studyLang = getStudyLang();
+
+    /* ====== 监听语言变更事件（AILOS 个人中心切换语言后触发） ====== */
+    if (window.AILOS) {
+      // 主动轮询：每 3 秒检查 studyLang 是否变化（兼容无事件广播的环境）
+      var _lastCheckedLang = studyLang;
+      setInterval(function() {
+        var current = getStudyLang();
+        if (current !== _lastCheckedLang) {
+          _lastCheckedLang = current;
+          onLanguageChanged();
+        }
+      }, 3000);
+      // 同时监听可能的自定义事件
+      window.addEventListener('languageChanged', function(e) {
+        var newLang = (e.detail && e.detail.lang) || getStudyLang();
+        if (newLang !== studyLang) {
+          _lastCheckedLang = newLang;
+          onLanguageChanged();
+        }
+      });
     }
 
     document.title = 'AILOS - ' + t('pageTitle');
     applyI18nToDOM();
     renderCategoryTabs();
+    // 首次加载：优先从 API 拉取（后端已按 targetLanguage 过滤），种子数据作为兜底
+    fetchFromContentAPI();
     renderAll();
+
+    console.log('[Sentences] Initialized: UI=' + currentLang + ' Study=' + studyLang + ' AILOS=' + (!!window.AILOS));
   }
 
   /* ============ Global Exports ============ */
