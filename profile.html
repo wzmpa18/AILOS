@@ -381,6 +381,22 @@
   </div>
 </div>
 
+<!-- Phase4 P1: Invite Code Modal -->
+<div class="modal-overlay" id="inviteModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-icon">🎁</div>
+    <div class="modal-title" data-i18n="invite_modal_title">邀请好友</div>
+    <div class="modal-desc" data-i18n="invite_modal_desc">分享你的专属邀请码，每邀请一位好友加入学习，双方均可获得7天VIP会员奖励！</div>
+    <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center;margin:8px 0;">
+      <div style="font-size:22px;font-weight:700;letter-spacing:4px;color:var(--primary);font-family:monospace;" id="inviteCodeDisplay">----</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyInviteCode()" data-i18n="invite_copy_code">复制邀请码</button>
+      <button class="btn btn-secondary" onclick="closeInviteModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Navbar -->
@@ -539,6 +555,15 @@
           </div>
         </div>
 
+        <div class="settings-item" onclick="openInviteModal()">
+          <span class="si-icon">🎁</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="settings_invite_code">邀请码</div>
+            <div class="si-desc" data-i18n="settings_invite_code_desc">邀请好友一起学习，赢取奖励</div>
+          </div>
+          <span class="si-arrow">›</span>
+        </div>
+
         <div class="settings-item danger" onclick="openDeleteModal()">
           <span class="si-icon">🗑️</span>
           <div class="si-text">
@@ -613,6 +638,11 @@ const I18N = {
     toast_pwd_too_short: '新密码至少需要6位',
     toast_enter_old_pwd: '请输入当前密码',
     toast_loading: '加载中...',
+    settings_invite_code: '邀请码',
+    settings_invite_code_desc: '邀请好友一起学习，赢取奖励',
+    invite_modal_title: '邀请好友',
+    invite_modal_desc: '分享你的专属邀请码，每邀请一位好友加入学习，双方均可获得7天VIP会员奖励！',
+    invite_copy_code: '复制邀请码',
     badge_rookie: '初学者',
     badge_rookie_desc: '完成第一课',
     badge_streak7: '连续7天',
@@ -695,6 +725,11 @@ const I18N = {
     toast_pwd_too_short: 'New password must be at least 6 characters',
     toast_enter_old_pwd: 'Please enter your current password',
     toast_loading: 'Loading...',
+    settings_invite_code: 'Invite Code',
+    settings_invite_code_desc: 'Invite friends to learn together and earn rewards',
+    invite_modal_title: 'Invite Friends',
+    invite_modal_desc: 'Share your exclusive invite code. Both you and your friend will receive a 7-day VIP membership reward when they join!',
+    invite_copy_code: 'Copy Invite Code',
     badge_rookie: 'Beginner',
     badge_rookie_desc: 'Complete your first lesson',
     badge_streak7: '7-Day Streak',
@@ -777,6 +812,11 @@ const I18N = {
     toast_pwd_too_short: '新しいパスワードは6文字以上必要です',
     toast_enter_old_pwd: '現在のパスワードを入力してください',
     toast_loading: '読み込み中...',
+    settings_invite_code: '招待コード',
+    settings_invite_code_desc: '友達を招待して一緒に学び、報酬を獲得',
+    invite_modal_title: '友達を招待',
+    invite_modal_desc: 'あなたの専用招待コードを共有しましょう。友達が参加すると、双方に7日間のVIP会員報酬がプレゼントされます！',
+    invite_copy_code: '招待コードをコピー',
     badge_rookie: 'ビギナー',
     badge_rookie_desc: '最初のレッスンを完了',
     badge_streak7: '7日連続',
@@ -859,6 +899,11 @@ const I18N = {
     toast_pwd_too_short: '새 비밀번호는 최소 6자 이상이어야 합니다',
     toast_enter_old_pwd: '현재 비밀번호를 입력해 주세요',
     toast_loading: '로딩 중...',
+    settings_invite_code: '초대 코드',
+    settings_invite_code_desc: '친구를 초대하여 함께 배우고 보상 받기',
+    invite_modal_title: '친구 초대',
+    invite_modal_desc: '전용 초대 코드를 공유하세요. 친구가 가입하면 양쪽 모두 7일 VIP 멤버십 보상을 받습니다!',
+    invite_copy_code: '초대 코드 복사',
     badge_rookie: '초보자',
     badge_rookie_desc: '첫 수업 완료',
     badge_streak7: '7일 연속',
@@ -941,6 +986,11 @@ const I18N = {
     toast_pwd_too_short: 'Le mot de passe doit contenir au moins 6 caractères',
     toast_enter_old_pwd: 'Veuillez entrer votre mot de passe actuel',
     toast_loading: 'Chargement...',
+    settings_invite_code: 'Code d\'invitation',
+    settings_invite_code_desc: 'Invitez des amis à apprendre et gagnez des récompenses',
+    invite_modal_title: 'Inviter des amis',
+    invite_modal_desc: 'Partagez votre code d\'invitation exclusif. Vous et votre ami recevrez 7 jours de VIP en récompense !',
+    invite_copy_code: 'Copier le code',
     badge_rookie: 'Débutant',
     badge_rookie_desc: 'Première leçon terminée',
     badge_streak7: '7 jours',
@@ -1023,6 +1073,11 @@ const I18N = {
     toast_pwd_too_short: 'La contraseña debe tener al menos 6 caracteres',
     toast_enter_old_pwd: 'Ingresa tu contraseña actual',
     toast_loading: 'Cargando...',
+    settings_invite_code: 'Código de invitación',
+    settings_invite_code_desc: 'Invita a amigos a aprender y gana recompensas',
+    invite_modal_title: 'Invitar amigos',
+    invite_modal_desc: 'Comparte tu código exclusivo. Cuando tu amigo se una, ambos recibirán 7 días de membresía VIP.',
+    invite_copy_code: 'Copiar código',
     badge_rookie: 'Principiante',
     badge_rookie_desc: 'Primera lección completada',
     badge_streak7: '7 días',
@@ -1105,6 +1160,11 @@ const I18N = {
     toast_pwd_too_short: 'Das neue Passwort muss mindestens 6 Zeichen haben',
     toast_enter_old_pwd: 'Bitte geben Sie Ihr aktuelles Passwort ein',
     toast_loading: 'Laden...',
+    settings_invite_code: 'Einladungscode',
+    settings_invite_code_desc: 'Freunde zum gemeinsamen Lernen einladen und Belohnungen verdienen',
+    invite_modal_title: 'Freunde einladen',
+    invite_modal_desc: 'Teilen Sie Ihren exklusiven Einladungscode. Wenn ein Freund beitritt, erhalten beide 7 Tage VIP-Mitgliedschaft!',
+    invite_copy_code: 'Code kopieren',
     badge_rookie: 'Anfänger',
     badge_rookie_desc: 'Erste Lektion abgeschlossen',
     badge_streak7: '7-Tage',
@@ -1648,11 +1708,52 @@ function getUserId() {
   return 'unknown';
 }
 
+// ==================== Phase4 P1: Invite Code ====================
+function generateInviteCode() {
+  var userId = getUserId();
+  // 基于用户ID生成6位邀请码
+  var hash = 0;
+  for (var i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash |= 0;
+  }
+  var code = '';
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (var j = 0; j < 6; j++) {
+    code += chars.charAt(Math.abs(hash + j * 7) % chars.length);
+  }
+  return code;
+}
+
+function openInviteModal() {
+  var modal = document.getElementById('inviteModal');
+  var codeEl = document.getElementById('inviteCodeDisplay');
+  codeEl.textContent = generateInviteCode();
+  modal.style.display = 'flex';
+}
+
+function closeInviteModal() {
+  document.getElementById('inviteModal').style.display = 'none';
+}
+
+function copyInviteCode() {
+  var code = document.getElementById('inviteCodeDisplay').textContent;
+  var text = code + '  (https://www.yandao.vip/xuewaiyu/invite?code=' + code + ')';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast(t('share_copied') || '已复制');
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
 // Keyboard modal dismiss
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeQRModal();
     closeShareModal();
+    closeInviteModal();
   }
 });
 

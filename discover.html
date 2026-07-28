@@ -188,6 +188,43 @@
   .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-state-text { font-size: 14px; }
 
+  /* Phase4 P1: Leaderboard */
+  .leaderboard-section {
+    margin-top: 24px;
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px;
+  }
+  .leaderboard-tabs {
+    display: flex; gap: 8px; margin: 12px 0;
+  }
+  .leaderboard-tab {
+    flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); cursor: pointer; transition: all .2s;
+  }
+  .leaderboard-tab.active {
+    background: var(--primary); color: #fff; border-color: var(--primary);
+  }
+  .leaderboard-item {
+    display: flex; align-items: center; padding: 10px 12px;
+    border-bottom: 1px solid var(--border); gap: 10px;
+  }
+  .leaderboard-item:last-child { border-bottom: none; }
+  .leaderboard-rank {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    background: var(--bg); color: var(--text-secondary);
+  }
+  .leaderboard-rank.gold { background: #FEF3C7; color: #B45309; }
+  .leaderboard-rank.silver { background: #E0E7FF; color: #3730A3; }
+  .leaderboard-rank.bronze { background: #FEE2E2; color: #B91C1C; }
+  .leaderboard-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; color: #fff; flex-shrink: 0; }
+  .leaderboard-info { flex: 1; min-width: 0; }
+  .leaderboard-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .leaderboard-detail { font-size: 11px; color: var(--text-secondary); }
+  .leaderboard-score { font-size: 14px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+
   /* Responsive */
   @media (max-width: 375px) {
     .header { padding: 12px 14px; }
@@ -287,6 +324,21 @@
     <div class="guest-overlay-text" data-i18n="guest_social_tip">登录后解锁社交功能，寻找学习搭子</div>
     <a class="btn-login" href="/xuewaiyu/login.html" data-i18n="btn_go_login">去登录</a>
   </div>
+
+  <!-- Phase4 P1: Weekly Leaderboard -->
+  <div class="leaderboard-section" id="leaderboardSection">
+    <div class="section-header">
+      <span class="section-icon">🏆</span>
+      <span class="section-title" data-i18n="section_leaderboard">周排行榜</span>
+    </div>
+    <div class="leaderboard-tabs">
+      <button class="leaderboard-tab active" onclick="switchLeaderboard('xp')" data-i18n="lb_tab_xp">学习积分</button>
+      <button class="leaderboard-tab" onclick="switchLeaderboard('streak')" data-i18n="lb_tab_streak">连续打卡</button>
+    </div>
+    <div class="leaderboard-list" id="leaderboardList">
+      <!-- populated by JS -->
+    </div>
+  </div>
 </div>
 
 <script>
@@ -311,6 +363,11 @@ const I18N = {
     btn_go_login: '去登录',
     btn_apply: '申请搭子',
     btn_login_required: '登录后解锁社交功能',
+    section_leaderboard: '周排行榜',
+    lb_tab_xp: '学习积分',
+    lb_tab_streak: '连续打卡',
+    lb_xp_label: '积分',
+    lb_streak_day: '天',
     tag_offline: '离线',
     tag_online: '在线',
     stat_lessons: '课时',
@@ -347,6 +404,11 @@ const I18N = {
     btn_go_login: 'Go to Login',
     btn_apply: 'Apply',
     btn_login_required: 'Login to unlock social features',
+    section_leaderboard: 'Weekly Leaderboard',
+    lb_tab_xp: 'XP Points',
+    lb_tab_streak: 'Streak',
+    lb_xp_label: 'XP',
+    lb_streak_day: 'days',
     tag_offline: 'Offline',
     tag_online: 'Online',
     stat_lessons: 'lessons',
@@ -383,6 +445,11 @@ const I18N = {
     btn_go_login: 'ログインへ',
     btn_apply: '申請する',
     btn_login_required: 'ログインしてソーシャル機能を利用',
+    section_leaderboard: '週間ランキング',
+    lb_tab_xp: '学習ポイント',
+    lb_tab_streak: '連続記録',
+    lb_xp_label: 'ポイント',
+    lb_streak_day: '日',
     tag_offline: 'オフライン',
     tag_online: 'オンライン',
     stat_lessons: 'レッスン',
@@ -419,6 +486,11 @@ const I18N = {
     btn_go_login: '로그인하기',
     btn_apply: '신청하기',
     btn_login_required: '로그인하여 소셜 기능 이용',
+    section_leaderboard: '주간 랭킹',
+    lb_tab_xp: '학습 포인트',
+    lb_tab_streak: '연속 기록',
+    lb_xp_label: '포인트',
+    lb_streak_day: '일',
     tag_offline: '오프라인',
     tag_online: '온라인',
     stat_lessons: '수업',
@@ -455,6 +527,11 @@ const I18N = {
     btn_go_login: 'Se connecter',
     btn_apply: 'Postuler',
     btn_login_required: 'Connectez-vous pour les fonctionnalités sociales',
+    section_leaderboard: 'Classement hebdomadaire',
+    lb_tab_xp: 'Points XP',
+    lb_tab_streak: 'Série',
+    lb_xp_label: 'XP',
+    lb_streak_day: 'jours',
     tag_offline: 'Hors ligne',
     tag_online: 'En ligne',
     stat_lessons: 'leçons',
@@ -491,6 +568,11 @@ const I18N = {
     btn_go_login: 'Iniciar sesión',
     btn_apply: 'Solicitar',
     btn_login_required: 'Inicia sesión para funciones sociales',
+    section_leaderboard: 'Clasificación semanal',
+    lb_tab_xp: 'Puntos XP',
+    lb_tab_streak: 'Racha',
+    lb_xp_label: 'XP',
+    lb_streak_day: 'días',
     tag_offline: 'Desconectado',
     tag_online: 'En línea',
     stat_lessons: 'lecciones',
@@ -527,6 +609,11 @@ const I18N = {
     btn_go_login: 'Zum Login',
     btn_apply: 'Bewerben',
     btn_login_required: 'Anmelden für soziale Funktionen',
+    section_leaderboard: 'Wöchentliche Rangliste',
+    lb_tab_xp: 'XP-Punkte',
+    lb_tab_streak: 'Serie',
+    lb_xp_label: 'XP',
+    lb_streak_day: 'Tage',
     tag_offline: 'Offline',
     tag_online: 'Online',
     stat_lessons: 'Lektionen',
@@ -768,6 +855,60 @@ window.addEventListener('languageChanged', function(e) {
     return '<a class="nav-item" href="' + link + '"><span class="nav-icon"></span><span>' + l[i] + '</span></a>';
   }).join('');
 })();
+
+// ==================== Phase4 P1: Weekly Leaderboard ====================
+var currentLeaderboardMode = 'xp';
+var MOCK_LEADERBOARD = [
+  { id:1, name:'Alice Chen', name_ja:'アリス', name_ko:'앨리스', avatar:'🐱', color:'#4F46E5', xp:2840, streak:42 },
+  { id:2, name:'田中 美咲', name_ja:'田中 美咲', name_ko:'타나카 미사키', avatar:'🐼', color:'#EC4899', xp:2650, streak:38 },
+  { id:3, name:'Marco Rossi', name_ja:'マルコ', name_ko:'마르코', avatar:'🦊', color:'#F59E0B', xp:2510, streak:35 },
+  { id:4, name:'Sophie Müller', name_ja:'ゾフィー', name_ko:'소피', avatar:'🐨', color:'#10B981', xp:2370, streak:31 },
+  { id:5, name:'박지민', name_ja:'パク・ジミン', name_ko:'박지민', avatar:'🐰', color:'#3B82F6', xp:2240, streak:28 },
+  { id:6, name:'Emily Davis', name_ja:'エミリー', name_ko:'에밀리', avatar:'🐯', color:'#8B5CF6', xp:2100, streak:26 },
+  { id:7, name:'Jean Dupont', name_ja:'ジャン', name_ko:'장', avatar:'🐸', color:'#EF4444', xp:1980, streak:24 },
+  { id:8, name:'张伟', name_ja:'張偉', name_ko:'장웨이', avatar:'🦁', color:'#06B6D4', xp:1850, streak:21 },
+];
+function getLeaderboardName(item) {
+  var l = currentLang;
+  if (l === 'ja' && item.name_ja) return item.name_ja;
+  if (l === 'ko' && item.name_ko) return item.name_ko;
+  return item.name;
+}
+function renderLeaderboard() {
+  var container = document.getElementById('leaderboardList');
+  if (!container) return;
+  var list = MOCK_LEADERBOARD.slice().sort(function(a,b){
+    return currentLeaderboardMode==='streak' ? b.streak - a.streak : b.xp - a.xp;
+  });
+  var rankClass = ['gold','silver','bronze'];
+  container.innerHTML = list.map(function(item, i){
+    var rc = i < 3 ? rankClass[i] : '';
+    var value = currentLeaderboardMode==='streak'
+      ? item.streak + ' ' + (t('lb_streak_day')||'天')
+      : item.xp + ' ' + (t('lb_xp_label')||'积分');
+    return '<div class="leaderboard-item">'
+      + '<div class="leaderboard-rank' + (rc ? ' ' + rc : '') + '">' + (i+1) + '</div>'
+      + '<div class="leaderboard-avatar" style="background:' + item.color + '">' + item.avatar + '</div>'
+      + '<div class="leaderboard-info"><div class="leaderboard-name">' + getLeaderboardName(item) + '</div></div>'
+      + '<div class="leaderboard-score">' + value + '</div>'
+      + '</div>';
+  }).join('');
+}
+function switchLeaderboard(mode) {
+  currentLeaderboardMode = mode;
+  document.querySelectorAll('.leaderboard-tab').forEach(function(btn, i){
+    btn.classList.toggle('active', i === (mode==='xp' ? 0 : 1));
+  });
+  renderLeaderboard();
+}
+// Initialize leaderboard on page load
+setTimeout(function(){ renderLeaderboard(); }, 100);
+
+window.addEventListener('languageChanged', function(){
+  var l = (window.getCurrentLanguage && getCurrentLanguage()) || currentLang;
+  if (l !== currentLang) { currentLang = l; }
+  renderLeaderboard();
+});
 </script>
 <div class="bottom-nav" id="bottomNav"></div>
 

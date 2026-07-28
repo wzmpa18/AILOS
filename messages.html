@@ -372,9 +372,9 @@
 
     <!-- Empty State -->
     <div class="empty-state hidden" id="emptyState">
-      <div class="empty-icon">📭</div>
-      <div class="empty-title" data-i18n="empty_title">暂无消息</div>
-      <div class="empty-sub" data-i18n="empty_sub">当有新的消息时，会在这里显示</div>
+      <div class="empty-icon" id="emptyStateIcon">📭</div>
+      <div class="empty-title" id="emptyStateTitle" data-i18n="empty_title">暂无消息</div>
+      <div class="empty-sub" id="emptyStateSub" data-i18n="empty_sub">当有新的消息时，会在这里显示</div>
     </div>
 
     <!-- System Notifications -->
@@ -423,6 +423,14 @@ var I18N = {
     tab_request: '申请',
     empty_title: '暂无消息',
     empty_sub: '当有新的消息时，会在这里显示',
+    empty_dm_title: '暂无私信',
+    empty_dm_sub: '开始和你的学习伙伴聊天吧',
+    empty_notification_title: '暂无通知',
+    empty_notification_sub: '系统通知将在这里显示',
+    empty_request_title: '暂无好友申请',
+    empty_request_sub: '好友申请将在这里显示',
+    empty_unread_title: '全部已读',
+    empty_unread_sub: '没有未读的消息',
     input_placeholder: '输入消息...',
     system_notifications: '系统通知',
     today: '今天',
@@ -442,6 +450,14 @@ var I18N = {
     tab_request: 'Requests',
     empty_title: 'No Messages',
     empty_sub: 'New messages will appear here',
+    empty_dm_title: 'No DMs',
+    empty_dm_sub: 'Start chatting with your study partners',
+    empty_notification_title: 'No Notifications',
+    empty_notification_sub: 'System notifications will appear here',
+    empty_request_title: 'No Friend Requests',
+    empty_request_sub: 'Friend requests will appear here',
+    empty_unread_title: 'All Read',
+    empty_unread_sub: 'No unread messages',
     input_placeholder: 'Type a message...',
     system_notifications: 'System Notifications',
     today: 'Today',
@@ -461,6 +477,14 @@ var I18N = {
     tab_request: '\u7533\u8ACB',
     empty_title: '\u30E1\u30C3\u30BB\u30FC\u30B8\u306F\u3042\u308A\u307E\u305B\u3093',
     empty_sub: '\u65B0\u3057\u3044\u30E1\u30C3\u30BB\u30FC\u30B8\u304C\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059',
+    empty_dm_title: '\u30C0\u30A4\u30EC\u30AF\u30C8\u30E1\u30C3\u30BB\u30FC\u30B8\u306F\u3042\u308A\u307E\u305B\u3093',
+    empty_dm_sub: '\u52C9\u5F37\u30D1\u30FC\u30C8\u30CA\u30FC\u3068\u30C1\u30E3\u30C3\u30C8\u3092\u59CB\u3081\u307E\u3057\u3087\u3046',
+    empty_notification_title: '\u901A\u77E5\u306F\u3042\u308A\u307E\u305B\u3093',
+    empty_notification_sub: '\u30B7\u30B9\u30C6\u30E0\u901A\u77E5\u306F\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059',
+    empty_request_title: '\u53CB\u9054\u7533\u8ACB\u306F\u3042\u308A\u307E\u305B\u3093',
+    empty_request_sub: '\u53CB\u9054\u7533\u8ACB\u306F\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059',
+    empty_unread_title: '\u3059\u3079\u3066\u65E2\u8AAD',
+    empty_unread_sub: '\u672A\u8AAD\u30E1\u30C3\u30BB\u30FC\u30B8\u306F\u3042\u308A\u307E\u305B\u3093',
     input_placeholder: '\u30E1\u30C3\u30BB\u30FC\u30B8\u3092\u5165\u529B...',
     system_notifications: '\u30B7\u30B9\u30C6\u30E0\u901A\u77E5',
     today: '\u4ECA\u65E5',
@@ -480,6 +504,14 @@ var I18N = {
     tab_request: '\uC694\uCCAD',
     empty_title: '\uBA54\uC2DC\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4',
     empty_sub: '\uC0C8 \uBA54\uC2DC\uC9C0\uAC00 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4',
+    empty_dm_title: 'DM\uC774 \uC5C6\uC2B5\uB2C8\uB2E4',
+    empty_dm_sub: '\uD559\uC2B5 \uD30C\uD2B8\uB108\uC640 \uCC44\uD305\uC744 \uC2DC\uC791\uD558\uC138\uC694',
+    empty_notification_title: '\uC54C\uB9BC\uC774 \uC5C6\uC2B5\uB2C8\uB2E4',
+    empty_notification_sub: '\uC2DC\uC2A4\uD15C \uC54C\uB9BC\uC740 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4',
+    empty_request_title: '\uCE5C\uAD6C \uC694\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4',
+    empty_request_sub: '\uCE5C\uAD6C \uC694\uCCAD\uC740 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4',
+    empty_unread_title: '\uBAA8\uB450 \uC77D\uC74C',
+    empty_unread_sub: '\uC77D\uC9C0 \uC54A\uC740 \uBA54\uC2DC\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4',
     input_placeholder: '\uBA54\uC2DC\uC9C0 \uC785\uB825...',
     system_notifications: '\uC2DC\uC2A4\uD15C \uC54C\uB9BC',
     today: '\uC624\uB298',
@@ -747,6 +779,44 @@ function getDefaultMockData() {
         ]
       },
     ],
+    friendRequests: [
+      {
+        id: 'req_1',
+        type: 'request',
+        name: '田中健太',
+        name_en: 'Kenta Tanaka',
+        name_ja: '田中健太',
+        name_ko: '타나카 켄타',
+        avatar: '🦊',
+        avatarClass: 'request',
+        lastMessage: '你好！我看到了你的日语学习动态，想一起练习口语！',
+        lastMessage_en: 'Hi! I saw your Japanese learning moments and would like to practice speaking together!',
+        lastMessage_ja: 'こんにちは！あなたの日本語学習の投稿を見ました。一緒に会話練習をしませんか？',
+        lastMessage_ko: '안녕하세요! 일본어 학습 다이내믹을 보고 말하기 연습을 함께 하고 싶어요!',
+        timestamp: Date.now() - 3 * 60 * 60 * 1000,
+        unread: 1,
+        messages: [],
+        requestStatus: 'pending',
+      },
+      {
+        id: 'req_2',
+        type: 'request',
+        name: 'Jean Dupont',
+        name_en: 'Jean Dupont',
+        name_ja: 'ジャン・デュポン',
+        name_ko: '장 뒤퐁',
+        avatar: '🐻',
+        avatarClass: 'request',
+        lastMessage: 'Bonjour! Je cherche un partenaire pour pratiquer le français.',
+        lastMessage_en: 'Hello! I\'m looking for a partner to practice French.',
+        lastMessage_ja: 'ボンジュール！フランス語を練習するパートナーを探しています。',
+        lastMessage_ko: 'Bonjour! 프랑스어 연습할 파트너를 찾고 있어요.',
+        timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000,
+        unread: 1,
+        messages: [],
+        requestStatus: 'pending',
+      },
+    ],
     systemNotifications: [
       {
         id: 'sys_1',
@@ -855,7 +925,10 @@ function resetData() {
 }
 
 // Convenience accessors
-function getConversations() { return appData.conversations; }
+function getConversations() {
+  var all = (appData.conversations || []).concat(appData.friendRequests || []);
+  return all;
+}
 function getConversation(id) {
   for (var i = 0; i < appData.conversations.length; i++) {
     if (appData.conversations[i].id === id) return appData.conversations[i];
@@ -965,6 +1038,29 @@ function renderConversationList() {
   if (filtered.length === 0) {
     container.innerHTML = '';
     emptyState.classList.remove('hidden');
+    // Phase4 P1 fix: differentiate empty state text per tab
+    var emptyMap = {
+      'dm':         { icon: '💬', key: 'empty_dm_title', subKey: 'empty_dm_sub' },
+      'notification': { icon: '🔔', key: 'empty_notification_title', subKey: 'empty_notification_sub' },
+      'request':    { icon: '👥', key: 'empty_request_title', subKey: 'empty_request_sub' },
+      'unread':     { icon: '✅', key: 'empty_unread_title', subKey: 'empty_unread_sub' }
+    };
+    var info = emptyMap[activeTab];
+    if (info) {
+      var titleEl = document.getElementById('emptyStateTitle');
+      var subEl = document.getElementById('emptyStateSub');
+      var iconEl = document.getElementById('emptyStateIcon');
+      if (iconEl) iconEl.textContent = info.icon;
+      if (titleEl) { titleEl.textContent = t(info.key); titleEl.setAttribute('data-i18n', info.key); }
+      if (subEl) { subEl.textContent = t(info.subKey); subEl.setAttribute('data-i18n', info.subKey); }
+    } else {
+      var titleEl2 = document.getElementById('emptyStateTitle');
+      var subEl2 = document.getElementById('emptyStateSub');
+      var iconEl2 = document.getElementById('emptyStateIcon');
+      if (iconEl2) iconEl2.textContent = '📭';
+      if (titleEl2) { titleEl2.textContent = t('empty_title'); titleEl2.setAttribute('data-i18n', 'empty_title'); }
+      if (subEl2) { subEl2.textContent = t('empty_sub'); subEl2.setAttribute('data-i18n', 'empty_sub'); }
+    }
     return;
   }
 
@@ -1240,8 +1336,53 @@ init();
 </script>
 
 
-<div id="bottomNavContainer"></div>
-<script src="/xuewaiyu/public/js/bottom-nav.js"></script>
+<!-- Social Bottom Navigation -->
+<nav class="bottom-nav" id="socialBottomNav" style="display:flex;">
+  <a class="nav-item" href="/xuewaiyu/home">
+    <span class="nav-icon">🏠</span>
+    <span data-i18n="nav_home">首页</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/messages.html">
+    <span class="nav-icon">👥</span>
+    <span data-i18n="nav_friends">好友</span>
+  </a>
+  <a class="nav-item active" href="/xuewaiyu/messages.html">
+    <span class="nav-icon">💬</span>
+    <span data-i18n="nav_messages">消息</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/discover.html">
+    <span class="nav-icon">🌐</span>
+    <span data-i18n="nav_circle">学习圈</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/profile.html">
+    <span class="nav-icon">👤</span>
+    <span data-i18n="nav_profile">我的</span>
+  </a>
+</nav>
+
 <script src="/xuewaiyu/public/js/page-header.js"></script>
+
+<!-- Social nav i18n init -->
+<script>
+(function(){
+  if (!window._socialI18n) {
+    window._socialI18n = {
+      zh: { nav_home:'首页',nav_friends:'好友',nav_messages:'消息',nav_circle:'学习圈',nav_profile:'我的' },
+      en: { nav_home:'Home',nav_friends:'Friends',nav_messages:'Messages',nav_circle:'Circle',nav_profile:'Profile' },
+      ja: { nav_home:'ホーム',nav_friends:'友達',nav_messages:'メッセージ',nav_circle:'サークル',nav_profile:'プロフィール' },
+      ko: { nav_home:'홈',nav_friends:'친구',nav_messages:'메시지',nav_circle:'서클',nav_profile:'프로필' },
+    };
+  }
+  var lang = (window.getCurrentLanguage && getCurrentLanguage()) || 'zh';
+  var map = window._socialI18n[lang] || window._socialI18n.zh;
+  var items = document.querySelectorAll('#socialBottomNav [data-i18n]');
+  items.forEach(function(el){ var k=el.getAttribute('data-i18n'); if(map[k]) el.textContent=map[k]; });
+  window.addEventListener('languageChanged', function(){
+    var l = (window.getCurrentLanguage && getCurrentLanguage()) || 'zh';
+    var m = window._socialI18n[l] || window._socialI18n.zh;
+    document.querySelectorAll('#socialBottomNav [data-i18n]').forEach(function(el){ var k=el.getAttribute('data-i18n'); if(m[k]) el.textContent=m[k]; });
+  });
+})();
+</script>
 </body>
 </html>

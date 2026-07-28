@@ -334,9 +334,28 @@
   }
   .exam-card-icon, .resource-card-icon { display: block; font-size: 28px; margin-bottom: 6px; }
   .exam-card-label, .resource-card-label { font-size: 14px; font-weight: 600; color: var(--text); }
-  .exam-empty, .resource-empty {
+  .exam-empty, .resource-empty, .records-empty {
     text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px;
   }
+
+  /* Phase4 P1: Learning Records Section */
+  .learning-records-section {
+    margin-bottom: 24px;
+  }
+  .records-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .record-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px 14px; text-align: center;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+  }
+  .record-card:hover {
+    transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  }
+  .record-card-icon { display: block; font-size: 28px; margin-bottom: 6px; }
+  .record-card-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .record-card-sub { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -456,6 +475,35 @@
       <span data-i18n="resource_empty">根据你的学习进度，资源将逐步开放</span>
     </div>
   </section>
+
+  <!-- Phase4 P1: 学习记录快捷入口 -->
+  <section class="learning-records-section" id="learningRecordsSection">
+    <div class="section-header">
+      <span class="section-icon">📊</span>
+      <span class="section-title" data-i18n="learning_records_title">学习记录</span>
+    </div>
+    <div class="section-desc" data-i18n="learning_records_desc">查看你的学习成长轨迹</div>
+    <div class="records-grid" id="recordsGrid">
+      <div class="record-card" onclick="openWrongAnswerBook()">
+        <span class="record-card-icon">📝</span>
+        <span class="record-card-label" data-i18n="wrong_answer_book">错题本</span>
+        <span class="record-card-sub" data-i18n="wrong_answer_book_sub">复习易错题目</span>
+      </div>
+      <div class="record-card" onclick="openCheckinRecords()">
+        <span class="record-card-icon">✅</span>
+        <span class="record-card-label" data-i18n="checkin_records">打卡记录</span>
+        <span class="record-card-sub" data-i18n="checkin_records_sub">连续学习天数</span>
+      </div>
+      <div class="record-card" onclick="openLearningReport()">
+        <span class="record-card-icon">📈</span>
+        <span class="record-card-label" data-i18n="learning_report">学习报表</span>
+        <span class="record-card-sub" data-i18n="learning_report_sub">学习成果总览</span>
+      </div>
+    </div>
+    <div class="records-empty" id="recordsEmpty" style="display:none;">
+      <span data-i18n="records_empty">开始学习后，数据将自动收录</span>
+    </div>
+  </section>
 </div>
 
 <!-- Toast Notification -->
@@ -520,6 +568,15 @@ const I18N = {
     grammar_guide: '语法指南',
     master_tips: '大咖秘籍',
     resource_empty: '根据你的学习进度，资源将逐步开放',
+    learning_records_title: '学习记录',
+    learning_records_desc: '查看你的学习成长轨迹',
+    wrong_answer_book: '错题本',
+    wrong_answer_book_sub: '复习易错题目',
+    checkin_records: '打卡记录',
+    checkin_records_sub: '连续学习天数',
+    learning_report: '学习报表',
+    learning_report_sub: '学习成果总览',
+    records_empty: '开始学习后，数据将自动收录',
   },
   en: {
     nav_back: '← Back',
@@ -559,6 +616,15 @@ const I18N = {
     grammar_guide: 'Grammar Guide',
     master_tips: 'Master Tips',
     resource_empty: 'Resources will unlock as you progress',
+    learning_records_title: 'Learning Records',
+    learning_records_desc: 'Track your learning growth',
+    wrong_answer_book: 'Error Book',
+    wrong_answer_book_sub: 'Review difficult questions',
+    checkin_records: 'Check-in Log',
+    checkin_records_sub: 'Consecutive study days',
+    learning_report: 'Study Report',
+    learning_report_sub: 'Learning results overview',
+    records_empty: 'Data will be collected once you start learning',
   },
   ja: {
     nav_back: '← 戻る',
@@ -598,6 +664,15 @@ const I18N = {
     grammar_guide: '文法ガイド',
     master_tips: '達人の秘訣',
     resource_empty: '学習の進捗に応じてリソースが開放されます',
+    learning_records_title: '学習記録',
+    learning_records_desc: 'あなたの学習の成長を見る',
+    wrong_answer_book: '間違いノート',
+    wrong_answer_book_sub: 'ミスの多い問題を復習',
+    checkin_records: 'チェックイン履歴',
+    checkin_records_sub: '連続学習日数',
+    learning_report: '学習レポート',
+    learning_report_sub: '学習成果の概要',
+    records_empty: '学習を始めるとデータが自動的に記録されます',
   },
   ko: {
     nav_back: '← 뒤로',
@@ -637,6 +712,15 @@ const I18N = {
     grammar_guide: '문법 가이드',
     master_tips: '고수 노하우',
     resource_empty: '학습 진도에 따라 자료가 개방됩니다',
+    learning_records_title: '학습 기록',
+    learning_records_desc: '학습 성장을 확인하세요',
+    wrong_answer_book: '오답 노트',
+    wrong_answer_book_sub: '틀린 문제 복습',
+    checkin_records: '출석 기록',
+    checkin_records_sub: '연속 학습 일수',
+    learning_report: '학습 리포트',
+    learning_report_sub: '학습 결과 개요',
+    records_empty: '학습을 시작하면 데이터가 자동으로 기록됩니다',
   },
   fr: {
     nav_back: '← Retour',
@@ -676,6 +760,15 @@ const I18N = {
     grammar_guide: 'Guide de grammaire',
     master_tips: 'Conseils d\'experts',
     resource_empty: 'Les ressources se débloquent avec votre progression',
+    learning_records_title: 'Historique d\'apprentissage',
+    learning_records_desc: 'Suivez votre parcours d\'apprentissage',
+    wrong_answer_book: 'Carnet d\'erreurs',
+    wrong_answer_book_sub: 'Révisez les questions difficiles',
+    checkin_records: 'Journal de présence',
+    checkin_records_sub: 'Jours d\'étude consécutifs',
+    learning_report: 'Rapport d\'étude',
+    learning_report_sub: 'Aperçu des résultats',
+    records_empty: 'Les données seront collectées après le début de l\'apprentissage',
   },
   es: {
     nav_back: '← Volver',
@@ -715,6 +808,15 @@ const I18N = {
     grammar_guide: 'Guía gramatical',
     master_tips: 'Consejos de expertos',
     resource_empty: 'Los recursos se desbloquean con tu progreso',
+    learning_records_title: 'Historial de aprendizaje',
+    learning_records_desc: 'Sigue tu crecimiento de aprendizaje',
+    wrong_answer_book: 'Cuaderno de errores',
+    wrong_answer_book_sub: 'Repasa las preguntas difíciles',
+    checkin_records: 'Registro de asistencia',
+    checkin_records_sub: 'Días de estudio consecutivos',
+    learning_report: 'Informe de estudio',
+    learning_report_sub: 'Resumen de resultados',
+    records_empty: 'Los datos se recopilarán al comenzar a aprender',
   },
   de: {
     nav_back: '← Zurück',
@@ -754,6 +856,15 @@ const I18N = {
     grammar_guide: 'Grammatikführer',
     master_tips: 'Experten-Tipps',
     resource_empty: 'Ressourcen werden mit Ihrem Fortschritt freigeschaltet',
+    learning_records_title: 'Lernprotokoll',
+    learning_records_desc: 'Verfolgen Sie Ihr Lernwachstum',
+    wrong_answer_book: 'Fehlerheft',
+    wrong_answer_book_sub: 'Schwierige Fragen wiederholen',
+    checkin_records: 'Check-in-Verlauf',
+    checkin_records_sub: 'Aufeinanderfolgende Lerntage',
+    learning_report: 'Lernbericht',
+    learning_report_sub: 'Lernergebnisübersicht',
+    records_empty: 'Daten werden nach Lernbeginn automatisch erfasst',
   },
 };
 
@@ -1104,7 +1215,27 @@ function closeModule() {
   // Phase4: 恢复新增板块显示
   document.getElementById('examSection').style.display = '';
   document.getElementById('resourceSection').style.display = '';
+  // Phase4 P1: 恢复学习记录板块
+  document.getElementById('learningRecordsSection').style.display = '';
   renderModuleProgress();
+}
+
+// Phase4 P1: 学习记录 快捷入口
+function openWrongAnswerBook() {
+  // 错题本 → 跳转个人中心学习记录
+  window.location.href = '/xuewaiyu/profile.html#learning-records';
+}
+function openCheckinRecords() {
+  // 打卡记录 → 弹出打卡统计弹窗
+  var total = parseInt(localStorage.getItem('ailos_checkin_total') || '0');
+  var streak = parseInt(localStorage.getItem('ailos_checkin_streak') || '0');
+  var label = (t('checkin_records') || '打卡记录');
+  var subLabel = (t('checkin_records_sub') || '连续学习天数');
+  showToast(label + ': ' + subLabel + ' ' + streak + ' 天, ' + t('total') + ' ' + total + ' 次', 4000);
+}
+function openLearningReport() {
+  // 学习报表 → 跳转个人中心学习记录
+  window.location.href = '/xuewaiyu/profile.html#learning-records';
 }
 
 function renderContentList() {
