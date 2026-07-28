@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 社交学习广场</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --level-beginner: #10B981;
+    --level-intermediate: #F59E0B;
+    --level-advanced: #EF4444;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: 40px;
+  }
+  .header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .back-link {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    transition: color .2s; flex-shrink: 0;
+  }
+  .back-link:hover { color: var(--primary); }
+  .header-title {
+    font-size: 18px; font-weight: 700; flex: 1;
+  }
+  .guest-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px;
+    background: var(--warning); color: #fff; font-weight: 600;
+  }
+    display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap; flex-shrink: 0;
+  }
+
+  .main-content { padding: 16px 20px; max-width: 600px; margin: 0 auto; }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+  }
+  .filter-group {
+    flex: 1; min-width: calc(50% - 4px);
+  }
+  .filter-group label {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .filter-group select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; background: var(--card-bg);
+    color: var(--text); font-family: inherit; cursor: pointer;
+    transition: border-color .2s; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 32px;
+  }
+  .filter-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+
+  /* Section Header */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+  }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .section-count { font-size: 12px; color: var(--text-muted); }
+
+  /* Partner Cards */
+  .partner-list { display: flex; flex-direction: column; gap: 12px; }
+  .partner-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; transition: box-shadow .2s; border: 1.5px solid transparent;
+    cursor: pointer;
+  }
+  .partner-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary-light); }
+  .partner-card-top {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .partner-avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: #fff;
+  }
+  .partner-info { flex: 1; min-width: 0; }
+  .partner-name {
+    font-size: 15px; font-weight: 700; margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .partner-status {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success); flex-shrink: 0;
+  }
+  .partner-status.offline { background: var(--text-muted); }
+  .partner-bio {
+    font-size: 12px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .partner-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+  }
+  .tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600;
+    background: var(--primary-light); color: var(--primary);
+  }
+  .tag.native { background: #F0FDF4; color: #166534; }
+  .tag.target { background: #FFF7ED; color: #9A3412; }
+  .tag.level { background: #FEF2F2; color: #991B1B; }
+  .tag.region { background: #F0F9FF; color: #075985; }
+  .partner-stats {
+    display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-muted);
+  }
+  .partner-stats span { display: flex; align-items: center; gap: 4px; }
+  .btn-apply {
+    width: 100%; padding: 10px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+    border: 1.5px solid var(--primary); background: var(--card-bg); color: var(--primary);
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-apply:hover { background: var(--primary); color: #fff; }
+  .btn-apply.disabled {
+    border-color: var(--border); background: var(--bg); color: var(--text-muted);
+    cursor: not-allowed;
+  }
+  .btn-apply.disabled:hover { background: var(--bg); color: var(--text-muted); }
+
+  /* Guest Overlay */
+  .guest-overlay {
+    text-align: center; padding: 20px; margin-top: 8px;
+    background: var(--primary-light); border-radius: var(--radius-sm);
+    border: 1px dashed var(--primary);
+  }
+  .guest-overlay-icon { font-size: 32px; margin-bottom: 8px; }
+  .guest-overlay-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+  .btn-login {
+    display: inline-block; padding: 8px 24px; border-radius: 20px; font-size: 13px; font-weight: 700;
+    background: var(--primary); color: #fff; text-decoration: none; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-login:hover { background: var(--primary-hover); }
+
+  /* FUTURE_MODULE_PENDING */
+  .future-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; background: #FEF3C7; color: #92400E;
+    margin-bottom: 16px;
+  }
+  .future-badge::before { content: '⚡ '; }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state-text { font-size: 14px; }
+
+  /* Responsive */
+  @media (max-width: 375px) {
+    .header { padding: 12px 14px; }
+    .main-content { padding: 12px 14px; }
+    .partner-card { padding: 12px; }
+    .partner-avatar { width: 40px; height: 40px; font-size: 16px; }
+    .partner-name { font-size: 14px; }
+    .filter-group { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="pageHeaderContainer" data-title="学习搭子" data-show-back="true"></div>
+
+  <script src="/xuewaiyu/assets/common.js?v=phase4_p0"></script>
+
+
+<div class="header">
+  <div class="header-top">
+    <a class="back-link" href="/xuewaiyu/home.html" data-i18n="nav_back">← 返回</a>
+    <span class="header-title" data-i18n="page_title">社交学习广场</span>
+    <span class="guest-badge" id="guestBadge" style="display:none" data-i18n="guest_label">游客</span>
+  </div>
+</div>
+
+<div class="main-content">
+  <!-- FUTURE_MODULE_PENDING -->
+  <div class="future-badge" data-i18n="future_module_badge">社交功能完整版在 Milestone 2 上线</div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label data-i18n="filter_native_lang">母语</label>
+      <select id="filterNative" onchange="applyFilters()">
+        <option value="all" data-i18n="filter_all">全部</option>
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label data-i18n="filter_target_lang">目标语言</label>
+      <select id="filterTarget" onchange="applyFilters()">
+        <option value="all" data-i18n="filter_all">全部</option>
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label data-i18n="filter_level">学习水平</label>
+      <select id="filterLevel" onchange="applyFilters()">
+        <option value="all" data-i18n="filter_all">全部</option>
+        <option value="beginner" data-i18n="level_beginner">初级</option>
+        <option value="intermediate" data-i18n="level_intermediate">中级</option>
+        <option value="advanced" data-i18n="level_advanced">高级</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label data-i18n="filter_region">地区</label>
+      <select id="filterRegion" onchange="applyFilters()">
+        <option value="all" data-i18n="filter_all">全部</option>
+        <option value="asia">亚洲</option>
+        <option value="europe">欧洲</option>
+        <option value="americas">美洲</option>
+        <option value="oceania">大洋洲</option>
+        <option value="africa">非洲</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Partner List -->
+  <div class="section-header">
+    <span class="section-title" data-i18n="section_partners">学习搭子推荐</span>
+    <span class="section-count" id="partnerCount"></span>
+  </div>
+  <div class="partner-list" id="partnerList"></div>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="empty-state-icon">🔍</div>
+    <div class="empty-state-text" data-i18n="empty_partners">没有找到匹配的学习搭子，试试调整筛选条件</div>
+  </div>
+
+  <!-- Guest Overlay -->
+  <div class="guest-overlay" id="guestOverlay" style="display:none">
+    <div class="guest-overlay-icon">🔒</div>
+    <div class="guest-overlay-text" data-i18n="guest_social_tip">登录后解锁社交功能，寻找学习搭子</div>
+    <a class="btn-login" href="/xuewaiyu/login.html" data-i18n="btn_go_login">去登录</a>
+  </div>
+</div>
+
+<script>
+// ==================== GLOI i18n System ====================
+const I18N = {
+  zh: {
+    nav_back: '← 返回',
+    page_title: '社交学习广场',
+    guest_label: '游客',
+    future_module_badge: '社交功能完整版在 Milestone 2 上线',
+    filter_native_lang: '母语',
+    filter_target_lang: '目标语言',
+    filter_level: '学习水平',
+    filter_region: '地区',
+    filter_all: '全部',
+    level_beginner: '初级',
+    level_intermediate: '中级',
+    level_advanced: '高级',
+    section_partners: '学习搭子推荐',
+    empty_partners: '没有找到匹配的学习搭子，试试调整筛选条件',
+    guest_social_tip: '登录后解锁社交功能，寻找学习搭子',
+    btn_go_login: '去登录',
+    btn_apply: '申请搭子',
+    btn_login_required: '登录后解锁社交功能',
+    tag_offline: '离线',
+    tag_online: '在线',
+    stat_lessons: '课时',
+    stat_followers: '关注',
+    region_asia: '亚洲',
+    region_europe: '欧洲',
+    region_americas: '美洲',
+    region_oceania: '大洋洲',
+    region_africa: '非洲',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어',
+    lang_fr: 'Français',
+    lang_es: 'Español',
+    lang_de: 'Deutsch',
+  },
+  en: {
+    nav_back: '← Back',
+    page_title: 'Social Learning Square',
+    guest_label: 'Guest',
+    future_module_badge: 'Full social features coming in Milestone 2',
+    filter_native_lang: 'Native Language',
+    filter_target_lang: 'Target Language',
+    filter_level: 'Level',
+    filter_region: 'Region',
+    filter_all: 'All',
+    level_beginner: 'Beginner',
+    level_intermediate: 'Intermediate',
+    level_advanced: 'Advanced',
+    section_partners: 'Learning Partner Recommendations',
+    empty_partners: 'No matching partners found, try adjusting filters',
+    guest_social_tip: 'Log in to unlock social features and find learning partners',
+    btn_go_login: 'Go to Login',
+    btn_apply: 'Apply',
+    btn_login_required: 'Login to unlock social features',
+    tag_offline: 'Offline',
+    tag_online: 'Online',
+    stat_lessons: 'lessons',
+    stat_followers: 'followers',
+    region_asia: 'Asia',
+    region_europe: 'Europe',
+    region_americas: 'Americas',
+    region_oceania: 'Oceania',
+    region_africa: 'Africa',
+    lang_zh: 'Chinese',
+    lang_en: 'English',
+    lang_ja: 'Japanese',
+    lang_ko: 'Korean',
+    lang_fr: 'French',
+    lang_es: 'Spanish',
+    lang_de: 'German',
+  },
+  ja: {
+    nav_back: '← 戻る',
+    page_title: 'ソーシャル学習広場',
+    guest_label: 'ゲスト',
+    future_module_badge: 'ソーシャル機能完全版はマイルストーン2で公開',
+    filter_native_lang: '母語',
+    filter_target_lang: '目標言語',
+    filter_level: 'レベル',
+    filter_region: '地域',
+    filter_all: 'すべて',
+    level_beginner: '初級',
+    level_intermediate: '中級',
+    level_advanced: '上級',
+    section_partners: '学習パートナーおすすめ',
+    empty_partners: 'マッチするパートナーが見つかりません。フィルターを調整してください',
+    guest_social_tip: 'ログインしてソーシャル機能を利用し、学習パートナーを探しましょう',
+    btn_go_login: 'ログインへ',
+    btn_apply: '申請する',
+    btn_login_required: 'ログインしてソーシャル機能を利用',
+    tag_offline: 'オフライン',
+    tag_online: 'オンライン',
+    stat_lessons: 'レッスン',
+    stat_followers: 'フォロワー',
+    region_asia: 'アジア',
+    region_europe: 'ヨーロッパ',
+    region_americas: 'アメリカ',
+    region_oceania: 'オセアニア',
+    region_africa: 'アフリカ',
+    lang_zh: '中国語',
+    lang_en: '英語',
+    lang_ja: '日本語',
+    lang_ko: '韓国語',
+    lang_fr: 'フランス語',
+    lang_es: 'スペイン語',
+    lang_de: 'ドイツ語',
+  },
+  ko: {
+    nav_back: '← 뒤로',
+    page_title: '소셜 학습 광장',
+    guest_label: '게스트',
+    future_module_badge: '소셜 기능 정식 버전은 마일스톤 2에서 제공',
+    filter_native_lang: '모국어',
+    filter_target_lang: '목표 언어',
+    filter_level: '레벨',
+    filter_region: '지역',
+    filter_all: '전체',
+    level_beginner: '초급',
+    level_intermediate: '중급',
+    level_advanced: '고급',
+    section_partners: '학습 파트너 추천',
+    empty_partners: '일치하는 파트너가 없습니다. 필터를 조정해 보세요',
+    guest_social_tip: '로그인하여 소셜 기능을 이용하고 학습 파트너를 찾아보세요',
+    btn_go_login: '로그인하기',
+    btn_apply: '신청하기',
+    btn_login_required: '로그인하여 소셜 기능 이용',
+    tag_offline: '오프라인',
+    tag_online: '온라인',
+    stat_lessons: '수업',
+    stat_followers: '팔로워',
+    region_asia: '아시아',
+    region_europe: '유럽',
+    region_americas: '아메리카',
+    region_oceania: '오세아니아',
+    region_africa: '아프리카',
+    lang_zh: '중국어',
+    lang_en: '영어',
+    lang_ja: '일본어',
+    lang_ko: '한국어',
+    lang_fr: '프랑스어',
+    lang_es: '스페인어',
+    lang_de: '독일어',
+  },
+  fr: {
+    nav_back: '← Retour',
+    page_title: 'Place d\'apprentissage social',
+    guest_label: 'Invité',
+    future_module_badge: 'Fonctionnalités sociales complètes dans Milestone 2',
+    filter_native_lang: 'Langue maternelle',
+    filter_target_lang: 'Langue cible',
+    filter_level: 'Niveau',
+    filter_region: 'Région',
+    filter_all: 'Tout',
+    level_beginner: 'Débutant',
+    level_intermediate: 'Intermédiaire',
+    level_advanced: 'Avancé',
+    section_partners: 'Partenaires d\'apprentissage recommandés',
+    empty_partners: 'Aucun partenaire trouvé, essayez d\'ajuster les filtres',
+    guest_social_tip: 'Connectez-vous pour débloquer les fonctionnalités sociales',
+    btn_go_login: 'Se connecter',
+    btn_apply: 'Postuler',
+    btn_login_required: 'Connectez-vous pour les fonctionnalités sociales',
+    tag_offline: 'Hors ligne',
+    tag_online: 'En ligne',
+    stat_lessons: 'leçons',
+    stat_followers: 'abonnés',
+    region_asia: 'Asie',
+    region_europe: 'Europe',
+    region_americas: 'Amériques',
+    region_oceania: 'Océanie',
+    region_africa: 'Afrique',
+    lang_zh: 'Chinois',
+    lang_en: 'Anglais',
+    lang_ja: 'Japonais',
+    lang_ko: 'Coréen',
+    lang_fr: 'Français',
+    lang_es: 'Espagnol',
+    lang_de: 'Allemand',
+  },
+  es: {
+    nav_back: '← Volver',
+    page_title: 'Plaza de aprendizaje social',
+    guest_label: 'Invitado',
+    future_module_badge: 'Funciones sociales completas en Milestone 2',
+    filter_native_lang: 'Lengua materna',
+    filter_target_lang: 'Idioma objetivo',
+    filter_level: 'Nivel',
+    filter_region: 'Región',
+    filter_all: 'Todo',
+    level_beginner: 'Principiante',
+    level_intermediate: 'Intermedio',
+    level_advanced: 'Avanzado',
+    section_partners: 'Compañeros de aprendizaje recomendados',
+    empty_partners: 'No se encontraron compañeros, ajusta los filtros',
+    guest_social_tip: 'Inicia sesión para desbloquear funciones sociales',
+    btn_go_login: 'Iniciar sesión',
+    btn_apply: 'Solicitar',
+    btn_login_required: 'Inicia sesión para funciones sociales',
+    tag_offline: 'Desconectado',
+    tag_online: 'En línea',
+    stat_lessons: 'lecciones',
+    stat_followers: 'seguidores',
+    region_asia: 'Asia',
+    region_europe: 'Europa',
+    region_americas: 'Américas',
+    region_oceania: 'Oceanía',
+    region_africa: 'África',
+    lang_zh: 'Chino',
+    lang_en: 'Inglés',
+    lang_ja: 'Japonés',
+    lang_ko: 'Coreano',
+    lang_fr: 'Francés',
+    lang_es: 'Español',
+    lang_de: 'Alemán',
+  },
+  de: {
+    nav_back: '← Zurück',
+    page_title: 'Sozialer Lernplatz',
+    guest_label: 'Gast',
+    future_module_badge: 'Vollständige soziale Funktionen in Meilenstein 2',
+    filter_native_lang: 'Muttersprache',
+    filter_target_lang: 'Zielsprache',
+    filter_level: 'Niveau',
+    filter_region: 'Region',
+    filter_all: 'Alle',
+    level_beginner: 'Anfänger',
+    level_intermediate: 'Mittelstufe',
+    level_advanced: 'Fortgeschritten',
+    section_partners: 'Lernpartner-Empfehlungen',
+    empty_partners: 'Keine passenden Partner gefunden, Filter anpassen',
+    guest_social_tip: 'Melden Sie sich an, um soziale Funktionen freizuschalten',
+    btn_go_login: 'Zum Login',
+    btn_apply: 'Bewerben',
+    btn_login_required: 'Anmelden für soziale Funktionen',
+    tag_offline: 'Offline',
+    tag_online: 'Online',
+    stat_lessons: 'Lektionen',
+    stat_followers: 'Follower',
+    region_asia: 'Asien',
+    region_europe: 'Europa',
+    region_americas: 'Amerika',
+    region_oceania: 'Ozeanien',
+    region_africa: 'Afrika',
+    lang_zh: 'Chinesisch',
+    lang_en: 'Englisch',
+    lang_ja: 'Japanisch',
+    lang_ko: 'Koreanisch',
+    lang_fr: 'Französisch',
+    lang_es: 'Spanisch',
+    lang_de: 'Deutsch',
+  },
+};
+
+// ==================== Language Detection ====================
+const LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko', 'fr':'fr', 'es':'es', 'de':'de' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
+
+
+
+
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const text = t(key);
+    if (text !== undefined) el.textContent = text;
+  });
+  // Update filter option texts
+  document.querySelectorAll('#filterNative option, #filterTarget option').forEach(opt => {
+    const val = opt.value;
+    if (val !== 'all' && I18N[currentLang] && I18N[currentLang]['lang_' + val]) {
+      opt.textContent = I18N[currentLang]['lang_' + val];
+    }
+  });
+  document.querySelectorAll('#filterRegion option').forEach(opt => {
+    const val = opt.value;
+    if (val !== 'all' && I18N[currentLang] && I18N[currentLang]['region_' + val]) {
+      opt.textContent = I18N[currentLang]['region_' + val];
+    }
+  });
+  document.querySelectorAll('#filterLevel option').forEach(opt => {
+    const val = opt.value;
+    if (val !== 'all' && I18N[currentLang] && I18N[currentLang]['level_' + val]) {
+      opt.textContent = I18N[currentLang]['level_' + val];
+    }
+  });
+}
+
+// ==================== Guest Detection ====================
+function isGuest() {
+  try {
+    const token = localStorage.getItem('yandao_token_v1');
+    const guestId = localStorage.getItem('yandao_guest_id_v1');
+    return !token && !!guestId;
+  } catch(e) { return true; }
+}
+
+function isLoggedIn() {
+  try {
+    return !!localStorage.getItem('yandao_token_v1');
+  } catch(e) { return false; }
+}
+
+// ==================== Mock Data ====================
+const AVATAR_COLORS = ['#4F46E5','#EC4899','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444','#06B6D4'];
+const AVATAR_EMOJIS = ['🐱','🐶','🐼','🦊','🐨','🐰','🐯','🐸','🦁','🐻','🐮','🐷'];
+
+function getAvatarColor(index) { return AVATAR_COLORS[index % AVATAR_COLORS.length]; }
+function getAvatarEmoji(index) { return AVATAR_EMOJIS[index % AVATAR_EMOJIS.length]; }
+
+const MOCK_PARTNERS = [
+  { id:1, name:'Alice Chen', native:'zh', target:'en', level:'intermediate', region:'asia', online:true, lessons:128, followers:342, bio:'热爱语言学习的设计师' },
+  { id:2, name:'田中 美咲', native:'ja', target:'ko', level:'beginner', region:'asia', online:true, lessons:56, followers:120, bio:'K-POPが大好きです！' },
+  { id:3, name:'Marco Rossi', native:'es', target:'fr', level:'advanced', region:'europe', online:false, lessons:210, followers:567, bio:'Appassionato di lingue e culture' },
+  { id:4, name:'Sophie Müller', native:'de', target:'ja', level:'intermediate', region:'europe', online:true, lessons:89, followers:234, bio:'Ich liebe Anime und japanische Kultur' },
+  { id:5, name:'박지민', native:'ko', target:'zh', level:'beginner', region:'asia', online:true, lessons:34, followers:78, bio:'중국어 공부 시작한 지 3개월' },
+  { id:6, name:'Emily Davis', native:'en', target:'es', level:'advanced', region:'americas', online:false, lessons:167, followers:445, bio:'Spanish teacher & language enthusiast' },
+  { id:7, name:'Jean Dupont', native:'fr', target:'de', level:'intermediate', region:'europe', online:true, lessons:102, followers:290, bio:'Voyageur passionné par les langues germaniques' },
+  { id:8, name:'张伟', native:'zh', target:'ja', level:'beginner', region:'asia', online:true, lessons:23, followers:45, bio:'想去日本留学的大学生' },
+  { id:9, name:'Carlos Silva', native:'es', target:'en', level:'intermediate', region:'americas', online:false, lessons:145, followers:389, bio:'Software engineer learning English' },
+  { id:10, name:'Yuki Sato', native:'ja', target:'fr', level:'advanced', region:'asia', online:true, lessons:234, followers:612, bio:'フランス文学を専攻しています' },
+  { id:11, name:'Lena Fischer', native:'de', target:'ko', level:'beginner', region:'europe', online:true, lessons:12, followers:18, bio:'K-Drama Fan seit 5 Jahren' },
+  { id:12, name:'刘芳', native:'zh', target:'es', level:'advanced', region:'asia', online:false, lessons:198, followers:523, bio:'西语翻译，热爱拉丁文化' },
+];
+
+// ==================== Render Partners ====================
+function getLangName(code) {
+  const key = 'lang_' + code;
+  return t(key);
+}
+
+function getLevelName(level) {
+  const key = 'level_' + level;
+  return t(key);
+}
+
+function getRegionName(region) {
+  const key = 'region_' + region;
+  return t(key);
+}
+
+function renderPartners() {
+  const nativeFilter = document.getElementById('filterNative').value;
+  const targetFilter = document.getElementById('filterTarget').value;
+  const levelFilter = document.getElementById('filterLevel').value;
+  const regionFilter = document.getElementById('filterRegion').value;
+
+  const filtered = MOCK_PARTNERS.filter(p => {
+    if (nativeFilter !== 'all' && p.native !== nativeFilter) return false;
+    if (targetFilter !== 'all' && p.target !== targetFilter) return false;
+    if (levelFilter !== 'all' && p.level !== levelFilter) return false;
+    if (regionFilter !== 'all' && p.region !== regionFilter) return false;
+    return true;
+  });
+
+  document.getElementById('partnerCount').textContent = filtered.length + ' ' + (currentLang === 'zh' ? '人' : '');
+
+  const listEl = document.getElementById('partnerList');
+  const emptyEl = document.getElementById('emptyState');
+  const guestOverlay = document.getElementById('guestOverlay');
+  const guestBadge = document.getElementById('guestBadge');
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    guestOverlay.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = filtered.map((p, idx) => {
+      const avatarColor = getAvatarColor(idx);
+      const avatarEmoji = getAvatarEmoji(idx);
+      const onlineClass = p.online ? '' : 'offline';
+      const onlineText = p.online ? t('tag_online') : t('tag_offline');
+      return `
+        <div class="partner-card">
+          <div class="partner-card-top">
+            <div class="partner-avatar" style="background:${avatarColor}">${avatarEmoji}</div>
+            <div class="partner-info">
+              <div class="partner-name">
+                ${p.name}
+                <span class="partner-status ${onlineClass}" title="${onlineText}"></span>
+              </div>
+              <div class="partner-bio">${p.bio}</div>
+            </div>
+          </div>
+          <div class="partner-tags">
+            <span class="tag native">🌐 ${getLangName(p.native)}</span>
+            <span class="tag target">🎯 ${getLangName(p.target)}</span>
+            <span class="tag level">📊 ${getLevelName(p.level)}</span>
+            <span class="tag region">📍 ${getRegionName(p.region)}</span>
+          </div>
+          <div class="partner-stats">
+            <span>📚 ${p.lessons} ${t('stat_lessons')}</span>
+            <span>👥 ${p.followers} ${t('stat_followers')}</span>
+          </div>
+          <button class="btn-apply${isGuest() ? ' disabled' : ''}" onclick="${isGuest() ? 'showGuestTip()' : 'applyPartner(' + p.id + ')'}">
+            ${isGuest() ? t('btn_login_required') : t('btn_apply')}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    if (isGuest()) {
+      guestOverlay.style.display = 'block';
+      guestBadge.style.display = 'inline-block';
+    } else {
+      guestOverlay.style.display = 'none';
+      guestBadge.style.display = 'none';
+    }
+  }
+}
+
+function applyFilters() {
+  renderPartners();
+}
+
+function applyPartner(id) {
+  const partner = MOCK_PARTNERS.find(p => p.id === id);
+  if (partner) {
+    alert((I18N[currentLang] && I18N[currentLang]['btn_apply'] || 'Apply') + ': ' + partner.name + '\n\n' + (currentLang === 'zh' ? '搭子申请已发送！对方将在24小时内回复。' : 'Partner request sent! They will respond within 24 hours.'));
+  }
+}
+
+function showGuestTip() {
+  alert(t('guest_social_tip'));
+}
+
+// ==================== Init ====================
+renderPartners();
+updateI18n();
+// Phase4: languageChanged listener
+window.addEventListener('languageChanged', function(e) {
+  var newLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : currentLang;
+  if (newLang !== currentLang) {
+    currentLang = newLang;
+    updateI18n();
+    renderPartners();
+  }
+});
+</script>
+<div class="bottom-nav" id="bottomNav"></div>
+
+<div id="bottomNavContainer"></div>
+<script src="/xuewaiyu/public/js/bottom-nav.js"></script>
+<script src="/xuewaiyu/public/js/page-header.js"></script>
+</body>
+</html>
