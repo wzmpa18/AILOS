@@ -1888,3 +1888,34 @@ pg_dump: 成功导出 PostgreSQL 数据库
 ---
 
 > 记录时间: 2026-07-28 12:04:15 | 记录人: AILOS 监理系统 | 状态: Phase 1 闭环
+
+
+---
+
+### 40.X 句库串语问题根因复盘与闭环整改
+
+**日期**: 2026-07-28 | **指令**: AILOS-LANG-FIX-20260728-001 | **Commit**: 3a47bdd
+
+**问题定性**: P1 核心体验缺陷 —— 句库页面切换目标语言后展示多语种混杂句子。
+
+**根因判定**: 语言架构在前端句库模块接入遗漏（架构设计到位、业务接入遗漏）：
+1. sentences.html 使用硬编码 seedSentences 数组，从未调用后端 /api/content
+2. renderSentenceList() 无语言过滤逻辑
+3. 未接入 AILOS.getStudyLang() 统一入口
+4. common.js 的 setStudyLang() 无事件广播机制
+
+**后端验证**: /api/content 经 ContextResolver 正确过滤 targetLanguage，验证返回 20 条全部为单一语种(ja)。
+
+**四层整改**:
+- 前端接入层: sentences.html 接入 AILOS.getStudyLang()，添加 s.language === studyLang 过滤，API集成 + 3s轮询事件监听
+- 接口数据层: 后端已正确，前端新增 fetchFromContentAPI() 对接 /api/content
+- 架构落地层: common.js 的 setStudyLang() 新增 CustomEvent(languageChanged) 广播
+- 体验兜底层: 语言切换清理缓存、每日一句语种隔离、空状态展示
+
+**全模块覆盖**: 7/7 业务模块接入统一语言入口，覆盖率 100%
+
+**验收**: 11/11 代码修正标记命中，HTTP 59266 bytes 部署验证通过，/api/content 语种过滤生效
+
+**证据归档**: docs/reports/language_architecture_coverage_report.md
+
+
