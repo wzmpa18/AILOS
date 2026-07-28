@@ -34,8 +34,10 @@ else
 fi
 
 npm install --omit=dev 2>&1 | tail -2
-npx prisma generate 2>&1 | tail -2
-npx prisma migrate deploy 2>&1 | tail -5
+# DEF-P3-04 修复: prisma CLI 必须显式注入 .env.production（服务器无 .env，
+# 运行时 DATABASE_URL 由 pm2 注入，但 CLI 不经过 pm2 → 此前 migrate deploy 一直静默失败）
+bash -c 'set -a; . ./.env.production; set +a; npx prisma generate' 2>&1 | tail -2
+bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate deploy' 2>&1 | tail -5
 
 # === 迁移自检闸门（防 schema 未跟上代码被 GATE 放行）===
 MIG_STAT=$(bash -c 'set -a; . ./.env.production; set +a; npx prisma migrate status 2>&1' | tail -8)

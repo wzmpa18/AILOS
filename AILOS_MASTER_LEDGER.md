@@ -1304,6 +1304,13 @@ P0_GATE_FIX_COMPLETE
 - 新增 `POST /api/admin/orders/:id/refund`（authenticate + requireAdmin + 操作密码二次校验）。
 - 规则：仅 `pay_*` 按量包 + `status=paid` 可退；`revokedSec = minutesTotal - minutesUsed`（未用秒数全部回收，consume/status 仅统计 `paid` 订单，回收即时生效）；按未用占比计算 `refundCny`；`AdminOperationLog(action=REFUND_ORDER)` 记录 before/after 全程留痕。
 
-### 38.1.4 修复验证（回归全绿后补录本节结论）
+### 38.1.4 部署链路 P0 缺陷 DEF-P3-04（首轮修复部署被闸门拦截时发现）
+
+- **现象**：修复提交 `65582a9` 走标准 `deploy.sh` 部署，迁移自检闸门报 `MIGRATION PENDING` → 自动回滚（闸门体系按设计工作，生产零损伤）。
+- **根因**：`deploy.sh` 中 `npx prisma generate/migrate deploy` **未注入 `.env.production`**（服务器无 `.env`，运行时 `DATABASE_URL` 由 pm2 注入，但 prisma CLI 不经过 pm2）→ `Validation Error [Context: getConfig]` 静默失败。这正是 §37.10「P1 迁移未应用」的同一总根因——**历史上 deploy.sh 的 migrate deploy 从未真正成功过**，此前迁移均靠人工带 env 补应用。
+- **修复**：`deploy.sh` prisma 两行统一改为 `bash -c 'set -a; . ./.env.production; set +a; npx prisma ...'`；随本节账簿更新同 commit 入库并重新走标准部署验证。
+- **附带发现**：回滚锚点 `/www/backups/last_good_commit` 停留在 `e05247d`（P0 治理/文档提交未走 deploy.sh，锚点未刷新），本次部署成功后锚点将自动刷新至新 HEAD。
+
+### 38.1.5 修复验证（回归全绿后补录本节结论）
 
 - 待回归：T-01~T-06 + UNIT-CHECK 复测全绿；证据 `delivery-evidence/p3_exception_test/stage1_billing/`。
