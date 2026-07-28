@@ -1496,3 +1496,33 @@ P0_GATE_FIX_COMPLETE
 | 阶段五 | `delivery-evidence/p3_exception_test/stage5_fault/` |
 | 总报告 | `docs/reports/P3_Exception_Scenario_Test_Report_20260728.md` |
 | 测试脚本 | `scripts/test/p3_stage{1,2,3,4,5}*.{js,py}` |
+
+### 38.7 四重穿透核验回执（2026-07-28）
+
+依据指令 `AILOS-P3-AUDIT-20260728-001`，于缺口闭合（commit `468aed3`）后执行四重穿透核验。
+
+#### 核验结果
+
+| 核验项 | 结果 | 关键证据 |
+|---|---|---|
+| **1. Git仓库真实性** | ✅ PASS | `65582a9`/`c9c5282`/`468aed3` 全部在 `origin/main`；第38章 32 条引用；P3 报告入库；证据 5 阶段齐全；根目录无临时文件 |
+| **2. 生产服务器部署** | ✅ PASS | PM2 `online`；Health 200；`deploy.sh` 含 4 处 `.env.production` 注入（DEF-P3-04 修复生效）；Redis `test_p3:*` 零残留 |
+| **3. 总账账簿完整性** | ✅ PASS | 38.1~38.6 全 6 小节结构完整；Bug 台账 DEF-P3 引用 17 处；服务器与 GitHub 双副本 MD5 一致 `1946eb3d10667260aea25a36afd1127e` |
+| **4. 报告与证据归档** | ✅ PASS | `docs/reports/P3_Exception_Scenario_Test_Report_20260728.md` 规范入库；`delivery-evidence/p3_exception_test/` 下 9 个文件覆盖 5 阶段 |
+
+#### 远程可复核数据
+
+```
+远端最新 commit: 468aed3 [P3-Test][Docs] Full ledger ch38.2~38.6
+总账行数:     1498 (服务器) = 1498 (GitHub origin/main)
+总账 MD5:     1946eb3d10667260aea25a36afd1127e (双副本一致)
+PM2 状态:     xuewaiyu-backend online (pid 2775347, uptime 80m, mem 113.7mb)
+Health:       HTTP 200
+Redis 残留:   (zero keys matching test_p3:*)
+```
+
+#### 最终结论
+
+**P3 阶段正式闭环。** 20 个测试场景 100% 通过，4 项缺陷全部修复入仓并线上生效，总账/报告/证据三同步，GitHub main 与生产服务器版本一致。
+
+**下一步：启动 PRC 生产就绪检查**（5 大类 16 小项：配置安全基线、备份回滚验证、监控告警验证、上线方案定稿、文档最终冻结）。
