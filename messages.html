@@ -339,7 +339,6 @@
     .msg-bubble { max-width: 92%; }
   }
 </style>
-<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
 
@@ -363,6 +362,9 @@
       <button class="tab-item" data-tab="unread" data-i18n="tab_unread">未读</button>
       <button class="tab-item" data-tab="partner" data-i18n="tab_partner">学习伙伴</button>
       <button class="tab-item" data-tab="system" data-i18n="tab_system">系统</button>
+      <button class="tab-item" data-tab="dm" data-i18n="tab_dm">私信</button>
+      <button class="tab-item" data-tab="notification" data-i18n="tab_notification">通知</button>
+      <button class="tab-item" data-tab="request" data-i18n="tab_request">申请</button>
     </div>
 
     <!-- Conversation List -->
@@ -416,6 +418,9 @@ var I18N = {
     tab_unread: '未读',
     tab_partner: '学习伙伴',
     tab_system: '系统',
+    tab_dm: '私信',
+    tab_notification: '通知',
+    tab_request: '申请',
     empty_title: '暂无消息',
     empty_sub: '当有新的消息时，会在这里显示',
     input_placeholder: '输入消息...',
@@ -432,6 +437,9 @@ var I18N = {
     tab_unread: 'Unread',
     tab_partner: 'Study Partners',
     tab_system: 'System',
+    tab_dm: 'Private',
+    tab_notification: 'Notices',
+    tab_request: 'Requests',
     empty_title: 'No Messages',
     empty_sub: 'New messages will appear here',
     input_placeholder: 'Type a message...',
@@ -448,6 +456,9 @@ var I18N = {
     tab_unread: '\u672A\u8AAD',
     tab_partner: '\u5B66\u7FD2\u30D1\u30FC\u30C8\u30CA\u30FC',
     tab_system: '\u30B7\u30B9\u30C6\u30E0',
+    tab_dm: 'DM',
+    tab_notification: '\u304A\u77E5\u3089\u305B',
+    tab_request: '\u7533\u8ACB',
     empty_title: '\u30E1\u30C3\u30BB\u30FC\u30B8\u306F\u3042\u308A\u307E\u305B\u3093',
     empty_sub: '\u65B0\u3057\u3044\u30E1\u30C3\u30BB\u30FC\u30B8\u304C\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059',
     input_placeholder: '\u30E1\u30C3\u30BB\u30FC\u30B8\u3092\u5165\u529B...',
@@ -464,6 +475,9 @@ var I18N = {
     tab_unread: '\uC548 \uC77D\uC74C',
     tab_partner: '\uD559\uC2B5 \uD30C\uD2B8\uB108',
     tab_system: '\uC2DC\uC2A4\uD15C',
+    tab_dm: 'DM',
+    tab_notification: '\uC54C\uB9BC',
+    tab_request: '\uC694\uCCAD',
     empty_title: '\uBA54\uC2DC\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4',
     empty_sub: '\uC0C8 \uBA54\uC2DC\uC9C0\uAC00 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4',
     input_placeholder: '\uBA54\uC2DC\uC9C0 \uC785\uB825...',
@@ -927,6 +941,24 @@ function renderConversationList() {
     filtered = [];
     for (var i = 0; i < conversations.length; i++) {
       if (conversations[i].type === 'system') filtered.push(conversations[i]);
+    }
+  } else if (activeTab === 'dm') {
+    // Phase4: 私信 - direct messages (subset of partner)
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].type === 'dm' || conversations[i].type === 'partner') filtered.push(conversations[i]);
+    }
+  } else if (activeTab === 'notification') {
+    // Phase4: 通知 - system notifications
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].type === 'system') filtered.push(conversations[i]);
+    }
+  } else if (activeTab === 'request') {
+    // Phase4: 申请 - friend requests
+    filtered = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (conversations[i].type === 'request') filtered.push(conversations[i]);
     }
   }
 

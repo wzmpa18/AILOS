@@ -334,7 +334,6 @@
     background: var(--primary); border-radius: 0 0 3px 3px;
   }
 </style>
-<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
   <script src="/xuewaiyu/assets/common.js?v=20260726b"></script>
@@ -352,6 +351,32 @@
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeDeleteModal()" data-i18n="btn_cancel">取消</button>
       <button class="btn btn-danger" id="btnConfirmDelete" onclick="confirmDeleteAccount()" data-i18n="btn_confirm_delete">确认注销</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase4: QR Code Modal -->
+<div class="modal-overlay" id="qrModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" data-i18n="qrcode_title">我的二维码</div>
+    <div style="text-align:center;padding:12px 0;">
+      <div id="qrCanvas" style="display:inline-block;background:#fff;padding:8px;border-radius:8px;"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:12px;word-break:break-all;" id="qrProfileUrl"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeQRModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase4: Share Modal -->
+<div class="modal-overlay" id="shareModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" data-i18n="share_title">分享我的主页</div>
+    <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:8px 0;word-break:break-all;" id="shareProfileUrl"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyProfileLink()" data-i18n="share_copy_link">复制链接</button>
+      <button class="btn btn-secondary" onclick="closeShareModal()" data-i18n="qrcode_close">关闭</button>
     </div>
   </div>
 </div>
@@ -402,32 +427,13 @@
             <button class="btn-sm btn-sm-outline" onclick="cancelEditNickname()" data-i18n="btn_cancel">取消</button>
           </div>
           <button class="btn-sm btn-sm-outline" id="btnEditNickname" onclick="startEditNickname()" data-i18n="btn_edit_nickname" style="margin-top:8px">编辑昵称</button>
+          <!-- Phase4: 二维码与分享按钮 -->
+          <div class="profile-share-row" id="profileShareRow" style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn-sm btn-sm-primary" id="btnQRCode" onclick="showQRCode()" data-i18n="btn_qrcode">📱 我的二维码</button>
+            <button class="btn-sm btn-sm-outline" id="btnShare" onclick="shareProfile()" data-i18n="btn_share">🔗 分享主页</button>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- My Services Card（第三优先级 Task1/Task4：我的账户/我的服务入口） -->
-    <div class="card">
-      <div class="card-header">
-        <span class="icon">💼</span>
-        <span>我的服务</span>
-      </div>
-      <a href="/xuewaiyu/billing.html" style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line,rgba(128,128,128,.15));color:inherit;text-decoration:none">
-        <span style="font-size:22px">⏱️</span>
-        <span style="flex:1">
-          <span style="display:block;font-weight:600">我的翻译时长</span>
-          <small id="svcQuotaText" style="color:var(--sub,#9aa3b2)">加载中…</small>
-        </span>
-        <span style="color:var(--sub,#9aa3b2)">›</span>
-      </a>
-      <a href="/xuewaiyu/vocabulary.html" style="display:flex;align-items:center;gap:12px;padding:12px 4px;color:inherit;text-decoration:none">
-        <span style="font-size:22px">📚</span>
-        <span style="flex:1">
-          <span style="display:block;font-weight:600">我的词汇本</span>
-          <small id="svcVocabText" style="color:var(--sub,#9aa3b2)">收藏的生词都在这里</small>
-        </span>
-        <span style="color:var(--sub,#9aa3b2)">›</span>
-      </a>
     </div>
 
     <!-- Language Preferences Card -->
@@ -560,6 +566,14 @@ const I18N = {
     btn_save: '保存',
     btn_cancel: '取消',
     btn_edit_nickname: '编辑昵称',
+    btn_qrcode: '📱 我的二维码',
+    btn_share: '🔗 分享主页',
+    qrcode_title: '我的二维码',
+    qrcode_save: '保存二维码',
+    qrcode_close: '关闭',
+    share_title: '分享我的主页',
+    share_copy_link: '复制链接',
+    share_copied: '已复制！',
     btn_change_password: '修改密码',
     btn_confirm_delete: '确认注销',
     label_old_password: '当前密码',
@@ -634,6 +648,14 @@ const I18N = {
     btn_save: 'Save',
     btn_cancel: 'Cancel',
     btn_edit_nickname: 'Edit Nickname',
+    btn_qrcode: '📱 My QR Code',
+    btn_share: '🔗 Share Profile',
+    qrcode_title: 'My QR Code',
+    qrcode_save: 'Save QR Code',
+    qrcode_close: 'Close',
+    share_title: 'Share My Profile',
+    share_copy_link: 'Copy Link',
+    share_copied: 'Copied!',
     btn_change_password: 'Change Password',
     btn_confirm_delete: 'Confirm Delete',
     label_old_password: 'Current Password',
@@ -708,6 +730,14 @@ const I18N = {
     btn_save: '保存',
     btn_cancel: 'キャンセル',
     btn_edit_nickname: 'ニックネーム編集',
+    btn_qrcode: '📱 QRコード',
+    btn_share: '🔗 プロフィール共有',
+    qrcode_title: 'QRコード',
+    qrcode_save: 'QRコード保存',
+    qrcode_close: '閉じる',
+    share_title: 'プロフィール共有',
+    share_copy_link: 'リンクコピー',
+    share_copied: 'コピーしました！',
     btn_change_password: 'パスワード変更',
     btn_confirm_delete: '削除を確認',
     label_old_password: '現在のパスワード',
@@ -782,6 +812,14 @@ const I18N = {
     btn_save: '저장',
     btn_cancel: '취소',
     btn_edit_nickname: '닉네임 편집',
+    btn_qrcode: '📱 QR코드',
+    btn_share: '🔗 프로필 공유',
+    qrcode_title: 'QR코드',
+    qrcode_save: 'QR코드 저장',
+    qrcode_close: '닫기',
+    share_title: '프로필 공유',
+    share_copy_link: '링크 복사',
+    share_copied: '복사 완료!',
     btn_change_password: '비밀번호 변경',
     btn_confirm_delete: '삭제 확인',
     label_old_password: '현재 비밀번호',
@@ -856,6 +894,14 @@ const I18N = {
     btn_save: 'Enregistrer',
     btn_cancel: 'Annuler',
     btn_edit_nickname: 'Modifier le pseudo',
+    btn_qrcode: '📱 Mon QR Code',
+    btn_share: '🔗 Partager le profil',
+    qrcode_title: 'Mon QR Code',
+    qrcode_save: 'Enregistrer le QR Code',
+    qrcode_close: 'Fermer',
+    share_title: 'Partager mon profil',
+    share_copy_link: 'Copier le lien',
+    share_copied: 'Copié !',
     btn_change_password: 'Changer le mot de passe',
     btn_confirm_delete: 'Confirmer la suppression',
     label_old_password: 'Mot de passe actuel',
@@ -930,6 +976,14 @@ const I18N = {
     btn_save: 'Guardar',
     btn_cancel: 'Cancelar',
     btn_edit_nickname: 'Editar apodo',
+    btn_qrcode: '📱 Mi Código QR',
+    btn_share: '🔗 Compartir perfil',
+    qrcode_title: 'Mi Código QR',
+    qrcode_save: 'Guardar Código QR',
+    qrcode_close: 'Cerrar',
+    share_title: 'Compartir mi perfil',
+    share_copy_link: 'Copiar enlace',
+    share_copied: '¡Copiado!',
     btn_change_password: 'Cambiar contraseña',
     btn_confirm_delete: 'Confirmar eliminación',
     label_old_password: 'Contraseña actual',
@@ -1004,6 +1058,14 @@ const I18N = {
     btn_save: 'Speichern',
     btn_cancel: 'Abbrechen',
     btn_edit_nickname: 'Nickname bearbeiten',
+    btn_qrcode: '📱 Mein QR-Code',
+    btn_share: '🔗 Profil teilen',
+    qrcode_title: 'Mein QR-Code',
+    qrcode_save: 'QR-Code speichern',
+    qrcode_close: 'Schließen',
+    share_title: 'Mein Profil teilen',
+    share_copy_link: 'Link kopieren',
+    share_copied: 'Kopiert!',
     btn_change_password: 'Passwort ändern',
     btn_confirm_delete: 'Löschen bestätigen',
     label_old_password: 'Aktuelles Passwort',
@@ -1511,41 +1573,88 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
   if (e.target === this) closeDeleteModal();
 });
 
-// ==================== My Services（我的翻译时长/词汇本） ====================
-function fmtDur(sec) {
-  sec = Math.max(0, sec || 0);
-  if (sec >= 3600) return (sec / 3600).toFixed(1) + ' 小时';
-  if (sec >= 60) return Math.floor(sec / 60) + ' 分钟';
-  return sec + ' 秒';
-}
-async function loadMyServices() {
-  try {
-    const res = await apiCall('GET', '/billing/status');
-    if (res && res.success) {
-      const d = res.data;
-      const total = (d.trial ? d.trial.remainingSec : 0)
-        + (d.subscription ? d.subscription.remainingSec : 0)
-        + (d.paidPackage ? d.paidPackage.remainingSec : 0);
-      const el = document.getElementById('svcQuotaText');
-      if (el) el.textContent = '剩余 ' + fmtDur(total) + (total <= 0 ? '，点击购买' : '');
-    }
-  } catch (e) { /* 游客/未登录静默 */ }
-  try {
-    const res = await apiCall('GET', '/vocabulary');
-    if (res && res.success) {
-      const el = document.getElementById('svcVocabText');
-      if (el) el.textContent = '已收藏 ' + (res.data || []).length + ' 个生词';
-    }
-  } catch (e) { /* 静默 */ }
-}
-
 // ==================== Init ====================
 function init() {
   renderLangSwitch();
   updateI18n();
   loadUserProfile();
-  loadMyServices();
 }
+
+// ==================== Phase4: QR Code & Share ====================
+function showQRCode() {
+  var modal = document.getElementById('qrModal');
+  var urlEl = document.getElementById('qrProfileUrl');
+  var canvasEl = document.getElementById('qrCanvas');
+  var userId = getUserId();
+  var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
+  urlEl.textContent = profileUrl;
+  // Google Charts QR API
+  var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(profileUrl) + '&choe=UTF-8';
+  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR生成失败</p>\'">';
+  modal.style.display = 'flex';
+}
+
+function closeQRModal() {
+  document.getElementById('qrModal').style.display = 'none';
+}
+
+function shareProfile() {
+  var modal = document.getElementById('shareModal');
+  var urlEl = document.getElementById('shareProfileUrl');
+  var userId = getUserId();
+  var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
+  urlEl.textContent = profileUrl;
+  modal.style.display = 'flex';
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').style.display = 'none';
+}
+
+function copyProfileLink() {
+  var urlEl = document.getElementById('shareProfileUrl');
+  var text = urlEl.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast(t('share_copied'));
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast(t('share_copied'));
+}
+
+function getUserId() {
+  try {
+    var token = localStorage.getItem('yandao_token_v1');
+    if (token) {
+      var payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || payload.userId || payload.id || 'unknown';
+    }
+  } catch(e) {}
+  return 'unknown';
+}
+
+// Keyboard modal dismiss
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeQRModal();
+    closeShareModal();
+  }
+});
 
 init();
 </script>

@@ -310,8 +310,34 @@
     display: flex; align-items: center; gap: 8px;
   }
   .degrade-banner-icon { font-size: 18px; flex-shrink: 0; }
+
+  /* Phase4: Exam & Resource Sections */
+  .exam-section, .resource-section {
+    margin-bottom: 24px;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .section-icon { font-size: 20px; }
+  .section-title { font-size: 17px; font-weight: 700; color: var(--text); }
+  .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+  .exam-grid, .resource-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .exam-card, .resource-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px 14px; text-align: center;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+  }
+  .exam-card:hover, .resource-card:hover {
+    transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  }
+  .exam-card-icon, .resource-card-icon { display: block; font-size: 28px; margin-bottom: 6px; }
+  .exam-card-label, .resource-card-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .exam-empty, .resource-empty {
+    text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px;
+  }
 </style>
-<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
   <script src="/xuewaiyu/assets/common.js?v=20260726b"></script>
@@ -374,6 +400,62 @@
     </div>
     <div id="contentPanelBody"></div>
   </div>
+
+  <!-- Phase4: 考级学习板块 -->
+  <section class="exam-section" id="examSection">
+    <div class="section-header">
+      <span class="section-icon">🎯</span>
+      <span class="section-title" data-i18n="exam_learning">考级学习</span>
+    </div>
+    <div class="section-desc" data-i18n="exam_desc">按考级目标精准提分</div>
+    <div class="exam-grid" id="examGrid">
+      <div class="exam-card" onclick="openExamModule('grammar')">
+        <span class="exam-card-icon">📝</span>
+        <span class="exam-card-label" data-i18n="exam_grammar">语法</span>
+      </div>
+      <div class="exam-card" onclick="openExamModule('vocab')">
+        <span class="exam-card-icon">📖</span>
+        <span class="exam-card-label" data-i18n="exam_vocab">单词</span>
+      </div>
+      <div class="exam-card" onclick="openExamModule('listening')">
+        <span class="exam-card-icon">🎧</span>
+        <span class="exam-card-label" data-i18n="exam_listening">听力</span>
+      </div>
+      <div class="exam-card" onclick="openExamModule('reading')">
+        <span class="exam-card-icon">📄</span>
+        <span class="exam-card-label" data-i18n="exam_reading">阅读</span>
+      </div>
+    </div>
+    <div class="exam-empty" id="examEmpty" style="display:none;">
+      <span data-i18n="exam_coming_soon">更多考级内容即将上线</span>
+    </div>
+  </section>
+
+  <!-- Phase4: 学习资源板块 -->
+  <section class="resource-section" id="resourceSection">
+    <div class="section-header">
+      <span class="section-icon">📚</span>
+      <span class="section-title" data-i18n="learning_resources">学习资源</span>
+    </div>
+    <div class="section-desc" data-i18n="resource_desc">精选学习材料，随等级螺旋上升</div>
+    <div class="resource-grid" id="resourceGrid">
+      <div class="resource-card" onclick="openResource('graded_reading')">
+        <span class="resource-card-icon">📰</span>
+        <span class="resource-card-label" data-i18n="graded_reading">分级阅读</span>
+      </div>
+      <div class="resource-card" onclick="openResource('grammar_guide')">
+        <span class="resource-card-icon">📕</span>
+        <span class="resource-card-label" data-i18n="grammar_guide">语法指南</span>
+      </div>
+      <div class="resource-card" onclick="openResource('master_tips')">
+        <span class="resource-card-icon">🌟</span>
+        <span class="resource-card-label" data-i18n="master_tips">大咖秘籍</span>
+      </div>
+    </div>
+    <div class="resource-empty" id="resourceEmpty" style="display:none;">
+      <span data-i18n="resource_empty">根据你的学习进度，资源将逐步开放</span>
+    </div>
+  </section>
 </div>
 
 <!-- Toast Notification -->
@@ -425,6 +507,19 @@ const I18N = {
     lang_fr: 'Français',
     lang_es: 'Español',
     lang_de: 'Deutsch',
+    exam_learning: '考级学习',
+    exam_desc: '按考级目标精准提分',
+    exam_grammar: '语法',
+    exam_vocab: '单词',
+    exam_listening: '听力',
+    exam_reading: '阅读',
+    exam_coming_soon: '更多考级内容即将上线',
+    learning_resources: '学习资源',
+    resource_desc: '精选学习材料，随等级螺旋上升',
+    graded_reading: '分级阅读',
+    grammar_guide: '语法指南',
+    master_tips: '大咖秘籍',
+    resource_empty: '根据你的学习进度，资源将逐步开放',
   },
   en: {
     nav_back: '← Back',
@@ -451,6 +546,19 @@ const I18N = {
     lang_fr: 'French',
     lang_es: 'Spanish',
     lang_de: 'German',
+    exam_learning: 'Exam Prep',
+    exam_desc: 'Targeted exam preparation',
+    exam_grammar: 'Grammar',
+    exam_vocab: 'Vocabulary',
+    exam_listening: 'Listening',
+    exam_reading: 'Reading',
+    exam_coming_soon: 'More exam content coming soon',
+    learning_resources: 'Resources',
+    resource_desc: 'Curated materials that grow with your level',
+    graded_reading: 'Graded Reading',
+    grammar_guide: 'Grammar Guide',
+    master_tips: 'Master Tips',
+    resource_empty: 'Resources will unlock as you progress',
   },
   ja: {
     nav_back: '← 戻る',
@@ -477,6 +585,19 @@ const I18N = {
     lang_fr: 'フランス語',
     lang_es: 'スペイン語',
     lang_de: 'ドイツ語',
+    exam_learning: '試験対策',
+    exam_desc: '試験目標に合わせた効率的な学習',
+    exam_grammar: '文法',
+    exam_vocab: '語彙',
+    exam_listening: 'リスニング',
+    exam_reading: '読解',
+    exam_coming_soon: 'さらに多くの試験対策コンテンツが近日公開',
+    learning_resources: '学習リソース',
+    resource_desc: 'レベルに合わせた精選教材',
+    graded_reading: '段階別読解',
+    grammar_guide: '文法ガイド',
+    master_tips: '達人の秘訣',
+    resource_empty: '学習の進捗に応じてリソースが開放されます',
   },
   ko: {
     nav_back: '← 뒤로',
@@ -503,6 +624,19 @@ const I18N = {
     lang_fr: '프랑스어',
     lang_es: '스페인어',
     lang_de: '독일어',
+    exam_learning: '시험 대비',
+    exam_desc: '시험 목표에 맞춘 집중 학습',
+    exam_grammar: '문법',
+    exam_vocab: '어휘',
+    exam_listening: '듣기',
+    exam_reading: '읽기',
+    exam_coming_soon: '더 많은 시험 대비 콘텐츠가 곧 제공됩니다',
+    learning_resources: '학습 자료',
+    resource_desc: '레벨에 맞춰 선별된 학습 자료',
+    graded_reading: '수준별 읽기',
+    grammar_guide: '문법 가이드',
+    master_tips: '고수 노하우',
+    resource_empty: '학습 진도에 따라 자료가 개방됩니다',
   },
   fr: {
     nav_back: '← Retour',
@@ -529,6 +663,19 @@ const I18N = {
     lang_fr: 'Français',
     lang_es: 'Espagnol',
     lang_de: 'Allemand',
+    exam_learning: 'Préparation examen',
+    exam_desc: 'Préparation ciblée aux examens',
+    exam_grammar: 'Grammaire',
+    exam_vocab: 'Vocabulaire',
+    exam_listening: 'Écoute',
+    exam_reading: 'Lecture',
+    exam_coming_soon: 'Plus de contenu d\'examen bientôt disponible',
+    learning_resources: 'Ressources',
+    resource_desc: 'Matériel sélectionné selon votre niveau',
+    graded_reading: 'Lecture graduée',
+    grammar_guide: 'Guide de grammaire',
+    master_tips: 'Conseils d\'experts',
+    resource_empty: 'Les ressources se débloquent avec votre progression',
   },
   es: {
     nav_back: '← Volver',
@@ -555,6 +702,19 @@ const I18N = {
     lang_fr: 'Francés',
     lang_es: 'Español',
     lang_de: 'Alemán',
+    exam_learning: 'Preparación examen',
+    exam_desc: 'Preparación enfocada para exámenes',
+    exam_grammar: 'Gramática',
+    exam_vocab: 'Vocabulario',
+    exam_listening: 'Comprensión auditiva',
+    exam_reading: 'Lectura',
+    exam_coming_soon: 'Más contenido de examen próximamente',
+    learning_resources: 'Recursos',
+    resource_desc: 'Materiales seleccionados según tu nivel',
+    graded_reading: 'Lectura graduada',
+    grammar_guide: 'Guía gramatical',
+    master_tips: 'Consejos de expertos',
+    resource_empty: 'Los recursos se desbloquean con tu progreso',
   },
   de: {
     nav_back: '← Zurück',
@@ -581,6 +741,19 @@ const I18N = {
     lang_fr: 'Französisch',
     lang_es: 'Spanisch',
     lang_de: 'Deutsch',
+    exam_learning: 'Prüfungsvorbereitung',
+    exam_desc: 'Gezielte Prüfungsvorbereitung',
+    exam_grammar: 'Grammatik',
+    exam_vocab: 'Wortschatz',
+    exam_listening: 'Hörverstehen',
+    exam_reading: 'Lesen',
+    exam_coming_soon: 'Weitere Prüfungsinhalte folgen in Kürze',
+    learning_resources: 'Ressourcen',
+    resource_desc: 'Kuratiertes Material, passend zu Ihrem Niveau',
+    graded_reading: 'Gestuftes Lesen',
+    grammar_guide: 'Grammatikführer',
+    master_tips: 'Experten-Tipps',
+    resource_empty: 'Ressourcen werden mit Ihrem Fortschritt freigeschaltet',
   },
 };
 
@@ -928,6 +1101,9 @@ function closeModule() {
   currentModule = null;
   document.getElementById('contentPanel').classList.remove('active');
   document.getElementById('moduleGrid').style.display = '';
+  // Phase4: 恢复新增板块显示
+  document.getElementById('examSection').style.display = '';
+  document.getElementById('resourceSection').style.display = '';
   renderModuleProgress();
 }
 
@@ -1062,6 +1238,132 @@ function showGuestTipIfNeeded() {
   }
 }
 
+// ==================== Phase4: Exam & Resource Modules ====================
+var examContent = {}; // { grammar: [...], vocab: [...], ... }
+var resourceContent = {}; // { graded_reading: [...], ... }
+
+async function fetchExamContent(lang, module) {
+  if (examContent[module] && examContent[module].length > 0) return examContent[module];
+  try {
+    const data = await apiCall('GET', '/content?lang=' + lang + '&type=' + module + '&category=exam');
+    examContent[module] = (data && data.items) ? data.items : [];
+    return examContent[module];
+  } catch(e) {
+    examContent[module] = [];
+    return [];
+  }
+}
+
+async function fetchResourceList(lang, module) {
+  if (resourceContent[module] && resourceContent[module].length > 0) return resourceContent[module];
+  try {
+    const data = await apiCall('GET', '/content?lang=' + lang + '&type=' + module + '&category=resource');
+    resourceContent[module] = (data && data.items) ? data.items : [];
+    return resourceContent[module];
+  } catch(e) {
+    resourceContent[module] = [];
+    return [];
+  }
+}
+
+async function openExamModule(type) {
+  document.getElementById('moduleGrid').style.display = 'none';
+  document.getElementById('examSection').style.display = 'none';
+  document.getElementById('resourceSection').style.display = 'none';
+  const panel = document.getElementById('contentPanel');
+  const title = document.getElementById('contentPanelTitle');
+  const body = document.getElementById('contentPanelBody');
+  const stats = document.getElementById('contentPanelStats');
+
+  const titleKeys = { grammar: 'exam_grammar', vocab: 'exam_vocab', listening: 'exam_listening', reading: 'exam_reading' };
+  title.textContent = I18N[currentLang] && I18N[currentLang][titleKeys[type]] ? I18N[currentLang][titleKeys[type]] : type;
+
+  body.innerHTML = renderSkeletonHTML();
+  panel.classList.add('active');
+  stats.textContent = '';
+
+  const lang = getTargetLang();
+  const items = await fetchExamContent(lang, type);
+
+  if (!items || items.length === 0) {
+    body.innerHTML = '<div class="error-state"><p>' + t('exam_coming_soon') + '</p></div>';
+    return;
+  }
+
+  stats.textContent = items.length + ' ' + t('completed_label');
+  body.innerHTML = items.map(function(item, idx) {
+    return '<div class="content-item" onclick="openExamDetail(\'' + type + '\',' + idx + ')">' +
+      '<span class="item-title">' + (item.title || item.word || item.phrase || 'Item ' + (idx+1)) + '</span>' +
+      '<span class="item-arrow">→</span></div>';
+  }).join('');
+}
+
+function openExamDetail(type, index) {
+  var items = examContent[type] || [];
+  if (!items[index]) return;
+  var item = items[index];
+  var body = document.getElementById('contentPanelBody');
+  document.getElementById('contentPanelStats').textContent = (index+1) + '/' + items.length;
+  body.innerHTML = '<div class="detail-view">' +
+    '<div class="detail-title">' + (item.title || item.word || item.phrase || '') + '</div>' +
+    '<div class="detail-content">' + (item.content || item.meaning || item.translation || item.description || '') + '</div>' +
+    (item.example ? '<div class="detail-example">' + item.example + '</div>' : '') +
+    '<button class="btn btn-primary" style="margin-top:12px" onclick="closeModule()">' + t('btn_back_list') + '</button>' +
+  '</div>';
+}
+
+async function openResource(type) {
+  document.getElementById('moduleGrid').style.display = 'none';
+  document.getElementById('examSection').style.display = 'none';
+  document.getElementById('resourceSection').style.display = 'none';
+  var panel = document.getElementById('contentPanel');
+  var title = document.getElementById('contentPanelTitle');
+  var body = document.getElementById('contentPanelBody');
+  var stats = document.getElementById('contentPanelStats');
+
+  var titleKeys = { graded_reading: 'graded_reading', grammar_guide: 'grammar_guide', master_tips: 'master_tips' };
+  title.textContent = I18N[currentLang] && I18N[currentLang][titleKeys[type]] ? I18N[currentLang][titleKeys[type]] : type;
+
+  body.innerHTML = renderSkeletonHTML();
+  panel.classList.add('active');
+  stats.textContent = '';
+
+  var lang = getTargetLang();
+  var items = await fetchResourceList(lang, type);
+
+  if (!items || items.length === 0) {
+    body.innerHTML = '<div class="error-state"><p>' + t('resource_empty') + '</p></div>';
+    return;
+  }
+
+  stats.textContent = items.length + ' ' + t('completed_label');
+  body.innerHTML = items.map(function(item, idx) {
+    return '<div class="content-item" onclick="openResourceDetail(\'' + type + '\',' + idx + ')">' +
+      '<span class="item-title">' + (item.title || item.word || 'Item ' + (idx+1)) + '</span>' +
+      '<span class="item-arrow">→</span></div>';
+  }).join('');
+}
+
+function openResourceDetail(type, index) {
+  var items = resourceContent[type] || [];
+  if (!items[index]) return;
+  var item = items[index];
+  var body = document.getElementById('contentPanelBody');
+  document.getElementById('contentPanelStats').textContent = (index+1) + '/' + items.length;
+  body.innerHTML = '<div class="detail-view">' +
+    '<div class="detail-title">' + (item.title || item.word || '') + '</div>' +
+    '<div class="detail-content">' + (item.content || item.meaning || item.description || '') + '</div>' +
+    (item.example ? '<div class="detail-example">' + item.example + '</div>' : '') +
+    '<button class="btn btn-primary" style="margin-top:12px" onclick="closeModule()">' + t('btn_back_list') + '</button>' +
+  '</div>';
+}
+
+function renderSkeletonHTML() {
+  return Array.from({length:4}, function() {
+    return '<div class="skeleton-item"><div class="skeleton-line skeleton-line-long"></div><div class="skeleton-line"></div></div>';
+  }).join('');
+}
+
 // ==================== Init ====================
 async function initPage() {
   updateTargetLangTag();
@@ -1080,8 +1382,31 @@ async function initPage() {
     // 静默失败，稍后 openModule 时再加载
   }
   renderModuleProgress();
+
+  // Phase4: 预加载考级内容
+  var examTypes = ['grammar', 'vocab', 'listening', 'reading'];
+  examTypes.forEach(function(type) { fetchExamContent(lang, type).catch(function(){}); });
+
+  // Phase4: languageChanged listener
+  window.addEventListener('languageChanged', function(e) {
+    var newLang = getTargetLang();
+    if (newLang !== lastKnownLang) {
+      lastKnownLang = newLang;
+      updateTargetLangTag();
+      updateI18n();
+      // 清空考级/资源缓存
+      examContent = {};
+      resourceContent = {};
+      var types = ['vocab', 'grammar', 'reading', 'listening'];
+      types.forEach(function(type) { fetchLearningContent(newLang, type, 'beginner'); });
+      examTypes.forEach(function(type) { fetchExamContent(newLang, type).catch(function(){}); });
+      renderModuleProgress();
+    }
+  });
+  lastKnownLang = getTargetLang();
 }
 
+var lastKnownLang = null;
 initPage();
 </script>
 

@@ -198,7 +198,6 @@
     .filter-group { min-width: 100%; }
   }
 </style>
-<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
 
@@ -733,6 +732,42 @@ function showGuestTip() {
 // ==================== Init ====================
 renderPartners();
 updateI18n();
+// Phase4: languageChanged listener
+window.addEventListener('languageChanged', function(e) {
+  var newLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : currentLang;
+  if (newLang !== currentLang) {
+    currentLang = newLang;
+    updateI18n();
+    renderPartners();
+  }
+});
+
+// Phase4: 社交专属底部导航（主页/好友/消息/学习圈/个人中心）
+(function initSocialNav() {
+  var socialNav = document.getElementById('socialBottomNav');
+  if (!socialNav) {
+    socialNav = document.createElement('nav');
+    socialNav.className = 'bottom-nav social-nav';
+    socialNav.id = 'socialBottomNav';
+    socialNav.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:1000;background:var(--bg);';
+    // 覆盖 common.js 渲染的导航
+    var existingNav = document.getElementById('bottomNav');
+    if (existingNav) existingNav.style.display = 'none';
+    document.body.appendChild(socialNav);
+  }
+  var uiLang = currentLang;
+  var labels = {
+    zh: ['🏠 主页','👥 好友','💬 消息','🌐 学习圈','👤 个人中心'],
+    en: ['🏠 Home','👥 Friends','💬 Messages','🌐 Circle','👤 Profile'],
+    ja: ['🏠 ホーム','👥 友達','💬 メッセージ','🌐 サークル','👤 マイ'],
+    ko: ['🏠 홈','👥 친구','💬 메시지','🌐 서클','👤 내정보']
+  };
+  var l = labels[uiLang] || labels['zh'];
+  var links = ['/xuewaiyu/home','/xuewaiyu/messages.html','/xuewaiyu/messages.html','/xuewaiyu/discover.html','/xuewaiyu/profile.html'];
+  socialNav.innerHTML = links.map(function(link, i) {
+    return '<a class="nav-item" href="' + link + '"><span class="nav-icon"></span><span>' + l[i] + '</span></a>';
+  }).join('');
+})();
 </script>
 <div class="bottom-nav" id="bottomNav"></div>
 
