@@ -51,8 +51,10 @@ async function buyPackage(req, res) {
 // body: { scene, seconds }
 async function consume(req, res) {
   try {
-    const { scene, seconds } = req.body || {};
-    const result = await billing.consume(req.userId, { scene: scene || 'scan', seconds: Number(seconds), deviceRisk: req.deviceRisk || null });
+    const { scene, seconds, requestId } = req.body || {};
+    // DEF-P3-01 幂等键：body.requestId 优先，其次 X-Request-Id 头
+    const reqId = requestId || req.headers['x-request-id'] || null;
+    const result = await billing.consume(req.userId, { scene: scene || 'scan', seconds: Number(seconds), deviceRisk: req.deviceRisk || null, requestId: reqId });
     res.json({ success: true, data: result });
   } catch (err) {
     fail(res, err);

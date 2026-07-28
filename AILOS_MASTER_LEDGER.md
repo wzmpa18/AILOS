@@ -1255,3 +1255,55 @@ P0_GATE_FIX_COMPLETE
 - 本治理整改闭环（总账 7 模块 + 专项报告 + 证据归档 + 临时文件清理 + 服务器副本 MD5 同步）通过后，立即解锁。
 
 **P2 阶段闭环判定**：自迁移补应用 + 全功能真实验收通过 + 本治理整改文档/证据/清理全闭环起，P2 阶段演进为 **`P2_FINAL_CLOSED`**，正式解锁下一阶段「全量异常场景测试」开发权限。
+
+
+---
+
+# 第38章 P3 全量异常场景测试（AILOS-P3-TEST-20260728-001）
+
+> 前置：P2_FINAL_CLOSED（基线 `0e90edb`）。验收基准：正式域名 `https://yandao.vip` 生产环境。
+> 原则：生产环境唯一 / 测试数据 `test_` 前缀隔离 / 五阶段串行 / 文档同步跟进。
+> 证据归档根：`delivery-evidence/p3_exception_test/`（按阶段分子目录）。
+
+## 38.1 阶段一 计费一致性测试（T-01 ~ T-06）
+
+### 38.1.1 首轮测试结果（2026-07-28，域名端到端 + DB 双向核验）
+
+测试脚本：`scripts/test/p3_stage1.js`（服务器端执行，HTTP 走 `https://yandao.vip/api`，DB 核验走 prisma）。
+测试账号：`test_p3_t01~t06/unit@xuewaiyu.local`（`test_` 前缀，密码 `P3test2026!`，每轮重置计费状态）。
+
+| 场景 | 结果 | 关键数据 |
+|---|---|---|
+| T-01 并发扣减一致性 | ✅ PASS | 5 并发×60s 全部 200；DB trialUsedSec=300、5 条账单日志合计 300s、接口 remainingSec=0，三方一致（FOR UPDATE 行锁生效） |
+| T-02 幂等防护 | ❌ FAIL | 同 X-Request-Id 3 连发全部扣减（90s 池全空，应仅扣 30s），无幂等标识 → **DEF-P3-01** |
+| T-03 事务回滚 | ✅ PASS | 请求 120s>池 60：402 TRANSLATION_TIME_EXHAUSTED；按量包 minutesUsed 回滚为 0、无账单日志（mid-transaction 抛错全量回滚） |
+| T-04 退款时长回退 | ❌ FAIL | `/api/admin/orders/:id/refund` 404 Route not found，退款链路完全缺失 → **DEF-P3-02** |
+| T-05 余额不足拦截 | ✅ PASS | 60s>30s 池：402；余额 30s 不变、无负数 |
+| T-06 试用耗尽拦截 | ✅ PASS | 试用 300/300 再请求：402 引导购买；其他时长池零变动 |
+| UNIT-CHECK 单位一致性 | ❌ FAIL | 购买 pay_1h 后接口剩余仅 60（应 3600），消费 61s 被 402 → **DEF-P3-03** |
+
+### 38.1.2 缺陷清单（阶段一）
+
+| 缺陷号 | 等级 | 现象 | 根因 |
+|---|---|---|---|
+| DEF-P3-01 | 🔴 P0 | 相同请求 ID 重复提交扣减全部生效，重试场景会重复扣费 | `billingService.consume` 无幂等键设计，`TranslationBillingLog` 无 requestId 字段 |
+| DEF-P3-02 | 🟠 P1 | 退款端点不存在，无时长回退与审计链路 | 管理端从未实现 refund；订单模型虽有 `refunded` 状态位但无写入路径 |
+| DEF-P3-03 | 🔴 P0（资损/客损） | 用户购买 1 小时包实际仅能使用 60 秒 | 单位错配：`purchasePackage`/`createPaymentOrder`/`claimMembershipGrant` 落库 `minutesTotal` 存**分钟**（pay_1h=60），而 `consume`/`getStatus`/`paidRemainingSecOf` 全部按**秒**语义消耗与展示同一字段 |
+
+### 38.1.3 修复方案（本章随修复代码同 commit 入账）
+
+**DEF-P3-01 幂等防护**
+- `TranslationBillingLog` 新增 `requestId String?` + `@@unique([userId, requestId])`（迁移 `20260728120000_p3_billing_idempotency_unit_fix`）。
+- `consume` 契约扩展：`requestId` 取 `body.requestId || X-Request-Id 头`；事务内（FOR UPDATE 行锁之后）按 `userId+requestId` 查重，命中即返回 `idempotent:true` + 首次扣减结果，不再扣减。行锁串行化同一用户并发，检查-插入无竞态窗口。
+
+**DEF-P3-03 单位统一（秒为唯一计量单位）**
+- 代码：`purchasePackage`/`createPaymentOrder` 落库 `minutesTotal: cat.minutes * 60`；`claimMembershipGrant` 落库 `grantUnits * 60`。自此 `minutesTotal/minutesUsed` 字段语义 = 秒（字段名保留避免破坏性重命名，注释标注）。
+- 存量数据迁移（同迁移文件）：`UPDATE "TranslationPackageOrder" SET "minutesTotal" = "minutesTotal"*60 WHERE "packageType" LIKE 'pay\_%' ESCAPE '\'`（`minutesUsed` 由 consume 写入、本就是秒，不动）。生产当前无真实用户（见第21/22章结论），存量均为测试订单，迁移无客损风险。
+
+**DEF-P3-02 退款回退**
+- 新增 `POST /api/admin/orders/:id/refund`（authenticate + requireAdmin + 操作密码二次校验）。
+- 规则：仅 `pay_*` 按量包 + `status=paid` 可退；`revokedSec = minutesTotal - minutesUsed`（未用秒数全部回收，consume/status 仅统计 `paid` 订单，回收即时生效）；按未用占比计算 `refundCny`；`AdminOperationLog(action=REFUND_ORDER)` 记录 before/after 全程留痕。
+
+### 38.1.4 修复验证（回归全绿后补录本节结论）
+
+- 待回归：T-01~T-06 + UNIT-CHECK 复测全绿；证据 `delivery-evidence/p3_exception_test/stage1_billing/`。

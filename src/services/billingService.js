@@ -120,7 +120,7 @@ class BillingService {
    * @param {object} opt { scene='scan'|'conversation', seconds }
    * @returns {Promise<{consumedSec, source, orderId, logId, balanceAfterSec}>}
    */
-  async consume(userId, { scene = 'scan', seconds, deviceRisk = null } = {}) {
+  async consume(userId, { scene = 'scan', seconds, deviceRisk = null, requestId = null } = {}) {
     if (!Number.isFinite(seconds) || seconds <= 0) {
       const e = new Error('无效时长');
       e.code = 'INVALID_DURATION';
@@ -136,6 +136,16 @@ class BillingService {
       await tx.$queryRaw`SELECT id FROM "TranslationBillingBalance" WHERE "userId" = ${userId} FOR UPDATE`;
       // 加锁后重读最新余额（锁前读取可能已过期）
       b = await tx.translationBillingBalance.findUnique({ where: { userId } });
+      // DEF-P3-01 幂等防护：同一 userId+requestId 仅首次扣减生效（行锁串行化后查重，无竞态窗口）
+      if (requestId) {
+        const dup = await tx.translationBillingLog.findFirst({ where: { userId, requestId } });
+        if (dup) {
+          return {
+            success: true, idempotent: true, consumedSec: dup.consumedSec,
+            source: dup.source, orderId: dup.orderId, logId: dup.id, balanceAfterSec: dup.balanceAfterSec,
+          };
+        }
+      }
       const now = new Date();
       let remain = seconds;
       let source = null;
@@ -218,6 +228,7 @@ class BillingService {
           consumedSec: seconds,
           source,
           orderId,
+          requestId,
           balanceAfterSec,
         },
       });
@@ -226,7 +237,7 @@ class BillingService {
     });
 
     // P1 设备指纹风控：试用实际扣减成功 → 登记设备 owner（终身一次）+ IP 前缀日计数
-    if (result.source === 'trial' && deviceRisk) {
+    if (!result.idempotent && result.source === 'trial' && deviceRisk) {
       const { getDeviceRiskService } = require('./deviceRiskService');
       await getDeviceRiskService().registerTrialClaim(userId, deviceRisk);
     }
@@ -270,7 +281,8 @@ class BillingService {
           userId,
           orderNo,
           packageType,
-          minutesTotal: cat.minutes,
+          // DEF-P3-03 单位统一：minutesTotal 字段语义=秒（consume/getStatus 均按秒消耗与展示）
+          minutesTotal: cat.minutes * 60,
           priceCny: cat.priceCny,
           expiresAt,
           status: 'paid',
@@ -287,7 +299,7 @@ class BillingService {
         orderNo: order.orderNo,
         packageType,
         kind: cat.kind,
-        minutesTotal: cat.minutes,
+        minutesTotal: cat.minutes * 60,
         priceCny: cat.priceCny,
         expiresAt,
       };
@@ -317,7 +329,7 @@ class BillingService {
         userId,
         orderNo,
         packageType,
-        minutesTotal: cat.minutes,
+        minutesTotal: cat.minutes * 60, // DEF-P3-03 单位统一（秒）
         priceCny: cat.priceCny,
         expiresAt: placeholder,
         status: 'pending',
@@ -484,7 +496,7 @@ class BillingService {
         userId,
         orderNo,
         packageType: grantType,
-        minutesTotal: grantUnits,
+        minutesTotal: grantUnits * 60, // DEF-P3-03 单位统一（秒）：grantUnits 语义为分钟
         priceCny: 0,
         expiresAt,
         status: 'paid',
@@ -609,6 +621,49 @@ class BillingService {
       };
     });
     return { startDate: s, endDate: e, summary, orders: rows };
+  }
+
+  /**
+   * DEF-P3-02 退款时长回退（管理端专用；仅 pay_* 按量包 + status=paid 可退）
+   * 未用秒数全额回收（status→refunded 后 consume/getStatus 不再计入该订单，即时生效），
+   * 按未用占比计算应退金额；AdminOperationLog 记录 before/after 全程留痕。
+   */
+  async refundOrder(orderId, { adminId, reason = null } = {}) {
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.translationPackageOrder.findUnique({ where: { id: orderId } });
+      if (!order) {
+        const e = new Error('订单不存在');
+        e.code = 'ORDER_NOT_FOUND'; e.status = 404; throw e;
+      }
+      if (!order.packageType.startsWith('pay_')) {
+        const e = new Error('仅按量时长包支持退款时长回退');
+        e.code = 'REFUND_NOT_SUPPORTED'; e.status = 400; throw e;
+      }
+      if (order.status !== 'paid') {
+        const e = new Error('订单当前状态不可退款: ' + order.status);
+        e.code = 'ORDER_NOT_REFUNDABLE'; e.status = 409; throw e;
+      }
+      const totalSec = order.minutesTotal;
+      const usedSec = order.minutesUsed;
+      const revokedSec = Math.max(0, totalSec - usedSec);
+      const refundCny = totalSec > 0
+        ? Math.round((Number(order.priceCny) || 0) * (revokedSec / totalSec) * 100) / 100
+        : 0;
+      await tx.translationPackageOrder.update({ where: { id: order.id }, data: { status: 'refunded' } });
+      await tx.adminOperationLog.create({
+        data: {
+          adminId, action: 'REFUND_ORDER', targetType: 'ORDER', targetId: order.id,
+          reason,
+          detail: {
+            orderNo: order.orderNo, packageType: order.packageType,
+            before: { status: 'paid', totalSec, usedSec },
+            after: { status: 'refunded', revokedSec, refundCny },
+          },
+        },
+      });
+      logger.info('Billing order refunded', { orderId: order.id, orderNo: order.orderNo, adminId, revokedSec, refundCny });
+      return { orderNo: order.orderNo, packageType: order.packageType, status: 'refunded', revokedSec, refundCny };
+    });
   }
 
   /** 定时清理：订阅过期清零 + 按量包超期标记作废（可被 cron 调用） */

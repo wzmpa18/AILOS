@@ -448,6 +448,23 @@ async function resetPassword(req, res) {
   }
 }
 
+// ---------- P3 DEF-P3-02: 订单退款时长回退（操作密码二次校验 + 审计留痕） ----------
+// POST /api/admin/orders/:id/refund  body: { opPassword, reason? }
+async function refundOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const { opPassword, reason } = req.body || {};
+    if (!await verifyOpPassword(opPassword)) return res.status(403).json({ success: false, error: '操作密码错误' });
+    const data = await getBillingService().refundOrder(id, { adminId: req.userId, reason: reason || null });
+    logger.info(`[admin] 订单退款 orderId=${id} by=${req.userId} revokedSec=${data.revokedSec}`);
+    return res.json({ success: true, data, message: '退款完成，未使用时长已回收' });
+  } catch (e) {
+    const status = e.status || 500;
+    logger.error('[admin] refundOrder 失败:', e.message);
+    return res.status(status).json({ success: false, error: e.code || 'REFUND_FAILED', message: e.message });
+  }
+}
+
 async function changeOpPassword(req, res) {
   try {
     const { oldPassword, newPassword } = req.body || {};
@@ -470,6 +487,7 @@ module.exports = {
   adjustUserTime,
   markOrderAbnormal,
   listOperationLogs,
+  refundOrder,
   getMe,
   listLoginLogs,
   listUsers,

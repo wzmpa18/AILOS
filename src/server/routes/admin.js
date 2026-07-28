@@ -37,6 +37,9 @@ router.post('/users/billing/adjust', authenticate, requireAdmin, adminController
 // 异常订单标记
 router.post('/orders/:id/abnormal', authenticate, requireAdmin, adminController.markOrderAbnormal);
 
+// P3 DEF-P3-02 订单退款（操作密码二次校验 + 未用时长回退 + 审计留痕）
+router.post('/orders/:id/refund', authenticate, requireAdmin, adminController.refundOrder);
+
 // 操作日志
 router.get('/operation-logs', authenticate, requireAdmin, adminController.listOperationLogs);
 

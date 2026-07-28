@@ -1065,8 +1065,10 @@ model TranslationBillingLog {
   consumedSec     Int
   source          String   // trial|subscription|paid_package
   orderId         String?
+  requestId       String?  // DEF-P3-01 幂等键（body.requestId / X-Request-Id 头）
   balanceAfterSec Int
   createdAt       DateTime @default(now())
+  @@unique([userId, requestId])
   @@index([userId])
   @@index([createdAt])
 }
