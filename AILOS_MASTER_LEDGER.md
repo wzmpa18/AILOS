@@ -1655,3 +1655,278 @@ delivery-evidence/prc/
 **PRC 生产就绪检查 16/16 项全通过，0 个 P0 风险，生产环境服务稳定运行（health 200, uptime 96min+），代码版本 `v1.0.0-rc-prc-passed` 已冻结推送，具备随时启动灰度发布的条件。**
 
 下一步：按 `docs/operation/gray_release_plan.md` 启动内部验证阶段（Phase 1: Internal 2h），确认无误后转入 10% 灰度。
+
+
+## 第 39 章: PRC 生产就绪检查
+
+> **检查完成时间**: 2026-07-28 10:30 (UTC+8)
+> **文档治理整改时间**: 2026-07-28 (UTC)
+> **代码基线**: commit 1bff872, tag v1.0.0-rc-prc-passed
+> **整体结论**: 16/16 全量通过，0 P0/P1 风险遗留，文档治理完成，具备上线条件
+> **下一阶段**: 灰度发布 Phase 1 (Internal, 2h)
+
+---
+
+### 39.1 PRC 检查概览
+
+| 项目 | 值 |
+|------|-----|
+| 检查日期 | 2026-07-28 |
+| 执行人 | 首席架构师/监理 |
+| 代码基线 | commit 1bff872 (GitHub origin/main) |
+| 版本标签 | v1.0.0-rc-prc-passed (已推送) |
+| 生产域名 | https://yandao.vip/xuewaiyu/ |
+| 服务器 IP | 82.156.228.87 |
+| PM2 进程 | xuewaiyu-backend (online, pid 2775347) |
+| 运行时 | Node.js + PostgreSQL (UUID id) |
+| 检查范围 | 5 大类 16 项 |
+| 通过率 | 16/16 = 100% |
+| P0 风险遗留 | 0 |
+| P1 风险遗留 | 0 |
+| 技术判定 | 具备上线条件 |
+| 文档治理 | 已整改 (单份专项报告, 零散文件已清除) |
+| 预览验证 | 管理后台可访问, 权限生效 |
+
+**五大类覆盖**:
+
+| 类别 | 名称 | 子项数 | 结论 |
+|------|------|--------|------|
+| CAT1 | 生产配置基线核对 | 8 | ✅ 全部合规 |
+| CAT2 | 备份与回滚能力验证 | 2 | ✅ 备份脚本实测 158KB |
+| CAT3 | 监控与告警链路验证 | 3 | ✅ PM2+Health+日志正常 |
+| CAT4 | 上线执行方案定稿 | 1 | ✅ 四方案整合入报告附录 |
+| CAT5 | 文档版本冻结与对齐 | 2 | ✅ 标签推送+终审全绿 |
+
+### 39.2 配置基线核对明细
+
+#### 39.2.1 业务配置合规性
+
+| 配置项 | 生产实际值 | 验收标准 | 结果 |
+|--------|-----------|---------|------|
+| NODE_ENV | `production` | 非 development | ✅ |
+| 数据库 | PostgreSQL (DATABASE_URL via .env.production) | pg_dump 可用 | ✅ |
+| 风控 IP 上限 | `IP_PREFIX_DAILY_LIMIT` (deviceRiskService) | 已配置生效 | ✅ |
+| 风控设备上限 | `DEVICE_ACCOUNT_LIMIT` (deviceRiskService) | 已配置生效 | ✅ |
+| 试用额度 | `trialAllowed` 5min (billingService) | 逻辑完整 | ✅ |
+| 计费规则 | 试用→订阅→按量包 FIFO 扣减 | 原子事务+超量 402 | ✅ |
+| 翻译日上限 | 6h/day (billingService) | 已实现 | ✅ |
+| 翻译月上限 | 30h/month (billingService) | 已实现 | ✅ |
+| 按量包过期 | 365 天自动过期 | 已实现 | ✅ |
+| AI 接口 | 腾讯混元 (HUNYUAN_API_KEY/URL/MODEL 已配置) | 直连无代理 | ✅ |
+| AI 备用接口 | HUNYUAN_API_URL_BACKUP + MODEL_BACKUP | 容灾就绪 | ✅ |
+| 影子数据库 | SHADOW_DATABASE_URL 已配置 | prisma migrate 可用 | ✅ |
+
+#### 39.2.2 安全配置合规性
+
+| 配置项 | 生产实际值 | 验收标准 | 结果 |
+|--------|-----------|---------|------|
+| JWT 密钥 | `yandao_jwt_secret_key_2024_production` | 非默认/非调试 | ✅ |
+| JWT 过期 | `expiresIn: 7d` | 合理窗口 | ✅ |
+| 管理员白名单 | env `ADMIN_USER_IDS` + SystemConfig `admin.user_ids` (双源) | 可配置+可审计 | ✅ |
+| 操作密码 | OP_PASSWORD 已配置 | 非空+强密码 | ✅ |
+| NODE_ENV | `production` | 所有调试开关关闭 | ✅ |
+| 错误信息 | 生产级, 不含堆栈/敏感数据 | 安全合规 | ✅ |
+| 鉴权中间件 | `requireAdmin` 双源判定 (env + DB SystemConfig) | 无绕过路径 | ✅ |
+| 文件权限 | deploy.sh 755, backup_db.sh 755 | 最小权限 | ✅ |
+
+#### 39.2.3 运行环境配置
+
+| 配置项 | 生产值 | 验收标准 | 结果 |
+|--------|--------|---------|------|
+| PM2 内存限制 | `--max-old-space-size=512` MB | 合理上限 | ✅ |
+| GC 暴露 | `--expose-gc` | 可手动回收 | ✅ |
+| 日志级别 | production 默认 (info+) | 非 verbose/debug | ✅ |
+| 错误格式 | JSON `{success:false, error:"..."}` | 不含堆栈 | ✅ |
+| 进程运行时长 | >1h 无重启 | 稳定 | ✅ |
+| node_args | 已注入 PM2 环境变量 | 生产配置生效 | ✅ |
+
+### 39.3 备份回滚验证明细
+
+#### 39.3.1 数据库全量备份
+
+| 项目 | 值 |
+|------|-----|
+| 备份脚本路径 | `scripts/backup_db.sh` |
+| 脚本权限 | 755 (rwxr-xr-x) |
+| 备份方式 | `pg_dump --format=custom` |
+| 实测执行 | ✅ 成功 |
+| 备份文件大小 | 158 KB (全量) |
+| 自动轮转 | 保留最近 7 天备份 |
+| 恢复命令 | `pg_restore --dbname=<target> <backup.dump>` |
+| 一键执行 | ✅ `bash scripts/backup_db.sh` |
+
+**备份脚本验证输出**:
+```
+pg_dump: 成功导出 PostgreSQL 数据库
+备份文件: /www/xuewaiyu-backend/backups/db_backup_20260728.dump (158KB)
+```
+
+#### 39.3.2 部署回滚闸门
+
+| 项目 | 值 |
+|------|-----|
+| 部署脚本 | `deploy.sh` (标准化) |
+| 环境注入 | 4 处 `source .env.production` (DEF-P3-04 修复) |
+| prisma migrate | `npx prisma migrate deploy` 自动执行 |
+| prisma generate | `npx prisma generate` 自动执行 |
+| 回滚机制 | 部署异常自动回滚至上一稳定版本 |
+| 恢复时间 | <1 分钟 |
+| 验证方式 | `curl localhost:3000/api/health` |
+
+#### 39.3.3 数据回滚预案
+
+| 项目 | 值 |
+|------|-----|
+| 触发条件 | 数据异常写入 / 误删 / 表结构损坏 |
+| 操作步骤 | ①确认异常范围 → ②暂停写服务 → ③`pg_restore` 回滚 → ④抽样验证 → ⑤恢复服务 |
+| 启动时间 | <10 分钟 |
+| 责任人 | root@82.156.228.87 (运维) |
+| 升级路径 | 15min 未恢复→开发负责人, 30min→项目总监 |
+| 完整预案 | PRC 专项报告附录 B |
+
+### 39.4 监控告警验证明细
+
+#### 39.4.1 服务运行状态
+
+| 监控项 | 当前状态 | 数据 |
+|--------|---------|------|
+| PM2 进程 | ✅ online | xuewaiyu-backend, pid 2775347 |
+| 运行时长 | ✅ 稳定 | 无异常重启 |
+| Health 接口 | ✅ HTTP 200 | `GET localhost:3000/api/health` |
+| 内存使用 | ✅ 正常 | `--max-old-space-size=512` MB |
+| 外网端口 | ❌ 未暴露 | 仅 localhost:3000 (安全) |
+| nginx 反代 | ✅ 生效 | `yandao.vip/xuewaiyu/` → localhost:3000 |
+
+#### 39.4.2 四类核心告警
+
+| 告警类型 | 触发机制 | P3 验证结果 | 当前状态 |
+|---------|---------|-----------|---------|
+| 资损异常 | billingService 超量拒 402 | ✅ 按量包 FIFO+原子事务 | 生效 |
+| 权限越权 | adminAuth requireAdmin 403 | ✅ 非管理员→403 | 生效 |
+| 服务宕机 | PM2 auto-restart | ✅ 自动恢复 | 生效 |
+| 接口错误率 | Express 错误中间件 | ✅ 生产级捕获 | 生效 |
+
+#### 39.4.3 核心业务观测指标
+
+| 指标 | 观测方式 | 状态 | 备注 |
+|------|---------|------|------|
+| 接口成功率 | PM2 logs + Health | ✅ | Health 200 持续 |
+| 平均响应时长 | Express morgan/日志 | ✅ | 正常范围 |
+| 并发处理 | PM2 instances | ✅ | 单实例, 可扩展 |
+| 翻译时长消耗 | `GET /api/billing/status` | ✅ | 实时查询 |
+| 按量包余额 | `GET /api/billing/status` | ✅ | 实时查询 |
+
+### 39.5 上线方案核心摘要
+
+#### 39.5.1 灰度发布四阶段
+
+| 阶段 | 名称 | 流量 | 时长 | 用户 | 关键校验 |
+|------|------|------|------|------|---------|
+| Phase 1 | Internal | 内部团队 | 2h | 管理员+开发 | 基础CRUD, AI, 翻译, 管理后台, 登录, 计费 |
+| Phase 2 | Beta | 5% | 24h | 邀请用户 | 学习流程, 计费扣减, 风控拦截, 配额 |
+| Phase 3 | Staged | 20%→50%→100% | 48h | 逐步全量 | 并发压力, DB写入, Redis缓存, 响应时间 |
+| Phase 4 | Full | 100% | 持续 | 全部用户 | 全量监控, 告警, 用户反馈 |
+
+**每阶段放行条件**:
+- 错误率 < 1%
+- P0 告警 = 0
+- 核心 API 平均响应 < 2s
+- 无资损事件
+
+**回滚触发条件 (任一即回)**:
+1. 错误率 > 5% 持续 5min
+2. 资损异常 (重复扣费/超量未拒绝)
+3. 数据库写入失败 (连接池耗尽/死锁)
+4. AI 接口全量不可用
+5. 安全漏洞 (未授权访问/数据泄露)
+
+#### 39.5.2 三类核心故障应急处置
+
+| 故障 | 处置流程 | 恢复目标 | 升级 |
+|------|---------|---------|------|
+| 服务不可用 | PM2 restart → 查日志 → Git 回滚 → DB 恢复 | <1min | 15min→开发, 30min→总监 |
+| 数据异常 | 停写 → 备份 → pg_restore → 验证 → 恢复 | <10min | 即报 DBA→总监 |
+| 资损 | 停计费接口 → 审计 BillingLog → 原子回滚 → 通知 | 即时 | 即报 财务+法务 |
+
+### 39.6 文档冻结与版本标签
+
+#### 39.6.1 版本标签
+
+| 项目 | 值 |
+|------|-----|
+| 标签名称 | `v1.0.0-rc-prc-passed` |
+| 代码基线 | commit `1bff872` |
+| 推送状态 | ✅ 已推送 GitHub origin/main |
+| 标签类型 | Release Candidate (上线候选) |
+| 冻结范围 | src/, prisma/schema.prisma, deploy.sh |
+| 变更管控 | 后续变更走正式 PR + Review 流程 |
+
+#### 39.6.2 文档对齐状态 (治理整改后)
+
+| 文档 | 路径 | 版本 | 状态 |
+|------|------|------|------|
+| 总账第 39 章 | `AILOS_MASTER_LEDGER.md` | v1.0.0-rc | ✅ 7 小节完整 |
+| PRC 专项报告 | `docs/reports/PRC_Production_Readiness_Report_20260728.md` | v1.0.0-rc | ✅ 含 4 附录 |
+| 操作手册 | 整合入报告附录 A | v1.0.0-rc | ✅ 已收敛 |
+| 应急预案 | 整合入报告附录 B | v1.0.0-rc | ✅ 已收敛 |
+| 灰度方案 | 整合入报告附录 C | v1.0.0-rc | ✅ 已收敛 |
+| 上线 Checklist | 整合入报告附录 D | v1.0.0-rc | ✅ 已收敛 |
+| 零散碎片文件 | `docs/operation/*.md` | - | 🗑️ 已删除 |
+| 碎片 PRC 报告 | `docs/reports/PRC_Check_Report*.md` / `PRC_Final_Report*.md` | - | 🗑️ 已删除 |
+
+#### 39.6.3 上线终审 Checklist
+
+| # | 检查项 | 结论 |
+|---|--------|------|
+| CL-01 | 代码冻结 (tag v1.0.0-rc-prc-passed) | ✅ |
+| CL-02 | 生产配置基线全部合规 | ✅ |
+| CL-03 | 数据库备份脚本实测可用 | ✅ |
+| CL-04 | 部署回滚闸门生效 | ✅ |
+| CL-05 | PM2 服务稳定 >1h | ✅ |
+| CL-06 | Health 接口 HTTP 200 | ✅ |
+| CL-07 | 管理员后台可访问 (admin.html 200) | ✅ |
+| CL-08 | 权限控制规则生效 (requireAdmin) | ✅ |
+| CL-09 | 总账第 39 章 7 小节完整 | ✅ |
+| CL-10 | 文档治理整改完成 (零散文件已清除) | ✅ |
+| CL-11 | 冗余临时文件清理完成 | ✅ |
+| CL-12 | 证据归档齐全 | ✅ |
+| CL-13 | 灰度方案定稿 | ✅ |
+| CL-14 | 应急预案定稿 | ✅ |
+| CL-15 | P0 风险 0 遗留 | ✅ |
+| CL-16 | P1 风险 0 遗留 | ✅ |
+
+### 39.7 证据统一索引
+
+#### 39.7.1 PRC 检查证据 (`delivery-evidence/prc/`)
+
+| 子目录 | 内容 | 关键文件 |
+|--------|------|---------|
+| `1_config/` | 配置基线核对 | `prc_results_2026-07-28.json` (全量类别判定) |
+| `2_backup/` | 备份脚本实测 | `backup_db_test_output.txt` (pg_dump 158KB) |
+| `3_monitoring/` | 监控状态 | `pm2_status.json`, `health_response.json` |
+| `4_launch/` | 上线方案 | (已整合入专项报告) |
+| `5_freeze/` | 版本冻结 | `tag_list.txt` |
+| `preview/` | 预览验证 | `admin_login.md`, `permission_test.md` |
+
+#### 39.7.2 P3 补充归档 (`delivery-evidence/p3_exception_test/audit_supplement/`)
+
+| 文件 | 内容 |
+|------|------|
+| `evidence_20260728.md` | PM2 运行状态、Health 完整响应、在线抽样日志、测试账号清理确认 |
+
+#### 39.7.3 专项报告
+
+| 文件 | 路径 |
+|------|------|
+| PRC 生产就绪检查专项工作报告 | `docs/reports/PRC_Production_Readiness_Report_20260728.md` |
+
+#### 39.7.4 预览验证
+
+| 验证项 | URL | 结果 | 证据 |
+|--------|-----|------|------|
+| 管理后台访问 | `https://yandao.vip/xuewaiyu/admin.html` | ✅ HTTP 200 | preview/admin_login.md |
+| 权限隔离 | 非管理员→管理员路径 | ✅ 403/重定向 | preview/permission_test.md |
+
+---
+
+> **第 39 章结束** | 下一章: 灰度发布 Phase 1 执行记录
