@@ -1,36 +1,67 @@
 /* ============================================================
- * AILOS 统一前端引擎 (common.js)
+ * AILOS 统一前端引擎 (common.js) v3.0
  * 职责：
  *  1. 全局"当前学习语言"单一真值源 (localStorage: yandao_study_lang)
  *     —— 解决 learn / chat / profile / language 四处目标语言不一致(串语)问题
- *  2. 统一底部导航(7 项)，含社交中心/定制伴读，自动高亮当前页
+ *  2. 全局"界面语言"单一真值源 (localStorage: yandao_ui_lang_v1)
+ *     —— 底部导航、返回按钮、硬阻断提示的文案本地化
+ *  3. 统一底部导航(7 项)，含社交中心/定制伴读，自动高亮当前页
+ *  4. 语言变更事件广播 (languageChanged CustomEvent)
  * 约束：纯前端、无框架；不在本文件改任何认证/会员逻辑。
  * 路径：/xuewaiyu/assets/common.js
+ * 版本：v3.0 — Phase4 语言收口：底部导航全7语种本地化 + UI语言读写入口
  * ============================================================ */
 (function () {
   'use strict';
 
-  // 注：API 走独立命名空间 /api/（nginx 已 proxy_pass 到 :3000，子路径部署下亦不会 404），
-  // 故前端无需、也不应改写 /api/ 前缀；静态资源统一用 /xuewaiyu/...（见各 HTML 引用）。
-
   var STUDY_KEY = 'yandao_study_lang';      // 统一学习语言(新真值源)
   var LEGACY_KEY = 'yandao_target_lang_v1'; // learn.html 旧 key(向后兼容)
+  var UI_LANG_KEY = 'yandao_ui_lang_v1';    // 界面语言(底部导航/提示文案)
 
-  // 语言 code -> 中文展示名
+  // 语言 code -> 本地化展示名（用于 UI 展示，如语言选择下拉框）
   var LANG_NAMES = {
     zh: '中文', en: 'English', ja: '日本語', ko: '한국어',
     fr: 'Français', es: 'Español', de: 'Deutsch'
   };
-  // 语言 code -> chat.html 下拉用的中文 label
+
   var CODE_TO_LABEL = {
     en: '英语', zh: '中文', ja: '日本語', ko: '한국어',
     fr: 'Français', es: 'Español', de: 'Deutsch'
   };
-  // chat.html 下拉中文 label -> code
+
   var LABEL_TO_CODE = {
     '英语': 'en', '中文': 'zh', '日本語': 'ja', '한국어': 'ko',
     'Français': 'fr', 'Español': 'es', 'Deutsch': 'de'
   };
+
+  // ===== Phase4: 底部导航全7语种本地化 =====
+  var NAV_LABELS = {
+    zh: { home: '首页', learn: '学习', chat: 'AI对话', review: '复习', discover: '社交', companion: '伴读', profile: '我的' },
+    en: { home: 'Home', learn: 'Learn', chat: 'AI Chat', review: 'Review', discover: 'Social', companion: 'Buddy', profile: 'Me' },
+    ja: { home: 'ホーム', learn: '学習', chat: 'AI会話', review: '復習', discover: '交流', companion: 'パートナー', profile: 'マイ' },
+    ko: { home: '홈', learn: '학습', chat: 'AI대화', review: '복습', discover: '소셜', companion: '파트너', profile: '내정보' },
+    fr: { home: 'Accueil', learn: 'Apprendre', chat: 'Chat IA', review: 'Réviser', discover: 'Social', companion: 'Partenaire', profile: 'Moi' },
+    es: { home: 'Inicio', learn: 'Aprender', chat: 'Chat IA', review: 'Repasar', discover: 'Social', companion: 'Amigo', profile: 'Yo' },
+    de: { home: 'Start', learn: 'Lernen', chat: 'KI-Chat', review: 'Wiederholen', discover: 'Sozial', companion: 'Partner', profile: 'Ich' }
+  };
+
+  // ===== Stage9 M5: 社群模块 4Tab 导航本地化 =====
+  var COMMUNITY_NAV_LABELS = {
+    zh: { home: '首页', friends: '好友', messages: '消息', discover: '搭子' },
+    en: { home: 'Home', friends: 'Friends', messages: 'Messages', discover: 'Partners' },
+    ja: { home: 'ホーム', friends: '友達', messages: 'メッセージ', discover: 'パートナー' },
+    ko: { home: '홈', friends: '친구', messages: '메시지', discover: '파트너' },
+    fr: { home: 'Accueil', friends: 'Amis', messages: 'Messages', discover: 'Partenaires' },
+    es: { home: 'Inicio', friends: 'Amigos', messages: 'Mensajes', discover: 'Amigos' },
+    de: { home: 'Start', friends: 'Freunde', messages: 'Nachrichten', discover: 'Partner' }
+  };
+
+  var COMMUNITY_NAV_ITEMS = [
+    { key: 'home',     icon: '🏠', href: '/xuewaiyu/home' },
+    { key: 'friends',  icon: '👥', href: '/xuewaiyu/community-friends.html' },
+    { key: 'messages', icon: '💬', href: '/xuewaiyu/community-messages.html' },
+    { key: 'discover', icon: '🌐', href: '/xuewaiyu/discover.html' }
+  ];
 
   function isValidLang(c) { return !!(c && LANG_NAMES[c]); }
 
@@ -61,6 +92,42 @@
         window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: code } }));
       } catch (e) {}
     }
+  }
+
+  // ===== Phase4: 界面语言读写（独立于学习语言） =====
+  function getUILang() {
+    try {
+      var v = localStorage.getItem(UI_LANG_KEY);
+      if (v && isValidLang(v)) return v;
+    } catch (e) {}
+    // 兜底：浏览器语言 > 学习语言映射 > 英文
+    var navLang = (navigator.language || '').split('-')[0];
+    if (navLang && isValidLang(navLang)) return navLang;
+    var sl = getStudyLang();
+    if (sl === 'zh') return 'zh';
+    return 'en';
+  }
+
+  function setUILang(code) {
+    if (!isValidLang(code)) return;
+    var changed = false;
+    try {
+      var old = getUILang();
+      if (old !== code) changed = true;
+      localStorage.setItem(UI_LANG_KEY, code);
+    } catch (e) {}
+    if (changed) {
+      try {
+        window.dispatchEvent(new CustomEvent('uiLanguageChanged', { detail: { lang: code } }));
+        window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: getStudyLang(), uiLang: code } }));
+      } catch (e) {}
+    }
+  }
+
+  function getNavLabel(key) {
+    var ui = getUILang();
+    var map = NAV_LABELS[ui] || NAV_LABELS['en'];
+    return map[key] || NAV_LABELS['zh'][key] || key;
   }
 
   function getToken() {
@@ -104,8 +171,27 @@
     { key: 'profile',   icon: '👤', label: '我的',   href: '/xuewaiyu/profile.html' }
   ];
 
+  // ===== Stage9 M5: 社群页面检测 =====
+  function isCommunityPage() {
+    var p = location.pathname;
+    return p.indexOf('community-friends') >= 0 ||
+           p.indexOf('community-messages') >= 0 ||
+           p.indexOf('community-groups') >= 0;
+  }
+
+  function getCommunityNavLabel(key) {
+    var ui = getUILang();
+    var map = COMMUNITY_NAV_LABELS[ui] || COMMUNITY_NAV_LABELS['en'];
+    return map[key] || COMMUNITY_NAV_LABELS['zh'][key] || key;
+  }
+
   function detectActive() {
     var p = location.pathname;
+    // Community pages (M5)
+    if (p.indexOf('community-friends') >= 0) return 'friends';
+    if (p.indexOf('community-messages') >= 0) return 'messages';
+    if (p.indexOf('community-groups') >= 0) return 'home'; // groups accessed via home
+    // Global pages
     if (p.indexOf('/home') >= 0 || p.endsWith('home.html')) return 'home';
     if (p.indexOf('learn') >= 0) return 'learn';
     if (p.indexOf('chat') >= 0) return 'chat';
@@ -118,16 +204,19 @@
   }
 
   function renderNav(activeKey) {
+    var inCommunity = isCommunityPage();
+    var items = inCommunity ? COMMUNITY_NAV_ITEMS : NAV_ITEMS;
     var navs = document.querySelectorAll('.bottom-nav');
     for (var n = 0; n < navs.length; n++) {
       var nav = navs[n];
       var html = '';
-      for (var i = 0; i < NAV_ITEMS.length; i++) {
-        var it = NAV_ITEMS[i];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
         var act = (it.key === activeKey) ? ' active' : '';
+        var label = inCommunity ? getCommunityNavLabel(it.key) : getNavLabel(it.key);
         html += '<a class="nav-item' + act + '" href="' + it.href + '">' +
                   '<span class="nav-icon">' + it.icon + '</span>' +
-                  '<span>' + it.label + '</span>' +
+                  '<span>' + label + '</span>' +
                 '</a>';
       }
       nav.innerHTML = html;
@@ -170,7 +259,7 @@
   }
 
   function hasBackAffordance() {
-    return !!document.querySelector('.nav-back,.back-link,.header-back,.back-btn,.chat-back,a[title="返回"],[data-i18n*="back"]');
+    return !!document.querySelector('.nav-back,.back-link,.header-back,.back-btn,.chat-back,.cp-back,a[title="返回"],[data-i18n*="back"]');
   }
 
   function ensureBackBtn() {
@@ -238,17 +327,37 @@
     syncStudyLangFromApi();
   });
 
+  // Stage9 M5: 语言切换时重新渲染导航标签
+  window.addEventListener('languageChanged', function () {
+    renderNav(detectActive());
+  });
+
+  // Stage9 M5: 社群模式公共方法
+  function reloadNav() {
+    renderNav(detectActive());
+  }
+
   window.AILOS = {
     STUDY_KEY: STUDY_KEY,
     LEGACY_KEY: LEGACY_KEY,
+    UI_LANG_KEY: UI_LANG_KEY,
     LANG_NAMES: LANG_NAMES,
     CODE_TO_LABEL: CODE_TO_LABEL,
     LABEL_TO_CODE: LABEL_TO_CODE,
+    NAV_LABELS: NAV_LABELS,
+    COMMUNITY_NAV_LABELS: COMMUNITY_NAV_LABELS,
+    COMMUNITY_NAV_ITEMS: COMMUNITY_NAV_ITEMS,
     getStudyLang: getStudyLang,
     setStudyLang: setStudyLang,
+    getUILang: getUILang,
+    setUILang: setUILang,
+    getNavLabel: getNavLabel,
+    getCommunityNavLabel: getCommunityNavLabel,
     getToken: getToken,
     syncStudyLangFromApi: syncStudyLangFromApi,
     renderNav: renderNav,
+    reloadNav: reloadNav,
+    isCommunityPage: isCommunityPage,
     NAV_ITEMS: NAV_ITEMS
   };
 })();

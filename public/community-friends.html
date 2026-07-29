@@ -329,26 +329,9 @@
   </div>
 </div>
 
-<!-- Community 4-Tab Bottom Nav -->
-<nav class="bottom-nav" id="communityNav">
-  <a class="nav-item" href="/xuewaiyu/home">
-    <span class="nav-icon">🏠</span>
-    <span data-i18n="nav_home">首页</span>
-  </a>
-  <a class="nav-item active" href="/xuewaiyu/community-friends.html">
-    <span class="nav-icon">👥</span>
-    <span data-i18n="nav_friends">好友</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/community-messages.html">
-    <span class="nav-icon">💬</span>
-    <span data-i18n="nav_messages">消息</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/discover.html">
-    <span class="nav-icon">🌐</span>
-    <span data-i18n="nav_discover">搭子</span>
-  </a>
-</nav>
+<!-- Bottom Nav injected by common.js (Stage9 M5: Community 4-Tab) -->
 
+<script src="/xuewaiyu/assets/common.js"></script>
 <script>
 // ===== i18n =====
 var I18N = {
@@ -684,22 +667,7 @@ function init() {
   loadFriends();
   // Listen for language changes
   window.addEventListener('languageChanged', function() {
-    currentLang = detectLang(); updateUI(); initNavI18n();
-  });
-  initNavI18n();
-}
-
-function initNavI18n() {
-  var socialI18n = {
-    zh: { nav_home:'首页',nav_friends:'好友',nav_messages:'消息',nav_discover:'搭子' },
-    en: { nav_home:'Home',nav_friends:'Friends',nav_messages:'Messages',nav_discover:'Partners' },
-    ja: { nav_home:'ホーム',nav_friends:'友達',nav_messages:'メッセージ',nav_discover:'パートナー' },
-    ko: { nav_home:'홈',nav_friends:'친구',nav_messages:'메시지',nav_discover:'파트너' }
-  };
-  var map = socialI18n[currentLang] || socialI18n.zh;
-  document.querySelectorAll('#communityNav [data-i18n]').forEach(function(el) {
-    var k = el.getAttribute('data-i18n');
-    if (map[k]) el.textContent = map[k];
+    currentLang = detectLang(); updateUI();
   });
 }
 
