@@ -8,7 +8,6 @@ const prisma = require('../config/database');
 const logger = require('../utils/logger');
 
 const FREE_DAILY_LIMIT = 50;
-const PREMIUM_DAILY_LIMIT = 200;
 
 class AiQuotaService {
   /**
@@ -27,7 +26,7 @@ class AiQuotaService {
    *   isPremium === false/undefined → FREE_DAILY_LIMIT (50)
    * 当前 User 表无 isPremium 字段，统一返回免费额度
    */
-  async _getDailyLimit(userId) {
+  async _getDailyLimit(_userId) {
     // TODO: const user = await prisma.user.findUnique({ where: { id: userId }, select: { isPremium: true } });
     // TODO: return user?.isPremium ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
     return FREE_DAILY_LIMIT;

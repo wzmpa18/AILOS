@@ -1,14 +1,4 @@
-# ============================================
-# AILOS CI Pipeline
-# 触发: push main / PR main
-# 说明:
-#   - 本仓库 ailos-server 为 NestJS 代码质量门禁项目, 并非生产后端
-#     (生产后端为 xuewaiyu-backend/Express, 由 nginx 手动 SSH 部署, 与本流水线无关)。
-#   - 因此流水线仅保留"可稳定通过"的 Lint 与 Build 两关,
-#     不配置 Docker/生产部署(其目标 /opt/ailos 与真实部署不符, 且无密钥)。
-# ============================================
-
-name: AILOS CI
+name: CI
 
 on:
   push:
@@ -16,61 +6,22 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  NODE_VERSION: '20'
-
 jobs:
-  # ============================================
-  # 代码质量检测 (ESLint + Prettier)
-  # ============================================
   lint:
-    name: Lint & Format
+    name: ESLint Quality Gate
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ailos-server/package-lock.json
-
-      - name: Install dependencies
-        working-directory: ailos-server
-        run: npm ci
-
-      # 非生产质量门禁项目(见文件头说明): lint/format 仅作提示, 不阻断流水线,
-      # 避免 CI 因瞬时网络或格式细节反复发送失败邮件。
-      - name: ESLint
-        working-directory: ailos-server
-        run: npx eslint src/ --ext .ts || true
-
-      - name: Prettier
-        working-directory: ailos-server
-        run: npx prettier --check "src/**/*.ts" || true
-
-  # ============================================
-  # 编译 (仅 TypeScript 编译, 不依赖外部服务)
-  # ============================================
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ailos-server/package-lock.json
-
-      - name: Install dependencies
-        working-directory: ailos-server
-        run: npm ci
-
-      - name: Prisma Generate
-        working-directory: ailos-server
+      - name: Install dependencies (incl. dev for eslint)
+        run: npm install
+      - name: Generate Prisma client
         run: npx prisma generate
-
-      - name: Build
-        working-directory: ailos-server
-        run: npx nest build
+      - name: Lint (block on error)
+        run: npm run lint

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的词汇本 - 言道</title>
+<style>
+:root { --bg:#0f1115; --card:#181b22; --line:#262b36; --txt:#e8eaed; --sub:#9aa3b2; --primary:#4f7cff; --danger:#e5534b; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--txt); min-height:100vh; padding-bottom:40px; }
+.top { display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5; }
+.top a { color:var(--sub); text-decoration:none; font-size:14px; }
+.top h1 { font-size:17px; font-weight:700; flex:1; }
+.wrap { max-width:640px; margin:0 auto; padding:16px; }
+.filter { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.chip { padding:6px 14px; border-radius:16px; border:1px solid var(--line); background:var(--card); color:var(--sub); font-size:13px; cursor:pointer; }
+.chip.on { border-color:var(--primary); color:#fff; background:rgba(79,124,255,.18); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+.card .w { font-size:18px; font-weight:700; }
+.card .r { font-size:13px; color:var(--sub); margin-top:2px; }
+.card .m { font-size:14px; margin-top:4px; }
+.card .lang { font-size:11px; color:var(--sub); border:1px solid var(--line); border-radius:8px; padding:1px 8px; margin-left:8px; }
+.card .del { margin-left:auto; background:none; border:1px solid var(--line); color:var(--danger); border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; flex-shrink:0; }
+.empty { text-align:center; color:var(--sub); padding:60px 0 30px; font-size:14px; line-height:2; }
+.empty a { color:var(--primary); }
+.toast { position:fixed; left:50%; bottom:70px; transform:translateX(-50%); background:#242a35; color:#fff; padding:10px 18px; border-radius:10px; font-size:14px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:99; }
+.toast.show { opacity:1; }
+.count { color:var(--sub); font-size:13px; margin-bottom:10px; }
+</style>
+<script src="/xuewaiyu/assets/devicefp.js"></script>
+</head>
+<body>
+<div class="top">
+  <a href="/xuewaiyu/profile.html">← 返回</a>
+  <h1>📚 我的词汇本</h1>
+</div>
+<div class="wrap">
+  <div class="filter" id="langChips">
+    <span class="chip on" data-lang="">当前语言</span>
+    <span class="chip" data-lang="all">全部语种</span>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function getToken(){try{var t=localStorage.getItem('yandao_token_v1');if(!t){var a=localStorage.getItem('auth_tokens');if(a){try{var p=JSON.parse(a);t=p.accessToken||p.token||a}catch(e){t=a}}}return t;}catch(e){return null;}}
+var TOKEN=getToken();
+if(!TOKEN){location.href='/xuewaiyu/login.html';}
+function api(path,opt){opt=opt||{};opt.headers=Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},opt.headers||{});return fetch('/api'+path,opt).then(function(r){if(r.status===401){location.href='/xuewaiyu/login.html';throw new Error('401');}return r.json();});}
+var toastTimer=null;
+function toast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2200);}
+var LANG_NAMES={ja:'日语',ko:'韩语',en:'英语',fr:'法语',de:'德语',es:'西语',ru:'俄语',th:'泰语',vi:'越南语',zh:'中文'};
+var curLang='';
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function load(){
+  var q=curLang?('?lang='+encodeURIComponent(curLang)):'';
+  api('/vocabulary'+q).then(function(res){
+    var list=document.getElementById('list');
+    if(!res.success){list.innerHTML='<div class="empty">加载失败：'+esc(res.message||(res.error&&res.error.message)||'')+'</div>';return;}
+    var rows=res.data||[];
+    document.getElementById('count').textContent='共 '+rows.length+' 个生词'+(curLang==='all'?'（全部语种）':'（按当前目标语言展示）');
+    if(rows.length===0){
+      list.innerHTML='<div class="empty">词汇本还是空的<br>去 <a href="/xuewaiyu/photo.html">拍照翻译</a> 里点「+ 词汇本」收藏生词吧</div>';
+      return;
+    }
+    list.innerHTML=rows.map(function(w){
+      return '<div class="card" data-id="'+esc(w.id)+'">'
+        +'<div><div class="w">'+esc(w.word)+'<span class="lang">'+esc(LANG_NAMES[w.lang]||w.lang||'')+'</span></div>'
+        +(w.reading?'<div class="r">'+esc(w.reading)+'</div>':'')
+        +(w.meaning?'<div class="m">'+esc(w.meaning)+'</div>':'')
+        +'</div><button class="del">取消收藏</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('.del'),function(btn){
+      btn.onclick=function(){
+        var card=btn.closest('.card');var id=card.getAttribute('data-id');
+        api('/vocabulary/'+encodeURIComponent(id),{method:'DELETE'}).then(function(r){
+          if(r.success){toast('已取消收藏');card.remove();load();}
+          else toast(r.message||'删除失败');
+        });
+      };
+    });
+  }).catch(function(){toast('网络异常');});
+}
+Array.prototype.forEach.call(document.querySelectorAll('#langChips .chip'),function(ch){
+  ch.onclick=function(){
+    document.querySelector('#langChips .chip.on').classList.remove('on');
+    ch.classList.add('on');
+    curLang=ch.getAttribute('data-lang');
+    load();
+  };
+});
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+[adminLogin] body= {"account":"13480010005","password":"Test123456"}
+[adminLogin] status= 200 success= true error= undefined
+{
+ "meta": {
+  "base": "http://localhost:3000/api",
+  "at": "2026-07-28T00:53:54.755Z",
+  "ts": "ms3y0ambyxsb",
+  "summary": {
+   "total": 3,
+   "pass": 3,
+   "fail": 0,
+   "allPass": true
+  }
+ },
+ "cases": {
+  "T-15": {
+   "expect": "普通用户调用所有 /api/admin/* 接口均返回 403",
+   "results": [
+    {
+     "path": "/admin/orders",
+     "method": "GET",
+     "status": 403,
+     "error": "Admin privilege required"
+    },
+    {
+     "path": "/admin/users",
+     "method": "GET",
+     "status": 403,
+     "error": "Admin privilege required"
+    },
+    {
+     "path": "/admin/users/billing",
+     "method": "GET",
+     "status": 403,
+     "error": "Admin privilege required"
+    },
+    {
+     "path": "/admin/operation-logs",
+     "method": "GET",
+     "status": 403,
+     "error": "Admin privilege required"
+    },
+    {
+     "path": "/admin/users/status",
+     "method": "POST",
+     "status": 403,
+     "error": "Admin privilege required"
+    },
+    {
+     "path": "/admin/users/reset-password",
+     "method": "POST",
+     "status": 403,
+     "error": "Admin privilege required"
+    }
+   ],
+   "all403": true,
+   "pass": true
+  },
+  "T-16": {
+   "expect": "未登录访问管理接口返回 401，不暴露后台结构",
+   "meWithoutToken": 401,
+   "meWithoutTokenError": "No token provided",
+   "ordersWithoutToken": 401,
+   "ordersWithoutTokenError": "No token provided",
+   "pass": true
+  },
+  "T-17": {
+   "expect": "adjust/disable/refund 不传 opPassword 均返回 403（二次校验生效，前端弹窗可绕过）",
+   "adjustNoOp": 403,
+   "adjustError": "操作密码错误",
+   "statusNoOp": 403,
+   "statusError": "操作密码错误",
+   "refundNoOp": 403,
+   "refundError": "操作密码错误",
+   "pass": true
+  }
+ }
+}

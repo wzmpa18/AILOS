@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const logger = require('../utils/logger');
+const { getAIGateway } = require('./aiGateway');
 
 const SUPPORTED_LANGUAGES = [
   { code: 'zh-CN', name: '中文', nameEn: 'Chinese', nameLocal: '中文' },
@@ -46,21 +47,38 @@ class LanguageService {
 
   async updateUserLanguages(userId, { nativeLanguage, targetLanguages, interfaceLanguage }) {
     try {
-      if (!nativeLanguage) throw new Error('nativeLanguage is required');
-      if (!targetLanguages || targetLanguages.length === 0) {
-        throw new Error('At least one target language is required');
+      if (!nativeLanguage) {
+        const err = new Error('nativeLanguage is required');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (!Array.isArray(targetLanguages) || targetLanguages.length === 0) {
+        const err = new Error('At least one target language is required');
+        err.statusCode = 400;
+        throw err;
       }
 
       const validCodes = SUPPORTED_LANGUAGES.map((l) => l.code);
       if (!validCodes.includes(nativeLanguage)) {
-        throw new Error(`Invalid native language: ${nativeLanguage}`);
+        const err = new Error(`Invalid native language: ${nativeLanguage}`);
+        err.statusCode = 400;
+        throw err;
       }
       for (const tl of targetLanguages) {
+        if (typeof tl !== 'string') {
+          const err = new Error('targetLanguages 的每个元素必须为字符串');
+          err.statusCode = 400;
+          throw err;
+        }
         if (!validCodes.includes(tl)) {
-          throw new Error(`Invalid target language: ${tl}`);
+          const err = new Error(`Invalid target language: ${tl}`);
+          err.statusCode = 400;
+          throw err;
         }
         if (tl === nativeLanguage) {
-          throw new Error(`Target language cannot be same as native language: ${tl}`);
+          const err = new Error(`Target language cannot be same as native language: ${tl}`);
+          err.statusCode = 400;
+          throw err;
         }
       }
 
@@ -99,20 +117,27 @@ class LanguageService {
           },
           update: {
             status: 'active',
-            priority: i + 1,
+            priority: i,
             level: 'A1',
           },
           create: {
             userId,
             languageCode: targetLanguages[i],
             level: 'A1',
-            priority: i + 1,
+            priority: i,
             status: 'active',
           },
         });
       }
 
       logger.info(`Language preferences updated for user ${userId}: native=${nativeLanguage}, targets=${targetLanguages.join(',')}`);
+
+      // 整改1：语言修改成功后强制清空该用户 AI 响应缓存，避免旧语言缓存命中
+      try {
+        await getAIGateway().clearUserCache(userId);
+      } catch (cacheErr) {
+        logger.warn('LanguageService', 'clearUserCache after language update failed', { error: cacheErr.message });
+      }
 
       return { success: true };
     } catch (error) {

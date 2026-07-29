@@ -246,6 +246,11 @@ class OnboardingService {
         err.status = 400; throw err;
       }
       const level = SELF_LEVEL_INDEX[selfLevel] !== undefined ? selfLevel : 'zero';
+      // 仅保留单一 active 目标语言：先停用其余 active 记录，避免 resolve() findFirst 命中旧语言导致“改了不生效”
+      await prisma.userLearningLanguage.updateMany({
+        where: { userId, status: 'active', NOT: { languageCode } },
+        data: { status: 'inactive' },
+      });
       await prisma.userLearningLanguage.upsert({
         where: { userId_languageCode: { userId, languageCode } },
         update: { level, status: 'active', priority: 0 },
@@ -285,7 +290,7 @@ class OnboardingService {
     await this._saveSession(userId, { languageCode: lang, selfLevel: level, questions, startedAt: new Date().toISOString() });
 
     const clientQuestions = questions.map((q) => {
-      const { correctIndex, ...rest } = q;
+      const { correctIndex: _ci, ...rest } = q;
       return rest;
     });
     return { languageCode: lang, total: clientQuestions.length, questions: clientQuestions };
@@ -536,7 +541,7 @@ class OnboardingService {
     return out;
   }
 
-  async _aiBuildCompanion(userId, description, name, lang) {
+  async _aiBuildCompanion(userId, description, name, _lang) {
     const prompt = `用户想要一个AI学习搭子，描述如下：「${description}」${name ? `，希望名字叫「${name}」` : ''}。
 请根据描述提炼角色设定，返回严格JSON（不要任何多余文字）：
 {"name":"名字","personality":"性格特征(30字内)","voiceStyle":"声音风格(如温柔女声/元气少年音)","catchphrase":"口头禅(一句)","greeting":"角色第一次见面对用户说的话(带人设感,50字内)","avatarEmoji":"一个最符合角色的emoji"}`;

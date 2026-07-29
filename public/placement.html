@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎯 水平测试 · AILOS</title>
+  <style>
+    :root { --primary:#6366f1; --primary-light:#eef2ff; --bg:#f5f6fa; --text:#1f2937; --text-secondary:#6b7280; --border:#e5e7eb; --radius:16px; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:640px; margin:0 auto; padding:20px 16px 90px; }
+    .p-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .p-header .back { font-size:22px; cursor:pointer; text-decoration:none; color:var(--text); }
+    .p-header h1 { font-size:20px; margin:0; }
+    .card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:16px; }
+    .lang-pill { display:inline-block; background:var(--primary-light); color:var(--primary); font-weight:600; padding:4px 12px; border-radius:20px; font-size:13px; margin-bottom:12px; }
+    .q-num { color:var(--text-secondary); font-size:13px; margin-bottom:6px; }
+    .q-text { font-size:16px; font-weight:600; margin-bottom:14px; line-height:1.5; }
+    .opt { display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:10px; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:15px; cursor:pointer; transition:all .15s; }
+    .opt:hover { border-color:var(--primary); }
+    .opt.sel { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .progress { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+    .progress > i { display:block; height:100%; background:var(--primary); transition:width .3s; }
+    .btn-primary { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:16px; font-weight:600; cursor:pointer; }
+    .btn-primary:disabled { opacity:.5; }
+    .btn-secondary { width:100%; padding:14px; background:#fff; color:var(--primary); border:1px solid var(--primary); border-radius:24px; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; }
+    .result-level { font-size:48px; font-weight:800; color:var(--primary); text-align:center; margin:8px 0; }
+    .result-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="p-header">
+      <a class="back" href="/xuewaiyu/home">‹</a>
+      <h1>🎯 <span class="t-page-title">水平测试</span></h1>
+    </div>
+
+    <div class="card" id="introCard">
+      <span class="lang-pill" id="testLangPill">当前学习语言</span>
+      <p style="font-size:14px;color:var(--text-secondary);line-height:1.6" class="t-intro-desc">
+        本测试将评估你的<strong>词汇 / 语法 / 阅读理解</strong>能力，约 1 分钟。
+        完成后会给出近似 CEFR 等级（A1–B2），并可一键设为你的学习语言。
+      </p>
+      <button class="btn-primary t-start-btn" id="startBtn" style="margin-top:14px">开始测试</button>
+    </div>
+
+    <div class="card hidden" id="quizCard">
+      <div class="progress"><i id="progBar" style="width:0%"></i></div>
+      <div class="q-num" id="qNum"></div>
+      <div class="q-text" id="qText"></div>
+      <div id="optBox"></div>
+    </div>
+
+    <div class="card hidden" id="resultCard">
+      <div style="text-align:center;font-size:13px;color:var(--text-secondary)" class="t-result-label">你的近似等级</div>
+      <div class="result-level" id="resLevel">A1</div>
+      <div class="result-desc" id="resDesc"></div>
+      <button class="btn-primary t-apply-btn" id="applyBtn" style="margin-top:16px">设为当前学习语言并去练习</button>
+      <button class="btn-secondary t-retry-btn" id="retryBtn">重新测试</button>
+    </div>
+  </div>
+
+  <script src="/xuewaiyu/assets/common.js?v=phase4_p0"></script>
+  <script>
+    (function () {
+      // ===== Phase4: 7语种 i18n =====
+      var I18N = {
+        zh: {
+          pageTitle: '水平测试',
+          testLang: '测试语言：',
+          introDesc: '本测试将评估你的<strong>词汇 / 语法 / 阅读理解</strong>能力，约 1 分钟。完成后会给出近似 CEFR 等级（A1–B2），并可一键设为你的学习语言。',
+          startBtn: '开始测试',
+          retryBtn: '重新测试',
+          resultLabel: '你的近似等级',
+          applyBtn: '设为当前学习语言并去练习',
+          qNum: function(n,total) { return '第 ' + n + ' / ' + total + ' 题'; },
+          retakenMsg: function(score,total) { return '你已完成过水平测试（答对 ' + score + '/' + total + '），可重新测试或继续。'; },
+          // 等级描述
+          levelB2: '你已具备较强的日常与学术表达能力，可挑战进阶材料。',
+          levelB1: '你能应对熟悉场景的要点交流，建议加强输出练习。',
+          levelA2: '你具备基础交流能力，继续积累词汇与句型即可。',
+          levelA1: '你处于起步阶段，建议从核心词汇与简单句型开始。',
+          scored: function(score,total) { return '（答对 ' + score + '/' + total + '）'; },
+          // 题库
+          questions: [
+            { q: '请选择"学习"对应的正确英文单词：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." 正确填词：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." 正确冠词：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '"他们正在吃饭"的英文是：', opts: ['They eat food.', 'They are eating.', 'They ate.', 'They will eat.'], a: 1 },
+            { q: '"book" 的复数形式是：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: '阅读理解：The sun rises in the east. 太阳从哪边升起？', opts: ['西', '东', '南', '北'], a: 1 }
+          ]
+        },
+        en: {
+          pageTitle: 'Placement Test',
+          testLang: 'Test language: ',
+          introDesc: 'This test evaluates your <strong>vocabulary / grammar / reading comprehension</strong>, ~1 minute. You\'ll get an approximate CEFR level (A1–B2) and can set it as your study language.',
+          startBtn: 'Start Test',
+          retryBtn: 'Retake Test',
+          resultLabel: 'Your Estimated Level',
+          applyBtn: 'Set as study language & start learning',
+          qNum: function(n,total) { return 'Q' + n + ' / ' + total; },
+          retakenMsg: function(score,total) { return 'You have taken this test before (' + score + '/' + total + ' correct). Retake or continue.'; },
+          levelB2: 'You have strong daily and academic expression ability. Ready for advanced materials.',
+          levelB1: 'You can handle key points in familiar scenarios. Strengthen output practice.',
+          levelA2: 'You have basic communication ability. Continue building vocabulary and patterns.',
+          levelA1: 'You are at the starting stage. Begin with core vocabulary and simple sentence patterns.',
+          scored: function(score,total) { return ' (Scored ' + score + '/' + total + ')'; },
+          questions: [
+            { q: 'Choose the correct word for "study":', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." Fill in:', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." Choose the article:', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '"They are eating" in Chinese means:', opts: ['他们吃完了。', '他们正在吃饭。', '他们吃了。', '他们会吃的。'], a: 1 },
+            { q: 'Plural form of "book":', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: 'Reading: The sun rises in the east. Where does the sun rise?', opts: ['West', 'East', 'South', 'North'], a: 1 }
+          ]
+        },
+        ja: {
+          pageTitle: 'レベルテスト',
+          testLang: 'テスト言語：',
+          introDesc: 'このテストは<strong>語彙・文法・読解力</strong>を約1分で評価します。CEFRレベル（A1–B2）の目安が表示され、学習言語として設定できます。',
+          startBtn: 'テスト開始',
+          retryBtn: '再テスト',
+          resultLabel: '推定レベル',
+          applyBtn: '学習言語に設定して学習開始',
+          qNum: function(n,total) { return '第' + n + '問 / 全' + total + '問'; },
+          retakenMsg: function(score,total) { return 'テスト済みです（' + score + '/' + total + ' 正解）。再テストまたは続行できます。'; },
+          levelB2: '日常・学術的な表現力が十分にあります。上級教材に挑戦できます。',
+          levelB1: '身近な場面での要点を理解できます。アウトプット練習を強化しましょう。',
+          levelA2: '基本的なコミュニケーション力があります。語彙と文型をさらに増やしましょう。',
+          levelA1: '初期段階です。中核語彙と簡単な文型から始めましょう。',
+          scored: function(score,total) { return '（' + score + '/' + total + ' 正解）'; },
+          questions: [
+            { q: '「勉強」に対応する正しい英単語を選んでください：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." に入る語：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." 正しい冠詞は：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '「彼らは食事中です」の英訳は：', opts: ['They eat food.', 'They are eating.', 'They ate.', 'They will eat.'], a: 1 },
+            { q: '"book" の複数形は：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: '読解：The sun rises in the east. 太陽はどちらから昇りますか？', opts: ['西', '東', '南', '北'], a: 1 }
+          ]
+        },
+        ko: {
+          pageTitle: '레벨 테스트',
+          testLang: '테스트 언어：',
+          introDesc: '이 테스트는 <strong>어휘・문법・독해력</strong>을 약 1분 동안 평가합니다. CEFR 레벨(A1–B2) 근사치가 표시되며 학습 언어로 설정할 수 있습니다.',
+          startBtn: '테스트 시작',
+          retryBtn: '재테스트',
+          resultLabel: '추정 레벨',
+          applyBtn: '학습 언어로 설정하고 학습 시작',
+          qNum: function(n,total) { return '제' + n + '문 / 총' + total + '문'; },
+          retakenMsg: function(score,total) { return '테스트를 완료했습니다（' + score + '/' + total + ' 정답）. 재테스트 또는 계속할 수 있습니다.'; },
+          levelB2: '일상 및 학술적 표현 능력이 충분합니다. 상급 자료에 도전할 수 있습니다.',
+          levelB1: '익숙한 상황의 요점을 이해할 수 있습니다. 출력 연습을 강화하세요.',
+          levelA2: '기본적인 의사소통 능력이 있습니다. 어휘와 문형을 계속 쌓으세요.',
+          levelA1: '초기 단계입니다. 핵심 어휘와 간단한 문형부터 시작하세요.',
+          scored: function(score,total) { return '（' + score + '/' + total + ' 정답）'; },
+          questions: [
+            { q: '"공부"에 해당하는 올바른 영어 단어를 고르세요：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." 빈칸에 들어갈 말：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." 올바른 관사는：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '「그들은 식사 중입니다」의 영문은：', opts: ['They eat food.', 'They are eating.', 'They ate.', 'They will eat.'], a: 1 },
+            { q: '"book"의 복수형：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: '독해：The sun rises in the east. 해는 어디에서 뜨나요？', opts: ['서쪽', '동쪽', '남쪽', '북쪽'], a: 1 }
+          ]
+        },
+        fr: {
+          pageTitle: 'Test de niveau',
+          testLang: 'Langue du test : ',
+          introDesc: 'Ce test évalue votre <strong>vocabulaire / grammaire / compréhension écrite</strong>, ~1 min. Niveau CEFR approximatif (A1–B2) et possibilité de le définir comme langue d\'étude.',
+          startBtn: 'Commencer le test',
+          retryBtn: 'Refaire le test',
+          resultLabel: 'Votre niveau estimé',
+          applyBtn: 'Définir comme langue d\'étude',
+          qNum: function(n,total) { return 'Q' + n + ' / ' + total; },
+          retakenMsg: function(score,total) { return 'Vous avez déjà passé ce test (' + score + '/' + total + ' corrects). Refaire ou continuer.'; },
+          levelB2: 'Vous avez une forte capacité d\'expression quotidienne et académique. Prêt pour le matériel avancé.',
+          levelB1: 'Vous gérez les points clés dans des scénarios familiers. Renforcez la pratique de production.',
+          levelA2: 'Vous avez une capacité de communication de base. Continuez à enrichir vocabulaire et structures.',
+          levelA1: 'Vous débutez. Commencez par le vocabulaire de base et les phrases simples.',
+          scored: function(score,total) { return ' (' + score + '/' + total + ' corrects)'; },
+          questions: [
+            { q: 'Choisissez le mot correct pour "étudier"：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." Complétez：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." Choisissez l\'article：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '"They are eating" signifie en français：', opts: ['Ils mangent de la nourriture.', 'Ils sont en train de manger.', 'Ils ont mangé.', 'Ils mangeront.'], a: 1 },
+            { q: 'Pluriel de "book"：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: 'Lecture : The sun rises in the east. Où le soleil se lève-t-il ?', opts: ['Ouest', 'Est', 'Sud', 'Nord'], a: 1 }
+          ]
+        },
+        es: {
+          pageTitle: 'Prueba de nivel',
+          testLang: 'Idioma de prueba: ',
+          introDesc: 'Esta prueba evalúa tu <strong>vocabulario / gramática / comprensión lectora</strong>, ~1 minuto. Obtendrás un nivel CEFR aproximado (A1–B2) y podrás establecerlo como idioma de estudio.',
+          startBtn: 'Iniciar prueba',
+          retryBtn: 'Repetir prueba',
+          resultLabel: 'Tu nivel estimado',
+          applyBtn: 'Establecer como idioma de estudio',
+          qNum: function(n,total) { return 'P' + n + ' / ' + total; },
+          retakenMsg: function(score,total) { return 'Ya has realizado esta prueba (' + score + '/' + total + ' aciertos). Repetir o continuar.'; },
+          levelB2: 'Tienes una fuerte capacidad de expresión diaria y académica. Listo para materiales avanzados.',
+          levelB1: 'Manejas puntos clave en escenarios familiares. Refuerza la práctica de producción.',
+          levelA2: 'Tienes capacidad de comunicación básica. Continúa ampliando vocabulario y estructuras.',
+          levelA1: 'Estás comenzando. Empieza con vocabulario básico y frases simples.',
+          scored: function(score,total) { return ' (' + score + '/' + total + ' aciertos)'; },
+          questions: [
+            { q: 'Elige la palabra correcta para "estudiar"：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." Completa：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." Elige el artículo：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '"They are eating" en español significa：', opts: ['Ellos comen comida.', 'Ellos están comiendo.', 'Ellos comieron.', 'Ellos comerán.'], a: 1 },
+            { q: 'Plural de "book"：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: 'Lectura: The sun rises in the east. ¿Por dónde sale el sol?', opts: ['Oeste', 'Este', 'Sur', 'Norte'], a: 1 }
+          ]
+        },
+        de: {
+          pageTitle: 'Einstufungstest',
+          testLang: 'Testsprache: ',
+          introDesc: 'Dieser Test bewertet Ihren <strong>Wortschatz / Grammatik / Leseverständnis</strong>, ~1 Minute. CEFR-Niveau (A1–B2) und als Lernsprache festlegbar.',
+          startBtn: 'Test starten',
+          retryBtn: 'Test wiederholen',
+          resultLabel: 'Ihr geschätztes Niveau',
+          applyBtn: 'Als Lernsprache festlegen',
+          qNum: function(n,total) { return 'F' + n + ' / ' + total; },
+          retakenMsg: function(score,total) { return 'Sie haben diesen Test bereits absolviert (' + score + '/' + total + ' richtig). Wiederholen oder fortsetzen.'; },
+          levelB2: 'Sie haben starke Alltags- und akademische Ausdrucksfähigkeit. Bereit für fortgeschrittenes Material.',
+          levelB1: 'Sie verstehen Kernpunkte in vertrauten Situationen. Verstärken Sie die aktive Übung.',
+          levelA2: 'Sie haben grundlegende Kommunikationsfähigkeit. Erweitern Sie Wortschatz und Satzmuster.',
+          levelA1: 'Sie sind am Anfang. Beginnen Sie mit Kernwortschatz und einfachen Satzmustern.',
+          scored: function(score,total) { return ' (' + score + '/' + total + ' richtig)'; },
+          questions: [
+            { q: 'Wählen Sie das richtige Wort für "lernen"：', opts: ['study', 'sleep', 'eat', 'run'], a: 0 },
+            { q: '"He ___ to school every day." Ergänzen Sie：', opts: ['go', 'goes', 'going', 'gone'], a: 1 },
+            { q: '"I have ___ apple." Wählen Sie den Artikel：', opts: ['a', 'an', 'the', '/'], a: 1 },
+            { q: '"They are eating" bedeutet auf Deutsch：', opts: ['Sie essen Essen.', 'Sie essen gerade.', 'Sie haben gegessen.', 'Sie werden essen.'], a: 1 },
+            { q: 'Plural von "book"：', opts: ['books', 'bookes', 'booken', 'book'], a: 0 },
+            { q: 'Leseverständnis: The sun rises in the east. Wo geht die Sonne auf?', opts: ['Westen', 'Osten', 'Süden', 'Norden'], a: 1 }
+          ]
+        }
+      };
+
+      var uiLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : 'zh';
+      var lang = (window.AILOS ? AILOS.getStudyLang() : 'en');
+
+      function t(key) {
+        return (I18N[uiLang] && I18N[uiLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key;
+      }
+
+      function applyUIText() {
+        var map = [
+          ['.t-page-title', 'pageTitle'],
+          ['.t-intro-desc', 'introDesc'],
+          ['.t-start-btn', 'startBtn'],
+          ['.t-retry-btn', 'retryBtn'],
+          ['.t-result-label', 'resultLabel'],
+          ['.t-apply-btn', 'applyBtn']
+        ];
+        map.forEach(function(item) {
+          var el = document.querySelector(item[0]);
+          if (el) {
+            var val = I18N[uiLang] && I18N[uiLang][item[1]];
+            if (val && item[1] === 'introDesc') el.innerHTML = val;
+            else if (val) el.textContent = val;
+          }
+        });
+        // Update lang pill
+        var langName = (window.AILOS ? AILOS.LANG_NAMES[lang] : lang);
+        document.getElementById('testLangPill').textContent = (I18N[uiLang] && I18N[uiLang].testLang || '测试语言：') + langName;
+        // Update title
+        document.title = '🎯 ' + (I18N[uiLang] && I18N[uiLang].pageTitle || '水平测试') + ' · AILOS';
+      }
+
+      applyUIText();
+
+      // Get current i18n bundle
+      var i18n = I18N[uiLang] || I18N['zh'];
+      var QUESTIONS = i18n.questions;
+
+      var idx = 0, score = 0;
+      var intro = document.getElementById('introCard');
+      var quiz = document.getElementById('quizCard');
+      var result = document.getElementById('resultCard');
+      var testDone = false;
+
+      document.getElementById('startBtn').onclick = function () {
+        intro.classList.add('hidden'); quiz.classList.remove('hidden');
+        render();
+      };
+      document.getElementById('retryBtn').onclick = function () {
+        idx = 0; score = 0; testDone = false;
+        result.classList.add('hidden'); intro.classList.remove('hidden');
+        // Re-apply i18n since page context may have changed
+        applyUIText();
+      };
+
+      function saveProgress(level, lang) {
+        var token = (window.AILOS && window.AILOS.getToken) ? window.AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+        if (!token) return;
+        fetch('/api/user/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ language: lang, level: level })
+        }).catch(function () {});
+        // Also save user level to learning profile
+        fetch('/api/user/languages', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ language: lang, level: level })
+        }).catch(function () {});
+      }
+
+      document.getElementById('applyBtn').onclick = function () {
+        try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
+        var token = (window.AILOS && window.AILOS.getToken) ? window.AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+        if (token) {
+          var lvl = document.getElementById('resLevel').textContent || 'A1';
+          try {
+            fetch('/api/blueprint/course?language=' + encodeURIComponent(lang) + '&level=' + encodeURIComponent(lvl), {
+              method: 'GET',
+              headers: { 'Authorization': 'Bearer ' + token }
+            }).catch(function () {});
+          } catch (e) {}
+        }
+        location.href = '/xuewaiyu/learn.html';
+      };
+
+      // REQ-04: 已有定级则展示结果
+      try {
+        var prevAssess = localStorage.getItem('yandao_level_assessment');
+        if (prevAssess) {
+          var pa = JSON.parse(prevAssess);
+          if (pa && pa.level) {
+            intro.classList.add('hidden');
+            result.classList.remove('hidden');
+            document.getElementById('resLevel').textContent = pa.level;
+            document.getElementById('resDesc').textContent = i18n.retakenMsg(pa.score || '?', QUESTIONS.length);
+            document.getElementById('startBtn').textContent = i18n.retryBtn;
+          }
+        }
+      } catch (e) {}
+
+      function render() {
+        var item = QUESTIONS[idx];
+        document.getElementById('qNum').textContent = i18n.qNum(idx + 1, QUESTIONS.length);
+        document.getElementById('qText').textContent = item.q;
+        document.getElementById('progBar').style.width = (idx / QUESTIONS.length * 100) + '%';
+        var box = document.getElementById('optBox'); box.innerHTML = '';
+        item.opts.forEach(function (opt, i) {
+          var b = document.createElement('button');
+          b.className = 'opt'; b.textContent = opt;
+          b.onclick = function () {
+            if (i === item.a) score++;
+            idx++;
+            if (idx < QUESTIONS.length) render(); else finish();
+          };
+          box.appendChild(b);
+        });
+      }
+
+      function finish() {
+        document.getElementById('progBar').style.width = '100%';
+        quiz.classList.add('hidden'); result.classList.remove('hidden');
+        testDone = true;
+        var ratio = score / QUESTIONS.length;
+        var level, desc;
+        if (ratio >= 0.85) { level = 'B2'; desc = i18n.levelB2; }
+        else if (ratio >= 0.65) { level = 'B1'; desc = i18n.levelB1; }
+        else if (ratio >= 0.4) { level = 'A2'; desc = i18n.levelA2; }
+        else { level = 'A1'; desc = i18n.levelA1; }
+        document.getElementById('resLevel').textContent = level;
+        document.getElementById('resDesc').textContent = desc + i18n.scored(score, QUESTIONS.length);
+        try { localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: lang, level: level, score: score, at: Date.now() })); } catch (e) {}
+        saveProgress(level, lang);
+      }
+
+      // Phase4: languageChanged listener
+      window.addEventListener('languageChanged', function(e) {
+        var newUiLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : uiLang;
+        var newStudyLang = (window.AILOS ? AILOS.getStudyLang() : lang);
+        if (newUiLang !== uiLang || newStudyLang !== lang) {
+          uiLang = newUiLang;
+          lang = newStudyLang;
+          i18n = I18N[uiLang] || I18N['zh'];
+          QUESTIONS = i18n.questions;
+          applyUIText();
+          // If on intro screen, update button text
+          document.getElementById('startBtn').textContent = i18n.startBtn;
+          // If on result screen, rebuild descriptions
+          if (testDone) {
+            var lvl = document.getElementById('resLevel').textContent;
+            var key = 'level' + lvl;
+            if (i18n[key]) {
+              document.getElementById('resDesc').textContent = i18n[key] + i18n.scored(score, QUESTIONS.length);
+            }
+            document.getElementById('applyBtn').textContent = i18n.applyBtn;
+            document.getElementById('retryBtn').textContent = i18n.retryBtn;
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

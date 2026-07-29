@@ -1,61 +1,66 @@
 {
-    "name": "xuewaiyu-app",
-    "version": "1.0.0",
-    "description": "言道学外语APP - 多语种学习商用级全栈应用",
-    "main": "src/server/index.js",
-    "scripts": {
-        "dev": "NODE_ENV=development nodemon src/server/index.js",
-        "start": "NODE_ENV=production node src/server/index.js",
-        "test": "NODE_ENV=test jest",
-        "build": "webpack --mode production",
-        "migrate": "prisma migrate dev",
-        "migrate:deploy": "prisma migrate deploy",
-        "seed": "node src/database/seed.js",
-        "start:v2": "NODE_ENV=production node server.js",
-        "dev:v2": "NODE_ENV=development nodemon server.js"
-    },
-    "keywords": [
-        "language-learning",
-        "education",
-        "multilingual"
-    ],
-    "author": "言道学外语",
-    "license": "PROPRIETARY",
-    "dependencies": {
-        "@prisma/client": "^5.2.0",
-        "axios": "^1.18.1",
-        "bcryptjs": "^2.4.3",
-        "compression": "^1.7.4",
-        "cors": "^2.8.5",
-        "dotenv": "^16.3.1",
-        "express": "^4.18.2",
-        "express-rate-limit": "^6.10.0",
-        "express-validator": "^7.0.1",
-        "helmet": "^7.0.0",
-        "ioredis": "^5.3.2",
-        "joi": "^17.10.0",
-        "jsonwebtoken": "^9.0.2",
-        "morgan": "^1.11.0",
-        "multer": "^1.4.5-lts.1",
-        "node-cron": "^3.0.2",
-        "pg": "^8.11.3",
-        "prisma": "^5.2.0",
-        "redis": "^4.6.7",
-        "socket.io": "^4.7.2",
-        "tencentcloud-sdk-nodejs-ses": "^4.1.271",
-        "tencentcloud-sdk-nodejs-sms": "^4.1.240",
-        "uuid": "^9.0.0",
-        "winston": "^3.10.0"
-    },
-    "devDependencies": {
-        "jest": "^29.6.4",
-        "nodemon": "^3.0.1",
-        "supertest": "^6.3.3",
-        "webpack": "^5.88.2",
-        "webpack-cli": "^5.1.4"
-    },
-    "engines": {
-        "node": ">=18.0.0",
-        "npm": ">=9.0.0"
-    }
+  "name": "xuewaiyu-app",
+  "version": "1.0.0",
+  "description": "言道学外语APP - 多语种学习商用级全栈应用",
+  "main": "src/server/index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon src/server/index.js",
+    "start": "NODE_ENV=production node src/server/index.js",
+    "test": "NODE_ENV=test jest",
+    "build": "webpack --mode production",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node src/database/seed.js",
+    "start:v2": "NODE_ENV=production node server.js",
+    "dev:v2": "NODE_ENV=development nodemon server.js",
+    "lint": "eslint \"src/**/*.js\"",
+    "lint:fix": "eslint --fix \"src/**/*.js\""
+  },
+  "keywords": [
+    "language-learning",
+    "education",
+    "multilingual"
+  ],
+  "author": "言道学外语",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "@prisma/client": "^5.2.0",
+    "axios": "^1.18.1",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "ioredis": "^5.3.2",
+    "joi": "^17.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.11.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.2",
+    "pg": "^8.11.3",
+    "prisma": "^5.2.0",
+    "redis": "^4.6.7",
+    "socket.io": "^4.7.2",
+    "tencentcloud-sdk-nodejs-ses": "^4.1.271",
+    "tencentcloud-sdk-nodejs-sms": "^4.1.240",
+    "uuid": "^9.0.0",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "eslint": "8.57.1",
+    "prettier": "^3.3.3",
+    "eslint-config-prettier": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
 }

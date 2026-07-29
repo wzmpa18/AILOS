@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AILOS - Invite</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:20px;padding:40px 30px;text-align:center;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.card-icon{font-size:64px;margin-bottom:16px}
+.card-title{font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:8px}
+.card-sub{font-size:14px;color:#666;margin-bottom:24px;line-height:1.6}
+.code-box{background:#f0f0ff;border-radius:12px;padding:16px;margin-bottom:20px}
+.code{font-size:28px;font-weight:700;letter-spacing:6px;color:#667eea;font-family:monospace}
+.btn{display:inline-block;padding:12px 32px;border-radius:25px;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;transition:all .2s}
+.btn-primary{background:#667eea;color:#fff;border:none;margin:4px}
+.btn-primary:hover{background:#5a6fd6;transform:translateY(-1px)}
+.footer{font-size:12px;color:#999;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="card-icon">🎁</div>
+<div class="card-title" id="title">你被邀请加入 AILOS！</div>
+<div class="card-sub" id="sub">你的好友邀请你一起开启多语言学习之旅。加入即可获得 7 天 VIP 会员奖励！</div>
+<div class="code-box"><div class="code" id="inviteCode">---</div></div>
+<a class="btn btn-primary" href="/xuewaiyu/register.html">立即加入</a>
+<div class="footer">AILOS - AI Language Learning Platform</div>
+</div>
+<script>
+(function(){
+var params = new URLSearchParams(window.location.search);
+var code = params.get('code');
+if (code) {
+document.getElementById('inviteCode').textContent = code.toUpperCase();
+}
+})();
+</script>
+</body>
+</html>

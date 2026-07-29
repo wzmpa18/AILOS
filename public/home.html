@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="theme-color" content="#4F46E5">
+  <title>AILOS - 学习驾驶舱</title>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #EEF2FF;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --bg: #F3F4F6;
+      --card-bg: #FFFFFF;
+      --text: #111827;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --border: #E5E7EB;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+      --nav-height: 64px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: calc(var(--nav-height) + 20px);
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .bottom-nav .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      min-width: 56px;
+    }
+    .bottom-nav .nav-item .nav-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .bottom-nav .nav-item.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .bottom-nav .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 24px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 0 0 3px 3px;
+    }
+    .bottom-nav .nav-item {
+      position: relative;
+      padding-top: 10px;
+    }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0; margin-bottom: 20px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #818CF8);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 20px; font-weight: 600;
+    }
+    .greeting h2 { font-size: 20px; font-weight: 700; }
+    .greeting p { font-size: 13px; color: var(--text-secondary); }
+    .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+      padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--card-bg); font-size: 12px; cursor: pointer;
+      color: var(--text-secondary); transition: all 0.2s;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 18px;
+      box-shadow: var(--shadow); text-align: center;
+    }
+    .stat-icon { font-size: 24px; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: var(--card-bg); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 15px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+
+    /* Ability Radar */
+    .radar-container { display: flex; justify-content: center; }
+    .radar-svg { width: 100%; max-width: 280px; height: auto; }
+
+    /* Language List */
+    .lang-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .lang-item:last-child { border-bottom: none; }
+    .lang-info { flex: 1; }
+    .lang-name { font-size: 14px; font-weight: 600; }
+    .lang-level { font-size: 12px; color: var(--text-secondary); }
+    .lang-streak { font-size: 12px; color: var(--warning); font-weight: 500; }
+    .progress-bar {
+      width: 100%; height: 6px; background: var(--border);
+      border-radius: 3px; margin-top: 6px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--primary), #818CF8);
+      transition: width 0.6s ease;
+    }
+
+    /* Activity Timeline */
+    .activity-item {
+      display: flex; gap: 12px; padding: 10px 0;
+      border-left: 2px solid var(--border); padding-left: 16px;
+      position: relative;
+    }
+    .activity-item::before {
+      content: ''; position: absolute; left: -5px; top: 14px;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+    }
+    .activity-content { flex: 1; }
+    .activity-label { font-size: 13px; font-weight: 500; }
+    .activity-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .activity-language {
+      font-size: 11px; background: var(--primary-light); color: var(--primary);
+      padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* Goals */
+    .goal-item {
+      padding: 12px; background: var(--bg); border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .goal-header { display: flex; justify-content: space-between; align-items: center; }
+    .goal-type { font-size: 13px; font-weight: 600; }
+    .goal-deadline { font-size: 11px; color: var(--text-muted); }
+    .goal-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Weekly Chart */
+    .chart-container { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 10px; }
+    .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+    .chart-bar {
+      width: 100%; max-width: 40px; border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--primary), #818CF8);
+      margin-top: auto; transition: height 0.5s ease;
+    }
+    .chart-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Highlights */
+    .highlight-item {
+      padding: 10px 12px; background: var(--primary-light);
+      border-radius: var(--radius-sm); margin-bottom: 8px;
+      font-size: 13px; border-left: 3px solid var(--primary);
+    }
+    .highlight-type { font-size: 11px; color: var(--primary); font-weight: 500; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error-state {
+      text-align: center; padding: 40px 20px; color: var(--danger);
+    }
+    .error-state button {
+      margin-top: 12px; padding: 10px 24px; background: var(--primary);
+      color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 14px;
+    }
+
+    /* AI Quota Card */
+    .ai-quota-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:20px;color:white;margin-bottom:20px;box-shadow:0 4px 15px rgba(102,126,234,0.3)}
+    .ai-quota-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .ai-quota-title{font-size:14px;font-weight:600;opacity:0.9}
+    .ai-quota-icon{font-size:20px}
+    .ai-quota-numbers{display:flex;align-items:baseline;gap:4px;margin-bottom:8px}
+    .ai-quota-remaining{font-size:32px;font-weight:700}
+    .ai-quota-total{font-size:14px;opacity:0.8}
+    .ai-quota-bar{height:6px;background:rgba(255,255,255,0.25);border-radius:3px;overflow:hidden;margin-bottom:8px}
+    .ai-quota-fill{height:100%;background:rgba(255,255,255,0.9);border-radius:3px;transition:width 0.5s ease}
+    .ai-quota-reset{font-size:11px;opacity:0.75}
+    .ai-quota-upgrade{display:inline-block;margin-top:10px;padding:6px 14px;background:rgba(255,255,255,0.2);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.3);transition:all 0.2s}
+    .ai-quota-exhausted{background:linear-gradient(135deg,#e53e3e 0%,#c53030 100%)!important}
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js?v=phase4_p0"></script>
+
+  <div class="ai-quota-card" id="aiQuotaCard">
+    <div class="ai-quota-header"><span class="ai-quota-title">今日AI额度</span><span class="ai-quota-icon">🤖</span></div>
+    <div class="ai-quota-numbers"><span class="ai-quota-remaining" id="homeQuotaRemaining">-</span><span class="ai-quota-total" id="homeQuotaTotal">/ - 次对话</span></div>
+    <div class="ai-quota-bar"><div class="ai-quota-fill" id="homeQuotaFill" style="width:100%"></div></div>
+    <div class="ai-quota-reset" id="homeQuotaReset">00:00 自动重置</div>
+    <div class="ai-quota-upgrade" id="homeQuotaUpgrade" style="display:none" onclick="window.location.href='/xuewaiyu/growth-center.html'">升级会员获取更多额度</div>
+  </div>
+
+  <!-- 水平测试入口 (F3) -->
+  <div class="card" style="margin-bottom:20px;border-left:4px solid var(--primary)">
+    <div class="card-header"><span class="icon">🎯</span><span>水平测试</span></div>
+    <p style="font-size:13px;color:var(--text-secondary);margin:6px 0 12px">测一测你当前的学习语言能力，获得定制学习建议与等级。<span id="homeStudyLang" style="font-weight:600;color:var(--primary)"></span></p>
+    <button onclick="location.href='/xuewaiyu/placement.html'" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">开始水平测试</button>
+  </div>
+  <script>
+    try { var _sl = (window.AILOS ? AILOS.getStudyLang() : 'en'); var _nm = (window.AILOS ? AILOS.LANG_NAMES[_sl] : _sl); var _el = document.getElementById('homeStudyLang'); if (_el && _nm) _el.textContent = '（当前学习语言：' + _nm + '）'; } catch(e){}
+  </script>
+
+  <!-- 快捷入口 (Phase4: 重排序 + 新增实时翻译入口) -->
+  <div class="container" style="padding-bottom:0">
+    <div class="card-header" style="margin-bottom:10px"><span class="icon">⚡</span><span class="quick-header-label">快捷入口</span></div>
+    <div class="quick-grid" id="quickGrid">
+      <a class="quick-item" href="/xuewaiyu/translate.html"><span class="quick-icon">🌐</span><span class="quick-label">实时翻译</span></a>
+      <a class="quick-item" href="/xuewaiyu/speaking.html"><span class="quick-icon">🗣️</span><span class="quick-label">口语速成</span></a>
+      <a class="quick-item" href="/xuewaiyu/sentences.html"><span class="quick-icon">📝</span><span class="quick-label">句库</span></a>
+      <a class="quick-item" href="/xuewaiyu/notebook.html"><span class="quick-icon">📖</span><span class="quick-label">错题本</span></a>
+      <a class="quick-item" href="/xuewaiyu/messages.html"><span class="quick-icon">💌</span><span class="quick-label">消息</span></a>
+      <a class="quick-item" href="/xuewaiyu/vip.html"><span class="quick-icon">👑</span><span class="quick-label">会员</span></a>
+      <a class="quick-item" href="/xuewaiyu/games.html"><span class="quick-icon">🎮</span><span class="quick-label">游戏中心</span></a>
+    </div>
+  </div>
+
+  <style>
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .quick-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; background: var(--card-bg); border-radius: var(--radius-sm); text-decoration: none; color: var(--text); box-shadow: var(--shadow); transition: all .2s; }
+    .quick-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .quick-icon { font-size: 28px; line-height: 1; }
+    .quick-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    @media (max-width: 480px) { .quick-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+  </style>
+
+  <div class="container" id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p id="loading-text">正在加载你的学习面板...</p>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a class="nav-item active" href="/xuewaiyu/home">
+      <span class="nav-icon">🏠</span>
+      <span>首页</span>
+    </a>
+    <a class="nav-item" href="/xuewaiyu/learn.html">
+      <span class="nav-icon">📚</span>
+      <span>学习</span>
+    </a>
+    <a class="nav-item" href="/xuewaiyu/chat.html">
+      <span class="nav-icon">💬</span>
+      <span>AI对话</span>
+    </a>
+    <a class="nav-item" href="/xuewaiyu/review.html">
+      <span class="nav-icon">🔄</span>
+      <span>复习</span>
+    </a>
+    <a class="nav-item" href="/xuewaiyu/profile.html">
+      <span class="nav-icon">👤</span>
+      <span>我的</span>
+    </a>
+  </nav>
+
+  <script>
+    // ============ GLOI i18n ============
+    const i18n = {
+      zh: {
+        loading: '正在加载你的学习面板...',
+        dashboard: '学习面板',
+        welcome: '欢迎回来',
+        todayStats: '今日学习',
+        wordsLearned: '单词学习',
+        lessonsDone: '课程完成',
+        studyTime: '学习时长',
+        quizzesTaken: '测验完成',
+        min: '分钟',
+        abilityModel: '能力模型',
+        myLanguages: '我的语言',
+        dayStreak: '天连续',
+        recentActivity: '最近活动',
+        activeGoals: '学习目标',
+        weeklyStats: '本周学习',
+        highlights: '学习亮点',
+        noData: '开始你的第一堂课吧！',
+        noActivity: '暂无学习记录',
+        noGoals: '还没有学习目标',
+        error: '加载失败',
+        retry: '重试',
+        grammar: '语法',
+        vocabulary: '词汇',
+        listening: '听力',
+        speaking: '口语',
+        reading: '阅读',
+        writing: '写作',
+        overallLevel: '综合水平',
+        strengths: '优势',
+        weaknesses: '薄弱项',
+        events: '次活动',
+        aiQuota: 'AI额度',
+        checkInStreak: '连续打卡',
+        todayCheckedIn: '今日已打卡',
+        checkInNow: '打卡',
+        logout: '退出',
+      },
+      en: {
+        loading: 'Loading your dashboard...',
+        dashboard: 'Dashboard',
+        welcome: 'Welcome back',
+        todayStats: "Today's Study",
+        wordsLearned: 'Words Learned',
+        lessonsDone: 'Lessons Done',
+        studyTime: 'Study Time',
+        quizzesTaken: 'Quizzes Taken',
+        min: 'min',
+        abilityModel: 'Ability Model',
+        myLanguages: 'My Languages',
+        dayStreak: 'day streak',
+        recentActivity: 'Recent Activity',
+        activeGoals: 'Learning Goals',
+        weeklyStats: 'This Week',
+        highlights: 'Highlights',
+        noData: 'Start your first lesson!',
+        noActivity: 'No activity yet',
+        noGoals: 'No learning goals yet',
+        error: 'Failed to load',
+        retry: 'Retry',
+        grammar: 'Grammar',
+        vocabulary: 'Vocabulary',
+        listening: 'Listening',
+        speaking: 'Speaking',
+        reading: 'Reading',
+        writing: 'Writing',
+        overallLevel: 'Overall Level',
+        strengths: 'Strengths',
+        weaknesses: 'Weaknesses',
+        events: 'events',
+        aiQuota: 'AI Quota',
+        checkInStreak: 'Check-in Streak',
+        todayCheckedIn: 'Checked In Today',
+        checkInNow: 'Check In',
+        logout: 'Logout',
+      },
+      ja: {
+        loading: 'ダッシュボードを読み込み中...',
+        dashboard: 'ダッシュボード',
+        welcome: 'おかえりなさい',
+        todayStats: '今日の学習',
+        wordsLearned: '学習単語',
+        lessonsDone: '完了レッスン',
+        studyTime: '学習時間',
+        quizzesTaken: 'クイズ完了',
+        min: '分',
+        abilityModel: '能力モデル',
+        myLanguages: '学習言語',
+        dayStreak: '日連続',
+        recentActivity: '最近の活動',
+        activeGoals: '学習目標',
+        weeklyStats: '今週の学習',
+        highlights: 'ハイライト',
+        noData: '最初のレッスンを始めましょう！',
+        noActivity: 'まだ活動記録がありません',
+        noGoals: '学習目標はまだありません',
+        error: '読み込みに失敗しました',
+        retry: '再試行',
+        grammar: '文法',
+        vocabulary: '語彙',
+        listening: 'リスニング',
+        speaking: 'スピーキング',
+        reading: 'リーディング',
+        writing: 'ライティング',
+        overallLevel: '総合レベル',
+        strengths: '得意分野',
+        weaknesses: '弱点',
+        events: '回',
+        aiQuota: 'AIクォータ',
+        checkInStreak: '連続チェックイン',
+        todayCheckedIn: '本日チェックイン済み',
+        checkInNow: 'チェックイン',
+        logout: 'ログアウト',
+      },
+      ko: {
+        loading: '대시보드 로딩 중...',
+        dashboard: '대시보드',
+        welcome: '돌아오신 것을 환영합니다',
+        todayStats: '오늘의 학습',
+        wordsLearned: '학습 단어',
+        lessonsDone: '완료 레슨',
+        studyTime: '학습 시간',
+        quizzesTaken: '퀴즈 완료',
+        min: '분',
+        abilityModel: '능력 모델',
+        myLanguages: '내 언어',
+        dayStreak: '일 연속',
+        recentActivity: '최근 활동',
+        activeGoals: '학습 목표',
+        weeklyStats: '이번 주 학습',
+        highlights: '하이라이트',
+        noData: '첫 레슨을 시작하세요!',
+        noActivity: '아직 활동 기록이 없습니다',
+        noGoals: '아직 학습 목표가 없습니다',
+        error: '로딩 실패',
+        retry: '재시도',
+        grammar: '문법',
+        vocabulary: '어휘',
+        listening: '듣기',
+        speaking: '말하기',
+        reading: '읽기',
+        writing: '쓰기',
+        overallLevel: '종합 레벨',
+        strengths: '강점',
+        weaknesses: '약점',
+        events: '회',
+        aiQuota: 'AI 할당량',
+        checkInStreak: '연속 출석',
+        todayCheckedIn: '오늘 출석 완료',
+        checkInNow: '출석',
+        logout: '로그아웃',
+      },
+      fr: {
+        loading: 'Chargement...',
+        dashboard: 'Tableau de bord',
+        welcome: 'Bon retour',
+        todayStats: 'Aujourd\'hui',
+        wordsLearned: 'Mots appris',
+        lessonsDone: 'Leçons terminées',
+        studyTime: 'Temps d\'étude',
+        quizzesTaken: 'Quiz terminés',
+        min: 'min',
+        abilityModel: 'Modèle de compétence',
+        myLanguages: 'Mes langues',
+        dayStreak: 'jours',
+        recentActivity: 'Activité récente',
+        activeGoals: 'Objectifs actifs',
+        weeklyStats: 'Cette semaine',
+        highlights: 'Points forts',
+        noData: 'Commencez votre première leçon !',
+        noActivity: 'Aucune activité',
+        noGoals: 'Aucun objectif',
+        error: 'Échec du chargement',
+        retry: 'Réessayer',
+        grammar: 'Grammaire',
+        vocabulary: 'Vocabulaire',
+        listening: 'Écoute',
+        speaking: 'Expression',
+        reading: 'Lecture',
+        writing: 'Écriture',
+        overallLevel: 'Niveau général',
+        strengths: 'Points forts',
+        weaknesses: 'Faiblesses',
+        events: 'fois',
+        aiQuota: 'Quota IA',
+        checkInStreak: 'Série',
+        todayCheckedIn: 'Pointage du jour',
+        checkInNow: 'Pointer',
+        logout: 'Déconnexion',
+      },
+      es: {
+        loading: 'Cargando...',
+        dashboard: 'Panel',
+        welcome: 'Bienvenido',
+        todayStats: 'Estadísticas de hoy',
+        wordsLearned: 'Palabras aprendidas',
+        lessonsDone: 'Lecciones completadas',
+        studyTime: 'Tiempo de estudio',
+        quizzesTaken: 'Pruebas realizadas',
+        min: 'min',
+        abilityModel: 'Modelo de habilidad',
+        myLanguages: 'Mis idiomas',
+        dayStreak: 'días',
+        recentActivity: 'Actividad reciente',
+        activeGoals: 'Metas activas',
+        weeklyStats: 'Esta semana',
+        highlights: 'Destacados',
+        noData: '¡Comienza tu primera lección!',
+        noActivity: 'Sin actividad',
+        noGoals: 'Sin metas',
+        error: 'Error al cargar',
+        retry: 'Reintentar',
+        grammar: 'Gramática',
+        vocabulary: 'Vocabulario',
+        listening: 'Comprensión auditiva',
+        speaking: 'Expresión oral',
+        reading: 'Lectura',
+        writing: 'Escritura',
+        overallLevel: 'Nivel general',
+        strengths: 'Fortalezas',
+        weaknesses: 'Debilidades',
+        events: 'veces',
+        aiQuota: 'Cuota IA',
+        checkInStreak: 'Racha',
+        todayCheckedIn: 'Registrado hoy',
+        checkInNow: 'Registrar',
+        logout: 'Cerrar sesión',
+      },
+      de: {
+        loading: 'Lade...',
+        dashboard: 'Dashboard',
+        welcome: 'Willkommen zurück',
+        todayStats: 'Heutige Statistiken',
+        wordsLearned: 'Gelernte Wörter',
+        lessonsDone: 'Abgeschlossene Lektionen',
+        studyTime: 'Lernzeit',
+        quizzesTaken: 'Quiz absolviert',
+        min: 'Min',
+        abilityModel: 'Fähigkeitsmodell',
+        myLanguages: 'Meine Sprachen',
+        dayStreak: 'Tage',
+        recentActivity: 'Letzte Aktivität',
+        activeGoals: 'Aktive Ziele',
+        weeklyStats: 'Diese Woche',
+        highlights: 'Highlights',
+        noData: 'Starte deine erste Lektion!',
+        noActivity: 'Keine Aktivität',
+        noGoals: 'Keine Lernziele',
+        error: 'Laden fehlgeschlagen',
+        retry: 'Wiederholen',
+        grammar: 'Grammatik',
+        vocabulary: 'Vokabular',
+        listening: 'Hörverstehen',
+        speaking: 'Sprechen',
+        reading: 'Lesen',
+        writing: 'Schreiben',
+        overallLevel: 'Gesamtniveau',
+        strengths: 'Stärken',
+        weaknesses: 'Schwächen',
+        events: 'Mal',
+        aiQuota: 'KI-Kontingent',
+        checkInStreak: 'Serie',
+        todayCheckedIn: 'Heute eingecheckt',
+        checkInNow: 'Einchecken',
+        logout: 'Abmelden',
+      }
+    };
+
+    // ============ State ============
+    let currentLang = 'zh';
+    let dashboardData = null;
+    let loadError = null;
+
+    // ============ Init ============
+    async function init() {
+      currentLang = detectLanguage();
+      applyQuickGridI18n();
+      fetchHomeQuota();
+      await loadDashboard();
+      // Phase4: 监听语言变更事件
+      window.addEventListener('languageChanged', function(e) {
+        currentLang = detectLanguage();
+        applyQuickGridI18n();
+        loadDashboard();
+      });
+    }
+
+    function detectLanguage() {
+      // Phase4: 优先读取 AILOS UI 语言
+      if (window.AILOS && typeof window.AILOS.getUILang === 'function') {
+        var uil = window.AILOS.getUILang();
+        if (i18n[uil]) return uil;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const paramLang = params.get('lang');
+      if (paramLang && i18n[paramLang]) return paramLang;
+      const navLang = (navigator.language || 'en').split('-')[0];
+      if (i18n[navLang]) return navLang;
+      return 'zh';
+    }
+
+    // Phase4: 快捷入口7语种标签
+    var QUICK_LABELS = {
+      zh: { title: '快捷入口', translate: '实时翻译', speaking: '口语速成', sentences: '句库', notebook: '错题本', messages: '消息', vip: '会员', games: '游戏中心' },
+      en: { title: 'Quick Actions', translate: 'Translate', speaking: 'Speaking', sentences: 'Phrases', notebook: 'Mistakes', messages: 'Messages', vip: 'VIP', games: 'Games' },
+      ja: { title: 'クイックアクション', translate: '翻訳', speaking: 'スピーキング', sentences: '例文', notebook: '復習', messages: 'メッセージ', vip: 'VIP', games: 'ゲーム' },
+      ko: { title: '바로가기', translate: '번역', speaking: '스피킹', sentences: '예문', notebook: '오답', messages: '메시지', vip: 'VIP', games: '게임' }
+    };
+    // fr/es/de 兜底英文
+    QUICK_LABELS.fr = { title: 'Accès rapide', translate: 'Traduire', speaking: 'Oral', sentences: 'Phrases', notebook: 'Erreurs', messages: 'Messages', vip: 'VIP', games: 'Jeux' };
+    QUICK_LABELS.es = { title: 'Acceso rápido', translate: 'Traducir', speaking: 'Oral', sentences: 'Frases', notebook: 'Errores', messages: 'Mensajes', vip: 'VIP', games: 'Juegos' };
+    QUICK_LABELS.de = { title: 'Schnellzugriff', translate: 'Übersetzen', speaking: 'Sprechen', sentences: 'Sätze', notebook: 'Fehler', messages: 'Nachrichten', vip: 'VIP', games: 'Spiele' };
+
+    function applyQuickGridI18n() {
+      var lbl = QUICK_LABELS[currentLang] || QUICK_LABELS['zh'];
+      var titleEl = document.querySelector('.quick-header-label');
+      if (titleEl) titleEl.textContent = lbl.title;
+      var items = document.querySelectorAll('#quickGrid .quick-label');
+      var keys = ['translate','speaking','sentences','notebook','messages','vip','games'];
+      items.forEach(function(el, i) { if (lbl[keys[i]]) el.textContent = lbl[keys[i]]; });
+    }
+
+    function t(key) {
+      return (i18n[currentLang] && i18n[currentLang][key]) || i18n['zh'][key] || key;
+    }
+
+    // ============ Token Helpers ============
+    function getToken() {
+      // 优先从 auth_tokens (JSON) 读取
+      try {
+        const stored = localStorage.getItem('auth_tokens');
+        if (stored) {
+          const tokens = JSON.parse(stored);
+          if (tokens.accessToken) return tokens.accessToken;
+        }
+      } catch (e) {}
+      // 回退到 yandao_token_v1
+      const fallback = localStorage.getItem('yandao_token_v1');
+      if (fallback) return fallback;
+      return '';
+    }
+
+    // ============ Dashboard Loading ============
+    async function loadDashboard() {
+      const app = document.getElementById('app');
+      const token = getToken();
+
+      if (!token) {
+        window.location.href = '/xuewaiyu/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/dashboard', {
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'X-Language': currentLang
+          }
+        });
+
+        if (resp.status === 401) {
+          window.location.href = '/xuewaiyu/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+          return;
+        }
+
+        const result = await resp.json();
+        if (result.success) {
+          dashboardData = result.data;
+          loadError = null;
+        } else {
+          throw new Error(result.error || 'Unknown error');
+        }
+      } catch (e) {
+        loadError = e.message;
+        dashboardData = null;
+      }
+
+      render();
+    }
+
+    // ============ AI Quota (BUG-015 fix: NaN) ============
+    async function fetchHomeQuota() {
+      var t = getToken();
+      if (!t) return;
+      try {
+        var r = await fetch('/api/ai/quota', {
+          headers: { 'Authorization': 'Bearer ' + t }
+        });
+        if (!r.ok) return;
+        var d = await r.json();
+        if (!d.success || !d.data) return;
+
+        // BUG-015 fix: 兼容多种API返回格式
+        var remaining = 0, total = 0, resetTime = null;
+        if (d.data.remaining !== undefined) {
+          // 格式: { dailyTotal, used, remaining, resetTime }
+          remaining = Number(d.data.remaining) || 0;
+          total = Number(d.data.dailyTotal) || 0;
+          resetTime = d.data.resetTime;
+        } else if (d.data.usage && d.data.usage.conversation) {
+          // 旧格式: { usage: { conversation: { remaining, total } } }
+          remaining = Number(d.data.usage.conversation.remaining) || 0;
+          total = Number(d.data.usage.conversation.total) || 0;
+        } else if (d.data.quotas && d.data.quotas.conversation) {
+          // 更旧格式: { quotas: { conversation: { remaining, total } } }
+          remaining = Number(d.data.quotas.conversation.remaining) || 0;
+          total = Number(d.data.quotas.conversation.total) || 0;
+        }
+
+        // NaN 兜底保护
+        if (isNaN(remaining)) remaining = 0;
+        if (isNaN(total)) total = 0;
+
+        document.getElementById('homeQuotaRemaining').textContent = remaining;
+        document.getElementById('homeQuotaTotal').textContent = '/ ' + total + ' 次对话';
+
+        var pct = total > 0 ? (remaining / total) * 100 : 100;
+        document.getElementById('homeQuotaFill').style.width = pct + '%';
+
+        // 重置时间显示
+        if (resetTime) {
+          var rs = new Date(resetTime);
+          var hh = rs.getHours().toString().padStart(2, '0');
+          var mm = rs.getMinutes().toString().padStart(2, '0');
+          document.getElementById('homeQuotaReset').textContent = hh + ':' + mm + ' 自动重置';
+        }
+
+        var card = document.getElementById('aiQuotaCard');
+        if (remaining === 0 && total > 0) {
+          card.classList.add('ai-quota-exhausted');
+          document.getElementById('homeQuotaUpgrade').style.display = 'inline-block';
+        } else {
+          card.classList.remove('ai-quota-exhausted');
+          document.getElementById('homeQuotaUpgrade').style.display = 'none';
+        }
+      } catch (e) {
+        console.warn('fetchHomeQuota error:', e);
+      }
+    }
+
+    // ============ Render ============
+    function render() {
+      var app = document.getElementById('app');
+
+      if (loadError) {
+        app.innerHTML = renderError();
+        return;
+      }
+
+      if (!dashboardData) {
+        app.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + t('loading') + '</p></div>';
+        return;
+      }
+
+      var d = dashboardData;
+      app.innerHTML =
+        renderHeader(d) +
+        renderStats(d) +
+        '<div class="main-grid">' + renderAbilityModel(d) + renderLanguages(d) + '</div>' +
+        '<div class="main-grid">' + renderActivity(d) + renderGoals(d) + '</div>' +
+        renderWeeklyChart(d) +
+        renderHighlights(d);
+    }
+
+    function renderError() {
+      return '<div class="error-state"><p>' + t('error') + ': ' + (loadError || '') + '</p><button onclick="loadDashboard()">' + t('retry') + '</button></div>';
+    }
+
+    function renderHeader(d) {
+      var user = d.user || {};
+      var initial = (user.nickname || 'U')[0].toUpperCase();
+      return '<div class="header">' +
+        '<div class="header-left">' +
+          '<div class="avatar">' + initial + '</div>' +
+          '<div class="greeting">' +
+            '<h2>' + t('welcome') + ', ' + escapeHtml(user.nickname || '学习者') + '</h2>' +
+            '<p>' + t('overallLevel') + ': ' + (user.level || d.learningProfile?.overallLevel || '初学者') + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="header-right">' + '' + '</div>' +
+      '</div>';
+    }
+
+    
+
+    function renderStats(d) {
+      // BUG-014 fix: 适配实际API返回格式 d.learning = { totalWords, totalMinutes, todayMinutes, streak }
+      var s = d.learning || d.todayStats || {};
+      var items = [
+        { icon: '📝', value: s.totalWords || s.wordsLearned || 0, label: t('wordsLearned') },
+        { icon: '✅', value: s.lessonsCompleted || 0, label: t('lessonsDone') },
+        { icon: '⏱️', value: Math.round((s.todayMinutes || s.studyTimeSeconds || 0)), label: t('studyTime'), suffix: t('min') },
+        { icon: '🎯', value: s.quizzesTaken || 0, label: t('quizzesTaken') }
+      ];
+      return '<div class="stats-grid">' + items.map(function(i) {
+        return '<div class="stat-card"><div class="stat-icon">' + i.icon + '</div><div class="stat-value">' + i.value + (i.suffix ? '<span style="font-size:14px">' + i.suffix + '</span>' : '') + '</div><div class="stat-label">' + i.label + '</div></div>';
+      }).join('') + renderAIQuotaStat(d) + renderCheckInStreak(d) + '</div>';
+    }
+
+    function renderAIQuotaStat(d) {
+      // BUG-015 fix: 适配实际API返回格式 { used: { conversation, correction }, max: { conversation, correction } }
+      var q = d.aiQuota || {};
+      var used = 0, maxTotal = 0;
+      
+      if (q.used && q.max) {
+        // 新格式: { used: { conversation, correction }, max: { conversation, correction } }
+        used = Number(q.used.conversation) || 0;
+        maxTotal = Number(q.max.conversation) || 5;
+      } else if (q.remaining !== undefined) {
+        // 旧格式: { dailyTotal, used, remaining, resetTime }
+        used = Number(q.used) || 0;
+        maxTotal = Number(q.dailyTotal || q.total) || 0;
+      } else {
+        // 兜底默认值
+        used = 0;
+        maxTotal = 5;
+      }
+      
+      var remaining = Math.max(0, maxTotal - used);
+      if (isNaN(remaining)) remaining = 0;
+      if (isNaN(maxTotal)) maxTotal = 0;
+      
+      return '<div class="stat-card"><div class="stat-icon">🤖</div><div class="stat-value">' + remaining + '<span style="font-size:14px">/' + maxTotal + '</span></div><div class="stat-label">' + t('aiQuota') + '</div></div>';
+    }
+
+    function renderCheckInStreak(d) {
+      var checkin = d.checkin || {};
+      var streak = checkin.checkInStreak || 0;
+      var todayCheckedIn = checkin.todayCheckedIn || false;
+      if (todayCheckedIn) {
+        return '<div class="stat-card" style="border: 2px solid #10B981; background: #F0FDF4;"><div class="stat-icon">🔥</div><div class="stat-value" style="color: #10B981;">' + streak + ' <span style="font-size:14px">' + t('dayStreak') + '</span></div><div class="stat-label" style="color: #10B981;">' + t('todayCheckedIn') + '</div></div>';
+      }
+      return '<div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value">' + streak + ' <span style="font-size:14px">' + t('dayStreak') + '</span></div><div class="stat-label">' + t('checkInStreak') + '</div><button onclick="doCheckIn()" style="margin-top:8px;padding:6px 14px;border:none;background:var(--primary);color:white;border-radius:16px;cursor:pointer;font-size:12px;">' + t('checkInNow') + '</button></div>';
+    }
+
+    async function doCheckIn() {
+      var token = getToken();
+      if (!token) return;
+      try {
+        var resp = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        });
+        var result = await resp.json();
+        if (result.success) {
+          await loadDashboard();
+        }
+      } catch (e) {
+        console.error('Check-in failed:', e);
+      }
+    }
+
+    function renderAbilityModel(d) {
+      var am = d.abilityModel || {};
+      var dims = ['vocabulary', 'grammar', 'listening', 'speaking', 'reading', 'writing'];
+      var dimLabels = { vocabulary: t('vocabulary'), grammar: t('grammar'), listening: t('listening'), speaking: t('speaking'), reading: t('reading'), writing: t('writing') };
+
+      var cx = 140, cy = 140, r = 100;
+      var angles = dims.map(function(_, i) { return (Math.PI * 2 * i / 6) - Math.PI / 2; });
+      var scores = dims.map(function(dim) { return (am[dim]?.score || 0) / 100; });
+
+      var gridLines = '';
+      for (var g = 1; g <= 4; g++) {
+        var gr = r * g / 4;
+        var points = angles.map(function(a) { return (cx + gr * Math.cos(a)) + ',' + (cy + gr * Math.sin(a)); }).join(' ');
+        gridLines += '<polygon points="' + points + '" fill="none" stroke="#E5E7EB" stroke-width="1"/>';
+      }
+
+      var axes = angles.map(function(a) {
+        var x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+        return '<line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="#E5E7EB" stroke-width="1"/>';
+      }).join('');
+
+      var dataPoints = dims.map(function(dim, i) {
+        var s = scores[i];
+        return (cx + r * s * Math.cos(angles[i])) + ',' + (cy + r * s * Math.sin(angles[i]));
+      }).join(' ');
+      var dataPoly = '<polygon points="' + dataPoints + '" fill="rgba(79,70,229,0.2)" stroke="#4F46E5" stroke-width="2"/>';
+
+      var labels = dims.map(function(dim, i) {
+        var x = cx + (r + 20) * Math.cos(angles[i]);
+        var y = cy + (r + 20) * Math.sin(angles[i]);
+        var score = am[dim]?.score || 0;
+        return '<text x="' + x + '" y="' + y + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#6B7280">' + dimLabels[dim] + ' ' + score + '</text>';
+      }).join('');
+
+      return '<div class="card"><div class="card-title"><span class="dot"></span>' + t('abilityModel') + '</div><div class="radar-container"><svg class="radar-svg" viewBox="0 0 280 280">' + gridLines + axes + dataPoly + labels + '</svg></div></div>';
+    }
+
+    function renderLanguages(d) {
+      var langs = d.learningLanguages || [];
+      var langNames = { ja: '日本語', en: 'English', ko: '한국어', fr: 'Français', es: 'Español', de: 'Deutsch', zh: '中文' };
+      var langFlags = { ja: '🇯🇵', en: '🇬🇧', ko: '🇰🇷', fr: '🇫🇷', es: '🇪🇸', de: '🇩🇪', zh: '🇨🇳' };
+
+      var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('myLanguages') + '</div>';
+      if (langs.length === 0) {
+        html += '<div class="empty-state"><p>' + t('noData') + '</p></div>';
+      } else {
+        html += langs.map(function(l) {
+          var p = l.progress || {};
+          var progressPct = Math.min(100, Math.round((p.totalWords || 0) / 50 * 100));
+        }).join('');
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderActivity(d) {
+      var activities = d.recentActivity || [];
+      var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('recentActivity') + '</div>';
+      if (activities.length === 0) {
+        html += '<div class="empty-state"><p>' + t('noActivity') + '</p></div>';
+      } else {
+        html += activities.map(function(a) {
+          var time = formatTime(a.time);
+          return '<div class="activity-item"><div class="activity-content"><div class="activity-label">' + escapeHtml(a.label) + '</div><div class="activity-meta">' + time + ' · ' + (a.duration ? Math.round(a.duration / 60) + 'min' : '') + ' <span class="activity-language">' + a.language + '</span></div></div></div>';
+        }).join('');
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderGoals(d) {
+      var goals = d.activeGoals || [];
+      var goalTypeLabels = { language_proficiency: t('overallLevel'), exam_prep: 'Exam Prep', travel: 'Travel', business: 'Business' };
+      var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('activeGoals') + '</div>';
+      if (goals.length === 0) {
+        html += '<div class="empty-state"><p>' + t('noGoals') + '</p></div>';
+      } else {
+        html += goals.map(function(g) {
+          return '<div class="goal-item"><div class="goal-header"><span class="goal-type">' + (goalTypeLabels[g.type] || g.type) + ': ' + g.targetLevel + ' (' + g.language + ')</span>' + (g.deadline ? '<span class="goal-deadline">' + formatDate(g.deadline) + '</span>' : '') + '</div>' + (g.description ? '<div class="goal-desc">' + escapeHtml(g.description) + '</div>' : '') + '</div>';
+        }).join('');
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderWeeklyChart(d) {
+      var stats = d.weeklyStats || [];
+      var days = [];
+      var now = new Date();
+      for (var i = 6; i >= 0; i--) {
+        var day = new Date(now);
+        day.setDate(day.getDate() - i);
+        days.push(day.toISOString().split('T')[0]);
+      }
+
+      var dayMap = {};
+      for (var j = 0; j < stats.length; j++) { dayMap[stats[j].date] = stats[j].minutes || 0; }
+      var maxMin = Math.max(1, ...days.map(function(d) { return dayMap[d] || 0; }));
+
+      var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('weeklyStats') + '</div>';
+      html += '<div class="chart-container">';
+      html += days.map(function(day) {
+        var min = dayMap[day] || 0;
+        var h = Math.max(4, (min / maxMin) * 100);
+        var dayLabel = day.split('-')[2];
+        return '<div class="chart-bar-wrapper"><div class="chart-bar" style="height:' + h + '%" title="' + min + 'min"></div><div class="chart-label">' + dayLabel + '</div></div>';
+      }).join('');
+      html += '</div></div>';
+      return html;
+    }
+
+    function renderHighlights(d) {
+      var highlights = d.highlights || [];
+      if (highlights.length === 0) return '';
+      var html = '<div class="card"><div class="card-title"><span class="dot"></span>' + t('highlights') + '</div>';
+      html += highlights.map(function(h) {
+        var content = typeof h.content === 'string' ? h.content : JSON.stringify(h.content);
+        return '<div class="highlight-item"><div class="highlight-type">' + h.type + '</div><div>' + escapeHtml(content) + '</div></div>';
+      }).join('');
+      html += '</div>';
+      return html;
+    }
+
+    // ============ Helpers ============
+    
+
+    function formatTime(isoString) {
+      if (!isoString) return '';
+      var d = new Date(isoString);
+      var now = new Date();
+      var diffMs = now - d;
+      var diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return 'Just now';
+      if (diffMin < 60) return diffMin + 'm ago';
+      var diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) return diffH + 'h ago';
+      return Math.floor(diffH / 24) + 'd ago';
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '';
+      return new Date(isoString).toLocaleDateString();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ============ Boot ============
+    init();
+  </script>
+</body>
+</html>

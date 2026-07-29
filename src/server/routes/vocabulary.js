@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+const vocabularyController = require('../controllers/vocabularyController');
+const { authenticate } = require('../middleware/auth');
+router.use(authenticate);
+router.post('/', vocabularyController.add);
+router.post('/batch', vocabularyController.batch);
+router.get('/', vocabularyController.list);
+router.delete('/:id', vocabularyController.remove);
+module.exports = router;

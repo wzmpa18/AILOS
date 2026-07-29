@@ -1,6 +1,4 @@
 const membershipService = require('../../services/membershipService');
-const logger = require('../../utils/logger');
-
 const membershipController = {
   // Get membership status
   async getStatus(req, res, next) {

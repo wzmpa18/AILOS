@@ -6,12 +6,41 @@
 const express = require('express');
 const router = express.Router();
 const translateController = require('../controllers/translateController');
+const billingController = require('../controllers/billingController');
 const { authenticate } = require('../middleware/auth');
+const { attachDeviceRisk } = require('../middleware/deviceRisk');
 
 router.use(authenticate);
+// P1 设备指纹风控：附加 req.deviceRisk（试用闸门在 billingService 内强制执行，前端不可绕过）
+router.use(attachDeviceRisk);
 
 router.post('/photo', translateController.photoTranslate);
 router.get('/photo/quota', translateController.getQuota);
 router.post('/notebook', translateController.addToNotebook);
+
+// 子模块2 计费链路（附件 L 2.3 命名对齐）：套餐购买 / 试用状态查询
+router.post('/package/buy', billingController.buyPackage);
+router.get('/trial/status', billingController.getStatus);
+
+
+// 子模块3 双向实时对话翻译流式接口
+const conversationService = require('../../services/conversationTranslationService');
+router.post('/conversation/stream', conversationService.handleConversationStream);
+
+// 子模块3 对话内容解密接口（用于收回收藏内容）
+router.post('/conversation/decrypt-stored', authenticate, (req, res) => {
+  const { encryptedDataBase64 } = req.body || {};
+  if (!encryptedDataBase64) {
+    return res.status(400).json({ error: 'INVALID_PARAMS', message: 'encryptedDataBase64 required' });
+  }
+  try {
+    const storage = require('../../services/conversationStorageService');
+    const userId = req.user?.id || req.user?.userId;
+    const decrypted = storage.decrypt(userId, Buffer.from(encryptedDataBase64, 'base64'));
+    return res.json({ success: true, plaintext: decrypted });
+  } catch (e) {
+    return res.status(400).json({ error: 'DECRYPT_FAILED', message: e.message });
+  }
+});
 
 module.exports = router;

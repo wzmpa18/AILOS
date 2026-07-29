@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 群组管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF;
+    --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #1E293B;
+    --text-secondary: #64748B; --text-muted: #94A3B8; --border: #E2E8F0;
+    --error: #EF4444; --success: #10B981; --warning: #F59E0B;
+    --radius: 16px; --radius-sm: 10px; --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06); --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6;
+    padding: 0 0 calc(var(--nav-height) + env(safe-area-inset-bottom, 0) + 20px);
+  }
+
+  .header {
+    background: var(--card-bg); border-bottom: 1px solid var(--border);
+    padding: 12px 16px; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header-back { font-size: 14px; color: var(--text-secondary); text-decoration: none; flex-shrink: 0; }
+  .header-title { font-size: 17px; font-weight: 700; flex: 1; }
+  .header-action {
+    font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none;
+    font-weight: 600; padding: 6px 12px; border-radius: var(--radius-xs);
+  }
+  .header-action:hover { background: var(--primary-light); }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    background: var(--card-bg); box-shadow: var(--shadow-md); display: none;
+  }
+  .toast.show { display: block; }
+  .toast.error { color: var(--error); border: 1.5px solid var(--error); }
+  .toast.success { color: var(--success); border: 1.5px solid var(--success); }
+
+  /* ===== Group List ===== */
+  .group-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .group-item {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: var(--card-bg); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+    cursor: pointer; transition: all .15s;
+  }
+  .group-item:hover { box-shadow: var(--shadow-md); }
+  .group-item:active { background: var(--primary-light); }
+  .group-avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+  }
+  .group-info { flex: 1; min-width: 0; }
+  .group-name { font-size: 15px; font-weight: 600; }
+  .group-meta {
+    font-size: 12px; color: var(--text-secondary); margin-top: 2px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .group-badge {
+    display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-owner { background: var(--primary-light); color: var(--primary); }
+  .badge-admin { background: #FEF3C7; color: #D97706; }
+  .badge-muted { background: #FEF2F2; color: var(--error); }
+
+  .empty-state {
+    text-align: center; padding: 80px 20px; color: var(--text-muted);
+  }
+  .empty-state.hidden { display: none; }
+  .empty-icon { font-size: 56px; margin-bottom: 12px; opacity: .6; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  /* ===== Overlay ===== */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .sheet {
+    background: var(--card-bg); border-radius: var(--radius) var(--radius) 0 0;
+    width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+    animation: slideUp .3s ease; padding: 20px;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .sheet-title { font-size: 16px; font-weight: 700; }
+  .sheet-close {
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--bg); color: var(--text-secondary); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sheet-field { margin-bottom: 14px; }
+  .sheet-field label {
+    display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;
+  }
+  .sheet-field input, .sheet-field textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs); font-size: 14px; font-family: inherit;
+    background: var(--bg); color: var(--text); outline: none; transition: border-color .2s;
+  }
+  .sheet-field input:focus, .sheet-field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .sheet-field textarea { min-height: 80px; resize: vertical; }
+  .sheet-field .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .sheet-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .btn-sheet {
+    flex: 1; min-width: 80px; padding: 10px 12px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; text-align: center;
+  }
+  .btn-sheet-primary { background: var(--primary); color: #fff; }
+  .btn-sheet-primary:hover { background: var(--primary-hover); }
+  .btn-sheet-danger { background: #FEF2F2; color: var(--error); border: 1.5px solid var(--error); }
+  .btn-sheet-danger:hover { background: var(--error); color: #fff; }
+  .btn-sheet-outline { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+  .btn-sheet-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ===== Member List ===== */
+  .member-list { display: flex; flex-direction: column; gap: 4px; }
+  .member-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: var(--radius-xs); transition: background .15s;
+  }
+  .member-item:hover { background: var(--bg); }
+  .member-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff;
+  }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 14px; font-weight: 600; }
+  .member-role { font-size: 11px; color: var(--text-muted); }
+  .member-action {
+    font-size: 12px; cursor: pointer; color: var(--error); background: none; border: none;
+    font-weight: 600; padding: 4px 8px;
+  }
+
+  /* ===== Add Member ===== */
+  .add-member-row {
+    display: flex; gap: 8px; margin-bottom: 12px;
+  }
+  .add-member-row input {
+    flex: 1; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+    font-size: 14px; font-family: inherit; background: var(--bg); color: var(--text); outline: none;
+  }
+  .add-member-row input:focus { border-color: var(--primary); }
+  .add-member-row button {
+    padding: 8px 14px; border-radius: var(--radius-xs); border: none;
+    background: var(--primary); color: #fff; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+
+  /* ===== Quick Join Group Section ===== */
+  .quick-section { padding: 16px; }
+  .quick-card {
+    background: var(--primary-light); border-radius: var(--radius-sm); padding: 16px;
+    text-align: center;
+  }
+  .quick-card-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .quick-card-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+  .quick-card button {
+    padding: 10px 24px; border-radius: var(--radius-xs); border: none;
+    background: var(--primary); color: #fff; font-size: 14px; cursor: pointer; font-weight: 600;
+  }
+
+  /* ===== Bottom Nav ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
+    background: var(--card-bg); border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 500; padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); font-size: 11px; font-weight: 500; border: none;
+    background: none; min-width: 56px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+
+  @media (max-width: 480px) {
+    .header { padding: 10px 12px; }
+    .group-list { padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a class="header-back" href="/xuewaiyu/home">&#8592; 返回</a>
+  <span class="header-title" data-i18n="groups_title">群组</span>
+  <button class="header-action" onclick="openCreateGroup()" data-i18n="create_group">+ 建群</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Group List -->
+<div class="group-list" id="groupList"></div>
+<div class="empty-state" id="emptyGroupState">
+  <div class="empty-icon">👥</div>
+  <div class="empty-title" data-i18n="no_groups">暂无群组</div>
+  <div class="empty-sub" data-i18n="no_groups_sub">创建一个群聊，和好友一起学习</div>
+</div>
+
+<div class="quick-section" style="margin-top:12px">
+  <div class="quick-card">
+    <div class="quick-card-title" data-i18n="create_group_now">创建学习群聊</div>
+    <div class="quick-card-sub" data-i18n="create_group_sub">邀请好友一起学习，每日建群上限 5 个</div>
+    <button onclick="openCreateGroup()" data-i18n="create_group_btn">新建群聊</button>
+  </div>
+</div>
+
+<!-- Create Group Overlay -->
+<div class="overlay" id="createGroupOverlay" onclick="if(event.target===this)closeCreateGroup()">
+  <div class="sheet">
+    <div class="sheet-header">
+      <span class="sheet-title" data-i18n="create_group_title">创建群聊</span>
+      <button class="sheet-close" onclick="closeCreateGroup()">&#10005;</button>
+    </div>
+    <div class="sheet-field">
+      <label data-i18n="group_name">群名称</label>
+      <input type="text" id="groupName" placeholder="输入群名称..." data-i18n-placeholder="group_name_placeholder" maxlength="50">
+    </div>
+    <div class="sheet-field">
+      <label data-i18n="group_desc">群描述</label>
+      <textarea id="groupDesc" placeholder="群简介（选填）..." data-i18n-placeholder="group_desc_placeholder"></textarea>
+    </div>
+    <div class="sheet-field">
+      <div class="hint" data-i18n="group_hint">默认50人上限，创建后您是群主</div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-sheet btn-sheet-outline" onclick="closeCreateGroup()" data-i18n="cancel">取消</button>
+      <button class="btn-sheet btn-sheet-primary" onclick="createGroup()" data-i18n="confirm_create">确认创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group Detail Overlay -->
+<div class="overlay" id="groupDetailOverlay" onclick="if(event.target===this)closeGroupDetail()">
+  <div class="sheet">
+    <div class="sheet-header">
+      <span class="sheet-title" data-i18n="group_info">群资料</span>
+      <button class="sheet-close" onclick="closeGroupDetail()">&#10005;</button>
+    </div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div class="group-avatar" id="detailAvatar" style="width:56px;height:56px;margin:0 auto 8px;font-size:22px"></div>
+      <div style="font-size:18px;font-weight:700" id="detailName"></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="detailMeta"></div>
+    </div>
+    <div class="sheet-field" id="detailDescField" style="display:none">
+      <label data-i18n="announcement">群公告/描述</label>
+      <div style="font-size:13px;color:var(--text-secondary);padding:8px;background:var(--bg);border-radius:var(--radius-xs)" id="detailDesc"></div>
+    </div>
+
+    <!-- Member List -->
+    <div style="margin:12px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted)" data-i18n="members">群成员</span>
+        <button style="font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600" onclick="openAddMember()" data-i18n="add_member">添加成员</button>
+      </div>
+      <div class="member-list" id="memberList"></div>
+
+      <!-- Add Member Row -->
+      <div class="add-member-row" id="addMemberRow" style="display:none">
+        <input type="text" id="addMemberInput" placeholder="输入好友UID..." data-i18n-placeholder="add_member_placeholder" onkeydown="if(event.key==='Enter')addMember()">
+        <button onclick="addMember()" data-i18n="add">添加</button>
+      </div>
+    </div>
+
+    <!-- Group Actions -->
+    <div class="sheet-actions" id="detailActions"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav injected by common.js (Stage9 M5: Community 4-Tab) -->
+
+<script src="/xuewaiyu/assets/common.js"></script>
+<script>
+// ===== i18n =====
+var I18N = {
+  zh: {
+    groups_title:'群组',create_group:'+ 建群',no_groups:'暂无群组',no_groups_sub:'创建一个群聊，和好友一起学习',
+    create_group_now:'创建学习群聊',create_group_sub:'邀请好友一起学习，每日建群上限 5 个',create_group_btn:'新建群聊',
+    create_group_title:'创建群聊',group_name:'群名称',group_name_placeholder:'输入群名称...',
+    group_desc:'群描述',group_desc_placeholder:'群简介（选填）...',group_hint:'默认50人上限，创建后您是群主',
+    cancel:'取消',confirm_create:'确认创建',group_info:'群资料',announcement:'群公告/描述',
+    members:'群成员',add_member:'添加成员',add_member_placeholder:'输入好友UID...',add:'添加',
+    mute_all:'全员禁言',unmute_all:'取消禁言',leave_group:'退出群聊',delete_group:'解散群聊',
+    owner:'群主',admin:'管理员',member:'成员',member_count:'成员',
+    created:'创建成功',added:'已添加',removed:'已移除',muted_all:'已开启全员禁言',unmuted_all:'已关闭全员禁言',
+    left_group:'已退出群聊',group_deleted:'群已解散',
+    nav_home:'首页',nav_friends:'好友',nav_messages:'消息',nav_discover:'搭子',
+    error_network:'网络错误',not_auth:'请先登录'
+  },
+  en: {
+    groups_title:'Groups',create_group:'+ New',no_groups:'No groups',no_groups_sub:'Create a group to study together',
+    create_group_now:'Create Study Group',create_group_sub:'Invite friends, daily limit: 5',create_group_btn:'New Group',
+    create_group_title:'Create Group',group_name:'Group Name',group_name_placeholder:'Enter name...',
+    group_desc:'Description',group_desc_placeholder:'Description (optional)...',group_hint:'Max 50 members, you are owner',
+    cancel:'Cancel',confirm_create:'Create',group_info:'Group Info',announcement:'Announcement',
+    members:'Members',add_member:'Add Member',add_member_placeholder:'Enter friend UID...',add:'Add',
+    mute_all:'Mute All',unmute_all:'Unmute',leave_group:'Leave',delete_group:'Delete Group',
+    owner:'Owner',admin:'Admin',member:'Member',member_count:'members',
+    created:'Created',added:'Added',removed:'Removed',muted_all:'Muted all',unmuted_all:'Unmuted',
+    left_group:'Left',group_deleted:'Deleted',
+    nav_home:'Home',nav_friends:'Friends',nav_messages:'Messages',nav_discover:'Partners',
+    error_network:'Network error',not_auth:'Please login'
+  }
+};
+
+function detectLang() {
+  try { var s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  return 'zh';
+}
+var currentLang = detectLang();
+function t(k) { return (I18N[currentLang] && I18N[currentLang][k]) || (I18N['zh'] && I18N['zh'][k]) || k; }
+function updateUI() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) { var k = el.getAttribute('data-i18n'); el.textContent = t(k); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) { el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder'))); });
+}
+window.addEventListener('languageChanged', function() { currentLang = detectLang(); updateUI(); loadGroups(); });
+
+// ===== API =====
+function getToken() {
+  try {
+    var t = localStorage.getItem('yandao_token_v1'); if (t) return t;
+    var a = localStorage.getItem('auth_tokens');
+    if (a) { try { var p = JSON.parse(a); return p.accessToken || p.token; } catch(e) {} }
+  } catch(e) {}
+  return null;
+}
+
+var API = '/api/v1/social';
+async function api(method, path, body) {
+  var token = getToken(); if (!token) throw new Error('NOT_AUTH');
+  var opts = { method: method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  var r = await fetch(API + path, opts);
+  var j = await r.json();
+  if (j && j.success) return j.data || j;
+  throw new Error((j && j.error) || (j && j.message) || 'NET_ERR');
+}
+
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast ' + (type || 'success') + ' show';
+  clearTimeout(el._t); el._t = setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+function avatarColor(name) {
+  var c = ['#4F46E5','#7C3AED','#DB2777','#DC2626','#EA580C','#CA8A04','#16A34A','#0891B2','#2563EB','#9333EA'];
+  var h = 0; for (var i = 0; i < (name||'').length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return c[Math.abs(h) % c.length];
+}
+function avatarText(name) { return (name || '?').charAt(0).toUpperCase(); }
+
+// ===== Create Group =====
+function openCreateGroup() { document.getElementById('createGroupOverlay').classList.add('open'); }
+function closeCreateGroup() {
+  document.getElementById('createGroupOverlay').classList.remove('open');
+  document.getElementById('groupName').value = '';
+  document.getElementById('groupDesc').value = '';
+}
+
+async function createGroup() {
+  var name = document.getElementById('groupName').value.trim();
+  if (!name) { showToast('请输入群名称', 'error'); return; }
+
+  try {
+    var g = await api('POST', '/group/create', { name: name, description: document.getElementById('groupDesc').value.trim() });
+    showToast(t('created') + ': ' + name, 'success');
+    closeCreateGroup();
+    loadGroups();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ===== Load Groups =====
+var allGroups = [];
+
+async function loadGroups() {
+  try {
+    // Groups are loaded via conversation list or we could have a dedicated endpoint
+    // For now, we need to figure out the right endpoint. Let's use a workaround
+    // The group API exposes /group/:id so we need a list endpoint
+    // In the backend, groups might not have a direct list. Let's check if we can load from conversations with type=group
+    var convs = await api('GET', '/conversation/list');
+    var convArr = Array.isArray(convs) ? convs : (convs.conversations || []);
+
+    // Load group details for group-type conversations
+    allGroups = [];
+    for (var i = 0; i < convArr.length; i++) {
+      if (convArr[i].type === 'group') {
+        try {
+          var detail = await api('GET', '/group/' + convArr[i].targetId);
+          allGroups.push({ id: convArr[i].targetId, convId: convArr[i].id, name: detail.name || '未命名群', description: detail.description, memberCount: detail.memberCount, muteAll: detail.muteAll, isOwner: detail.isOwner, myRole: detail.myRole });
+        } catch(e) {}
+      }
+    }
+
+    renderGroups();
+  } catch (e) { if (e.message !== 'NOT_AUTH') {} }
+}
+
+function renderGroups() {
+  var list = document.getElementById('groupList');
+  var empty = document.getElementById('emptyGroupState');
+
+  if (allGroups.length === 0) {
+    list.innerHTML = ''; empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  var html = '';
+  for (var i = 0; i < allGroups.length; i++) {
+    var g = allGroups[i];
+    var roleBadge = g.isOwner ? '<span class="group-badge badge-owner">' + t('owner') + '</span>' : (g.myRole === 'admin' ? '<span class="group-badge badge-admin">' + t('admin') + '</span>' : '');
+    var muteBadge = g.muteAll ? '<span class="group-badge badge-muted">' + t('mute_all') + '</span>' : '';
+    html += '<div class="group-item" onclick="openGroupDetail(\'' + g.id + '\')">';
+    html += '<div class="group-avatar" style="background:' + avatarColor(g.name) + '">' + avatarText(g.name) + '</div>';
+    html += '<div class="group-info">';
+    html += '<div class="group-name">' + g.name + '</div>';
+    html += '<div class="group-meta">' + (g.memberCount || '-') + ' ' + t('member_count') + ' ' + roleBadge + ' ' + muteBadge + '</div>';
+    html += '</div><span style="color:var(--text-muted);font-size:12px">&#8250;</span>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+// ===== Group Detail =====
+var detailGroupId = null;
+
+async function openGroupDetail(gid) {
+  detailGroupId = gid;
+  try {
+    var g = await api('GET', '/group/' + gid);
+    document.getElementById('detailAvatar').textContent = avatarText(g.name || 'G');
+    document.getElementById('detailAvatar').style.background = avatarColor(g.name || gid);
+    document.getElementById('detailName').textContent = g.name || '未命名群';
+    document.getElementById('detailMeta').textContent = (g.memberCount || 0) + ' 成员' + (g.muteAll ? ' · 全员禁言' : '');
+
+    if (g.description) {
+      document.getElementById('detailDescField').style.display = 'block';
+      document.getElementById('detailDesc').textContent = g.description;
+    } else {
+      document.getElementById('detailDescField').style.display = 'none';
+    }
+
+    // Members
+    var memHtml = '';
+    if (g.members && g.members.length > 0) {
+      for (var i = 0; i < g.members.length; i++) {
+        var m = g.members[i];
+        var role = m.role === 'owner' ? t('owner') : (m.role === 'admin' ? t('admin') : t('member'));
+        var name = m.nickname || m.uniqueId || m.userId || '未知';
+        var isOwner = g.isOwner;
+        memHtml += '<div class="member-item">';
+        memHtml += '<div class="member-avatar" style="background:' + avatarColor(name) + '">' + avatarText(name) + '</div>';
+        memHtml += '<div class="member-info"><div class="member-name">' + name + '</div><div class="member-role">' + role + '</div></div>';
+        if (isOwner && m.role !== 'owner') {
+          memHtml += '<button class="member-action" onclick="removeMember(\'' + m.userId + '\')">移除</button>';
+        }
+        memHtml += '</div>';
+      }
+    }
+    document.getElementById('memberList').innerHTML = memHtml;
+
+    // Actions
+    var actionsHtml = '';
+    if (g.muteAll) {
+      actionsHtml += '<button class="btn-sheet btn-sheet-outline" onclick="toggleMuteAll()">' + t('unmute_all') + '</button>';
+    } else {
+      actionsHtml += '<button class="btn-sheet btn-sheet-outline" onclick="toggleMuteAll()">' + t('mute_all') + '</button>';
+    }
+    actionsHtml += '<button class="btn-sheet btn-sheet-danger" onclick="leaveGroup()">' + t('leave_group') + '</button>';
+    if (g.isOwner) {
+      actionsHtml += '<button class="btn-sheet btn-sheet-danger" onclick="deleteGroup()">' + t('delete_group') + '</button>';
+    }
+    document.getElementById('detailActions').innerHTML = actionsHtml;
+
+    document.getElementById('groupDetailOverlay').classList.add('open');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function closeGroupDetail() {
+  document.getElementById('groupDetailOverlay').classList.remove('open');
+  document.getElementById('addMemberRow').style.display = 'none';
+  detailGroupId = null;
+}
+
+function openAddMember() {
+  document.getElementById('addMemberRow').style.display = 'flex';
+  document.getElementById('addMemberInput').focus();
+}
+
+async function addMember() {
+  var uid = document.getElementById('addMemberInput').value.trim();
+  if (!uid) return;
+  try {
+    // First search by UID to get userId
+    var user = await api('GET', '/friend/search-by-uid?uid=' + encodeURIComponent(uid));
+    if (!user || !user.id) { showToast('用户未找到', 'error'); return; }
+    await api('POST', '/group/' + detailGroupId + '/members', { userId: user.id });
+    showToast(t('added'), 'success');
+    document.getElementById('addMemberInput').value = '';
+    document.getElementById('addMemberRow').style.display = 'none';
+    openGroupDetail(detailGroupId); // refresh
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function removeMember(userId) {
+  try {
+    await api('DELETE', '/group/' + detailGroupId + '/members/' + userId);
+    showToast(t('removed'), 'success');
+    openGroupDetail(detailGroupId);
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function toggleMuteAll() {
+  try {
+    var g = await api('GET', '/group/' + detailGroupId);
+    await api('PUT', '/group/' + detailGroupId + '/mute-all', { muteAll: !g.muteAll });
+    showToast(g.muteAll ? t('unmuted_all') : t('muted_all'), 'success');
+    openGroupDetail(detailGroupId);
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function leaveGroup() {
+  if (!confirm('确定要退出该群？')) return;
+  try {
+    // No dedicated leave endpoint, use member remove on self
+    await api('DELETE', '/group/' + detailGroupId + '/members/' + 'self');
+    showToast(t('left_group'), 'success');
+    closeGroupDetail();
+    loadGroups();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function deleteGroup() {
+  if (!confirm('确定要解散该群？此操作不可撤销！')) return;
+  try {
+    // No dedicated delete endpoint yet
+    showToast('功能开发中', 'error');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function init() { updateUI(); loadGroups(); }
+init();
+</script>
+</body>
+</html>

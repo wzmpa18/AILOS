@@ -1,5 +1,5 @@
 # Sprint_V6.2_Fault_SOP.md
-> 配套文档：AILOS_MASTER_LEDGER.md V7.1 Enterprise Freeze
+> 配套文档：AILOS_总账账簿.md V7.1 Enterprise Freeze
 > 定位：故障排查操作手册，集中存放bash/curl/sql长脚本，总账第20.7章引用
 > 使用方式：故障发生时复制对应命令块到服务器终端执行
 

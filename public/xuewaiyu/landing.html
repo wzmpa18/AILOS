@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<meta name="description" content="AILOS - AI Native Full-Layer Education Operating System. 不只是语言APP，而是AI原生全层级教育操作系统。">
+<title>AILOS - AI原生全层级教育操作系统</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF; --primary-glow: rgba(79,70,229,0.15);
+    --accent: #10B981; --accent-light: #ECFDF5; --bg: #F8FAFC; --card-bg: #FFFFFF;
+    --text: #1E293B; --text-secondary: #64748B; --text-muted: #94A3B8; --border: #E2E8F0;
+    --radius: 16px; --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.04);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; overflow-x: hidden;
+  }
+  
+  .hero { text-align: center; padding: 60px 20px 40px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -40%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .hero-badge { display: inline-block; padding: 6px 18px; border-radius: 50px; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 600; margin-bottom: 20px; position: relative; z-index: 1; }
+  .hero-title { font-size: clamp(28px, 5vw, 48px); font-weight: 800; line-height: 1.2; position: relative; z-index: 1; margin-bottom: 14px; }
+  .hero-title .highlight { color: var(--primary); }
+  .hero-sub { font-size: clamp(15px, 2.5vw, 18px); color: var(--text-secondary); max-width: 680px; margin: 0 auto 20px; position: relative; z-index: 1; }
+  .hero-vs { font-size: 13px; color: var(--text-muted); max-width: 600px; margin: 0 auto 28px; position: relative; z-index: 1; line-height: 1.8; }
+  .hero-vs span { color: var(--primary); font-weight: 600; }
+  .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; border: none; cursor: pointer; text-decoration: none; background: var(--primary); color: #fff; transition: all .2s; box-shadow: 0 4px 16px rgba(79,70,229,.35); }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(79,70,229,.4); }
+  .btn-login-hero { padding: 18px 48px; font-size: 20px; font-weight: 800; box-shadow: 0 6px 28px rgba(79,70,229,.45); animation: pulse-glow 2.5s ease-in-out infinite; }
+  .btn-login-hero:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 36px rgba(79,70,229,.55); }
+  @keyframes pulse-glow { 0%,100% { box-shadow: 0 6px 28px rgba(79,70,229,.45); } 50% { box-shadow: 0 8px 40px rgba(79,70,229,.65); } }
+  .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; background: var(--card-bg); color: var(--primary); border: 2px solid var(--primary); transition: all .2s; }
+  .btn-outline:hover { background: var(--primary-light); transform: translateY(-2px); }
+  .btn-register-hero { font-size: 14px; padding: 10px 24px; border-color: var(--text-muted); color: var(--text-secondary); }
+  .btn-register-hero:hover { border-color: var(--primary); color: var(--primary); }
+
+  .section-title { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .section-sub { text-align: center; font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  .features { max-width: 1100px; margin: 0 auto; padding: 40px 20px 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+  .feature-card { background: var(--card-bg); border-radius: var(--radius); padding: 32px 24px; box-shadow: var(--shadow); transition: all .3s; border: 1px solid transparent; }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-glow); }
+  .feature-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 18px; }
+  .feature-icon.ai { background: #EEF2FF; } .feature-icon.course { background: #ECFDF5; } .feature-icon.lang { background: #FEF3C7; } .feature-icon.creator { background: #FCE7F3; }
+  .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  .roles { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+  .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .role-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px 18px; box-shadow: var(--shadow); text-align: center; transition: all .3s; border: 1px solid transparent; }
+  .role-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary-glow); }
+  .role-icon { font-size: 36px; margin-bottom: 10px; }
+  .role-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .role-card p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+  .stats-section { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; background: linear-gradient(135deg, var(--primary), #6366F1); border-radius: var(--radius); padding: 36px 24px; color: #fff; }
+  .stat-item { text-align: center; } .stat-num { font-size: 32px; font-weight: 800; } .stat-label { font-size: 13px; opacity: .85; margin-top: 4px; }
+
+  .cta-section { text-align: center; padding: 40px 20px 80px; max-width: 700px; margin: 0 auto; }
+  .cta-section h2 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+  .cta-section p { color: var(--text-secondary); font-size: 16px; margin-bottom: 28px; }
+  .cta-section .btn-primary { font-size: 18px; padding: 16px 40px; }
+
+  .site-footer { text-align: center; padding: 24px 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; }
+  .site-footer a { color: var(--primary); text-decoration: none; }
+  .site-footer a:hover { text-decoration: underline; }
+  .icp-record { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: inline-block; }
+
+  @media (max-width: 768px) {
+    .hero { padding: 40px 16px 30px; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 28px 18px; }
+    .features, .roles-grid { grid-template-columns: 1fr; } .feature-card, .role-card { padding: 24px 18px; }
+  }
+  @media (max-width: 400px) {
+    .hero-title { font-size: 24px; } .btn-primary, .btn-outline { width: 100%; justify-content: center; } .hero-cta { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge" data-i18n="hero_badge">AI Native 全层级教育操作系统</div>
+  <h1 class="hero-title">
+    <span data-i18n="hero_title_1">不只是语言APP，</span><br><span class="highlight" data-i18n="hero_title_ai">AI原生</span><span data-i18n="hero_title_2">全层级教育操作系统</span>
+  </h1>
+  <p class="hero-sub" data-i18n="hero_sub">Duolingo 教你单词，Babbel 教你语法——AILOS 用你的母语，帮你构建完整的语言认知体系。</p>
+  <p class="hero-vs" data-i18n="hero_vs"><span>vs Duolingo：</span>不只是游戏化刷题，AILOS用AI理解你的母语思维，生成个性化教学。<br><span>vs Babbel：</span>不只是固定课程，AILOS实时动态生成适合你当前水平的专属内容。</p>
+  <div class="hero-cta">
+    <a class="btn-primary btn-login-hero" href="/xuewaiyu/login" data-i18n="cta_login">登录</a>
+    <a class="btn-outline" href="/xuewaiyu/login?mode=guest" data-i18n="cta_guest">免费游客体验</a>
+    <a class="btn-outline btn-register-hero" href="/xuewaiyu/login?mode=register" data-i18n="cta_register">立即注册</a>
+  </div>
+</section>
+
+<!-- Four Differentiators -->
+<section>
+  <h2 class="section-title" data-i18n="diff_title">四大核心差异化</h2>
+  <p class="section-sub" data-i18n="diff_sub">AILOS 不是工具，是生态——每个角色都能在这里找到专属价值</p>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon ai">🤖</div>
+      <h3 data-i18n="feat_ai_title">人格化AI语伴</h3>
+      <p data-i18n="feat_ai_desc">专属AI导师用你的母语解释语法、生成例句、纠正发音。24小时在线，像真人教师一样陪伴你的学习旅程，而非冰冷的题库引擎。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon course">📚</div>
+      <h3 data-i18n="feat_course_title">动态AI课程生成</h3>
+      <p data-i18n="feat_course_desc">告别固定教材。AI根据你的学习目标、当前水平、薄弱环节，实时生成个性化课程。每节课都是为你量身定制的独特内容，而非千篇一律的标准化课程。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon lang">🌐</div>
+      <h3 data-i18n="feat_lang_title">三层母语全球适配</h3>
+      <p data-i18n="feat_lang_desc">界面语言、母语、目标语言三层独立分离。无论你说藏语、阿拉伯语还是印地语，AI都能用你最熟悉的方式教学。真正的全球化语言学习，非英语为中心。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon creator">💡</div>
+      <h3 data-i18n="feat_creator_title">学习创作双向变现</h3>
+      <p data-i18n="feat_creator_desc">语言教师和内容创作者可发布原创课程、建立学习社群、获得收益分成。学习者也可通过知识分享获得回报。学与教的价值闭环。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Five Role Values -->
+<section>
+  <h2 class="section-title" data-i18n="role_title">五类角色 · 专属价值</h2>
+  <p class="section-sub" data-i18n="role_sub">AILOS 为每个角色设计独立空间，而非一刀切的通用界面</p>
+  <div class="roles">
+    <div class="roles-grid">
+      <div class="role-card">
+        <div class="role-icon">🎓</div>
+        <h4 data-i18n="role_student_title">学生</h4>
+        <p data-i18n="role_student_desc">AI母语教学、动态课程、游戏化学习——用你的母语，学任何语言。</p>
+      </div>
+      <div class="role-card">
+        <div class="role-icon">👨‍👩‍👧</div>
+        <h4 data-i18n="role_parent_title">家长</h4>
+        <p data-i18n="role_parent_desc">学习进度追踪、能力评估报告、使用时长控制——孩子的学习，你全程可见。</p>
+      </div>
+      <div class="role-card">
+        <div class="role-icon">👩‍🏫</div>
+        <h4 data-i18n="role_teacher_title">教师</h4>
+        <p data-i18n="role_teacher_desc">班级管理、作业布置批改、学生数据追踪——AI辅助，教学效率翻倍。</p>
+      </div>
+      <div class="role-card">
+        <div class="role-icon">🏫</div>
+        <h4 data-i18n="role_org_title">机构</h4>
+        <p data-i18n="role_org_desc">多教师管理、批量学生导入、机构级数据报表——完整的B端解决方案。</p>
+      </div>
+      <div class="role-card">
+        <div class="role-icon">✍️</div>
+        <h4 data-i18n="role_creator_title">创作者</h4>
+        <p data-i18n="role_creator_desc">课程发布、社群运营、收益分成——你的专业知识，帮助全球学习者。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section">
+  <div class="stats-grid">
+    <div class="stat-item"><div class="stat-num" data-i18n="stat_lang_num">7</div><div class="stat-label" data-i18n="stat_lang_label">界面语种</div></div>
+    <div class="stat-item"><div class="stat-num" data-i18n="stat_ai_num">AI</div><div class="stat-label" data-i18n="stat_ai_label">混元驱动</div></div>
+    <div class="stat-item"><div class="stat-num" data-i18n="stat_dim_num">6</div><div class="stat-label" data-i18n="stat_dim_label">能力维度</div></div>
+    <div class="stat-item"><div class="stat-num" data-i18n="stat_role_num">5</div><div class="stat-label" data-i18n="stat_role_label">用户角色</div></div>
+  </div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="cta-section">
+  <h2 data-i18n="cta_bottom_title">准备好开始你的语言学习之旅了吗？</h2>
+  <p data-i18n="cta_bottom_sub">免费注册，即刻体验AI驱动的个性化学习。不是工具，是生态。</p>
+  <a class="btn-primary" href="/xuewaiyu/login" data-i18n="cta_bottom_btn">免费注册 AILOS</a>
+</section>
+
+<footer class="site-footer">
+  <span data-i18n="footer_brand">东莞言道科技有限公司</span> &copy; 2026 &nbsp;|&nbsp;
+  <a href="https://www.yandao.vip" data-i18n="footer_company">企业官网</a> &nbsp;|&nbsp;
+  <a href="/xuewaiyu/login" data-i18n="footer_login">登录</a> &nbsp;|&nbsp;
+  <a href="/xuewaiyu/terms.html" data-i18n="footer_terms">服务条款</a>
+  <br><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="icp-record" id="icpRecord" data-i18n="footer_icp">粤ICP备2026071165号-2</a>
+</footer>
+
+<script>
+const I18N = {
+  zh: {
+    hero_badge: 'AI Native 全层级教育操作系统',
+    hero_title_1: '不只是语言APP，', hero_title_ai: 'AI原生', hero_title_2: '全层级教育操作系统',
+    hero_sub: 'Duolingo 教你单词，Babbel 教你语法——AILOS 用你的母语，帮你构建完整的语言认知体系。',
+    hero_vs: '<span>vs Duolingo：</span>不只是游戏化刷题，AILOS用AI理解你的母语思维，生成个性化教学。<br><span>vs Babbel：</span>不只是固定课程，AILOS实时动态生成适合你当前水平的专属内容。',
+    cta_guest: '免费游客体验', cta_register: '立即注册', cta_login: '登录',
+    diff_title: '四大核心差异化', diff_sub: 'AILOS 不是工具，是生态——每个角色都能在这里找到专属价值',
+    feat_ai_title: '人格化AI语伴', feat_ai_desc: '专属AI导师用你的母语解释语法、生成例句、纠正发音。24小时在线，像真人教师一样陪伴你的学习旅程，而非冰冷的题库引擎。',
+    feat_course_title: '动态AI课程生成', feat_course_desc: '告别固定教材。AI根据你的学习目标、当前水平、薄弱环节，实时生成个性化课程。每节课都是为你量身定制的独特内容，而非千篇一律的标准化课程。',
+    feat_lang_title: '三层母语全球适配', feat_lang_desc: '界面语言、母语、目标语言三层独立分离。无论你说藏语、阿拉伯语还是印地语，AI都能用你最熟悉的方式教学。真正的全球化语言学习，非英语为中心。',
+    feat_creator_title: '学习创作双向变现', feat_creator_desc: '语言教师和内容创作者可发布原创课程、建立学习社群、获得收益分成。学习者也可通过知识分享获得回报。学与教的价值闭环。',
+    role_title: '五类角色 · 专属价值', role_sub: 'AILOS 为每个角色设计独立空间，而非一刀切的通用界面',
+    role_student_title: '学生', role_student_desc: 'AI母语教学、动态课程、游戏化学习——用你的母语，学任何语言。',
+    role_parent_title: '家长', role_parent_desc: '学习进度追踪、能力评估报告、使用时长控制——孩子的学习，你全程可见。',
+    role_teacher_title: '教师', role_teacher_desc: '班级管理、作业布置批改、学生数据追踪——AI辅助，教学效率翻倍。',
+    role_org_title: '机构', role_org_desc: '多教师管理、批量学生导入、机构级数据报表——完整的B端解决方案。',
+    role_creator_title: '创作者', role_creator_desc: '课程发布、社群运营、收益分成——你的专业知识，帮助全球学习者。',
+    stat_lang_num: '7', stat_lang_label: '界面语种', stat_ai_num: 'AI', stat_ai_label: '混元驱动', stat_dim_num: '6', stat_dim_label: '能力维度', stat_role_num: '5', stat_role_label: '用户角色',
+    cta_bottom_title: '准备好开始你的语言学习之旅了吗？', cta_bottom_sub: '免费注册，即刻体验AI驱动的个性化学习。不是工具，是生态。', cta_bottom_btn: '免费注册 AILOS',
+    footer_brand: '东莞言道科技有限公司', footer_company: '企业官网', footer_login: '登录', footer_terms: '服务条款', footer_icp: '粤ICP备2026071165号-2',
+  },
+  en: {
+    hero_badge: 'AI Native Full-Layer Education OS',
+    hero_title_1: 'Not Just a Language App — ', hero_title_ai: 'AI Native', hero_title_2: ' Full-Layer Education OS',
+    hero_sub: 'Duolingo teaches you words. Babbel teaches you grammar. AILOS uses your native language to build a complete linguistic cognitive system.',
+    hero_vs: '<span>vs Duolingo:</span> Beyond gamified drills — AILOS understands your native thinking patterns.<br><span>vs Babbel:</span> Beyond fixed courses — AILOS generates real-time personalized content.',
+    cta_guest: 'Try as Guest', cta_register: 'Sign Up', cta_login: 'Sign In',
+    diff_title: 'Four Core Differentiators', diff_sub: 'AILOS is not a tool, it\'s an ecosystem — every role finds its unique value here',
+    feat_ai_title: 'Personal AI Language Partner', feat_ai_desc: 'Your dedicated AI tutor explains grammar, generates examples, and corrects pronunciation in your native language. 24/7 availability, like a real teacher — not a cold question bank.',
+    feat_course_title: 'Dynamic AI Course Generation', feat_course_desc: 'Say goodbye to fixed textbooks. AI generates personalized courses in real-time based on your goals, level, and weaknesses. Every lesson uniquely tailored for you.',
+    feat_lang_title: 'Three-Layer Native Language Adaptation', feat_lang_desc: 'Interface language, native language, and target language are independently separated. Whether you speak Tibetan, Arabic, or Hindi, AI teaches in your most familiar way. True global language learning.',
+    feat_creator_title: 'Dual Learning & Creation Monetization', feat_creator_desc: 'Language teachers and content creators can publish original courses, build communities, and earn revenue. Learners can also earn through knowledge sharing. A complete value loop.',
+    role_title: 'Five Roles · Dedicated Value', role_sub: 'AILOS designs independent spaces for each role, not a one-size-fits-all interface',
+    role_student_title: 'Student', role_student_desc: 'AI native teaching, dynamic courses, gamified learning — learn any language with your native tongue.',
+    role_parent_title: 'Parent', role_parent_desc: 'Progress tracking, ability reports, screen time control — your child\'s learning journey, fully visible.',
+    role_teacher_title: 'Teacher', role_teacher_desc: 'Class management, assignment grading, student tracking — AI-assisted teaching efficiency doubled.',
+    role_org_title: 'Institution', role_org_desc: 'Multi-teacher management, bulk student import, institutional reports — complete B-end solution.',
+    role_creator_title: 'Creator', role_creator_desc: 'Course publishing, community management, revenue sharing — your expertise helps global learners.',
+    stat_lang_num: '7', stat_lang_label: 'Languages', stat_ai_num: 'AI', stat_ai_label: 'Hunyuan', stat_dim_num: '6', stat_dim_label: 'Dimensions', stat_role_num: '5', stat_role_label: 'Roles',
+    cta_bottom_title: 'Ready to start your language learning journey?', cta_bottom_sub: 'Sign up free. Not a tool — an ecosystem.', cta_bottom_btn: 'Sign Up Free',
+    footer_brand: 'Dongguan Yandao Technology', footer_company: 'Company', footer_login: 'Login', footer_terms: 'Terms', footer_icp: '粤ICP备2026071165号-2',
+  },
+  ja: {
+    hero_badge: 'AI Native 全層教育OS',
+    hero_title_1: '言語アプリではない、', hero_title_ai: 'AI Native', hero_title_2: ' 全層教育OS',
+    hero_sub: 'Duolingoは単語を、Babbelは文法を教えます。AILOSはあなたの母語で完全な言語認知体系を構築します。',
+    hero_vs: '<span>vs Duolingo：</span>ゲーム化ドリルを超えて、AIがあなたの母語思考を理解します。<br><span>vs Babbel：</span>固定コースを超えて、AIがリアルタイムに個別コンテンツを生成します。',
+    cta_guest: 'ゲスト体験', cta_register: '登録', cta_login: 'ログイン',
+    diff_title: '四つの核心的差別化', diff_sub: 'AILOSはツールではなく、エコシステム——すべての役割に固有の価値を',
+    feat_ai_title: '人格化AIパートナー', feat_ai_desc: '専用AIチューターが母語で文法を説明し、例文を生成し、発音を矯正します。24時間対応、本物の教師のように。',
+    feat_course_title: '動的AIコース生成', feat_course_desc: '固定教科書にさようなら。AIが目標、レベル、弱点に基づいてリアルタイムで個別コースを生成します。',
+    feat_lang_title: '三層母語グローバル対応', feat_lang_desc: 'インターフェース言語、母語、目標言語を独立分離。チベット語、アラビア語、ヒンディー語でも、最も慣れた方法で教えます。',
+    feat_creator_title: '学習・創作双方向収益化', feat_creator_desc: '語学教師とクリエイターがオリジナルコースを公開し、コミュニティを構築し、収益を得られます。',
+    role_title: '五つの役割 · 専用価値', role_sub: 'AILOSは各役割に独立したスペースを設計、一律のインターフェースではありません',
+    role_student_title: '学生', role_student_desc: 'AI母語教学、動的コース、ゲーム化学習——母語でどんな言語も学べます。',
+    role_parent_title: '保護者', role_parent_desc: '進捗追跡、能力レポート、利用時間制御——お子様の学習がすべて見えます。',
+    role_teacher_title: '教師', role_teacher_desc: 'クラス管理、課題採点、学生追跡——AI支援で教学効率が倍増。',
+    role_org_title: '機関', role_org_desc: '複数教師管理、一括学生登録、機関レポート——完全なBエンドソリューション。',
+    role_creator_title: 'クリエイター', role_creator_desc: 'コース公開、コミュニティ運営、収益分配——あなたの専門知識が世界の学習者を助けます。',
+    stat_lang_num: '7', stat_lang_label: '言語', stat_ai_num: 'AI', stat_ai_label: '混元', stat_dim_num: '6', stat_dim_label: '次元', stat_role_num: '5', stat_role_label: '役割',
+    cta_bottom_title: '言語学習の旅を始める準備はできましたか？', cta_bottom_sub: '無料登録。ツールではなく、エコシステム。', cta_bottom_btn: '無料登録',
+    footer_brand: '東莞言道科技', footer_company: '企業サイト', footer_login: 'ログイン', footer_terms: '利用規約', footer_icp: '粤ICP备2026071165号-2',
+  },
+  ko: {
+    hero_badge: 'AI Native 전층 교육 OS',
+    hero_title_1: '언어 앱이 아닌, ', hero_title_ai: 'AI Native', hero_title_2: ' 전층 교육 OS',
+    hero_sub: 'Duolingo는 단어를, Babbel은 문법을 가르칩니다. AILOS는 당신의 모국어로 완전한 언어 인지 체계를 구축합니다.',
+    hero_vs: '<span>vs Duolingo:</span> 게임화 문제풀이를 넘어, AI가 모국어 사고를 이해합니다.<br><span>vs Babbel:</span> 고정 코스를 넘어, AI가 실시간 개인화 콘텐츠를 생성합니다.',
+    cta_guest: '게스트 체험', cta_register: '가입', cta_login: '로그인',
+    diff_title: '네 가지 핵심 차별화', diff_sub: 'AILOS는 도구가 아닌 생태계 — 모든 역할이 고유한 가치를 찾습니다',
+    feat_ai_title: '개인화 AI 파트너', feat_ai_desc: '전용 AI 튜터가 모국어로 문법을 설명하고 예문을 생성하며 발음을 교정합니다. 24시간 이용 가능, 실제 교사처럼.',
+    feat_course_title: '동적 AI 코스 생성', feat_course_desc: '고정 교재는 이제 그만. AI가 목표, 수준, 약점에 따라 실시간으로 개인화 코스를 생성합니다.',
+    feat_lang_title: '3층 모국어 글로벌 대응', feat_lang_desc: '인터페이스 언어, 모국어, 목표 언어를 독립 분리. 티베트어, 아랍어, 힌디어도 가장 익숙한 방식으로 교육합니다.',
+    feat_creator_title: '학습·창작 양방향 수익화', feat_creator_desc: '언어 교사와 크리에이터가 오리지널 코스를 게시하고 커뮤니티를 구축하며 수익을 얻을 수 있습니다.',
+    role_title: '다섯 역할 · 전용 가치', role_sub: 'AILOS는 각 역할에 독립 공간을 설계, 획일적 인터페이스가 아닙니다',
+    role_student_title: '학생', role_student_desc: 'AI 모국어 교육, 동적 코스, 게임화 학습 — 모국어로 모든 언어를 배우세요.',
+    role_parent_title: '학부모', role_parent_desc: '진도 추적, 능력 보고서, 사용 시간 제어 — 자녀의 학습이 모두 보입니다.',
+    role_teacher_title: '교사', role_teacher_desc: '수업 관리, 과제 채점, 학생 추적 — AI 지원으로 교육 효율 두 배.',
+    role_org_title: '기관', role_org_desc: '다중 교사 관리, 일괄 학생 등록, 기관 보고서 — 완전한 B엔드 솔루션.',
+    role_creator_title: '크리에이터', role_creator_desc: '코스 게시, 커뮤니티 운영, 수익 공유 — 당신의 전문 지식이 세계 학습자를 돕습니다.',
+    stat_lang_num: '7', stat_lang_label: '언어', stat_ai_num: 'AI', stat_ai_label: '혼원', stat_dim_num: '6', stat_dim_label: '차원', stat_role_num: '5', stat_role_label: '역할',
+    cta_bottom_title: '언어 학습 여정을 시작할 준비가 되셨나요?', cta_bottom_sub: '무료 가입. 도구가 아닌 생태계.', cta_bottom_btn: '무료 가입',
+    footer_brand: '동관 옌다오 테크놀로지', footer_company: '기업 사이트', footer_login: '로그인', footer_terms: '이용약관', footer_icp: '粤ICP备2026071165号-2',
+  },
+  fr: {
+    hero_badge: 'OS Éducatif IA Native',
+    hero_title_1: 'Pas juste une app — ', hero_title_ai: 'IA Native', hero_title_2: ' OS éducatif complet',
+    hero_sub: 'Duolingo enseigne des mots. Babbel enseigne la grammaire. AILOS utilise votre langue maternelle pour construire un système cognitif linguistique complet.',
+    hero_vs: '<span>vs Duolingo:</span> Au-delà des exercices gamifiés — l\'IA comprend votre pensée native.<br><span>vs Babbel:</span> Au-delà des cours fixes — l\'IA génère du contenu personnalisé en temps réel.',
+    cta_guest: 'Essayer en invité', cta_register: 'S\'inscrire', cta_login: 'Connexion',
+    diff_title: 'Quatre différenciateurs clés', diff_sub: 'AILOS n\'est pas un outil, c\'est un écosystème',
+    feat_ai_title: 'Partenaire IA personnel', feat_ai_desc: 'Votre tuteur IA dédié explique la grammaire, génère des exemples et corrige la prononciation dans votre langue maternelle.',
+    feat_course_title: 'Génération dynamique de cours', feat_course_desc: 'L\'IA génère des cours personnalisés en temps réel selon vos objectifs, niveau et faiblesses.',
+    feat_lang_title: 'Adaptation native trois couches', feat_lang_desc: 'Langue d\'interface, langue maternelle et langue cible séparées. Que vous parliez tibétain, arabe ou hindi.',
+    feat_creator_title: 'Monétisation double apprentissage-création', feat_creator_desc: 'Les enseignants et créateurs publient des cours originaux et génèrent des revenus.',
+    role_title: 'Cinq rôles · Valeur dédiée', role_sub: 'AILOS conçoit des espaces indépendants pour chaque rôle',
+    role_student_title: 'Étudiant', role_student_desc: 'Enseignement IA natif, cours dynamiques, apprentissage gamifié.',
+    role_parent_title: 'Parent', role_parent_desc: 'Suivi des progrès, rapports, contrôle du temps d\'écran.',
+    role_teacher_title: 'Enseignant', role_teacher_desc: 'Gestion de classe, correction, suivi des élèves.',
+    role_org_title: 'Institution', role_org_desc: 'Gestion multi-enseignants, import d\'élèves, rapports.',
+    role_creator_title: 'Créateur', role_creator_desc: 'Publication de cours, communauté, partage de revenus.',
+    stat_lang_num: '7', stat_lang_label: 'Langues', stat_ai_num: 'IA', stat_ai_label: 'Hunyuan', stat_dim_num: '6', stat_dim_label: 'Dimensions', stat_role_num: '5', stat_role_label: 'Rôles',
+    cta_bottom_title: 'Prêt à commencer ?', cta_bottom_sub: 'Inscription gratuite. Pas un outil — un écosystème.', cta_bottom_btn: 'Inscription gratuite',
+    footer_brand: 'Dongguan Yandao Technology', footer_company: 'Entreprise', footer_login: 'Connexion', footer_terms: 'Conditions', footer_icp: '粤ICP备2026071165号-2',
+  },
+  es: {
+    hero_badge: 'OS Educativo AI Native',
+    hero_title_1: 'No solo una app — ', hero_title_ai: 'IA Nativa', hero_title_2: ' OS educativo completo',
+    hero_sub: 'Duolingo enseña palabras. Babbel enseña gramática. AILOS usa tu lengua materna para construir un sistema cognitivo lingüístico completo.',
+    hero_vs: '<span>vs Duolingo:</span> Más allá de ejercicios gamificados.<br><span>vs Babbel:</span> Más allá de cursos fijos — IA genera contenido en tiempo real.',
+    cta_guest: 'Probar como invitado', cta_register: 'Registrarse', cta_login: 'Iniciar sesión',
+    diff_title: 'Cuatro diferenciadores', diff_sub: 'AILOS no es una herramienta, es un ecosistema',
+    feat_ai_title: 'Compañero IA personal', feat_ai_desc: 'Tu tutor IA dedicado explica gramática, genera ejemplos y corrige pronunciación en tu lengua materna.',
+    feat_course_title: 'Generación dinámica de cursos', feat_course_desc: 'IA genera cursos personalizados en tiempo real según tus objetivos, nivel y debilidades.',
+    feat_lang_title: 'Adaptación nativa tres capas', feat_lang_desc: 'Idioma de interfaz, lengua materna e idioma objetivo separados. Hables tibetano, árabe o hindi.',
+    feat_creator_title: 'Monetización dual aprendizaje-creación', feat_creator_desc: 'Profesores y creadores publican cursos originales y generan ingresos.',
+    role_title: 'Cinco roles · Valor dedicado', role_sub: 'AILOS diseña espacios independientes para cada rol',
+    role_student_title: 'Estudiante', role_student_desc: 'Enseñanza IA nativa, cursos dinámicos, aprendizaje gamificado.',
+    role_parent_title: 'Padre', role_parent_desc: 'Seguimiento de progreso, informes, control de tiempo.',
+    role_teacher_title: 'Profesor', role_teacher_desc: 'Gestión de clases, corrección, seguimiento de alumnos.',
+    role_org_title: 'Institución', role_org_desc: 'Gestión multi-profesor, importación de alumnos, informes.',
+    role_creator_title: 'Creador', role_creator_desc: 'Publicación de cursos, comunidad, ingresos compartidos.',
+    stat_lang_num: '7', stat_lang_label: 'Idiomas', stat_ai_num: 'IA', stat_ai_label: 'Hunyuan', stat_dim_num: '6', stat_dim_label: 'Dimensiones', stat_role_num: '5', stat_role_label: 'Roles',
+    cta_bottom_title: '¿Listo para comenzar?', cta_bottom_sub: 'Registro gratuito. No una herramienta — un ecosistema.', cta_bottom_btn: 'Registro gratuito',
+    footer_brand: 'Dongguan Yandao Technology', footer_company: 'Empresa', footer_login: 'Iniciar sesión', footer_terms: 'Términos', footer_icp: '粤ICP备2026071165号-2',
+  },
+  de: {
+    hero_badge: 'KI Native Bildungs-OS',
+    hero_title_1: 'Keine Sprach-App — ', hero_title_ai: 'KI Native', hero_title_2: ' Bildungs-OS',
+    hero_sub: 'Duolingo lehrt Wörter. Babbel lehrt Grammatik. AILOS nutzt deine Muttersprache für ein vollständiges linguistisches System.',
+    hero_vs: '<span>vs Duolingo:</span> Mehr als gamifizierte Übungen.<br><span>vs Babbel:</span> Mehr als feste Kurse — KI generiert Echtzeit-Inhalte.',
+    cta_guest: 'Als Gast testen', cta_register: 'Registrieren', cta_login: 'Anmelden',
+    diff_title: 'Vier Kernunterschiede', diff_sub: 'AILOS ist kein Werkzeug, sondern ein Ökosystem',
+    feat_ai_title: 'Persönlicher KI-Partner', feat_ai_desc: 'Dein KI-Tutor erklärt Grammatik, generiert Beispiele und korrigiert die Aussprache in deiner Muttersprache.',
+    feat_course_title: 'Dynamische KI-Kursgenerierung', feat_course_desc: 'KI generiert personalisierte Kurse in Echtzeit basierend auf deinen Zielen und Schwächen.',
+    feat_lang_title: 'Drei-Schicht-Muttersprache', feat_lang_desc: 'Oberflächensprache, Muttersprache und Zielsprache getrennt. Ob Tibetisch, Arabisch oder Hindi.',
+    feat_creator_title: 'Lern- und Kreativ-Monetarisierung', feat_creator_desc: 'Sprachlehrer und Autoren veröffentlichen Originalkurse und erzielen Einnahmen.',
+    role_title: 'Fünf Rollen · Eigener Wert', role_sub: 'AILOS gestaltet unabhängige Räume für jede Rolle',
+    role_student_title: 'Schüler', role_student_desc: 'KI-native Lehre, dynamische Kurse, gamifiziertes Lernen.',
+    role_parent_title: 'Eltern', role_parent_desc: 'Fortschrittsverfolgung, Berichte, Bildschirmzeitkontrolle.',
+    role_teacher_title: 'Lehrer', role_teacher_desc: 'Klassenverwaltung, Korrektur, Schülerverfolgung.',
+    role_org_title: 'Institution', role_org_desc: 'Multi-Lehrer-Verwaltung, Schülerimport, Berichte.',
+    role_creator_title: 'Ersteller', role_creator_desc: 'Kursveröffentlichung, Community, Umsatzbeteiligung.',
+    stat_lang_num: '7', stat_lang_label: 'Sprachen', stat_ai_num: 'KI', stat_ai_label: 'Hunyuan', stat_dim_num: '6', stat_dim_label: 'Dimensionen', stat_role_num: '5', stat_role_label: 'Rollen',
+    cta_bottom_title: 'Bereit zum Start?', cta_bottom_sub: 'Kostenlos registrieren. Kein Werkzeug — ein Ökosystem.', cta_bottom_btn: 'Kostenlos registrieren',
+    footer_brand: 'Dongguan Yandao Technology', footer_company: 'Unternehmen', footer_login: 'Anmelden', footer_terms: 'AGB', footer_icp: '粤ICP备2026071165号-2',
+  },
+};
+
+const LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko', 'fr':'fr', 'es':'es', 'de':'de' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh && I18N.zh[key]) || key; }
+
+
+
+
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const text = t(key);
+    if (text !== undefined) {
+      if (key === 'hero_vs') { el.innerHTML = text; }
+      else { el.textContent = text; }
+    }
+  });
+}
+
+updateI18n();
+</script>
+</body>
+</html>

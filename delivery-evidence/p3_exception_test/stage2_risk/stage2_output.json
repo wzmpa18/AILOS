@@ -1,0 +1,180 @@
+Redis connected successfully
+{
+ "meta": {
+  "base": "http://localhost:3000/api",
+  "at": "2026-07-28T00:42:06.974Z",
+  "summary": {
+   "total": 4,
+   "pass": 3,
+   "fail": 1,
+   "allPass": false
+  }
+ },
+ "cases": {
+  "T-07": {
+   "expect": "A 试用扣减 10s，B 因设备已领用拒绝试用（402，无 trial 扣减）",
+   "A_status": 200,
+   "A_source": "trial",
+   "B_status": 402,
+   "B_error": "TRANSLATION_TIME_EXHAUSTED",
+   "B_trialRestricted": true,
+   "B_restrictReason": "DEVICE_TRIAL_CLAIMED",
+   "A_trialUsed": 10,
+   "B_trialUsed": 0,
+   "pass": true
+  },
+  "T-08": {
+   "expect": "前 5 次无指纹试用扣减成功，第 6 次被 IP 前缀日频控拦截",
+   "results": [
+    {
+     "i": 1,
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 2,
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 3,
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 4,
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 5,
+     "status": 402,
+     "error": "TRANSLATION_TIME_EXHAUSTED"
+    },
+    {
+     "i": 6,
+     "status": 402,
+     "error": "TRANSLATION_TIME_EXHAUSTED"
+    }
+   ],
+   "dbUsage": [
+    {
+     "i": 1,
+     "trialUsed": 10
+    },
+    {
+     "i": 2,
+     "trialUsed": 10
+    },
+    {
+     "i": 3,
+     "trialUsed": 10
+    },
+    {
+     "i": 4,
+     "trialUsed": 10
+    },
+    {
+     "i": 5,
+     "trialUsed": 0
+    },
+    {
+     "i": 6,
+     "trialUsed": 0
+    }
+   ],
+   "redisIpCounter": 0,
+   "pass": false
+  },
+  "T-09": {
+   "expect": "同一 /24 网段轮换 6 个 IP，前 5 个成功，第 6 个触前缀上限拦截",
+   "results": [
+    {
+     "i": 1,
+     "xff": "10.0.0.1",
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 2,
+     "xff": "10.0.0.2",
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 3,
+     "xff": "10.0.0.3",
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 4,
+     "xff": "10.0.0.4",
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 5,
+     "xff": "10.0.0.5",
+     "status": 200,
+     "source": "trial",
+     "error": ""
+    },
+    {
+     "i": 6,
+     "xff": "10.0.0.6",
+     "status": 402,
+     "error": "TRANSLATION_TIME_EXHAUSTED"
+    }
+   ],
+   "dbUsage": [
+    {
+     "i": 1,
+     "trialUsed": 10
+    },
+    {
+     "i": 2,
+     "trialUsed": 10
+    },
+    {
+     "i": 3,
+     "trialUsed": 10
+    },
+    {
+     "i": 4,
+     "trialUsed": 10
+    },
+    {
+     "i": 5,
+     "trialUsed": 10
+    },
+    {
+     "i": 6,
+     "trialUsed": 0
+    }
+   ],
+   "redisIpCounter": 5,
+   "pass": true
+  },
+  "T-10": {
+   "expect": "设备绑定 ≤2 账号可正常使用，第 3 个账号触 DEVICE_ACCOUNT_LIMIT → 试用不可领",
+   "A_ok": true,
+   "B_ok": true,
+   "C_beforeOK": true,
+   "C_consumeStatus": 402,
+   "C_consumeError": "TRANSLATION_TIME_EXHAUSTED",
+   "C_trialRestricted": true,
+   "C_restrictReason": "DEVICE_ACCOUNT_LIMIT",
+   "C_trialUsed": 0,
+   "pass": true
+  }
+ }
+}

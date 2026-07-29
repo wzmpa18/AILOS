@@ -41,6 +41,7 @@
   .upgrade-box h3 { margin-bottom:8px; }
   .upgrade-box p { font-size:14px; color:var(--sub); margin-bottom:16px; line-height:1.6; }
 </style>
+<script src="/xuewaiyu/assets/devicefp.js"></script>
 </head>
 <body>
 <div class="top">
@@ -103,7 +104,23 @@
     t.textContent = msg; t.classList.add('show');
     setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
-  function hdrs() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }; }
+  var DEVICE_FP = (function () {
+    try {
+      var k = 'yandao_dfp_v1', v = localStorage.getItem(k);
+      if (v) return v;
+      var c = document.createElement('canvas'); c.width = 200; c.height = 50;
+      var x = c.getContext('2d'); x.textBaseline = 'top'; x.font = '14px Arial';
+      x.fillStyle = '#f60'; x.fillRect(10, 10, 60, 20); x.fillStyle = '#069'; x.fillText('yandao-fp', 2, 15);
+      var s = [navigator.userAgent, navigator.language, screen.width + 'x' + screen.height + 'x' + screen.colorDepth,
+        new Date().getTimezoneOffset(), navigator.hardwareConcurrency || '', navigator.platform || '', c.toDataURL()].join('|');
+      var h = 5381, h2 = 52711, i;
+      for (i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; }
+      for (i = s.length - 1; i >= 0; i--) { h2 = ((h2 << 5) + h2 + s.charCodeAt(i)) >>> 0; }
+      v = 'fp1-' + h.toString(16) + '-' + h2.toString(16) + '-' + s.length.toString(16);
+      localStorage.setItem(k, v); return v;
+    } catch (e) { return 'fp1-fallback-' + String((navigator.userAgent || '').length); }
+  })();
+  function hdrs() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Device-Fp': DEVICE_FP }; }
 
   function refreshQuota() {
     fetch(API + '/api/translate/photo/quota', { headers: hdrs() })

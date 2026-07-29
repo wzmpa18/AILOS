@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AILOS - 错题本</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --vocab-color: #4F46E5;
+    --grammar-color: #EC4899;
+    --reading-color: #F59E0B;
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: calc(var(--nav-height) + 20px);
+  }
+
+  /* Header */
+  .header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .back-link {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    transition: color .2s; flex-shrink: 0;
+  }
+  .back-link:hover { color: var(--primary); }
+  .header-title {
+    font-size: 18px; font-weight: 700; flex: 1;
+  }
+    display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap; flex-shrink: 0;
+  }
+
+  .main-content { padding: 16px 20px; max-width: 600px; margin: 0 auto; }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 16px 12px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .stat-icon { font-size: 22px; margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+    padding-bottom: 4px;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--card-bg);
+    color: var(--text-secondary); transition: all .2s; white-space: nowrap; flex-shrink: 0;
+  }
+  .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .filter-chip.vocab.active { background: var(--vocab-color); border-color: var(--vocab-color); }
+  .filter-chip.grammar.active { background: var(--grammar-color); border-color: var(--grammar-color); }
+  .filter-chip.reading.active { background: var(--reading-color); border-color: var(--reading-color); }
+
+  /* Action Bar */
+  .action-bar {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .btn {
+    flex: 1; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s; border: 1.5px solid var(--border);
+    background: var(--card-bg); color: var(--text-secondary); text-align: center;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn.primary {
+    background: var(--primary); color: #fff; border-color: var(--primary);
+  }
+  .btn.primary:hover { background: var(--primary-hover); }
+  .btn.success {
+    background: var(--success); color: #fff; border-color: var(--success);
+  }
+  .btn.success:hover { background: #059669; }
+
+  /* Error List */
+  .error-list { display: flex; flex-direction: column; gap: 10px; }
+  .error-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; border-left: 4px solid var(--primary); transition: all .2s;
+    position: relative;
+  }
+  .error-card.vocab { border-left-color: var(--vocab-color); }
+  .error-card.grammar { border-left-color: var(--grammar-color); }
+  .error-card.reading { border-left-color: var(--reading-color); }
+  .error-card.mastered { opacity: 0.5; }
+  .error-card.mastered .error-question,
+  .error-card.mastered .error-answers { text-decoration: line-through; text-decoration-color: var(--text-muted); }
+
+  .error-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+  }
+  .error-source {
+    font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 10px;
+    color: #fff;
+  }
+  .error-source.vocab { background: var(--vocab-color); }
+  .error-source.grammar { background: var(--grammar-color); }
+  .error-source.reading { background: var(--reading-color); }
+  .error-date {
+    font-size: 11px; color: var(--text-muted);
+  }
+  .error-question {
+    font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text);
+    line-height: 1.5;
+  }
+  .error-answers {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .answer-row {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+  }
+  .answer-label {
+    font-size: 11px; color: var(--text-muted); min-width: 48px; flex-shrink: 0;
+  }
+  .answer-value {
+    font-weight: 500; padding: 2px 8px; border-radius: 4px;
+  }
+  .answer-value.wrong {
+    background: #FEF2F2; color: var(--error);
+  }
+  .answer-value.correct {
+    background: #F0FDF4; color: var(--success);
+  }
+  .error-actions {
+    display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .error-actions .btn-small {
+    padding: 6px 12px; border-radius: 16px; font-size: 11px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text-secondary); transition: all .2s;
+  }
+  .error-actions .btn-small:hover { border-color: var(--primary); color: var(--primary); }
+  .error-actions .btn-small.mastered-btn {
+    background: var(--success); color: #fff; border-color: var(--success);
+  }
+  .error-actions .btn-small.mastered-btn:hover { background: #059669; }
+  .error-actions .btn-small.undo-btn {
+    background: var(--warning); color: #fff; border-color: var(--warning);
+  }
+
+  .mastered-badge {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    background: #F0FDF4; color: var(--success); font-weight: 600;
+  }
+
+  /* Quiz Mode */
+  .quiz-container {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-md);
+    padding: 24px 20px; margin-bottom: 20px;
+  }
+  .quiz-progress {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .quiz-progress-bar {
+    flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s ease;
+  }
+  .quiz-progress-text {
+    font-size: 12px; color: var(--text-muted); flex-shrink: 0;
+  }
+  .quiz-question {
+    font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;
+    padding: 20px 0; border-bottom: 1px solid var(--border);
+  }
+  .quiz-source {
+    text-align: center; font-size: 11px; color: var(--text-muted); margin-bottom: 16px;
+  }
+  .quiz-input {
+    width: 100%; padding: 12px 16px; border-radius: var(--radius-sm);
+    border: 2px solid var(--border); font-size: 16px; outline: none;
+    transition: border-color .2s; margin-bottom: 12px;
+  }
+  .quiz-input:focus { border-color: var(--primary); }
+  .quiz-input.correct-input { border-color: var(--success); background: #F0FDF4; }
+  .quiz-input.wrong-input { border-color: var(--error); background: #FEF2F2; }
+  .quiz-feedback {
+    text-align: center; font-size: 14px; padding: 10px; border-radius: var(--radius-sm);
+    margin-bottom: 12px; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #F0FDF4; color: var(--success); }
+  .quiz-feedback.wrong { background: #FEF2F2; color: var(--error); }
+  .quiz-buttons {
+    display: flex; gap: 10px;
+  }
+  .quiz-result {
+    text-align: center; padding: 24px 0;
+  }
+  .quiz-result-score {
+    font-size: 48px; font-weight: 800; color: var(--primary);
+  }
+  .quiz-result-label {
+    font-size: 14px; color: var(--text-secondary); margin-top: 4px;
+  }
+  .quiz-result-detail {
+    font-size: 13px; color: var(--text-muted); margin-top: 16px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-muted);
+  }
+  .empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; }
+  .empty-state .empty-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+  .empty-state .empty-desc { font-size: 13px; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: #fff; padding: 12px 24px; border-radius: 24px;
+    font-size: 14px; font-weight: 600; z-index: 10000; box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-height); background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex;
+    justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); transition: all 0.2s; font-size: 11px;
+    font-weight: 500; border: none; background: none; min-width: 56px;
+    position: relative; padding-top: 10px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+  .bottom-nav .nav-item.active::before {
+    content: ''; position: absolute; top: 0; width: 24px; height: 3px;
+    background: var(--primary); border-radius: 0 0 3px 3px;
+  }
+
+  /* Responsive */
+  @media (max-width: 375px) {
+    .header { padding: 12px 14px; }
+    .main-content { padding: 12px 14px; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-value { font-size: 20px; }
+    .error-question { font-size: 14px; }
+    .quiz-question { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="pageHeaderContainer" data-title="错题本" data-show-back="true"></div>
+
+  <script src="/xuewaiyu/assets/common.js?v=phase4_p0"></script>
+
+  <div class="header">
+    <div class="header-top">
+      <a class="back-link" href="/xuewaiyu/home" data-i18n="nav_back">&#8592; 返回</a>
+      <span class="header-title" data-i18n="page_title">错题本</span>
+    </div>
+  </div>
+
+  <div class="main-content" id="app">
+    <!-- dynamic content -->
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+<script>
+// ==================== i18n ====================
+var I18N = {
+  zh: {
+    nav_back: '\u2190 返回',
+    page_title: '错题本',
+    filter_all: '全部',
+    filter_vocab: '词汇',
+    filter_grammar: '语法',
+    filter_reading: '阅读',
+    btn_retry_all: '重做全部',
+    btn_retry_selected: '重做筛选',
+    btn_exit_quiz: '退出测验',
+    stat_total: '错题总数',
+    stat_accuracy: '正确率',
+    stat_most_type: '最易错类型',
+    stat_mastered: '已掌握',
+    source_label: '来源',
+    date_label: '日期',
+    question_label: '题目',
+    your_answer: '你的答案',
+    correct_answer: '正确答案',
+    btn_mastered: '已掌握',
+    btn_undo_mastered: '撤销掌握',
+    btn_retry: '重做此题',
+    mastered_status: '已掌握',
+    empty_title: '错题本为空',
+    empty_desc: '继续学习吧！当你做错题目时，它们会自动记录在这里。',
+    quiz_title: '错题重练',
+    quiz_submit: '提交',
+    quiz_next: '下一题',
+    quiz_skip: '跳过',
+    quiz_correct: '正确！',
+    quiz_wrong: '错误！正确答案是：',
+    quiz_complete: '测验完成！',
+    quiz_score: '得分',
+    quiz_detail: '你答对了 {correct} 题，共 {total} 题',
+    quiz_placeholder: '输入你的答案...',
+    quiz_back: '返回错题本',
+    quiz_retry: '再做一次',
+    toast_mastered: '已标记为掌握',
+    toast_undo_mastered: '已撤销掌握标记',
+    toast_cleared: '所有错题已清除',
+    lang_zh: '中文',
+    lang_en: 'English',
+    lang_ja: '日本語',
+    lang_ko: '한국어'
+  },
+  en: {
+    nav_back: '\u2190 Back',
+    page_title: 'Error Notebook',
+    filter_all: 'All',
+    filter_vocab: 'Vocabulary',
+    filter_grammar: 'Grammar',
+    filter_reading: 'Reading',
+    btn_retry_all: 'Retry All',
+    btn_retry_selected: 'Retry Filtered',
+    btn_exit_quiz: 'Exit Quiz',
+    stat_total: 'Total Errors',
+    stat_accuracy: 'Accuracy',
+    stat_most_type: 'Most Wrong Type',
+    stat_mastered: 'Mastered',
+    source_label: 'Source',
+    date_label: 'Date',
+    question_label: 'Question',
+    your_answer: 'Your Answer',
+    correct_answer: 'Correct Answer',
+    btn_mastered: 'Mastered',
+    btn_undo_mastered: 'Undo',
+    btn_retry: 'Retry',
+    mastered_status: 'Mastered',
+    empty_title: 'No Errors Yet',
+    empty_desc: 'Keep learning! When you answer questions incorrectly, they will be recorded here automatically.',
+    quiz_title: 'Error Retry',
+    quiz_submit: 'Submit',
+    quiz_next: 'Next',
+    quiz_skip: 'Skip',
+    quiz_correct: 'Correct!',
+    quiz_wrong: 'Wrong! The correct answer is: ',
+    quiz_complete: 'Quiz Complete!',
+    quiz_score: 'Score',
+    quiz_detail: 'You got {correct} out of {total} correct',
+    quiz_placeholder: 'Type your answer...',
+    quiz_back: 'Back to Notebook',
+    quiz_retry: 'Try Again',
+    toast_mastered: 'Marked as mastered',
+    toast_undo_mastered: 'Undo mastered mark',
+    toast_cleared: 'All errors cleared',
+    lang_zh: 'Chinese',
+    lang_en: 'English',
+    lang_ja: 'Japanese',
+    lang_ko: 'Korean'
+  },
+  ja: {
+    nav_back: '\u2190 戻る',
+    page_title: 'エラーノート',
+    filter_all: 'すべて',
+    filter_vocab: '語彙',
+    filter_grammar: '文法',
+    filter_reading: '読解',
+    btn_retry_all: 'すべて再挑戦',
+    btn_retry_selected: '選択して再挑戦',
+    btn_exit_quiz: 'クイズを終了',
+    stat_total: '総エラー数',
+    stat_accuracy: '正解率',
+    stat_most_type: '最も間違いやすい',
+    stat_mastered: 'マスター済',
+    source_label: '出典',
+    date_label: '日付',
+    question_label: '問題',
+    your_answer: 'あなたの回答',
+    correct_answer: '正解',
+    btn_mastered: 'マスター済',
+    btn_undo_mastered: '取消',
+    btn_retry: '再挑戦',
+    mastered_status: 'マスター済',
+    empty_title: 'エラーはまだありません',
+    empty_desc: '学習を続けましょう！間違えた問題は自動的にここに記録されます。',
+    quiz_title: '復習クイズ',
+    quiz_submit: '提出',
+    quiz_next: '次へ',
+    quiz_skip: 'スキップ',
+    quiz_correct: '正解！',
+    quiz_wrong: '不正解！正解は：',
+    quiz_complete: 'クイズ完了！',
+    quiz_score: 'スコア',
+    quiz_detail: '{total}問中{correct}問正解',
+    quiz_placeholder: '回答を入力...',
+    quiz_back: 'ノートに戻る',
+    quiz_retry: 'もう一度',
+    toast_mastered: 'マスター済にマークしました',
+    toast_undo_mastered: 'マスター済マークを解除しました',
+    toast_cleared: 'すべてのエラーをクリアしました',
+    lang_zh: '中国語',
+    lang_en: '英語',
+    lang_ja: '日本語',
+    lang_ko: '韓国語'
+  },
+  ko: {
+    nav_back: '\u2190 뒤로',
+    page_title: '오답 노트',
+    filter_all: '전체',
+    filter_vocab: '어휘',
+    filter_grammar: '문법',
+    filter_reading: '읽기',
+    btn_retry_all: '전체 다시 풀기',
+    btn_retry_selected: '필터 다시 풀기',
+    btn_exit_quiz: '퀴즈 종료',
+    stat_total: '총 오답 수',
+    stat_accuracy: '정답률',
+    stat_most_type: '가장 틀린 유형',
+    stat_mastered: '마스터함',
+    source_label: '출처',
+    date_label: '날짜',
+    question_label: '문제',
+    your_answer: '내 답변',
+    correct_answer: '정답',
+    btn_mastered: '마스터함',
+    btn_undo_mastered: '취소',
+    btn_retry: '다시 풀기',
+    mastered_status: '마스터함',
+    empty_title: '아직 오답이 없습니다',
+    empty_desc: '계속 학습하세요! 틀린 문제는 자동으로 여기에 기록됩니다.',
+    quiz_title: '오답 복습',
+    quiz_submit: '제출',
+    quiz_next: '다음',
+    quiz_skip: '건너뛰기',
+    quiz_correct: '정답입니다!',
+    quiz_wrong: '오답입니다! 정답은: ',
+    quiz_complete: '퀴즈 완료!',
+    quiz_score: '점수',
+    quiz_detail: '총 {total}문제 중 {correct}문제 정답',
+    quiz_placeholder: '답변을 입력하세요...',
+    quiz_back: '노트로 돌아가기',
+    quiz_retry: '다시 하기',
+    toast_mastered: '마스터로 표시됨',
+    toast_undo_mastered: '마스터 표시 취소됨',
+    toast_cleared: '모든 오답이 삭제됨',
+    lang_zh: '중국어',
+    lang_en: '영어',
+    lang_ja: '일본어',
+    lang_ko: '한국어'
+  }
+};
+
+// ==================== Language Detection ====================
+var LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko' };
+var LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어' };
+
+function detectLang() {
+  try { var s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  var nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+var currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
+
+
+
+
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var text = t(key);
+    if (text !== undefined) el.textContent = text;
+  });
+}
+
+// ==================== Data Management ====================
+var STORAGE_KEY = 'yandao_error_notebook';
+
+function getSampleData() {
+  return {
+    errors: [
+      { id: 'e1', question: '"apple" 的中文意思是什么？', userAnswer: '香蕉', correctAnswer: '苹果', source: 'vocabulary', date: '2026-07-24T10:30:00Z', mastered: false },
+      { id: 'e2', question: 'She ___ to school every day. (go/goes/went)', userAnswer: 'go', correctAnswer: 'goes', source: 'grammar', date: '2026-07-24T11:15:00Z', mastered: false },
+      { id: 'e3', question: '"library" 的正确拼写是？', userAnswer: 'libary', correctAnswer: 'library', source: 'vocabulary', date: '2026-07-23T14:00:00Z', mastered: false },
+      { id: 'e4', question: 'They ___ playing football now. (is/are/am)', userAnswer: 'is', correctAnswer: 'are', source: 'grammar', date: '2026-07-23T15:30:00Z', mastered: true },
+      { id: 'e5', question: '根据短文，主人公为什么去图书馆？', userAnswer: '为了借书', correctAnswer: '为了找一个安静的地方学习', source: 'reading', date: '2026-07-22T09:45:00Z', mastered: false },
+      { id: 'e6', question: '"beautiful" 的同义词是？', userAnswer: 'ugly', correctAnswer: 'pretty', source: 'vocabulary', date: '2026-07-22T10:20:00Z', mastered: false },
+      { id: 'e7', question: 'I have ___ finished my homework. (already/yet/still)', userAnswer: 'yet', correctAnswer: 'already', source: 'grammar', date: '2026-07-21T16:00:00Z', mastered: false },
+      { id: 'e8', question: '文章中提到的主要观点是什么？', userAnswer: '环保很重要', correctAnswer: '每个人都应该为环保做出具体行动', source: 'reading', date: '2026-07-21T13:00:00Z', mastered: false },
+      { id: 'e9', question: '"experience" 的意思是？', userAnswer: '实验', correctAnswer: '经验/经历', source: 'vocabulary', date: '2026-07-20T08:30:00Z', mastered: false },
+      { id: 'e10', question: 'If I ___ you, I would study harder. (am/was/were)', userAnswer: 'was', correctAnswer: 'were', source: 'grammar', date: '2026-07-19T11:00:00Z', mastered: false },
+      { id: 'e11', question: '作者在第二段中表达了什么情感？', userAnswer: '愤怒', correctAnswer: '遗憾和希望', source: 'reading', date: '2026-07-19T14:30:00Z', mastered: true },
+      { id: 'e12', question: '"environment" 的正确发音重音在第几音节？', userAnswer: '第一音节', correctAnswer: '第二音节', source: 'vocabulary', date: '2026-07-18T10:00:00Z', mastered: false }
+    ],
+    stats: {
+      totalAttempts: 50,
+      totalCorrect: 38
+    }
+  };
+}
+
+function loadData() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var data = JSON.parse(raw);
+      if (data && data.errors && Array.isArray(data.errors)) return data;
+    }
+  } catch(e) {}
+  // Seed sample data
+  var sample = getSampleData();
+  saveData(sample);
+  return sample;
+}
+
+function saveData(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function getErrors() {
+  var data = loadData();
+  return data.errors || [];
+}
+
+function getStats() {
+  var data = loadData();
+  return data.stats || { totalAttempts: 0, totalCorrect: 0 };
+}
+
+// ==================== Toast ====================
+var toastTimer = null;
+function showToast(message, duration) {
+  duration = duration || 2500;
+  var toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { toast.classList.remove('show'); }, duration);
+}
+
+// ==================== State ====================
+var currentFilter = 'all';
+var quizMode = false;
+var quizErrors = [];
+var quizIndex = 0;
+var quizCorrectCount = 0;
+var quizFeedbackShown = false;
+
+// ==================== Statistics ====================
+function computeStats(errors) {
+  var total = errors.length;
+  var mastered = errors.filter(function(e) { return e.mastered; }).length;
+  var stats = getStats();
+  var totalAttempts = stats.totalAttempts || 0;
+  var totalCorrect = stats.totalCorrect || 0;
+  var accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
+  // Most common error type
+  var typeCounts = { vocabulary: 0, grammar: 0, reading: 0 };
+  errors.forEach(function(e) {
+    if (typeCounts[e.source] !== undefined) typeCounts[e.source]++;
+  });
+  var mostType = 'vocabulary';
+  var maxCount = 0;
+  Object.keys(typeCounts).forEach(function(type) {
+    if (typeCounts[type] > maxCount) { maxCount = typeCounts[type]; mostType = type; }
+  });
+
+  return { total: total, accuracy: accuracy, mostType: mostType, mastered: mastered, typeCounts: typeCounts };
+}
+
+function getMostTypeName(type) {
+  var map = { vocabulary: t('filter_vocab'), grammar: t('filter_grammar'), reading: t('filter_reading') };
+  return map[type] || type;
+}
+
+// ==================== Filter ====================
+function getFilteredErrors() {
+  var errors = getErrors();
+  if (currentFilter === 'all') return errors;
+  return errors.filter(function(e) { return e.source === currentFilter; });
+}
+
+// ==================== Actions ====================
+function markMastered(id) {
+  var data = loadData();
+  var error = data.errors.find(function(e) { return e.id === id; });
+  if (error) {
+    error.mastered = !error.mastered;
+    saveData(data);
+    showToast(error.mastered ? t('toast_mastered') : t('toast_undo_mastered'));
+    render();
+  }
+}
+
+function startQuiz(errors) {
+  if (!errors || errors.length === 0) return;
+  quizMode = true;
+  quizErrors = errors.slice();
+  // Shuffle
+  for (var i = quizErrors.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = quizErrors[i]; quizErrors[i] = quizErrors[j]; quizErrors[j] = tmp;
+  }
+  quizIndex = 0;
+  quizCorrectCount = 0;
+  quizFeedbackShown = false;
+  render();
+}
+
+function retrySingleError(id) {
+  var allErrors = getErrors();
+  var error = allErrors.find(function(e) { return e.id === id; });
+  if (error) {
+    startQuiz([error]);
+  }
+}
+
+/* ============ AI 重练（变式题，蓝图铁律：内容 AI 生成） ============ */
+function startAIQuiz() {
+  var token = localStorage.getItem('yandao_token_v1');
+  if (!token) { showToast(t('toast_login_first') || '请先登录后使用 AI 重练'); startQuiz(getFilteredErrors()); return; }
+  showToast('正在生成 AI 变式题...');
+  fetch('/api/ai/generate-exercise', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ language: localStorage.getItem('yandao_study_lang') || 'en', level: 'beginner', type: 'grammar', count: 3 })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    var exs = (j && j.exercises) || [];
+    if (!exs.length) { showToast('AI 暂未生成变式题，使用本地错题'); startQuiz(getFilteredErrors()); return; }
+    var items = exs.map(function(ex, i){
+      return { id: 'ai' + Date.now() + '_' + i, question: ex.question, userAnswer: '', correctAnswer: ex.answer || '', source: 'grammar', date: new Date().toISOString(), mastered: false };
+    });
+    showToast('AI 生成了 ' + items.length + ' 道变式题');
+    startQuiz(items);
+  })
+  .catch(function(){
+    showToast('AI 重练失败（需登录），使用本地错题');
+    startQuiz(getFilteredErrors());
+  });
+}
+
+function exitQuiz() {
+  quizMode = false;
+  quizErrors = [];
+  render();
+}
+
+function submitQuizAnswer() {
+  if (quizFeedbackShown) return;
+  var input = document.getElementById('quizInput');
+  if (!input) return;
+  var answer = input.value.trim();
+  if (!answer) return;
+
+  var current = quizErrors[quizIndex];
+  var isCorrect = answer.toLowerCase() === current.correctAnswer.toLowerCase();
+  quizFeedbackShown = true;
+
+  if (isCorrect) {
+    quizCorrectCount++;
+    input.classList.add('correct-input');
+  } else {
+    input.classList.add('wrong-input');
+  }
+
+  var feedback = document.getElementById('quizFeedback');
+  feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+  feedback.textContent = isCorrect ? t('quiz_correct') : t('quiz_wrong') + current.correctAnswer;
+
+  // Re-render buttons (switch from submit/skip to next)
+  var btns = document.querySelector('.quiz-buttons');
+  if (btns) {
+    btns.innerHTML = '<button class="btn primary" onclick="nextQuiz()">' + t('quiz_next') + '</button>' +
+      '<button class="btn" onclick="exitQuiz()">' + t('btn_exit_quiz') + '</button>';
+  }
+}
+
+function nextQuiz() {
+  if (quizIndex < quizErrors.length - 1) {
+    quizIndex++;
+    quizFeedbackShown = false;
+    renderQuiz();
+  } else {
+    // Quiz complete
+    renderQuizResult();
+  }
+}
+
+function skipQuiz() {
+  if (quizIndex < quizErrors.length - 1) {
+    quizIndex++;
+    quizFeedbackShown = false;
+    renderQuiz();
+  } else {
+    renderQuizResult();
+  }
+}
+
+function retryQuiz() {
+  quizIndex = 0;
+  quizCorrectCount = 0;
+  quizFeedbackShown = false;
+  renderQuiz();
+}
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  try {
+    var d = new Date(isoString);
+    var y = d.getFullYear();
+    var m = ('0' + (d.getMonth() + 1)).slice(-2);
+    var day = ('0' + d.getDate()).slice(-2);
+    return y + '-' + m + '-' + day;
+  } catch(e) { return isoString; }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ==================== Render ====================
+function render() {
+  var app = document.getElementById('app');
+  if (quizMode) {
+    app.innerHTML = renderQuiz();
+  } else {
+    app.innerHTML = renderMain();
+  }
+}
+
+function renderMain() {
+  var errors = getErrors();
+  var filtered = getFilteredErrors();
+  var stats = computeStats(errors);
+
+  var html = '';
+
+  // Stats
+  html += '<div class="stats-grid">';
+  html += '<div class="stat-card"><div class="stat-icon">&#10060;</div><div class="stat-value">' + stats.total + '</div><div class="stat-label">' + t('stat_total') + '</div></div>';
+  html += '<div class="stat-card"><div class="stat-icon">&#127919;</div><div class="stat-value">' + stats.accuracy + '%</div><div class="stat-label">' + t('stat_accuracy') + '</div></div>';
+  html += '<div class="stat-card"><div class="stat-icon">&#128161;</div><div class="stat-value">' + getMostTypeName(stats.mostType) + '</div><div class="stat-label">' + t('stat_most_type') + '</div></div>';
+  html += '</div>';
+
+  // Filter Bar
+  html += '<div class="filter-bar">';
+  var filters = [
+    { key: 'all', label: t('filter_all'), cls: '' },
+    { key: 'vocabulary', label: t('filter_vocab'), cls: 'vocab' },
+    { key: 'grammar', label: t('filter_grammar'), cls: 'grammar' },
+    { key: 'reading', label: t('filter_reading'), cls: 'reading' }
+  ];
+  filters.forEach(function(f) {
+    var active = currentFilter === f.key ? ' active ' + f.cls : '';
+    html += '<span class="filter-chip' + active + '" onclick="setFilter(\'' + f.key + '\')">' + f.label + '</span>';
+  });
+  html += '</div>';
+
+  // Action Bar
+  if (filtered.length > 0) {
+    html += '<div class="action-bar">';
+    html += '<button class="btn primary" onclick="startQuiz(getFilteredErrors())">' + t('btn_retry_all') + ' (' + filtered.length + ')</button>';
+    html += '<button class="btn" onclick="startAIQuiz()">🤖 AI 重练</button>';
+    html += '</div>';
+  }
+
+  // Error List or Empty State
+  if (errors.length === 0) {
+    html += '<div class="empty-state">';
+    html += '<div class="empty-icon">&#128218;</div>';
+    html += '<div class="empty-title">' + t('empty_title') + '</div>';
+    html += '<div class="empty-desc">' + t('empty_desc') + '</div>';
+    html += '</div>';
+  } else if (filtered.length === 0) {
+    html += '<div class="empty-state">';
+    html += '<div class="empty-icon">&#128270;</div>';
+    html += '<div class="empty-title">' + t('filter_' + currentFilter) + ' ' + t('empty_title') + '</div>';
+    html += '<div class="empty-desc">' + t('empty_desc') + '</div>';
+    html += '</div>';
+  } else {
+    html += '<div class="error-list">';
+    filtered.forEach(function(e) {
+      html += '<div class="error-card ' + e.source + (e.mastered ? ' mastered' : '') + '">';
+      if (e.mastered) {
+        html += '<div class="mastered-badge">' + t('mastered_status') + '</div>';
+      }
+      html += '<div class="error-header">';
+      html += '<span class="error-source ' + e.source + '">' + t('filter_' + e.source) + '</span>';
+      html += '<span class="error-date">' + formatDate(e.date) + '</span>';
+      html += '</div>';
+      html += '<div class="error-question">' + escapeHtml(e.question) + '</div>';
+      html += '<div class="error-answers">';
+      html += '<div class="answer-row"><span class="answer-label">' + t('your_answer') + ':</span><span class="answer-value wrong">' + escapeHtml(e.userAnswer) + '</span></div>';
+      html += '<div class="answer-row"><span class="answer-label">' + t('correct_answer') + ':</span><span class="answer-value correct">' + escapeHtml(e.correctAnswer) + '</span></div>';
+      html += '</div>';
+      html += '<div class="error-actions">';
+      if (e.mastered) {
+        html += '<button class="btn-small undo-btn" onclick="markMastered(\'' + e.id + '\')">' + t('btn_undo_mastered') + '</button>';
+      } else {
+        html += '<button class="btn-small mastered-btn" onclick="markMastered(\'' + e.id + '\')">' + t('btn_mastered') + '</button>';
+      }
+      if (!e.mastered) {
+        html += '<button class="btn-small" onclick="retrySingleError(\'' + e.id + '\')">' + t('btn_retry') + '</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function renderQuiz() {
+  if (quizErrors.length === 0) {
+    quizMode = false;
+    return renderMain();
+  }
+
+  var current = quizErrors[quizIndex];
+  var progress = quizIndex + 1;
+  var total = quizErrors.length;
+  var pct = Math.round((quizIndex / total) * 100);
+
+  var html = '<div class="quiz-container">';
+  html += '<div class="quiz-progress">';
+  html += '<div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:' + pct + '%"></div></div>';
+  html += '<span class="quiz-progress-text">' + progress + '/' + total + '</span>';
+  html += '</div>';
+
+  html += '<div class="quiz-source">' + t('filter_' + current.source) + '</div>';
+  html += '<div class="quiz-question">' + escapeHtml(current.question) + '</div>';
+
+  html += '<input type="text" class="quiz-input" id="quizInput" placeholder="' + t('quiz_placeholder') + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
+  html += '<div class="quiz-feedback" id="quizFeedback"></div>';
+
+  html += '<div class="quiz-buttons">';
+  if (!quizFeedbackShown) {
+    html += '<button class="btn primary" onclick="submitQuizAnswer()">' + t('quiz_submit') + '</button>';
+    html += '<button class="btn" onclick="skipQuiz()">' + t('quiz_skip') + '</button>';
+  } else {
+    html += '<button class="btn primary" onclick="nextQuiz()">' + t('quiz_next') + '</button>';
+  }
+  html += '<button class="btn" onclick="exitQuiz()">' + t('btn_exit_quiz') + '</button>';
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+function renderQuizResult() {
+  var total = quizErrors.length;
+  var pct = Math.round((quizCorrectCount / total) * 100);
+
+  var html = '<div class="quiz-container">';
+  html += '<div class="quiz-result">';
+  html += '<div class="quiz-result-score">' + pct + '%</div>';
+  html += '<div class="quiz-result-label">' + t('quiz_complete') + '</div>';
+  html += '<div class="quiz-result-detail">' + t('quiz_detail').replace('{correct}', quizCorrectCount).replace('{total}', total) + '</div>';
+  html += '</div>';
+  html += '<div class="quiz-buttons">';
+  html += '<button class="btn primary" onclick="retryQuiz()">' + t('quiz_retry') + '</button>';
+  html += '<button class="btn" onclick="exitQuiz()">' + t('quiz_back') + '</button>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  render();
+}
+
+// ==================== Init ====================
+function init() {
+  updateI18n();
+  render();
+  // Phase4: languageChanged listener
+  window.addEventListener('languageChanged', function(e) {
+    var newLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : currentLang;
+    if (newLang !== currentLang) {
+      currentLang = newLang;
+      updateI18n();
+      render();
+    }
+  });
+}
+
+init();
+</script>
+
+<div id="bottomNavContainer"></div>
+<script src="/xuewaiyu/public/js/bottom-nav.js"></script>
+<script src="/xuewaiyu/public/js/page-header.js"></script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私政策 - AILOS</title>
+    <style>
+        :root {
+            --bg: #fafbfc;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-secondary: #4a4a5e;
+            --text-muted: #6e6e82;
+            --border: #e2e4e9;
+            --accent: #2563eb;
+            --accent-light: #eff6ff;
+            --radius: 10px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.3px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .hero h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+        }
+
+        .hero .meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero .meta .divider {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .hero .tag {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 36px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+            padding-left: 14px;
+            border-left: 3px solid var(--accent);
+            letter-spacing: -0.3px;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 14px;
+            text-align: justify;
+        }
+
+        .section ul {
+            padding-left: 24px;
+            margin-bottom: 14px;
+        }
+
+        .section ul li {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .section ul li::marker {
+            color: var(--accent);
+        }
+
+        .section .sub-heading {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 20px 0 10px;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .info-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 24px;
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .footer .company {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 24px;
+            }
+            .hero {
+                padding: 24px 0 24px;
+            }
+            .section h2 {
+                font-size: 18px;
+            }
+            .main {
+                padding: 24px 16px 40px;
+            }
+            .header {
+                padding: 0 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">AILO<span>S</span></a>
+            <a href="/" class="back-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                返回首页
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Hero -->
+        <section class="hero">
+            <h1>隐私政策</h1>
+            <div class="meta">
+                <span>生效日期：2026年7月25日</span>
+                <span class="divider"></span>
+                <span>最后更新：2026年7月25日</span>
+                <span class="divider"></span>
+                <span class="tag">AILOS</span>
+            </div>
+        </section>
+
+        <!-- Preamble -->
+        <div class="section">
+            <p>东莞言道科技有限公司（以下简称"我们"或"AILOS"）深知个人信息对您的重要性，我们将按照法律法规的规定，保护您的个人信息及隐私安全。本隐私政策旨在向您说明我们如何收集、使用、存储、共享和保护您的个人信息，以及您所享有的相关权利。</p>
+            <p>请您在使用AILOS产品及相关服务前，仔细阅读并充分理解本隐私政策的全部内容。如您对本隐私政策有任何疑问或意见，请通过本政策末尾提供的联系方式与我们取得联系。</p>
+        </div>
+
+        <!-- 1. 信息收集 -->
+        <div class="section">
+            <h2>一、信息收集</h2>
+            <p>在您使用AILOS服务的过程中，我们可能会收集以下类型的信息：</p>
+
+            <div class="info-card">
+                <h3>1.1 您主动提供的信息</h3>
+                <p>当您注册账户、使用我们的服务或与我们沟通时，您可能会主动提供个人信息，包括但不限于：您的姓名、电子邮箱地址、手机号码、头像、公司名称、职位信息以及您在提交反馈或联系客服时提供的其他信息。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>1.2 我们自动收集的信息</h3>
+                <p>在您访问或使用AILOS服务时，我们可能会自动收集以下信息：设备信息（设备型号、操作系统版本、唯一设备标识符）、日志信息（IP地址、浏览器类型、访问时间、访问页面URL、引荐来源）、以及使用数据（您与服务的交互方式、功能使用频率等）。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>1.3 AI交互数据</h3>
+                <p>当您使用AILOS的AI功能时，我们会收集您输入的文本、上传的文件以及系统生成的回复内容。这些数据用于改进我们的AI模型和服务质量，我们对此类数据采取严格的保护措施。</p>
+            </div>
+        </div>
+
+        <!-- 2. 信息使用 -->
+        <div class="section">
+            <h2>二、信息使用</h2>
+            <p>我们收集的信息将用于以下目的：</p>
+            <ul>
+                <li>提供、维护和改进AILOS产品及服务，确保服务的稳定性和安全性；</li>
+                <li>处理您的注册、登录和账户管理请求，验证您的用户身份；</li>
+                <li>向您发送与服务相关的通知，包括但不限于服务更新、安全警报和管理消息；</li>
+                <li>回应您的咨询、反馈和客户支持请求；</li>
+                <li>分析和研究服务使用情况，以优化用户体验和产品功能；</li>
+                <li>训练和改进我们的AI模型，提高服务的智能化水平和准确性；</li>
+                <li>检测、预防和解决技术问题、安全漏洞和欺诈行为；</li>
+                <li>履行法律法规规定的义务，或在法律允许的范围内进行其他合法处理。</li>
+            </ul>
+            <p>我们仅在获得您的明确同意或符合法律规定的其他合法依据时，才会对您的个人信息进行上述处理。我们不会将您的个人信息用于与本隐私政策所述目的不相关的其他用途。</p>
+        </div>
+
+        <!-- 3. 信息存储与安全 -->
+        <div class="section">
+            <h2>三、信息存储与安全</h2>
+
+            <div class="info-card">
+                <h3>3.1 存储地点</h3>
+                <p>您的个人信息将存储于中华人民共和国境内的服务器上。如因业务需要确需将您的个人信息转移至境外，我们将严格按照法律法规的要求，在获得您的单独同意或满足法律规定的其他条件后进行。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>3.2 存储期限</h3>
+                <p>我们仅在实现本隐私政策所述目的所必需的期限内保留您的个人信息，除非法律要求或允许更长的保留期限。当您的个人信息不再需要时，我们将采取安全的方式删除或匿名化处理。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>3.3 安全措施</h3>
+                <p>我们已采取符合业界标准的安全防护措施保护您的个人信息安全，包括但不限于：数据加密传输（SSL/TLS）、访问控制机制、防火墙保护、定期安全审计和漏洞扫描、员工数据访问权限管理以及数据备份与灾难恢复机制。然而，请注意没有任何一种互联网传输或电子存储方法是100%安全的。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>3.4 安全事件处理</h3>
+                <p>如发生个人信息安全事件，我们将按照法律法规的要求，及时向您告知安全事件的基本情况和可能造成的影响、我们已采取或将要采取的处置措施、您可采取的防范和降低风险的建议以及我们的联系方式。我们将及时通过邮件、站内通知等方式将事件相关情况告知您。难以逐一告知个人信息主体时，我们会采取合理、有效的方式发布公告。</p>
+            </div>
+        </div>
+
+        <!-- 4. 用户权利 -->
+        <div class="section">
+            <h2>四、用户权利</h2>
+            <p>根据适用的数据保护法律法规，您享有以下权利：</p>
+            <ul>
+                <li><strong>访问权：</strong>您有权访问我们持有的关于您的个人信息，并获取相关信息的副本；</li>
+                <li><strong>更正权：</strong>如您发现您的个人信息不准确或不完整，您有权要求我们进行更正或补充；</li>
+                <li><strong>删除权：</strong>在符合法律规定的情形下，您有权要求我们删除您的个人信息；</li>
+                <li><strong>撤回同意权：</strong>您可以随时撤回此前对个人信息处理所给予的同意，撤回同意不影响撤回前基于同意进行的处理活动的合法性；</li>
+                <li><strong>可携带权：</strong>在符合条件的情况下，您有权要求将您的个人信息以结构化、通用化的格式传输给您或指定的第三方；</li>
+                <li><strong>注销账户权：</strong>您有权注销您的AILOS账户，账户注销后我们将停止为您提供服务并删除您的个人信息（法律法规另有规定的除外）；</li>
+                <li><strong>限制处理权：</strong>在特定情形下，您有权要求我们限制对您个人信息的处理。</li>
+            </ul>
+            <p>如您希望行使上述任何权利，请通过本政策末尾提供的联系方式与我们联系。我们将在收到您的请求后及时响应，并在法律法规规定的期限内完成处理。</p>
+        </div>
+
+        <!-- 5. Cookie政策 -->
+        <div class="section">
+            <h2>五、Cookie政策</h2>
+            <p>我们使用Cookie和类似技术（如Web Beacon、本地存储等）来提升您的用户体验并提供个性化的服务。</p>
+
+            <div class="info-card">
+                <h3>5.1 什么是Cookie</h3>
+                <p>Cookie是您访问网站时存储在您的设备（计算机或移动设备）上的小型文本文件。Cookie可以帮助网站记住您的偏好设置、登录状态等信息，从而提升您的浏览体验。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>5.2 我们使用的Cookie类型</h3>
+                <p><strong>必要Cookie：</strong>这些Cookie是网站正常运行所必需的，无法禁用。它们通常用于会话管理、安全验证和偏好设置。<br>
+                <strong>分析Cookie：</strong>帮助我们了解用户如何使用我们的服务，以便我们改进功能和性能。我们使用这些Cookie收集匿名统计数据。<br>
+                <strong>功能Cookie：</strong>用于记住您的偏好设置（如语言选择），以提供更个性化的体验。</p>
+            </div>
+
+            <div class="info-card">
+                <h3>5.3 您的选择</h3>
+                <p>大多数浏览器默认接受Cookie，但您可以通过浏览器设置选择拒绝或删除Cookie。请注意，禁用某些Cookie可能会影响您使用我们服务的部分功能。您也可以通过浏览器设置中的"无痕模式"或"隐私模式"来限制Cookie的使用。</p>
+            </div>
+        </div>
+
+        <!-- 6. 第三方服务 -->
+        <div class="section">
+            <h2>六、第三方服务</h2>
+            <p>我们的服务可能包含指向第三方网站、产品或服务的链接，或集成第三方SDK、API等服务。这些第三方服务独立运营，并拥有各自的隐私政策。我们不对第三方服务的隐私实践负责，建议您在使用相关服务前仔细阅读其隐私政策。</p>
+            <p>我们可能使用以下类型的第三方服务：</p>
+            <ul>
+                <li><strong>数据分析服务：</strong>用于了解服务使用情况，优化产品体验；</li>
+                <li><strong>支付服务：</strong>用于处理您的付款交易（如适用）；</li>
+                <li><strong>云基础设施服务：</strong>用于托管我们的服务和数据存储；</li>
+                <li><strong>AI技术服务：</strong>用于支持我们AI功能的底层模型推理和计算服务。</li>
+            </ul>
+            <p>我们将审慎选择第三方服务提供商，并要求其采取不低于我们自身标准的安全保护措施。我们仅会为提供AILOS服务所必需的目的与第三方共享您的个人信息。</p>
+        </div>
+
+        <!-- 7. 儿童隐私 -->
+        <div class="section">
+            <h2>七、儿童隐私</h2>
+            <p>AILOS服务不面向未满14周岁的儿童。我们不会在知情的情况下收集未满14周岁儿童的个人信息。如您作为监护人发现我们可能收集了您监护的儿童的个人信息，请立即通过本政策末尾提供的联系方式通知我们，我们将及时核实并删除相关数据。</p>
+            <p>对于已满14周岁但未满18周岁的未成年人，我们建议在其监护人的陪同下阅读本隐私政策，并在征得监护人同意后使用我们的服务。</p>
+        </div>
+
+        <!-- 8. 政策更新 -->
+        <div class="section">
+            <h2>八、政策更新</h2>
+            <p>我们可能会不时更新本隐私政策，以反映我们信息处理实践的变化、法律法规的要求或服务功能的调整。当我们对本隐私政策做出重大变更时，我们将通过以下方式通知您：</p>
+            <ul>
+                <li>在AILOS应用或网站内发布醒目的公告；</li>
+                <li>通过您注册时提供的电子邮箱发送通知；</li>
+                <li>在更新后的隐私政策顶部标注新的生效日期。</li>
+            </ul>
+            <p>我们建议您定期查阅本隐私政策，以了解最新的隐私保护信息。如您在新版隐私政策生效后继续使用我们的服务，即表示您同意修订后的隐私政策。如您不同意修订内容，您有权停止使用我们的服务并注销账户。</p>
+        </div>
+
+        <!-- 9. 联系方式 -->
+        <div class="section">
+            <h2>九、联系方式</h2>
+            <p>如您对本隐私政策有任何疑问、意见或建议，或希望行使您的用户权利，请通过以下方式与我们联系：</p>
+
+            <div class="info-card">
+                <h3>公司信息</h3>
+                <p>
+                    公司名称：东莞言道科技有限公司<br>
+                    注册地址：中国广东省东莞市<br>
+                    电子邮箱：privacy@ailos.ai<br>
+                    联系电话：敬请通过电子邮件获取
+                </p>
+            </div>
+
+            <p>我们将在收到您的邮件后尽快回复，并在法律法规规定的期限内处理您的请求。一般情况下，我们将在15个工作日内予以回复。如果您对我们的回复不满意，您还可以向相关数据保护监管机构投诉。</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <p class="company">东莞言道科技有限公司</p>
+            <p>&copy; 2026 AILOS. All rights reserved.</p>
+            <p style="margin-top: 4px;"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" style="color:#9ca3af;">ICP备案号：粤ICP备2026071165号-2</a></p>
+        </div>
+    </footer>
+
+</body>
+</html>

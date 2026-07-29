@@ -74,7 +74,7 @@ const dashboardController = {
       const todayCheckedIn = !!todayCheckin;
 
       // 3. AI 使用额度（从 Redis 或数据库获取）
-      let aiQuota = { conversation: 0, correction: 0, maxConversation: 5, maxCorrection: 3 };
+      const aiQuota = { conversation: 0, correction: 0, maxConversation: 5, maxCorrection: 3 };
       try {
         // 尝试从 Redis 获取当日使用量
         const redis = req.app.get('redis');
@@ -94,7 +94,7 @@ const dashboardController = {
       }
 
       // 4. 学习统计
-      let learningStats = {
+      const learningStats = {
         totalWords: 0,
         totalMinutes: 0,
         todayMinutes: 0,

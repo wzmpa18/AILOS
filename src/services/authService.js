@@ -6,6 +6,22 @@ const { checkRateLimit } = require('../utils/rateLimiter');
 const smsService = require('./smsService');
 const logger = require('../utils/logger');
 const config = require('../config');
+const { getSystemConfigService } = require('./systemConfigService');
+
+// 判断是否为管理员（用于登录审计等场景）
+async function isAdminUser(userId) {
+  if (!userId) return false;
+  const envAdmins = (process.env.ADMIN_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (envAdmins.includes(userId)) return true;
+  try {
+    const cfg = getSystemConfigService();
+    const ids = await cfg.getJson('admin.user_ids', []);
+    if (Array.isArray(ids) && ids.map(String).includes(String(userId))) return true;
+  } catch (e) {
+    logger.warn('[authService] isAdminUser check failed:', e.message);
+  }
+  return false;
+}
 
 class AuthService {
   // Phone + SMS login/register
@@ -37,7 +53,11 @@ class AuthService {
       });
 
       let user = await prisma.user.findUnique({ where: { phone } });
-      
+
+      if (user && user.disabled) {
+        throw new Error('ACCOUNT_DISABLED');
+      }
+
       if (!user) {
         user = await this._createUserWithIdentity({ phone });
       }
@@ -74,6 +94,10 @@ class AuthService {
       let user = await prisma.user.findUnique({
         where: { wechatOpenId: wechatUserInfo.openid },
       });
+
+      if (user && user.disabled) {
+        throw new Error('ACCOUNT_DISABLED');
+      }
 
       if (!user) {
         user = await this._createUserWithIdentity({
@@ -115,6 +139,10 @@ class AuthService {
         throw new Error('Invalid credentials');
       }
 
+      if (user.disabled) {
+        throw new Error('ACCOUNT_DISABLED');
+      }
+
       if (user.lockedUntil && user.lockedUntil > new Date()) {
         throw new Error('Account is temporarily locked. Please try again later.');
       }
@@ -148,6 +176,21 @@ class AuthService {
 
       const tokens = generateTokens({ userId: user.id, uniqueId: user.uniqueId });
       await this.createSession(user.id, tokens, deviceInfo);
+
+      if (await isAdminUser(user.id)) {
+        try {
+          await prisma.loginLog.create({
+            data: {
+              adminId: user.id,
+              account: user.phone || user.email || account,
+              ip: deviceInfo?.ipAddress || null,
+              userAgent: deviceInfo?.userAgent || null,
+            },
+          });
+        } catch (logErr) {
+          logger.warn('[authService] 写入管理员登录日志失败:', logErr.message);
+        }
+      }
 
       return { user: this.sanitizeUser(user), tokens };
     } catch (error) {
@@ -575,11 +618,11 @@ class AuthService {
   }
 
   sanitizeUser(user) {
-    const { passwordHash, ...sanitized } = user;
+    const { passwordHash: _ph, ...sanitized } = user;
     return sanitized;
   }
 
-  async getWechatUserInfo(code) {
+  async getWechatUserInfo(_code) {
     return {
       openid: 'mock_wechat_openid_' + generateRandomString(8),
       unionid: 'mock_wechat_unionid_' + generateRandomString(8),

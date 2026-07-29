@@ -44,7 +44,7 @@ class SmsEmailService {
     return crypto.randomInt(Math.pow(10, len - 1), Math.pow(10, len) - 1).toString();
   }
 
-  async sendVerificationCode(phone, code, type = 'login') {
+  async sendVerificationCode(phone, code, _type = 'login') {
     if (!this.isConfigured) {
       logger.warn('SMS not configured');
       if (config.env !== 'production') {

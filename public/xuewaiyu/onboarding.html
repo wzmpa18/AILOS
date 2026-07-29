@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>首次引导 · AILOS</title>
+  <style>
+    :root { --primary:#6366f1; --primary-light:#eef2ff; --bg:#f5f6fa; --text:#1f2937; --text-secondary:#6b7280; --border:#e5e7eb; --radius:16px; --ok:#10b981; --warn:#f59e0b; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:640px; margin:0 auto; padding:20px 16px 40px; }
+    .p-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .p-header h1 { font-size:20px; margin:0; }
+    .step-dots { display:flex; gap:6px; margin:10px 0 18px; }
+    .step-dots i { flex:1; height:5px; border-radius:3px; background:var(--border); transition:background .3s; }
+    .step-dots i.on { background:var(--primary); }
+    .card { background:#fff; border-radius:var(--radius); padding:22px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:16px; }
+    .card h2 { font-size:18px; margin:0 0 6px; }
+    .sub { font-size:13px; color:var(--text-secondary); line-height:1.6; margin:0 0 16px; }
+    .opt { display:block; width:100%; text-align:left; padding:14px; margin-bottom:10px; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:15px; cursor:pointer; transition:all .15s; }
+    .opt:hover { border-color:var(--primary); }
+    .opt.sel { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .opt .desc { display:block; font-size:12px; opacity:.75; margin-top:3px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .lang-card { text-align:center; padding:16px 8px; border:1px solid var(--border); border-radius:12px; cursor:pointer; background:#fff; font-size:15px; transition:all .15s; }
+    .lang-card.sel { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .lang-card .flag { font-size:28px; display:block; margin-bottom:4px; }
+    .btn { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:16px; font-weight:600; cursor:pointer; margin-top:8px; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn.ghost { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+    textarea { width:100%; min-height:96px; padding:12px; border:1px solid var(--border); border-radius:12px; font-size:14px; font-family:inherit; resize:vertical; }
+    input[type=text] { width:100%; padding:12px; border:1px solid var(--border); border-radius:12px; font-size:14px; font-family:inherit; }
+    .progress { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:14px; }
+    .progress > i { display:block; height:100%; background:var(--primary); transition:width .3s; }
+    .q-num { color:var(--text-secondary); font-size:13px; margin-bottom:6px; }
+    .q-text { font-size:16px; font-weight:600; margin-bottom:14px; line-height:1.5; }
+    .tag { display:inline-block; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; margin-bottom:8px; }
+    .tag.choice { background:var(--primary-light); color:var(--primary); }
+    .tag.listening { background:#fef3c7; color:#b45309; }
+    .tag.speaking { background:#d1fae5; color:#047857; }
+    .audio-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border:1px solid var(--primary); color:var(--primary); background:var(--primary-light); border-radius:20px; font-size:14px; font-weight:600; cursor:pointer; margin-bottom:14px; }
+    .ref-box { background:var(--primary-light); border-radius:12px; padding:14px; font-size:17px; font-weight:600; text-align:center; margin-bottom:6px; }
+    .ref-meaning { text-align:center; font-size:12px; color:var(--text-secondary); margin-bottom:14px; }
+    .mic-btn { display:block; margin:0 auto 10px; width:76px; height:76px; border-radius:50%; border:none; background:var(--primary); color:#fff; font-size:30px; cursor:pointer; transition:all .2s; }
+    .mic-btn.rec { background:#ef4444; animation:pulse 1s infinite; }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)} 70%{box-shadow:0 0 0 16px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} }
+    .mic-hint { text-align:center; font-size:13px; color:var(--text-secondary); margin-bottom:10px; min-height:20px; }
+    .result-level { font-size:48px; font-weight:800; color:var(--primary); text-align:center; margin:8px 0; }
+    .dim-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:13px; }
+    .dim-row .dim-name { width:42px; color:var(--text-secondary); }
+    .dim-row .dim-bar { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+    .dim-row .dim-bar > i { display:block; height:100%; background:var(--primary); }
+    .dim-row .dim-score { width:34px; text-align:right; font-weight:600; }
+    .companion-card { text-align:center; padding:10px 0; }
+    .companion-card .avatar { font-size:56px; }
+    .companion-card .c-name { font-size:20px; font-weight:700; margin:6px 0; }
+    .companion-card .c-line { font-size:13px; color:var(--text-secondary); margin:4px 0; }
+    .companion-card .c-greet { background:var(--primary-light); border-radius:12px; padding:12px; font-size:14px; margin-top:12px; line-height:1.6; text-align:left; }
+    .plan-day { display:flex; gap:10px; padding:10px 0; border-bottom:1px dashed var(--border); font-size:13px; align-items:center; }
+    .plan-day:last-child { border-bottom:none; }
+    .plan-day .d-num { width:44px; height:44px; flex-shrink:0; border-radius:12px; background:var(--primary-light); color:var(--primary); font-weight:700; display:flex; align-items:center; justify-content:center; }
+    .loading { text-align:center; padding:30px 10px; }
+    .spinner { width:36px; height:36px; border:4px solid var(--primary-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 14px; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .hidden { display:none; }
+    .err { color:#ef4444; font-size:13px; margin-top:8px; min-height:18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="p-header"><h1>✨ 开启你的学习之旅</h1></div>
+    <div class="step-dots" id="stepDots"></div>
+
+    <!-- Step 0: 加载状态 -->
+    <div class="card" id="stepLoading">
+      <div class="loading"><div class="spinner"></div><div class="sub" style="text-align:center">正在读取你的引导进度…</div></div>
+    </div>
+
+    <!-- Step 1: 身份选择 -->
+    <div class="card hidden" id="step1">
+      <h2>你是以什么身份使用 AILOS？</h2>
+      <p class="sub">按照你的身份为你定制体验</p>
+      <button class="opt" data-idt="personal">👤 个人学习者<span class="desc">默认学习模式，为自己定制学习计划</span></button>
+      <button class="opt" data-idt="teacher">🧑‍🏫 教师<span class="desc">管理班级、布置任务</span></button>
+      <button class="opt" data-idt="school">🏫 学校 / 机构<span class="desc">机构管理与教学服务</span></button>
+      <button class="opt" data-idt="enterprise">🏢 企业<span class="desc">企业团队语言培训</span></button>
+      <div class="err" id="err1"></div>
+    </div>
+
+    <!-- Step 1.5: 母语选择（必填，与目标语言并列前置） -->
+    <div class="card hidden" id="stepNative">
+      <h2>你的母语是？</h2>
+      <p class="sub">母语用于 AI 讲解与陪读语言。完成后修改入口仅在「个人中心」。</p>
+      <div class="grid2" id="nativeGrid"></div>
+      <div class="err" id="errNative"></div>
+    </div>
+
+    <!-- Step 2: 选语言 -->
+    <div class="card hidden" id="step2">
+      <h2>你想学习哪门语言？</h2>
+      <p class="sub">选择你最想开始的语言（之后可以再加）</p>
+      <div class="grid2" id="langGrid"></div>
+      <div class="err" id="err2"></div>
+    </div>
+
+    <!-- Step 3: 自评级别 -->
+    <div class="card hidden" id="step3">
+      <h2>你目前的水平大概是？</h2>
+      <p class="sub" id="step3Sub">先自评一下，稍后用 10 道题帮你精确定级</p>
+      <button class="opt" data-lv="zero"><span class="lv-icon">🌱</span> <span class="lv-label" data-lv="zero">零基础</span><span class="desc">完全没学过 / 只认识几个词</span></button>
+      <button class="opt" data-lv="beginner"><span class="lv-icon">📖</span> <span class="lv-label" data-lv="beginner">初级</span><span class="desc">学过一点，能进行简单问候</span></button>
+      <button class="opt" data-lv="intermediate"><span class="lv-icon">💬</span> <span class="lv-label" data-lv="intermediate">中级</span><span class="desc">能进行日常对话，读懂短文</span></button>
+      <button class="opt" data-lv="advanced"><span class="lv-icon">🚀</span> <span class="lv-label" data-lv="advanced">高级</span><span class="desc">能流利交流，处理复杂话题</span></button>
+      <div class="err" id="err3"></div>
+    </div>
+
+    <!-- Step 4: 定级测试 -->
+    <div class="card hidden" id="step4intro">
+      <h2>🎯 定级小测（10 题）</h2>
+      <p class="sub">6 道选择题 + 2 道听力题 + 2 道发音题，约 3 分钟。<br>完成后为你精确评级并推荐学习计划。<br><span style="color:var(--warn)">听力/发音需要声音与麦克风权限，不支持的环境可跳过。</span></p>
+      <button class="btn" id="startQuizBtn">开始测试</button>
+    </div>
+    <div class="card hidden" id="step4quiz">
+      <div class="progress"><i id="quizProg" style="width:0%"></i></div>
+      <div class="q-num" id="qNum"></div>
+      <span class="tag choice hidden" id="tagChoice">📝 选择题</span>
+      <span class="tag listening hidden" id="tagListening">🎧 听力题</span>
+      <span class="tag speaking hidden" id="tagSpeaking">🎤 发音题</span>
+      <div class="q-text" id="qText"></div>
+      <div id="audioZone" class="hidden" style="text-align:center"><button class="audio-btn" id="playAudioBtn">▶ 播放音频</button></div>
+      <div id="optBox"></div>
+      <div id="speakZone" class="hidden">
+        <div class="ref-box" id="refText"></div>
+        <div class="ref-meaning" id="refMeaning"></div>
+        <button class="mic-btn" id="micBtn">🎤</button>
+        <div class="mic-hint" id="micHint">点击麦克风开始朗读</div>
+        <button class="btn ghost" id="skipSpeakBtn">跳过此题（环境不支持）</button>
+        <button class="btn hidden" id="confirmSpeakBtn">确认，下一题</button>
+      </div>
+      <div class="err" id="err4"></div>
+    </div>
+    <div class="card hidden" id="step4result">
+      <div style="text-align:center;font-size:13px;color:var(--text-secondary)">你的评定等级</div>
+      <div class="result-level" id="resLevel">—</div>
+      <div id="dimBox" style="margin:14px 0"></div>
+      <p class="sub" id="resReco" style="background:var(--primary-light);border-radius:12px;padding:12px"></p>
+      <button class="btn" id="afterResultBtn">继续 · 设定学习目标</button>
+    </div>
+
+    <!-- Step 5: 学习目标 -->
+    <div class="card hidden" id="step5">
+      <h2>你学习的主要目的是？</h2>
+      <p class="sub">目标不同，计划的侧重完全不同</p>
+      <button class="opt" data-goal="exam_prep">📜 考级 / 考试<span class="desc">JLPT · CEFR · TOPIK · HSK 等</span></button>
+      <button class="opt" data-goal="business">💼 商务 / 职场<span class="desc">工作邮件、会议、商务谈判</span></button>
+      <button class="opt" data-goal="daily_life">🏠 生活交流<span class="desc">日常会话、社交、追剧无障碍</span></button>
+      <button class="opt" data-goal="travel">✈️ 旅行<span class="desc">出行问路、点餐、购物应急</span></button>
+      <button class="opt" data-goal="interest">🎨 兴趣爱好<span class="desc">动漫、音乐、文化的热爱</span></button>
+      <input type="text" id="goalDesc" placeholder="补充说明（可选），如：明年 7 月考 N2" style="margin-top:6px">
+      <button class="btn" id="goalBtn" disabled>下一步 · 定制你的 AI 学习搭子</button>
+      <div class="err" id="err5"></div>
+    </div>
+
+    <!-- Step 6: AI 伴读搭子 -->
+    <div class="card hidden" id="step6">
+      <h2>🤝 打造你的 AI 学习搭子</h2>
+      <p class="sub">用几句话描述你想要的伴读角色——性格、声音、甚至口头禅，AI 会为你构建 TA</p>
+      <input type="text" id="compName" placeholder="给 TA 起个名字（可选）">
+      <textarea id="compDesc" placeholder="例如：一个温柔的邻家姐姐，声音软软的，很会鼓励人，口头禅是「慢慢来，我陪着你」…" style="margin-top:10px"></textarea>
+      <button class="btn" id="compBtn">✨ 生成我的学习搭子</button>
+      <div class="err" id="err6"></div>
+    </div>
+    <div class="card hidden" id="step6result">
+      <div class="companion-card">
+        <div class="avatar" id="cAvatar">🤖</div>
+        <div class="c-name" id="cName">—</div>
+        <div class="c-line" id="cPersonality"></div>
+        <div class="c-line" id="cVoice"></div>
+        <div class="c-line" id="cCatch"></div>
+        <div class="c-greet" id="cGreet"></div>
+      </div>
+      <button class="btn" id="compOkBtn">很满意！继续 · 生成学习计划</button>
+      <button class="btn ghost" id="compRetryBtn">重新描述</button>
+    </div>
+
+    <!-- Step 7: 学习重点 + 生成计划 -->
+    <div class="card hidden" id="step7">
+      <h2>📋 最后一步：你的重点方向</h2>
+      <p class="sub">用一段话描述你希望重点学什么。计划将结合<strong>权威教材</strong>与<strong>大咖学习方法</strong>（艾宾浩斯复习、影子跟读、i+1 输入等）为你个性化生成 30 天计划。</p>
+      <textarea id="focusDesc" placeholder="例如：重点提升口语和听力，希望三个月后能和客户开视频会议；语法薄弱，需要系统补一遍…"></textarea>
+      <button class="btn" id="planBtn">🚀 生成我的 30 天学习计划</button>
+      <div class="err" id="err7"></div>
+    </div>
+    <div class="card hidden" id="step7loading">
+      <div class="loading"><div class="spinner"></div>
+        <div class="sub" style="text-align:center">AI 正在结合你的级别、目标与重点方向，<br>参考权威教材为你定制 30 天计划…<br>（约需 10~30 秒）</div>
+      </div>
+    </div>
+    <div class="card hidden" id="step7result">
+      <h2>🎉 你的 30 天计划已生成！</h2>
+      <p class="sub" id="planMeta"></p>
+      <div id="planDays"></div>
+      <p class="sub" id="planBooks" style="margin-top:10px"></p>
+      <button class="btn" id="finishBtn">完成引导，开始学习 →</button>
+    </div>
+  </div>
+
+  <script src="/xuewaiyu/assets/common.js?v=20260726b"></script>
+  <script>
+  (function () {
+    var API = '/api/onboarding';
+    var token = localStorage.getItem('yandao_token_v1');
+    if (!token) { location.href = '/xuewaiyu/login.html'; return; }
+
+    var LANGS = [
+      { code:'ja', flag:'🇯🇵', name:'日语' }, { code:'en', flag:'🇬🇧', name:'英语' },
+      { code:'ko', flag:'🇰🇷', name:'韩语' }, { code:'fr', flag:'🇫🇷', name:'法语' },
+      { code:'es', flag:'🇪🇸', name:'西班牙语' }, { code:'de', flag:'🇩🇪', name:'德语' },
+      { code:'zh', flag:'🇨🇳', name:'中文' }
+    ];
+    // 等级体系映射：日语→JLPT(N5-N1)，英语/欧洲语言→CEFR(A1-C2)，韩语→TOPIK，中文→HSK
+    var LEVEL_SYSTEM = {
+      ja: { name:'JLPT', levels:{ zero:'N5', beginner:'N4', intermediate:'N3', advanced:'N2' } },
+      en: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      ko: { name:'TOPIK', levels:{ zero:'TOPIK 1급', beginner:'TOPIK 2급', intermediate:'TOPIK 3급', advanced:'TOPIK 4급' } },
+      fr: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      es: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      de: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      zh: { name:'HSK', levels:{ zero:'HSK 1', beginner:'HSK 2', intermediate:'HSK 3', advanced:'HSK 4' } }
+    };
+    var TTS_LANG = { ja:'ja-JP', en:'en-US', ko:'ko-KR', fr:'fr-FR', es:'es-ES', de:'de-DE', zh:'zh-CN' };
+    var state = { lang:null, selfLevel:null, nativeLang:null, questions:[], answers:[], qIdx:0, assessedLevel:null };
+
+    // 根据目标语言获取等级体系名称和自评等级映射
+    function getLevelSystem(langCode) {
+      return LEVEL_SYSTEM[langCode] || { name:'通用', levels:{ zero:'入门', beginner:'初级', intermediate:'中级', advanced:'高级' } };
+    }
+    function mapLevelToSystemName(langCode, selfLevel) {
+      var sys = getLevelSystem(langCode);
+      return sys.levels[selfLevel] || selfLevel;
+    }
+    // 进入 Step 3 时根据目标语言更新等级标签
+    function updateLevelLabels() {
+      if (!state.lang) return;
+      var sys = getLevelSystem(state.lang);
+      document.getElementById('step3Sub').textContent = '先自评一下，稍后用 10 道题帮你精确定级（' + sys.name + '）';
+      var labels = document.querySelectorAll('#step3 .lv-label');
+      labels.forEach(function (el) {
+        var lv = el.getAttribute('data-lv');
+        el.textContent = sys.levels[lv] || el.textContent;
+      });
+    }
+
+    function api(path, method, body) {
+      return fetch(API + path, {
+        method: method || 'GET',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+        body: body ? JSON.stringify(body) : undefined
+      }).then(function (r) {
+        return r.json().then(function (j) {
+          if (!r.ok || j.success === false) throw new Error(j.error || ('HTTP ' + r.status));
+          return j.data;
+        });
+      });
+    }
+
+    var STEPS = ['step1','step2','step3','step4intro','step5','step6','step7'];
+    var dots = document.getElementById('stepDots');
+    for (var i = 0; i < 7; i++) { var d = document.createElement('i'); dots.appendChild(d); }
+    function markDots(n) {
+      var is = dots.children;
+      for (var i = 0; i < is.length; i++) is[i].className = i < n ? 'on' : '';
+    }
+    function show(id, dotN) {
+      ['stepLoading','step1','stepNative','step2','step3','step4intro','step4quiz','step4result','step5','step6','step6result','step7','step7loading','step7result'].forEach(function (s) {
+        document.getElementById(s).classList.add('hidden');
+      });
+      document.getElementById(id).classList.remove('hidden');
+      if (dotN !== undefined) markDots(dotN);
+      if (id === 'step3') updateLevelLabels();
+      window.scrollTo(0, 0);
+    }
+    function setErr(id, msg) { document.getElementById(id).textContent = msg || ''; }
+
+    // ============ 断点续走 ============
+    api('/status').then(function (st) {
+      if (st.onboardingComplete) { finishLocal(st); location.href = '/xuewaiyu/home'; return; }
+      if (st.nativeLanguage) { state.nativeLang = st.nativeLanguage; }
+      if (st.language) { state.lang = st.language.code; }
+      if (!st.identityType) return show('step1', 0);
+      if (!st.nativeLanguage) return show('stepNative', 1);
+      if (!st.language) return show('step2', 1);
+      if (!st.placementDone) return show('step3', 2);
+      state.assessedLevel = st.assessedLevel;
+      if (!st.goal) return show('step5', 4);
+      if (!st.companion) return show('step6', 5);
+      if (!st.planReady) return show('step7', 6);
+      show('step7', 6);
+    }).catch(function () { show('step1', 0); });
+
+    // ============ Step 1 身份 ============
+    document.querySelectorAll('#step1 .opt').forEach(function (b) {
+      b.onclick = function () {
+        setErr('err1');
+        api('/identity', 'POST', { identityType: b.dataset.idt })
+          .then(function () { show('stepNative', 1); })
+          .catch(function (e) { setErr('err1', e.message); });
+      };
+    });
+
+    // ============ Step 2 语言 ============
+    var grid = document.getElementById('langGrid');
+    LANGS.forEach(function (l) {
+      var c = document.createElement('div');
+      c.className = 'lang-card';
+      c.innerHTML = '<span class="flag">' + l.flag + '</span>' + l.name;
+      c.onclick = function () {
+        if (!state.nativeLang) { setErr('err2', '请先选择母语（上一步）'); return; }
+        state.lang = l.code;
+        setErr('err2');
+        show('step3', 2);
+      };
+      grid.appendChild(c);
+    });
+
+    // ============ Step 1.5 母语（必填，与目标语言并列前置，实时写入用户配置） ============
+    var ngrid = document.getElementById('nativeGrid');
+    LANGS.forEach(function (l) {
+      var c = document.createElement('div');
+      c.className = 'lang-card';
+      c.innerHTML = '<span class="flag">' + l.flag + '</span>' + l.name;
+      c.onclick = function () {
+        state.nativeLang = l.code;
+        setErr('errNative');
+        // 实时写入用户配置（真实双语言字段：UserLanguagePreference.nativeLanguage）
+        api('/language', 'POST', { nativeLanguage: state.nativeLang }).catch(function () { /* 容错，语言步会随 target 一并提交 */ });
+        show('step2', 1);
+      };
+      ngrid.appendChild(c);
+    });
+
+    // ============ Step 3 自评 ============
+    document.querySelectorAll('#step3 .opt').forEach(function (b) {
+      b.onclick = function () {
+        state.selfLevel = b.dataset.lv;
+        setErr('err3');
+        api('/language', 'POST', { languageCode: state.lang, selfLevel: state.selfLevel, nativeLanguage: state.nativeLang })
+          .then(function () { show('step4intro', 3); })
+          .catch(function (e) { setErr('err3', e.message); });
+      };
+    });
+
+    // ============ Step 4 定级测试 ============
+    document.getElementById('startQuizBtn').onclick = function () {
+      var btn = this; btn.disabled = true; btn.textContent = '正在出题…';
+      api('/placement/start', 'POST', { languageCode: state.lang, selfLevel: state.selfLevel })
+        .then(function (d) {
+          state.questions = d.questions; state.answers = []; state.qIdx = 0;
+          btn.disabled = false; btn.textContent = '开始测试';
+          show('step4quiz', 3); renderQ();
+        })
+        .catch(function (e) { btn.disabled = false; btn.textContent = '开始测试'; alert('出题失败：' + e.message); });
+    };
+
+    function speak(text) {
+      try {
+        speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = TTS_LANG[state.lang] || 'en-US';
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (e) { alert('当前环境不支持语音播放'); }
+    }
+
+    var recog = null, recResult = null;
+    function renderQ() {
+      var q = state.questions[state.qIdx];
+      if (!q) return submitQuiz();
+      document.getElementById('quizProg').style.width = Math.round(state.qIdx / state.questions.length * 100) + '%';
+      document.getElementById('qNum').textContent = '第 ' + (state.qIdx + 1) + ' / ' + state.questions.length + ' 题';
+      ['tagChoice','tagListening','tagSpeaking'].forEach(function (t) { document.getElementById(t).classList.add('hidden'); });
+      document.getElementById('audioZone').classList.add('hidden');
+      document.getElementById('speakZone').classList.add('hidden');
+      document.getElementById('optBox').innerHTML = '';
+      setErr('err4');
+
+      if (q.type === 'choice' || q.type === 'listening') {
+        document.getElementById(q.type === 'choice' ? 'tagChoice' : 'tagListening').classList.remove('hidden');
+        document.getElementById('qText').textContent = q.question;
+        if (q.type === 'listening') {
+          document.getElementById('audioZone').classList.remove('hidden');
+          document.getElementById('playAudioBtn').onclick = function () { speak(q.audioText); };
+          setTimeout(function () { speak(q.audioText); }, 400);
+        }
+        q.options.forEach(function (opt, i) {
+          var b = document.createElement('button');
+          b.className = 'opt'; b.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+          b.onclick = function () {
+            state.answers.push({ id: q.id, selectedIndex: i });
+            state.qIdx++; renderQ();
+          };
+          document.getElementById('optBox').appendChild(b);
+        });
+      } else { // speaking
+        document.getElementById('tagSpeaking').classList.remove('hidden');
+        document.getElementById('qText').textContent = '请朗读下面的句子：';
+        document.getElementById('speakZone').classList.remove('hidden');
+        document.getElementById('refText').textContent = q.referenceText;
+        document.getElementById('refMeaning').textContent = q.meaning || '';
+        document.getElementById('micHint').textContent = '点击麦克风开始朗读';
+        document.getElementById('confirmSpeakBtn').classList.add('hidden');
+        recResult = null;
+
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var micBtn = document.getElementById('micBtn');
+        micBtn.classList.remove('rec');
+        if (!SR) {
+          document.getElementById('micHint').textContent = '⚠️ 当前浏览器不支持语音识别，可跳过此题';
+          micBtn.disabled = true;
+        } else {
+          micBtn.disabled = false;
+          micBtn.onclick = function () {
+            if (micBtn.classList.contains('rec')) { try { recog.stop(); } catch (e) {} return; }
+            recog = new SR();
+            recog.lang = TTS_LANG[state.lang] || 'en-US';
+            recog.interimResults = false; recog.maxAlternatives = 1;
+            micBtn.classList.add('rec');
+            document.getElementById('micHint').textContent = '🔴 正在聆听，请朗读…（再次点击结束）';
+            recog.onresult = function (ev) {
+              recResult = ev.results[0][0].transcript;
+              document.getElementById('micHint').textContent = '识别结果：「' + recResult + '」';
+              document.getElementById('confirmSpeakBtn').classList.remove('hidden');
+            };
+            recog.onerror = function () {
+              document.getElementById('micHint').textContent = '识别失败，可重试或跳过';
+              micBtn.classList.remove('rec');
+            };
+            recog.onend = function () { micBtn.classList.remove('rec'); };
+            try { recog.start(); } catch (e) { document.getElementById('micHint').textContent = '无法启动麦克风，可跳过'; }
+          };
+        }
+        document.getElementById('skipSpeakBtn').onclick = function () {
+          state.answers.push({ id: q.id, skipped: true });
+          state.qIdx++; renderQ();
+        };
+        document.getElementById('confirmSpeakBtn').onclick = function () {
+          state.answers.push({ id: q.id, transcript: recResult || '' });
+          state.qIdx++; renderQ();
+        };
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quizProg').style.width = '100%';
+      api('/placement/submit', 'POST', { answers: state.answers })
+        .then(function (r) {
+          state.assessedLevel = r.assessedLevel;
+          // 根据目标语言映射等级体系名称
+          var sys = getLevelSystem(state.lang);
+          var mappedLevel = mapLevelToSystemName(state.lang, r.assessedLevel);
+          document.getElementById('resLevel').textContent = sys.name + ' ' + mappedLevel;
+          var names = { vocabulary:'词汇', grammar:'语法', listening:'听力', speaking:'口语' };
+          document.getElementById('dimBox').innerHTML = r.dimensions.map(function (d) {
+            return '<div class="dim-row"><span class="dim-name">' + (names[d.dimension] || d.dimension) + '</span>' +
+              '<span class="dim-bar"><i style="width:' + d.score + '%"></i></span>' +
+              '<span class="dim-score">' + d.score + '</span></div>';
+          }).join('');
+          document.getElementById('resReco').textContent = r.recommendation;
+          // 兼容旧闸门与旧页面
+          try {
+            localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: state.lang, level: r.assessedLevel, levelSystem: sys.name, mappedLevel: mappedLevel, score: r.totalScore, at: Date.now() }));
+            if (window.AILOS && AILOS.setStudyLang) AILOS.setStudyLang(state.lang);
+          } catch (e) {}
+          show('step4result', 4);
+        })
+        .catch(function (e) { setErr('err4', '提交失败：' + e.message); });
+    }
+    document.getElementById('afterResultBtn').onclick = function () { show('step5', 4); };
+
+    // ============ Step 5 目标 ============
+    var goalSel = null;
+    document.querySelectorAll('#step5 .opt').forEach(function (b) {
+      b.onclick = function () {
+        document.querySelectorAll('#step5 .opt').forEach(function (x) { x.classList.remove('sel'); });
+        b.classList.add('sel'); goalSel = b.dataset.goal;
+        document.getElementById('goalBtn').disabled = false;
+      };
+    });
+    document.getElementById('goalBtn').onclick = function () {
+      setErr('err5');
+      api('/goal', 'POST', { goalType: goalSel, description: document.getElementById('goalDesc').value.trim() })
+        .then(function () { show('step6', 5); })
+        .catch(function (e) { setErr('err5', e.message); });
+    };
+
+    // ============ Step 6 伴读搭子 ============
+    document.getElementById('compBtn').onclick = function () {
+      var desc = document.getElementById('compDesc').value.trim();
+      if (desc.length < 2) { setErr('err6', '请用几句话描述你想要的搭子'); return; }
+      var btn = this; btn.disabled = true; btn.textContent = 'AI 构建中…';
+      setErr('err6');
+      api('/companion', 'POST', { description: desc, name: document.getElementById('compName').value.trim() || undefined })
+        .then(function (c) {
+          btn.disabled = false; btn.textContent = '✨ 生成我的学习搭子';
+          document.getElementById('cAvatar').textContent = c.avatarEmoji || '🤖';
+          document.getElementById('cName').textContent = c.name;
+          document.getElementById('cPersonality').textContent = '性格：' + (c.personality || '');
+          document.getElementById('cVoice').textContent = '声音：' + (c.voiceStyle || '');
+          document.getElementById('cCatch').textContent = '口头禅：「' + (c.catchphrase || '') + '」';
+          document.getElementById('cGreet').textContent = c.greeting || '';
+          show('step6result', 6);
+        })
+        .catch(function (e) { btn.disabled = false; btn.textContent = '✨ 生成我的学习搭子'; setErr('err6', e.message); });
+    };
+    document.getElementById('compRetryBtn').onclick = function () { show('step6', 5); };
+    document.getElementById('compOkBtn').onclick = function () { show('step7', 6); };
+
+    // ============ Step 7 生成计划 ============
+    document.getElementById('planBtn').onclick = function () {
+      setErr('err7');
+      show('step7loading', 6);
+      api('/plan/generate', 'POST', { focusDescription: document.getElementById('focusDesc').value.trim() })
+        .then(function (p) {
+          document.getElementById('planMeta').innerHTML =
+            '语言：<strong>' + (AILOS && AILOS.LANG_NAMES ? (AILOS.LANG_NAMES[p.language] || p.language) : p.language) +
+            '</strong> · 级别：<strong>' + p.level + '</strong> · 共 <strong>' + p.totalDays + '</strong> 天 · ' + p.startDate + ' 开始<br>前 7 天预览：';
+          document.getElementById('planDays').innerHTML = p.overview.map(function (d) {
+            return '<div class="plan-day"><div class="d-num">D' + d.day + '</div><div><div style="font-weight:600">' + d.title + '</div>' +
+              '<div style="color:var(--text-secondary)">' + d.focusArea + ' · ' + d.scene + ' · ' + d.duration + ' 分钟</div></div></div>';
+          }).join('');
+          document.getElementById('planBooks').textContent = '参考教材：' + (p.textbooks || []).join('、');
+          show('step7result', 7);
+        })
+        .catch(function (e) { show('step7', 6); setErr('err7', '生成失败：' + e.message + '（可重试）'); });
+    };
+
+    function finishLocal(st) {
+      try {
+        localStorage.setItem('yandao_onboarding_done', '1');
+        if (st && st.assessedLevel && st.language) {
+          localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: st.language.code, level: st.assessedLevel, at: Date.now() }));
+        }
+      } catch (e) {}
+    }
+    document.getElementById('finishBtn').onclick = function () {
+      try { localStorage.setItem('yandao_onboarding_done', '1'); } catch (e) {}
+      location.href = '/xuewaiyu/home';
+    };
+  })();
+  </script>
+</body>
+</html>

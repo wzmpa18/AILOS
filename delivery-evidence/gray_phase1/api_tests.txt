@@ -1,0 +1,4 @@
+Phase 1 API Test Log
+Timestamp: {TS}
+
+/login(200) /register(500) /guest(200) /translate(200) /chat(200) /billing(200) /trial(200) /admin(200) /admin/guest(403) /dashboard(200) /checkin(200) /quota(200) /wrong-password(401)

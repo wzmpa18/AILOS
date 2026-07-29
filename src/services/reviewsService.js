@@ -47,7 +47,7 @@ class ReviewsService {
    *   5: 完全正确，立即反应
    * @param {number} elapsedMs - 答题耗时（毫秒）
    */
-  async submitReview(userId, reviewId, quality, elapsedMs) {
+  async submitReview(userId, reviewId, quality, _elapsedMs) {
     const review = await prisma.reviewQueue.findFirst({
       where: { id: reviewId, userId },
     });
