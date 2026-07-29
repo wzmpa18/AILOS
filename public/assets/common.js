@@ -45,6 +45,24 @@
     de: { home: 'Start', learn: 'Lernen', chat: 'KI-Chat', review: 'Wiederholen', discover: 'Sozial', companion: 'Partner', profile: 'Ich' }
   };
 
+  // ===== Stage9 M5: 社群模块 4Tab 导航本地化 =====
+  var COMMUNITY_NAV_LABELS = {
+    zh: { home: '首页', friends: '好友', messages: '消息', trend: '动态' },
+    en: { home: 'Home', friends: 'Friends', messages: 'Messages', trend: 'Trends' },
+    ja: { home: 'ホーム', friends: '友達', messages: 'メッセージ', trend: '動向' },
+    ko: { home: '홈', friends: '친구', messages: '메시지', trend: '트렌드' },
+    fr: { home: 'Accueil', friends: 'Amis', messages: 'Messages', trend: 'Tendances' },
+    es: { home: 'Inicio', friends: 'Amigos', messages: 'Mensajes', trend: 'Tendencias' },
+    de: { home: 'Start', friends: 'Freunde', messages: 'Nachrichten', trend: 'Trends' }
+  };
+
+  var COMMUNITY_NAV_ITEMS = [
+    { key: 'home',     icon: '🏠', href: '/xuewaiyu/home' },
+    { key: 'friends',  icon: '👥', href: '/xuewaiyu/community-friends.html' },
+    { key: 'messages', icon: '💬', href: '/xuewaiyu/community-messages.html' },
+    { key: 'trend',    icon: '📰', href: '/xuewaiyu/community-trend.html' }
+  ];
+
   function isValidLang(c) { return !!(c && LANG_NAMES[c]); }
 
   function getStudyLang() {
@@ -153,8 +171,27 @@
     { key: 'profile',   icon: '👤', label: '我的',   href: '/xuewaiyu/profile.html' }
   ];
 
+  // ===== Stage9 M5: 社群页面检测 =====
+  function isCommunityPage() {
+    var p = location.pathname;
+    return p.indexOf('community-friends') >= 0 ||
+           p.indexOf('community-messages') >= 0 ||
+           p.indexOf('community-groups') >= 0;
+  }
+
+  function getCommunityNavLabel(key) {
+    var ui = getUILang();
+    var map = COMMUNITY_NAV_LABELS[ui] || COMMUNITY_NAV_LABELS['en'];
+    return map[key] || COMMUNITY_NAV_LABELS['zh'][key] || key;
+  }
+
   function detectActive() {
     var p = location.pathname;
+    // Community pages (M5)
+    if (p.indexOf('community-friends') >= 0) return 'friends';
+    if (p.indexOf('community-messages') >= 0) return 'messages';
+    if (p.indexOf('community-groups') >= 0) return 'home'; // groups accessed via home
+    // Global pages
     if (p.indexOf('/home') >= 0 || p.endsWith('home.html')) return 'home';
     if (p.indexOf('learn') >= 0) return 'learn';
     if (p.indexOf('chat') >= 0) return 'chat';
@@ -167,16 +204,19 @@
   }
 
   function renderNav(activeKey) {
+    var inCommunity = isCommunityPage();
+    var items = inCommunity ? COMMUNITY_NAV_ITEMS : NAV_ITEMS;
     var navs = document.querySelectorAll('.bottom-nav');
     for (var n = 0; n < navs.length; n++) {
       var nav = navs[n];
       var html = '';
-      for (var i = 0; i < NAV_ITEMS.length; i++) {
-        var it = NAV_ITEMS[i];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
         var act = (it.key === activeKey) ? ' active' : '';
+        var label = inCommunity ? getCommunityNavLabel(it.key) : getNavLabel(it.key);
         html += '<a class="nav-item' + act + '" href="' + it.href + '">' +
                   '<span class="nav-icon">' + it.icon + '</span>' +
-                  '<span>' + getNavLabel(it.key) + '</span>' +
+                  '<span>' + label + '</span>' +
                 '</a>';
       }
       nav.innerHTML = html;
@@ -219,7 +259,7 @@
   }
 
   function hasBackAffordance() {
-    return !!document.querySelector('.nav-back,.back-link,.header-back,.back-btn,.chat-back,a[title="返回"],[data-i18n*="back"]');
+    return !!document.querySelector('.nav-back,.back-link,.header-back,.back-btn,.chat-back,.cp-back,a[title="返回"],[data-i18n*="back"]');
   }
 
   function ensureBackBtn() {
@@ -287,6 +327,16 @@
     syncStudyLangFromApi();
   });
 
+  // Stage9 M5: 语言切换时重新渲染导航标签
+  window.addEventListener('languageChanged', function () {
+    renderNav(detectActive());
+  });
+
+  // Stage9 M5: 社群模式公共方法
+  function reloadNav() {
+    renderNav(detectActive());
+  }
+
   window.AILOS = {
     STUDY_KEY: STUDY_KEY,
     LEGACY_KEY: LEGACY_KEY,
@@ -295,14 +345,19 @@
     CODE_TO_LABEL: CODE_TO_LABEL,
     LABEL_TO_CODE: LABEL_TO_CODE,
     NAV_LABELS: NAV_LABELS,
+    COMMUNITY_NAV_LABELS: COMMUNITY_NAV_LABELS,
+    COMMUNITY_NAV_ITEMS: COMMUNITY_NAV_ITEMS,
     getStudyLang: getStudyLang,
     setStudyLang: setStudyLang,
     getUILang: getUILang,
     setUILang: setUILang,
     getNavLabel: getNavLabel,
+    getCommunityNavLabel: getCommunityNavLabel,
     getToken: getToken,
     syncStudyLangFromApi: syncStudyLangFromApi,
     renderNav: renderNav,
+    reloadNav: reloadNav,
+    isCommunityPage: isCommunityPage,
     NAV_ITEMS: NAV_ITEMS
   };
 })();

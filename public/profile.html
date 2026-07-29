@@ -57,17 +57,6 @@
   .nav-title {
     font-size: 16px; font-weight: 700; color: var(--text);
   }
-  .lang-switch {
-    display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end;
-  }
-  .lang-flag {
-    padding: 3px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;
-    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
-    background: transparent; white-space: nowrap;
-  }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
-
   /* ===== Container ===== */
   .container {
     width: 100%; max-width: 680px; margin: 0 auto;
@@ -336,8 +325,7 @@
     .badges-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .badge-item { padding: 8px 4px; }
     .badge-icon { font-size: 22px; }
-    .lang-switch { justify-content: center; width: 100%; }
-    .navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+.navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
     .modal { padding: 20px 16px; }
     .modal-actions { flex-direction: column; }
     .modal-actions .btn { width: 100%; }
@@ -439,7 +427,6 @@
   <nav class="navbar">
     <a class="nav-back" href="/xuewaiyu/landing.html" data-i18n="back_to_home">← 返回首页</a>
     <span class="nav-title" data-i18n="page_title">个人中心</span>
-    <div class="lang-switch" id="langSwitch"></div>
   </nav>
 
   <!-- Guest / Not Logged In -->
@@ -1370,17 +1357,10 @@ let currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
 // ==================== Render ====================
-function renderLangSwitch() {
-  document.getElementById('langSwitch').innerHTML = LANG_CODES.map(code =>
-    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
-  ).join('');
-}
-
 function switchLang(code) {
   currentLang = code;
   try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
   updateI18n();
-  renderLangSwitch();
   renderLanguageSelects();
   renderBadges();
 }
@@ -1897,7 +1877,6 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 
 // ==================== Init ====================
 function init() {
-  renderLangSwitch();
   updateI18n();
   loadUserProfile();
 }
@@ -1910,9 +1889,9 @@ function showQRCode() {
   var userId = getUserId();
   var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
   urlEl.textContent = profileUrl;
-  // Google Charts QR API
-  var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(profileUrl) + '&choe=UTF-8';
-  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR生成失败</p>\'">';
+  // Use goQR.me API (free, no rate limit, UTF-8 support)
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(profileUrl);
+  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR\u751f\u6210\u5931\u8d25</p>\'">';
   modal.style.display = 'flex';
 }
 
@@ -2022,29 +2001,8 @@ document.addEventListener('keydown', function(e) {
 init();
 </script>
 
-<!-- Bottom Navigation Bar -->
-<nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="/xuewaiyu/home">
-    <span class="nav-icon">🏠</span>
-    <span>首页</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/learn.html">
-    <span class="nav-icon">📚</span>
-    <span>学习</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/chat.html">
-    <span class="nav-icon">💬</span>
-    <span>AI对话</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/review.html">
-    <span class="nav-icon">🔄</span>
-    <span>复习</span>
-  </a>
-  <a class="nav-item active" href="/xuewaiyu/profile.html">
-    <span class="nav-icon">👤</span>
-    <span>我的</span>
-  </a>
-</nav>
+<!-- Bottom Navigation Bar (injected by common.js with 7-tab i18n) -->
+<nav class="bottom-nav"></nav>
 
 </body>
 </html>
