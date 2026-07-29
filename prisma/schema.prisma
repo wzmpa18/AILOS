@@ -88,6 +88,8 @@ model User {
   translationBalance     TranslationBillingBalance?
   packageOrders          TranslationPackageOrder[]
   billingLogs            TranslationBillingLog[]
+  taughtClasses          OrgClass[]              @relation("OrgClassTeacher")
+  classEnrollments       OrgClassStudent[]       @relation("OrgClassStudentUser")
 
   @@index([phone])
   @@index([email])
@@ -361,6 +363,7 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   members OrganizationMember[]
+  classes OrgClass[]
 
   @@index([status])
 }
@@ -1103,4 +1106,45 @@ model LoginLog {
   @@index([adminId])
   @@index([account])
   @@index([createdAt])
+}
+
+// ==================== Phase 4 P2: Organization B-end (机构端) — 纯增量模型 ====================
+
+// org_class — 机构班级（新增表，零修改已有模型）
+model OrgClass {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  teacherId      String?
+  teacher        User?        @relation("OrgClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  status         String       @default("active") // active, archived
+  studentCount   Int          @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students OrgClassStudent[]
+
+  @@index([organizationId])
+  @@index([teacherId])
+  @@index([status])
+}
+
+// org_class_student — 班级学生关联（新增表，零修改已有模型）
+model OrgClassStudent {
+  id      String   @id @default(uuid())
+  classId String
+  class   OrgClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User     @relation("OrgClassStudentUser", fields: [userId], references: [id], onDelete: Cascade)
+  status  String   @default("active") // active, left
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([classId, userId])
+  @@index([classId])
+  @@index([userId])
 }
