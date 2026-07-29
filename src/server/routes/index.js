@@ -57,11 +57,10 @@ router.use('/onboarding', require('./onboarding'));
 // Admin (P2 任务二 — 双语言一致性校验 + 告警处置；管理员 allowlist 鉴权)
 router.use('/admin', require('./admin'));
 
-// Billing (Stage11 子模块2 — 翻译时长计费)
-router.use('/billing', require('./billing'));
-
 // Translate (Stage11 子模块1 — 静态拍照翻译 + OCR 分层限流熔断)
 router.use('/translate', require('./translate'));
-router.use('/vocabulary', require('./vocabulary'));
+
+// Organization (Phase 4 P2 — 机构端 B-end 管理后台，独立路由 /api/org)
+router.use('/org', require('./org'));
 
 module.exports = router;
