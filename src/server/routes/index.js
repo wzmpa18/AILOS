@@ -62,5 +62,6 @@ router.use('/translate', require('./translate'));
 
 // Organization (Phase 4 P2 — 机构端 B-end 管理后台，独立路由 /api/org)
 router.use('/org', require('./org'));
+router.use('/v1/social', require('./social'));
 
 module.exports = router;
