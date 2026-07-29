@@ -280,16 +280,17 @@
     try { var _sl = (window.AILOS ? AILOS.getStudyLang() : 'en'); var _nm = (window.AILOS ? AILOS.LANG_NAMES[_sl] : _sl); var _el = document.getElementById('homeStudyLang'); if (_el && _nm) _el.textContent = '（当前学习语言：' + _nm + '）'; } catch(e){}
   </script>
 
-  <!-- 快捷入口 -->
+  <!-- 快捷入口 (Phase4: 重排序 + 新增实时翻译入口) -->
   <div class="container" style="padding-bottom:0">
-    <div class="card-header" style="margin-bottom:10px"><span class="icon">⚡</span><span>快捷入口</span></div>
-    <div class="quick-grid">
-      <a class="quick-item" href="/xuewaiyu/games.html"><span class="quick-icon">🎮</span><span class="quick-label">游戏中心</span></a>
+    <div class="card-header" style="margin-bottom:10px"><span class="icon">⚡</span><span class="quick-header-label">快捷入口</span></div>
+    <div class="quick-grid" id="quickGrid">
+      <a class="quick-item" href="/xuewaiyu/translate.html"><span class="quick-icon">🌐</span><span class="quick-label">实时翻译</span></a>
       <a class="quick-item" href="/xuewaiyu/speaking.html"><span class="quick-icon">🗣️</span><span class="quick-label">口语速成</span></a>
       <a class="quick-item" href="/xuewaiyu/sentences.html"><span class="quick-icon">📝</span><span class="quick-label">句库</span></a>
       <a class="quick-item" href="/xuewaiyu/notebook.html"><span class="quick-icon">📖</span><span class="quick-label">错题本</span></a>
       <a class="quick-item" href="/xuewaiyu/messages.html"><span class="quick-icon">💌</span><span class="quick-label">消息</span></a>
       <a class="quick-item" href="/xuewaiyu/vip.html"><span class="quick-icon">👑</span><span class="quick-label">会员</span></a>
+      <a class="quick-item" href="/xuewaiyu/games.html"><span class="quick-icon">🎮</span><span class="quick-label">游戏中心</span></a>
     </div>
   </div>
 
@@ -487,6 +488,120 @@
         todayCheckedIn: '오늘 출석 완료',
         checkInNow: '출석',
         logout: '로그아웃',
+      },
+      fr: {
+        loading: 'Chargement...',
+        dashboard: 'Tableau de bord',
+        welcome: 'Bon retour',
+        todayStats: 'Aujourd\'hui',
+        wordsLearned: 'Mots appris',
+        lessonsDone: 'Leçons terminées',
+        studyTime: 'Temps d\'étude',
+        quizzesTaken: 'Quiz terminés',
+        min: 'min',
+        abilityModel: 'Modèle de compétence',
+        myLanguages: 'Mes langues',
+        dayStreak: 'jours',
+        recentActivity: 'Activité récente',
+        activeGoals: 'Objectifs actifs',
+        weeklyStats: 'Cette semaine',
+        highlights: 'Points forts',
+        noData: 'Commencez votre première leçon !',
+        noActivity: 'Aucune activité',
+        noGoals: 'Aucun objectif',
+        error: 'Échec du chargement',
+        retry: 'Réessayer',
+        grammar: 'Grammaire',
+        vocabulary: 'Vocabulaire',
+        listening: 'Écoute',
+        speaking: 'Expression',
+        reading: 'Lecture',
+        writing: 'Écriture',
+        overallLevel: 'Niveau général',
+        strengths: 'Points forts',
+        weaknesses: 'Faiblesses',
+        events: 'fois',
+        aiQuota: 'Quota IA',
+        checkInStreak: 'Série',
+        todayCheckedIn: 'Pointage du jour',
+        checkInNow: 'Pointer',
+        logout: 'Déconnexion',
+      },
+      es: {
+        loading: 'Cargando...',
+        dashboard: 'Panel',
+        welcome: 'Bienvenido',
+        todayStats: 'Estadísticas de hoy',
+        wordsLearned: 'Palabras aprendidas',
+        lessonsDone: 'Lecciones completadas',
+        studyTime: 'Tiempo de estudio',
+        quizzesTaken: 'Pruebas realizadas',
+        min: 'min',
+        abilityModel: 'Modelo de habilidad',
+        myLanguages: 'Mis idiomas',
+        dayStreak: 'días',
+        recentActivity: 'Actividad reciente',
+        activeGoals: 'Metas activas',
+        weeklyStats: 'Esta semana',
+        highlights: 'Destacados',
+        noData: '¡Comienza tu primera lección!',
+        noActivity: 'Sin actividad',
+        noGoals: 'Sin metas',
+        error: 'Error al cargar',
+        retry: 'Reintentar',
+        grammar: 'Gramática',
+        vocabulary: 'Vocabulario',
+        listening: 'Comprensión auditiva',
+        speaking: 'Expresión oral',
+        reading: 'Lectura',
+        writing: 'Escritura',
+        overallLevel: 'Nivel general',
+        strengths: 'Fortalezas',
+        weaknesses: 'Debilidades',
+        events: 'veces',
+        aiQuota: 'Cuota IA',
+        checkInStreak: 'Racha',
+        todayCheckedIn: 'Registrado hoy',
+        checkInNow: 'Registrar',
+        logout: 'Cerrar sesión',
+      },
+      de: {
+        loading: 'Lade...',
+        dashboard: 'Dashboard',
+        welcome: 'Willkommen zurück',
+        todayStats: 'Heutige Statistiken',
+        wordsLearned: 'Gelernte Wörter',
+        lessonsDone: 'Abgeschlossene Lektionen',
+        studyTime: 'Lernzeit',
+        quizzesTaken: 'Quiz absolviert',
+        min: 'Min',
+        abilityModel: 'Fähigkeitsmodell',
+        myLanguages: 'Meine Sprachen',
+        dayStreak: 'Tage',
+        recentActivity: 'Letzte Aktivität',
+        activeGoals: 'Aktive Ziele',
+        weeklyStats: 'Diese Woche',
+        highlights: 'Highlights',
+        noData: 'Starte deine erste Lektion!',
+        noActivity: 'Keine Aktivität',
+        noGoals: 'Keine Lernziele',
+        error: 'Laden fehlgeschlagen',
+        retry: 'Wiederholen',
+        grammar: 'Grammatik',
+        vocabulary: 'Vokabular',
+        listening: 'Hörverstehen',
+        speaking: 'Sprechen',
+        reading: 'Lesen',
+        writing: 'Schreiben',
+        overallLevel: 'Gesamtniveau',
+        strengths: 'Stärken',
+        weaknesses: 'Schwächen',
+        events: 'Mal',
+        aiQuota: 'KI-Kontingent',
+        checkInStreak: 'Serie',
+        todayCheckedIn: 'Heute eingecheckt',
+        checkInNow: 'Einchecken',
+        logout: 'Abmelden',
       }
     };
 
@@ -498,17 +613,50 @@
     // ============ Init ============
     async function init() {
       currentLang = detectLanguage();
+      applyQuickGridI18n();
       fetchHomeQuota();
       await loadDashboard();
+      // Phase4: 监听语言变更事件
+      window.addEventListener('languageChanged', function(e) {
+        currentLang = detectLanguage();
+        applyQuickGridI18n();
+        loadDashboard();
+      });
     }
 
     function detectLanguage() {
+      // Phase4: 优先读取 AILOS UI 语言
+      if (window.AILOS && typeof window.AILOS.getUILang === 'function') {
+        var uil = window.AILOS.getUILang();
+        if (i18n[uil]) return uil;
+      }
       const params = new URLSearchParams(window.location.search);
       const paramLang = params.get('lang');
       if (paramLang && i18n[paramLang]) return paramLang;
       const navLang = (navigator.language || 'en').split('-')[0];
       if (i18n[navLang]) return navLang;
       return 'zh';
+    }
+
+    // Phase4: 快捷入口7语种标签
+    var QUICK_LABELS = {
+      zh: { title: '快捷入口', translate: '实时翻译', speaking: '口语速成', sentences: '句库', notebook: '错题本', messages: '消息', vip: '会员', games: '游戏中心' },
+      en: { title: 'Quick Actions', translate: 'Translate', speaking: 'Speaking', sentences: 'Phrases', notebook: 'Mistakes', messages: 'Messages', vip: 'VIP', games: 'Games' },
+      ja: { title: 'クイックアクション', translate: '翻訳', speaking: 'スピーキング', sentences: '例文', notebook: '復習', messages: 'メッセージ', vip: 'VIP', games: 'ゲーム' },
+      ko: { title: '바로가기', translate: '번역', speaking: '스피킹', sentences: '예문', notebook: '오답', messages: '메시지', vip: 'VIP', games: '게임' }
+    };
+    // fr/es/de 兜底英文
+    QUICK_LABELS.fr = { title: 'Accès rapide', translate: 'Traduire', speaking: 'Oral', sentences: 'Phrases', notebook: 'Erreurs', messages: 'Messages', vip: 'VIP', games: 'Jeux' };
+    QUICK_LABELS.es = { title: 'Acceso rápido', translate: 'Traducir', speaking: 'Oral', sentences: 'Frases', notebook: 'Errores', messages: 'Mensajes', vip: 'VIP', games: 'Juegos' };
+    QUICK_LABELS.de = { title: 'Schnellzugriff', translate: 'Übersetzen', speaking: 'Sprechen', sentences: 'Sätze', notebook: 'Fehler', messages: 'Nachrichten', vip: 'VIP', games: 'Spiele' };
+
+    function applyQuickGridI18n() {
+      var lbl = QUICK_LABELS[currentLang] || QUICK_LABELS['zh'];
+      var titleEl = document.querySelector('.quick-header-label');
+      if (titleEl) titleEl.textContent = lbl.title;
+      var items = document.querySelectorAll('#quickGrid .quick-label');
+      var keys = ['translate','speaking','sentences','notebook','messages','vip','games'];
+      items.forEach(function(el, i) { if (lbl[keys[i]]) el.textContent = lbl[keys[i]]; });
     }
 
     function t(key) {

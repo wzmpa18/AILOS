@@ -57,17 +57,6 @@
   .nav-title {
     font-size: 16px; font-weight: 700; color: var(--text);
   }
-  .lang-switch {
-    display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end;
-  }
-  .lang-flag {
-    padding: 3px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;
-    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
-    background: transparent; white-space: nowrap;
-  }
-  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
-  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
-
   /* ===== Container ===== */
   .container {
     width: 100%; max-width: 680px; margin: 0 auto;
@@ -83,6 +72,18 @@
     display: flex; align-items: center; gap: 8px;
   }
   .card-header .icon { font-size: 18px; }
+
+  /* ===== Level Card (P0 Bug 2 fix) ===== */
+  .level-display {
+    display: flex; flex-direction: column; align-items: center; padding: 16px 0;
+  }
+  .level-badge {
+    font-size: 28px; font-weight: 800; color: var(--primary);
+    background: var(--primary-light); padding: 12px 28px; border-radius: 16px;
+    letter-spacing: 1px;
+  }
+  .level-system-name { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .level-lang { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 
   /* ===== Profile Header ===== */
   .profile-header {
@@ -273,6 +274,30 @@
   .toast.info { background: var(--primary); color: #fff; }
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
+  /* ===== Stage9 M5: Privacy Toggles ===== */
+  .privacy-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .privacy-row:last-child { border-bottom: none; }
+  .privacy-info { flex: 1; }
+  .privacy-info .privacy-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .privacy-info .privacy-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: #CBD5E1; border-radius: 26px; transition: .3s;
+  }
+  .toggle-slider:before {
+    content: ""; position: absolute; height: 20px; width: 20px;
+    left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+  .toggle-switch.loading { opacity: .5; pointer-events: none; }
+
   /* ===== Loading ===== */
   .loading-spinner {
     display: flex; align-items: center; justify-content: center; padding: 40px;
@@ -300,8 +325,7 @@
     .badges-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .badge-item { padding: 8px 4px; }
     .badge-icon { font-size: 22px; }
-    .lang-switch { justify-content: center; width: 100%; }
-    .navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+.navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
     .modal { padding: 20px 16px; }
     .modal-actions { flex-direction: column; }
     .modal-actions .btn { width: 100%; }
@@ -355,13 +379,54 @@
   </div>
 </div>
 
+<!-- Phase4: QR Code Modal -->
+<div class="modal-overlay" id="qrModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" data-i18n="qrcode_title">我的二维码</div>
+    <div style="text-align:center;padding:12px 0;">
+      <div id="qrCanvas" style="display:inline-block;background:#fff;padding:8px;border-radius:8px;"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:12px;word-break:break-all;" id="qrProfileUrl"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeQRModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase4: Share Modal -->
+<div class="modal-overlay" id="shareModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" data-i18n="share_title">分享我的主页</div>
+    <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:8px 0;word-break:break-all;" id="shareProfileUrl"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyProfileLink()" data-i18n="share_copy_link">复制链接</button>
+      <button class="btn btn-secondary" onclick="closeShareModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase4 P1: Invite Code Modal -->
+<div class="modal-overlay" id="inviteModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-icon">🎁</div>
+    <div class="modal-title" data-i18n="invite_modal_title">邀请好友</div>
+    <div class="modal-desc" data-i18n="invite_modal_desc">分享你的专属邀请码，每邀请一位好友加入学习，双方均可获得7天VIP会员奖励！</div>
+    <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center;margin:8px 0;">
+      <div style="font-size:22px;font-weight:700;letter-spacing:4px;color:var(--primary);font-family:monospace;" id="inviteCodeDisplay">----</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyInviteCode()" data-i18n="invite_copy_code">复制邀请码</button>
+      <button class="btn btn-secondary" onclick="closeInviteModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Navbar -->
   <nav class="navbar">
     <a class="nav-back" href="/xuewaiyu/landing.html" data-i18n="back_to_home">← 返回首页</a>
     <span class="nav-title" data-i18n="page_title">个人中心</span>
-    <div class="lang-switch" id="langSwitch"></div>
   </nav>
 
   <!-- Guest / Not Logged In -->
@@ -401,6 +466,11 @@
             <button class="btn-sm btn-sm-outline" onclick="cancelEditNickname()" data-i18n="btn_cancel">取消</button>
           </div>
           <button class="btn-sm btn-sm-outline" id="btnEditNickname" onclick="startEditNickname()" data-i18n="btn_edit_nickname" style="margin-top:8px">编辑昵称</button>
+          <!-- Phase4: 二维码与分享按钮 -->
+          <div class="profile-share-row" id="profileShareRow" style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn-sm btn-sm-primary" id="btnQRCode" onclick="showQRCode()" data-i18n="btn_qrcode">📱 我的二维码</button>
+            <button class="btn-sm btn-sm-outline" id="btnShare" onclick="shareProfile()" data-i18n="btn_share">🔗 分享主页</button>
+          </div>
         </div>
       </div>
     </div>
@@ -433,6 +503,20 @@
         <select class="pref-select" id="targetLangSelect" onchange="onTargetLangChange()"></select>
       </div>
       <div style="margin-top:10px"><a href="/xuewaiyu/placement.html" style="color:var(--primary);font-size:13px;font-weight:600">🎯 去水平测试，评估你的当前等级</a></div>
+    </div>
+
+    <!-- Level Card (Phase4 P0: Bug 2 fix) -->
+    <div class="card" id="levelCard">
+      <div class="card-header">
+        <span class="icon">🎯</span>
+        <span data-i18n="level_card_title">当前等级</span>
+      </div>
+      <div class="level-display">
+        <div class="level-badge" id="levelBadge">--</div>
+        <div class="level-system-name" id="levelSystemName"></div>
+        <div class="level-lang" id="levelLang"></div>
+      </div>
+      <div style="margin-top:10px"><a href="/xuewaiyu/placement.html" style="color:var(--primary);font-size:13px;font-weight:600">🎯 重新测评等级</a></div>
     </div>
 
     <!-- Learning Stats Card -->
@@ -481,6 +565,38 @@
         <span data-i18n="settings_title">设置</span>
       </div>
       <div class="settings-list">
+        <!-- Stage9 M5: Privacy Settings -->
+        <div class="settings-item" onclick="togglePrivacySection()">
+          <span class="si-icon">🔒</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="privacy_title">隐私设置</div>
+            <div class="si-desc" data-i18n="privacy_desc">管理你的社交隐私偏好</div>
+          </div>
+          <span class="si-arrow" id="privacyArrow">›</span>
+        </div>
+        <div class="pwd-form" id="privacySection" style="display:none;">
+          <div class="privacy-row">
+            <div class="privacy-info">
+              <div class="privacy-title" data-i18n="privacy_allow_discover">允许被发现</div>
+              <div class="privacy-desc" data-i18n="privacy_allow_discover_desc">其他用户可以在社交中发现你</div>
+            </div>
+            <label class="toggle-switch" id="toggleDiscoverWrap">
+              <input type="checkbox" id="toggleAllowDiscover" onchange="onPrivacyToggle('allowDiscover', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="privacy-row">
+            <div class="privacy-info">
+              <div class="privacy-title" data-i18n="privacy_allow_uid_search">允许通过UID搜索</div>
+              <div class="privacy-desc" data-i18n="privacy_allow_uid_search_desc">其他用户可以通过UID搜索到你</div>
+            </div>
+            <label class="toggle-switch" id="toggleUidSearchWrap">
+              <input type="checkbox" id="toggleAllowUidSearch" onchange="onPrivacyToggle('allowUidSearch', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
         <div class="settings-item" onclick="togglePasswordForm()">
           <span class="si-icon">🔑</span>
           <div class="si-text">
@@ -506,6 +622,15 @@
             <button class="btn btn-primary" id="btnChangePassword" onclick="changePassword()" data-i18n="btn_change_password">修改密码</button>
             <button class="btn btn-cancel" onclick="togglePasswordForm()" data-i18n="btn_cancel">取消</button>
           </div>
+        </div>
+
+        <div class="settings-item" onclick="openInviteModal()">
+          <span class="si-icon">🎁</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="settings_invite_code">邀请码</div>
+            <div class="si-desc" data-i18n="settings_invite_code_desc">邀请好友一起学习，赢取奖励</div>
+          </div>
+          <span class="si-arrow">›</span>
         </div>
 
         <div class="settings-item danger" onclick="openDeleteModal()">
@@ -535,6 +660,14 @@ const I18N = {
     btn_save: '保存',
     btn_cancel: '取消',
     btn_edit_nickname: '编辑昵称',
+    btn_qrcode: '📱 我的二维码',
+    btn_share: '🔗 分享主页',
+    qrcode_title: '我的二维码',
+    qrcode_save: '保存二维码',
+    qrcode_close: '关闭',
+    share_title: '分享我的主页',
+    share_copy_link: '复制链接',
+    share_copied: '已复制！',
     btn_change_password: '修改密码',
     btn_confirm_delete: '确认注销',
     label_old_password: '当前密码',
@@ -550,6 +683,8 @@ const I18N = {
     pref_native_lang_desc: '你的第一语言',
     pref_target_lang: '目标学习语言',
     pref_target_lang_desc: '你正在学习的语言',
+    level_card_title: '当前等级',
+    level_not_assessed: '未测评',
     stats_title: '学习统计',
     stat_total_hours: '总学习时长 (小时)',
     stat_courses: '完成课程数',
@@ -557,6 +692,14 @@ const I18N = {
     stat_points: '总积分',
     badges_title: '成就徽章',
     settings_title: '设置',
+    privacy_title: '隐私设置',
+    privacy_desc: '管理你的社交隐私偏好',
+    privacy_allow_discover: '允许被发现',
+    privacy_allow_discover_desc: '其他用户可以在社交中发现你',
+    privacy_allow_uid_search: '允许通过UID搜索',
+    privacy_allow_uid_search_desc: '其他用户可以通过UID搜索到你',
+    toast_privacy_updated: '隐私设置已更新',
+    toast_privacy_failed: '隐私设置保存失败',
     settings_change_pwd: '修改密码',
     settings_change_pwd_desc: '更新你的登录密码',
     settings_delete_account: '注销账号',
@@ -574,6 +717,11 @@ const I18N = {
     toast_pwd_too_short: '新密码至少需要6位',
     toast_enter_old_pwd: '请输入当前密码',
     toast_loading: '加载中...',
+    settings_invite_code: '邀请码',
+    settings_invite_code_desc: '邀请好友一起学习，赢取奖励',
+    invite_modal_title: '邀请好友',
+    invite_modal_desc: '分享你的专属邀请码，每邀请一位好友加入学习，双方均可获得7天VIP会员奖励！',
+    invite_copy_code: '复制邀请码',
     badge_rookie: '初学者',
     badge_rookie_desc: '完成第一课',
     badge_streak7: '连续7天',
@@ -609,6 +757,14 @@ const I18N = {
     btn_save: 'Save',
     btn_cancel: 'Cancel',
     btn_edit_nickname: 'Edit Nickname',
+    btn_qrcode: '📱 My QR Code',
+    btn_share: '🔗 Share Profile',
+    qrcode_title: 'My QR Code',
+    qrcode_save: 'Save QR Code',
+    qrcode_close: 'Close',
+    share_title: 'Share My Profile',
+    share_copy_link: 'Copy Link',
+    share_copied: 'Copied!',
     btn_change_password: 'Change Password',
     btn_confirm_delete: 'Confirm Delete',
     label_old_password: 'Current Password',
@@ -624,6 +780,8 @@ const I18N = {
     pref_native_lang_desc: 'Your first language',
     pref_target_lang: 'Target Learning Language',
     pref_target_lang_desc: 'The language you are learning',
+    level_card_title: 'Current Level',
+    level_not_assessed: 'Not Assessed',
     stats_title: 'Learning Statistics',
     stat_total_hours: 'Total Study Hours',
     stat_courses: 'Courses Completed',
@@ -631,6 +789,14 @@ const I18N = {
     stat_points: 'Total Points',
     badges_title: 'Achievement Badges',
     settings_title: 'Settings',
+    privacy_title: 'Privacy Settings',
+    privacy_desc: 'Manage your social privacy preferences',
+    privacy_allow_discover: 'Allow Discovery',
+    privacy_allow_discover_desc: 'Other users can discover you in social',
+    privacy_allow_uid_search: 'Allow UID Search',
+    privacy_allow_uid_search_desc: 'Others can find you by UID',
+    toast_privacy_updated: 'Privacy settings updated',
+    toast_privacy_failed: 'Failed to save privacy settings',
     settings_change_pwd: 'Change Password',
     settings_change_pwd_desc: 'Update your login password',
     settings_delete_account: 'Delete Account',
@@ -648,6 +814,11 @@ const I18N = {
     toast_pwd_too_short: 'New password must be at least 6 characters',
     toast_enter_old_pwd: 'Please enter your current password',
     toast_loading: 'Loading...',
+    settings_invite_code: 'Invite Code',
+    settings_invite_code_desc: 'Invite friends to learn together and earn rewards',
+    invite_modal_title: 'Invite Friends',
+    invite_modal_desc: 'Share your exclusive invite code. Both you and your friend will receive a 7-day VIP membership reward when they join!',
+    invite_copy_code: 'Copy Invite Code',
     badge_rookie: 'Beginner',
     badge_rookie_desc: 'Complete your first lesson',
     badge_streak7: '7-Day Streak',
@@ -683,6 +854,14 @@ const I18N = {
     btn_save: '保存',
     btn_cancel: 'キャンセル',
     btn_edit_nickname: 'ニックネーム編集',
+    btn_qrcode: '📱 QRコード',
+    btn_share: '🔗 プロフィール共有',
+    qrcode_title: 'QRコード',
+    qrcode_save: 'QRコード保存',
+    qrcode_close: '閉じる',
+    share_title: 'プロフィール共有',
+    share_copy_link: 'リンクコピー',
+    share_copied: 'コピーしました！',
     btn_change_password: 'パスワード変更',
     btn_confirm_delete: '削除を確認',
     label_old_password: '現在のパスワード',
@@ -698,6 +877,8 @@ const I18N = {
     pref_native_lang_desc: 'あなたの第一言語',
     pref_target_lang: '学習目標言語',
     pref_target_lang_desc: '学習中の言語',
+    level_card_title: '現在のレベル',
+    level_not_assessed: '未評価',
     stats_title: '学習統計',
     stat_total_hours: '総学習時間 (時間)',
     stat_courses: '完了コース数',
@@ -705,6 +886,14 @@ const I18N = {
     stat_points: '総ポイント',
     badges_title: '達成バッジ',
     settings_title: '設定',
+    privacy_title: 'プライバシー設定',
+    privacy_desc: 'ソーシャルプライバシー設定を管理',
+    privacy_allow_discover: '発見を許可',
+    privacy_allow_discover_desc: '他のユーザーがソーシャルであなたを発見できます',
+    privacy_allow_uid_search: 'UID検索を許可',
+    privacy_allow_uid_search_desc: '他のユーザーがUIDであなたを検索できます',
+    toast_privacy_updated: 'プライバシー設定を更新しました',
+    toast_privacy_failed: 'プライバシー設定の保存に失敗しました',
     settings_change_pwd: 'パスワード変更',
     settings_change_pwd_desc: 'ログインパスワードを更新',
     settings_delete_account: 'アカウント削除',
@@ -722,6 +911,11 @@ const I18N = {
     toast_pwd_too_short: '新しいパスワードは6文字以上必要です',
     toast_enter_old_pwd: '現在のパスワードを入力してください',
     toast_loading: '読み込み中...',
+    settings_invite_code: '招待コード',
+    settings_invite_code_desc: '友達を招待して一緒に学び、報酬を獲得',
+    invite_modal_title: '友達を招待',
+    invite_modal_desc: 'あなたの専用招待コードを共有しましょう。友達が参加すると、双方に7日間のVIP会員報酬がプレゼントされます！',
+    invite_copy_code: '招待コードをコピー',
     badge_rookie: 'ビギナー',
     badge_rookie_desc: '最初のレッスンを完了',
     badge_streak7: '7日連続',
@@ -757,6 +951,14 @@ const I18N = {
     btn_save: '저장',
     btn_cancel: '취소',
     btn_edit_nickname: '닉네임 편집',
+    btn_qrcode: '📱 QR코드',
+    btn_share: '🔗 프로필 공유',
+    qrcode_title: 'QR코드',
+    qrcode_save: 'QR코드 저장',
+    qrcode_close: '닫기',
+    share_title: '프로필 공유',
+    share_copy_link: '링크 복사',
+    share_copied: '복사 완료!',
     btn_change_password: '비밀번호 변경',
     btn_confirm_delete: '삭제 확인',
     label_old_password: '현재 비밀번호',
@@ -772,6 +974,8 @@ const I18N = {
     pref_native_lang_desc: '당신의 첫 번째 언어',
     pref_target_lang: '목표 학습 언어',
     pref_target_lang_desc: '학습 중인 언어',
+    level_card_title: '현재 레벨',
+    level_not_assessed: '미평가',
     stats_title: '학습 통계',
     stat_total_hours: '총 학습 시간',
     stat_courses: '완료한 코스',
@@ -779,6 +983,14 @@ const I18N = {
     stat_points: '총 포인트',
     badges_title: '성취 배지',
     settings_title: '설정',
+    privacy_title: '개인정보 설정',
+    privacy_desc: '소셜 개인정보 설정 관리',
+    privacy_allow_discover: '발견 허용',
+    privacy_allow_discover_desc: '다른 사용자가 소셜에서 당신을 발견할 수 있습니다',
+    privacy_allow_uid_search: 'UID 검색 허용',
+    privacy_allow_uid_search_desc: '다른 사용자가 UID로 당신을 검색할 수 있습니다',
+    toast_privacy_updated: '개인정보 설정이 업데이트되었습니다',
+    toast_privacy_failed: '개인정보 설정 저장 실패',
     settings_change_pwd: '비밀번호 변경',
     settings_change_pwd_desc: '로그인 비밀번호 업데이트',
     settings_delete_account: '계정 삭제',
@@ -796,6 +1008,11 @@ const I18N = {
     toast_pwd_too_short: '새 비밀번호는 최소 6자 이상이어야 합니다',
     toast_enter_old_pwd: '현재 비밀번호를 입력해 주세요',
     toast_loading: '로딩 중...',
+    settings_invite_code: '초대 코드',
+    settings_invite_code_desc: '친구를 초대하여 함께 배우고 보상 받기',
+    invite_modal_title: '친구 초대',
+    invite_modal_desc: '전용 초대 코드를 공유하세요. 친구가 가입하면 양쪽 모두 7일 VIP 멤버십 보상을 받습니다!',
+    invite_copy_code: '초대 코드 복사',
     badge_rookie: '초보자',
     badge_rookie_desc: '첫 수업 완료',
     badge_streak7: '7일 연속',
@@ -831,6 +1048,14 @@ const I18N = {
     btn_save: 'Enregistrer',
     btn_cancel: 'Annuler',
     btn_edit_nickname: 'Modifier le pseudo',
+    btn_qrcode: '📱 Mon QR Code',
+    btn_share: '🔗 Partager le profil',
+    qrcode_title: 'Mon QR Code',
+    qrcode_save: 'Enregistrer le QR Code',
+    qrcode_close: 'Fermer',
+    share_title: 'Partager mon profil',
+    share_copy_link: 'Copier le lien',
+    share_copied: 'Copié !',
     btn_change_password: 'Changer le mot de passe',
     btn_confirm_delete: 'Confirmer la suppression',
     label_old_password: 'Mot de passe actuel',
@@ -846,6 +1071,8 @@ const I18N = {
     pref_native_lang_desc: 'Votre première langue',
     pref_target_lang: 'Langue cible',
     pref_target_lang_desc: 'La langue que vous apprenez',
+    level_card_title: 'Niveau actuel',
+    level_not_assessed: 'Non évalué',
     stats_title: 'Statistiques',
     stat_total_hours: 'Heures d\'étude',
     stat_courses: 'Cours terminés',
@@ -853,6 +1080,14 @@ const I18N = {
     stat_points: 'Points totaux',
     badges_title: 'Badges',
     settings_title: 'Paramètres',
+    privacy_title: 'Confidentialité',
+    privacy_desc: 'Gérer vos préférences de confidentialité sociale',
+    privacy_allow_discover: 'Autoriser la découverte',
+    privacy_allow_discover_desc: 'D\'autres utilisateurs peuvent vous découvrir',
+    privacy_allow_uid_search: 'Autoriser la recherche par UID',
+    privacy_allow_uid_search_desc: 'D\'autres peuvent vous trouver par UID',
+    toast_privacy_updated: 'Paramètres de confidentialité mis à jour',
+    toast_privacy_failed: 'Échec de la mise à jour des paramètres',
     settings_change_pwd: 'Changer le mot de passe',
     settings_change_pwd_desc: 'Mettre à jour votre mot de passe',
     settings_delete_account: 'Supprimer le compte',
@@ -870,6 +1105,11 @@ const I18N = {
     toast_pwd_too_short: 'Le mot de passe doit contenir au moins 6 caractères',
     toast_enter_old_pwd: 'Veuillez entrer votre mot de passe actuel',
     toast_loading: 'Chargement...',
+    settings_invite_code: 'Code d\'invitation',
+    settings_invite_code_desc: 'Invitez des amis à apprendre et gagnez des récompenses',
+    invite_modal_title: 'Inviter des amis',
+    invite_modal_desc: 'Partagez votre code d\'invitation exclusif. Vous et votre ami recevrez 7 jours de VIP en récompense !',
+    invite_copy_code: 'Copier le code',
     badge_rookie: 'Débutant',
     badge_rookie_desc: 'Première leçon terminée',
     badge_streak7: '7 jours',
@@ -905,6 +1145,14 @@ const I18N = {
     btn_save: 'Guardar',
     btn_cancel: 'Cancelar',
     btn_edit_nickname: 'Editar apodo',
+    btn_qrcode: '📱 Mi Código QR',
+    btn_share: '🔗 Compartir perfil',
+    qrcode_title: 'Mi Código QR',
+    qrcode_save: 'Guardar Código QR',
+    qrcode_close: 'Cerrar',
+    share_title: 'Compartir mi perfil',
+    share_copy_link: 'Copiar enlace',
+    share_copied: '¡Copiado!',
     btn_change_password: 'Cambiar contraseña',
     btn_confirm_delete: 'Confirmar eliminación',
     label_old_password: 'Contraseña actual',
@@ -920,6 +1168,8 @@ const I18N = {
     pref_native_lang_desc: 'Tu primer idioma',
     pref_target_lang: 'Idioma objetivo',
     pref_target_lang_desc: 'El idioma que estás aprendiendo',
+    level_card_title: 'Nivel actual',
+    level_not_assessed: 'No evaluado',
     stats_title: 'Estadísticas',
     stat_total_hours: 'Horas de estudio',
     stat_courses: 'Cursos completados',
@@ -927,6 +1177,14 @@ const I18N = {
     stat_points: 'Puntos totales',
     badges_title: 'Insignias',
     settings_title: 'Configuración',
+    privacy_title: 'Privacidad',
+    privacy_desc: 'Gestiona tus preferencias de privacidad social',
+    privacy_allow_discover: 'Permitir descubrimiento',
+    privacy_allow_discover_desc: 'Otros usuarios pueden descubrirte en social',
+    privacy_allow_uid_search: 'Permitir búsqueda por UID',
+    privacy_allow_uid_search_desc: 'Otros pueden encontrarte por UID',
+    toast_privacy_updated: 'Configuración de privacidad actualizada',
+    toast_privacy_failed: 'Error al guardar la configuración de privacidad',
     settings_change_pwd: 'Cambiar contraseña',
     settings_change_pwd_desc: 'Actualiza tu contraseña',
     settings_delete_account: 'Eliminar cuenta',
@@ -944,6 +1202,11 @@ const I18N = {
     toast_pwd_too_short: 'La contraseña debe tener al menos 6 caracteres',
     toast_enter_old_pwd: 'Ingresa tu contraseña actual',
     toast_loading: 'Cargando...',
+    settings_invite_code: 'Código de invitación',
+    settings_invite_code_desc: 'Invita a amigos a aprender y gana recompensas',
+    invite_modal_title: 'Invitar amigos',
+    invite_modal_desc: 'Comparte tu código exclusivo. Cuando tu amigo se una, ambos recibirán 7 días de membresía VIP.',
+    invite_copy_code: 'Copiar código',
     badge_rookie: 'Principiante',
     badge_rookie_desc: 'Primera lección completada',
     badge_streak7: '7 días',
@@ -979,6 +1242,14 @@ const I18N = {
     btn_save: 'Speichern',
     btn_cancel: 'Abbrechen',
     btn_edit_nickname: 'Nickname bearbeiten',
+    btn_qrcode: '📱 Mein QR-Code',
+    btn_share: '🔗 Profil teilen',
+    qrcode_title: 'Mein QR-Code',
+    qrcode_save: 'QR-Code speichern',
+    qrcode_close: 'Schließen',
+    share_title: 'Mein Profil teilen',
+    share_copy_link: 'Link kopieren',
+    share_copied: 'Kopiert!',
     btn_change_password: 'Passwort ändern',
     btn_confirm_delete: 'Löschen bestätigen',
     label_old_password: 'Aktuelles Passwort',
@@ -994,6 +1265,8 @@ const I18N = {
     pref_native_lang_desc: 'Ihre Erstsprache',
     pref_target_lang: 'Zielsprache',
     pref_target_lang_desc: 'Die Sprache, die Sie lernen',
+    level_card_title: 'Aktuelles Niveau',
+    level_not_assessed: 'Nicht bewertet',
     stats_title: 'Lernstatistik',
     stat_total_hours: 'Lernstunden gesamt',
     stat_courses: 'Abgeschlossene Kurse',
@@ -1001,6 +1274,14 @@ const I18N = {
     stat_points: 'Gesamtpunkte',
     badges_title: 'Abzeichen',
     settings_title: 'Einstellungen',
+    privacy_title: 'Datenschutz',
+    privacy_desc: 'Verwalten Sie Ihre sozialen Datenschutzeinstellungen',
+    privacy_allow_discover: 'Entdeckung erlauben',
+    privacy_allow_discover_desc: 'Andere Benutzer können Sie in sozialen Netzwerken entdecken',
+    privacy_allow_uid_search: 'UID-Suche erlauben',
+    privacy_allow_uid_search_desc: 'Andere können Sie per UID finden',
+    toast_privacy_updated: 'Datenschutzeinstellungen aktualisiert',
+    toast_privacy_failed: 'Fehler beim Speichern der Datenschutzeinstellungen',
     settings_change_pwd: 'Passwort ändern',
     settings_change_pwd_desc: 'Aktualisieren Sie Ihr Anmeldepasswort',
     settings_delete_account: 'Konto löschen',
@@ -1018,6 +1299,11 @@ const I18N = {
     toast_pwd_too_short: 'Das neue Passwort muss mindestens 6 Zeichen haben',
     toast_enter_old_pwd: 'Bitte geben Sie Ihr aktuelles Passwort ein',
     toast_loading: 'Laden...',
+    settings_invite_code: 'Einladungscode',
+    settings_invite_code_desc: 'Freunde zum gemeinsamen Lernen einladen und Belohnungen verdienen',
+    invite_modal_title: 'Freunde einladen',
+    invite_modal_desc: 'Teilen Sie Ihren exklusiven Einladungscode. Wenn ein Freund beitritt, erhalten beide 7 Tage VIP-Mitgliedschaft!',
+    invite_copy_code: 'Code kopieren',
     badge_rookie: 'Anfänger',
     badge_rookie_desc: 'Erste Lektion abgeschlossen',
     badge_streak7: '7-Tage',
@@ -1071,17 +1357,10 @@ let currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
 // ==================== Render ====================
-function renderLangSwitch() {
-  document.getElementById('langSwitch').innerHTML = LANG_CODES.map(code =>
-    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
-  ).join('');
-}
-
 function switchLang(code) {
   currentLang = code;
   try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
   updateI18n();
-  renderLangSwitch();
   renderLanguageSelects();
   renderBadges();
 }
@@ -1222,6 +1501,9 @@ function populateProfile(data) {
     avatarEl.innerHTML = '<span id="avatarInitial">' + (data.nickname || 'U').charAt(0).toUpperCase() + '</span>';
   }
 
+  // Level card (P0 Bug 2 fix)
+  populateLevelCard(data);
+
   // Stats
   const stats = data.stats || {};
   document.getElementById('statTotalHours').textContent = stats.totalHours || 0;
@@ -1231,6 +1513,60 @@ function populateProfile(data) {
 
   // Store for later use
   userData = data;
+}
+
+// 等级体系映射表（与 onboarding 一致）
+var PROFILE_LEVEL_SYSTEM = {
+  ja: { name:'JLPT', levels:{ zero:'N5', beginner:'N4', intermediate:'N3', advanced:'N2' } },
+  en: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+  ko: { name:'TOPIK', levels:{ zero:'TOPIK 1급', beginner:'TOPIK 2급', intermediate:'TOPIK 3급', advanced:'TOPIK 4급' } },
+  fr: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+  es: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+  de: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+  zh: { name:'HSK', levels:{ zero:'HSK 1', beginner:'HSK 2', intermediate:'HSK 3', advanced:'HSK 4' } }
+};
+
+function populateLevelCard(data) {
+  var levelBadge = document.getElementById('levelBadge');
+  var levelSystemName = document.getElementById('levelSystemName');
+  var levelLang = document.getElementById('levelLang');
+
+  // 尝试从 localStorage 读取 onboarding 定级结果
+  var savedAssessment = null;
+  try {
+    var raw = localStorage.getItem('yandao_level_assessment');
+    if (raw) savedAssessment = JSON.parse(raw);
+  } catch(e) {}
+
+  // 尝试从 profile data 获取
+  var targetLang = null;
+  var assessedLevel = null;
+
+  if (data.userLearningLanguages && data.userLearningLanguages.length > 0) {
+    var activeLangs = data.userLearningLanguages.filter(function(l) { return l.status === 'active'; });
+    if (activeLangs.length > 0) {
+      targetLang = activeLangs[0].language;
+      assessedLevel = activeLangs[0].level || activeLangs[0].assessedLevel;
+    }
+  }
+
+  // 如果 data 中没有，回退到 localStorage
+  if ((!targetLang || !assessedLevel) && savedAssessment) {
+    targetLang = savedAssessment.lang;
+    assessedLevel = savedAssessment.level;
+  }
+
+  if (targetLang && assessedLevel) {
+    var sys = PROFILE_LEVEL_SYSTEM[targetLang] || { name:'通用', levels:{} };
+    var mapped = sys.levels[assessedLevel] || assessedLevel;
+    levelBadge.textContent = sys.name + ' ' + mapped;
+    levelSystemName.textContent = '';
+    levelLang.textContent = LANG_NAMES[targetLang] || targetLang;
+  } else {
+    levelBadge.textContent = '--';
+    levelSystemName.textContent = '';
+    levelLang.textContent = t('level_not_assessed') || '未测评';
+  }
 }
 
 function showGuestBanner() {
@@ -1412,6 +1748,59 @@ function renderBadges() {
   }).join('');
 }
 
+// ==================== Stage9 M5: Privacy Settings ====================
+var privacySectionOpen = false;
+
+function togglePrivacySection() {
+  privacySectionOpen = !privacySectionOpen;
+  var section = document.getElementById('privacySection');
+  var arrow = document.getElementById('privacyArrow');
+  section.style.display = privacySectionOpen ? 'block' : 'none';
+  arrow.textContent = privacySectionOpen ? '\u2304' : '\u203A';
+  if (privacySectionOpen) { loadPrivacySettings(); }
+}
+
+async function loadPrivacySettings() {
+  try {
+    var token = getToken();
+    if (!token) return;
+    var resp = await fetch(API_BASE + '/api/v1/social/privacy', {
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+    });
+    var d = await resp.json();
+    var data = d.data || d;
+    document.getElementById('toggleAllowDiscover').checked = !!data.allowDiscover;
+    document.getElementById('toggleAllowUidSearch').checked = !!data.allowUidSearch;
+  } catch (e) { /* silent - toggles remain in initial state */ }
+}
+
+async function onPrivacyToggle(field, value) {
+  var wrap = field === 'allowDiscover' ? 'toggleDiscoverWrap' : 'toggleUidSearchWrap';
+  var toggleWrap = document.getElementById(wrap);
+  var checkbox = document.getElementById(field === 'allowDiscover' ? 'toggleAllowDiscover' : 'toggleAllowUidSearch');
+  toggleWrap.classList.add('loading');
+  checkbox.disabled = true;
+  try {
+    var token = getToken();
+    if (!token) throw new Error('Unauthorized');
+    var body = {};
+    body[field] = value;
+    var resp = await fetch(API_BASE + '/api/v1/social/privacy', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    var d = await resp.json();
+    if (!resp.ok && !d.success) throw new Error(d.message || 'Failed');
+    showToast(t('toast_privacy_updated'), 'success');
+  } catch (e) {
+    checkbox.checked = !value; // revert
+    showToast(t('toast_privacy_failed'), 'error');
+  }
+  toggleWrap.classList.remove('loading');
+  checkbox.disabled = false;
+}
+
 // ==================== Password Change ====================
 function togglePasswordForm() {
   const form = document.getElementById('pwdForm');
@@ -1488,37 +1877,132 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 
 // ==================== Init ====================
 function init() {
-  renderLangSwitch();
   updateI18n();
   loadUserProfile();
 }
 
+// ==================== Phase4: QR Code & Share ====================
+function showQRCode() {
+  var modal = document.getElementById('qrModal');
+  var urlEl = document.getElementById('qrProfileUrl');
+  var canvasEl = document.getElementById('qrCanvas');
+  var userId = getUserId();
+  var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
+  urlEl.textContent = profileUrl;
+  // Use goQR.me API (free, no rate limit, UTF-8 support)
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(profileUrl);
+  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR\u751f\u6210\u5931\u8d25</p>\'">';
+  modal.style.display = 'flex';
+}
+
+function closeQRModal() {
+  document.getElementById('qrModal').style.display = 'none';
+}
+
+function shareProfile() {
+  var modal = document.getElementById('shareModal');
+  var urlEl = document.getElementById('shareProfileUrl');
+  var userId = getUserId();
+  var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
+  urlEl.textContent = profileUrl;
+  modal.style.display = 'flex';
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').style.display = 'none';
+}
+
+function copyProfileLink() {
+  var urlEl = document.getElementById('shareProfileUrl');
+  var text = urlEl.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast(t('share_copied'));
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast(t('share_copied'));
+}
+
+function getUserId() {
+  try {
+    var token = localStorage.getItem('yandao_token_v1');
+    if (token) {
+      var payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || payload.userId || payload.id || 'unknown';
+    }
+  } catch(e) {}
+  return 'unknown';
+}
+
+// ==================== Phase4 P1: Invite Code ====================
+function generateInviteCode() {
+  var userId = getUserId();
+  // 基于用户ID生成6位邀请码
+  var hash = 0;
+  for (var i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash |= 0;
+  }
+  var code = '';
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (var j = 0; j < 6; j++) {
+    code += chars.charAt(Math.abs(hash + j * 7) % chars.length);
+  }
+  return code;
+}
+
+function openInviteModal() {
+  var modal = document.getElementById('inviteModal');
+  var codeEl = document.getElementById('inviteCodeDisplay');
+  codeEl.textContent = generateInviteCode();
+  modal.style.display = 'flex';
+}
+
+function closeInviteModal() {
+  document.getElementById('inviteModal').style.display = 'none';
+}
+
+function copyInviteCode() {
+  var code = document.getElementById('inviteCodeDisplay').textContent;
+  var text = code + '  (https://www.yandao.vip/xuewaiyu/invite?code=' + code + ')';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast(t('share_copied') || '已复制');
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+// Keyboard modal dismiss
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeQRModal();
+    closeShareModal();
+    closeInviteModal();
+  }
+});
+
 init();
 </script>
 
-<!-- Bottom Navigation Bar -->
-<nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="/xuewaiyu/home">
-    <span class="nav-icon">🏠</span>
-    <span>首页</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/learn.html">
-    <span class="nav-icon">📚</span>
-    <span>学习</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/chat.html">
-    <span class="nav-icon">💬</span>
-    <span>AI对话</span>
-  </a>
-  <a class="nav-item" href="/xuewaiyu/review.html">
-    <span class="nav-icon">🔄</span>
-    <span>复习</span>
-  </a>
-  <a class="nav-item active" href="/xuewaiyu/profile.html">
-    <span class="nav-icon">👤</span>
-    <span>我的</span>
-  </a>
-</nav>
+<!-- Bottom Navigation Bar (injected by common.js with 7-tab i18n) -->
+<nav class="bottom-nav"></nav>
 
 </body>
 </html>

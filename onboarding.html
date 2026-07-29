@@ -106,11 +106,11 @@
     <!-- Step 3: 自评级别 -->
     <div class="card hidden" id="step3">
       <h2>你目前的水平大概是？</h2>
-      <p class="sub">先自评一下，稍后用 10 道题帮你精确定级</p>
-      <button class="opt" data-lv="zero">🌱 零基础<span class="desc">完全没学过 / 只认识几个词</span></button>
-      <button class="opt" data-lv="beginner">📖 初级<span class="desc">学过一点，能进行简单问候</span></button>
-      <button class="opt" data-lv="intermediate">💬 中级<span class="desc">能进行日常对话，读懂短文</span></button>
-      <button class="opt" data-lv="advanced">🚀 高级<span class="desc">能流利交流，处理复杂话题</span></button>
+      <p class="sub" id="step3Sub">先自评一下，稍后用 10 道题帮你精确定级</p>
+      <button class="opt" data-lv="zero"><span class="lv-icon">🌱</span> <span class="lv-label" data-lv="zero">零基础</span><span class="desc">完全没学过 / 只认识几个词</span></button>
+      <button class="opt" data-lv="beginner"><span class="lv-icon">📖</span> <span class="lv-label" data-lv="beginner">初级</span><span class="desc">学过一点，能进行简单问候</span></button>
+      <button class="opt" data-lv="intermediate"><span class="lv-icon">💬</span> <span class="lv-label" data-lv="intermediate">中级</span><span class="desc">能进行日常对话，读懂短文</span></button>
+      <button class="opt" data-lv="advanced"><span class="lv-icon">🚀</span> <span class="lv-label" data-lv="advanced">高级</span><span class="desc">能流利交流，处理复杂话题</span></button>
       <div class="err" id="err3"></div>
     </div>
 
@@ -218,8 +218,38 @@
       { code:'es', flag:'🇪🇸', name:'西班牙语' }, { code:'de', flag:'🇩🇪', name:'德语' },
       { code:'zh', flag:'🇨🇳', name:'中文' }
     ];
+    // 等级体系映射：日语→JLPT(N5-N1)，英语/欧洲语言→CEFR(A1-C2)，韩语→TOPIK，中文→HSK
+    var LEVEL_SYSTEM = {
+      ja: { name:'JLPT', levels:{ zero:'N5', beginner:'N4', intermediate:'N3', advanced:'N2' } },
+      en: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      ko: { name:'TOPIK', levels:{ zero:'TOPIK 1급', beginner:'TOPIK 2급', intermediate:'TOPIK 3급', advanced:'TOPIK 4급' } },
+      fr: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      es: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      de: { name:'CEFR', levels:{ zero:'A1', beginner:'A2', intermediate:'B1', advanced:'B2' } },
+      zh: { name:'HSK', levels:{ zero:'HSK 1', beginner:'HSK 2', intermediate:'HSK 3', advanced:'HSK 4' } }
+    };
     var TTS_LANG = { ja:'ja-JP', en:'en-US', ko:'ko-KR', fr:'fr-FR', es:'es-ES', de:'de-DE', zh:'zh-CN' };
     var state = { lang:null, selfLevel:null, nativeLang:null, questions:[], answers:[], qIdx:0, assessedLevel:null };
+
+    // 根据目标语言获取等级体系名称和自评等级映射
+    function getLevelSystem(langCode) {
+      return LEVEL_SYSTEM[langCode] || { name:'通用', levels:{ zero:'入门', beginner:'初级', intermediate:'中级', advanced:'高级' } };
+    }
+    function mapLevelToSystemName(langCode, selfLevel) {
+      var sys = getLevelSystem(langCode);
+      return sys.levels[selfLevel] || selfLevel;
+    }
+    // 进入 Step 3 时根据目标语言更新等级标签
+    function updateLevelLabels() {
+      if (!state.lang) return;
+      var sys = getLevelSystem(state.lang);
+      document.getElementById('step3Sub').textContent = '先自评一下，稍后用 10 道题帮你精确定级（' + sys.name + '）';
+      var labels = document.querySelectorAll('#step3 .lv-label');
+      labels.forEach(function (el) {
+        var lv = el.getAttribute('data-lv');
+        el.textContent = sys.levels[lv] || el.textContent;
+      });
+    }
 
     function api(path, method, body) {
       return fetch(API + path, {
@@ -247,6 +277,7 @@
       });
       document.getElementById(id).classList.remove('hidden');
       if (dotN !== undefined) markDots(dotN);
+      if (id === 'step3') updateLevelLabels();
       window.scrollTo(0, 0);
     }
     function setErr(id, msg) { document.getElementById(id).textContent = msg || ''; }
@@ -424,7 +455,10 @@
       api('/placement/submit', 'POST', { answers: state.answers })
         .then(function (r) {
           state.assessedLevel = r.assessedLevel;
-          document.getElementById('resLevel').textContent = r.assessedLevel;
+          // 根据目标语言映射等级体系名称
+          var sys = getLevelSystem(state.lang);
+          var mappedLevel = mapLevelToSystemName(state.lang, r.assessedLevel);
+          document.getElementById('resLevel').textContent = sys.name + ' ' + mappedLevel;
           var names = { vocabulary:'词汇', grammar:'语法', listening:'听力', speaking:'口语' };
           document.getElementById('dimBox').innerHTML = r.dimensions.map(function (d) {
             return '<div class="dim-row"><span class="dim-name">' + (names[d.dimension] || d.dimension) + '</span>' +
@@ -434,7 +468,7 @@
           document.getElementById('resReco').textContent = r.recommendation;
           // 兼容旧闸门与旧页面
           try {
-            localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: state.lang, level: r.assessedLevel, score: r.totalScore, at: Date.now() }));
+            localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: state.lang, level: r.assessedLevel, levelSystem: sys.name, mappedLevel: mappedLevel, score: r.totalScore, at: Date.now() }));
             if (window.AILOS && AILOS.setStudyLang) AILOS.setStudyLang(state.lang);
           } catch (e) {}
           show('step4result', 4);

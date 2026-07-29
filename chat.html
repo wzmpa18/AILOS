@@ -1040,6 +1040,11 @@ function init() {
       checkGuest();
     }
   });
+
+  // Phase4: languageChanged listener
+  window.addEventListener('languageChanged', function(e) {
+    updateI18n();
+  });
 }
 
 // Run

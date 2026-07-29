@@ -943,6 +943,15 @@ function setFilter(filter) {
 function init() {
   updateI18n();
   render();
+  // Phase4: languageChanged listener
+  window.addEventListener('languageChanged', function(e) {
+    var newLang = (window.AILOS && window.AILOS.getUILang) ? window.AILOS.getUILang() : currentLang;
+    if (newLang !== currentLang) {
+      currentLang = newLang;
+      updateI18n();
+      render();
+    }
+  });
 }
 
 init();

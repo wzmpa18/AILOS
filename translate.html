@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>实时翻译 · AILOS</title>
+  <style>
+    :root { --primary: #6366f1; --primary-light: #eef2ff; --bg: #f5f6fa; --text: #1f2937; --text-secondary: #6b7280; --border: #e5e7eb; --radius: 16px; --radius-sm: 12px; --card-bg: #fff; --shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(64px + env(safe-area-inset-bottom,0) + 20px); }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px; }
+
+    .translate-header { text-align: center; padding: 24px 0 8px; }
+    .translate-header h1 { font-size: 22px; margin: 0 0 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .translate-header .sub { font-size: 13px; color: var(--text-secondary); }
+
+    .status-bar { background: linear-gradient(135deg, #eef2ff, #f0f9ff); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); }
+    .status-bar .trial-info { display: flex; align-items: center; gap: 8px; }
+    .status-bar .trial-icon { font-size: 24px; }
+    .status-bar .trial-text strong { color: var(--primary); }
+    .status-bar .upgrade-btn { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+    .feature-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 20px; }
+    .feature-card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all .2s; border: 1px solid transparent; text-decoration: none; color: inherit; }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-color: var(--primary); }
+    .feature-card .card-icon { font-size: 40px; flex-shrink: 0; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+    .feature-card .card-icon.photo { background: #fef3c7; }
+    .feature-card .card-icon.scan { background: #dbeafe; }
+    .feature-card .card-icon.converse { background: #d1fae5; }
+    .feature-card .card-body { flex: 1; }
+    .feature-card .card-body h3 { margin: 0 0 4px; font-size: 16px; }
+    .feature-card .card-body p { margin: 0 0 6px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .feature-card .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-free { background: #d1fae5; color: #065f46; }
+    .badge-premium { background: #fef3c7; color: #92400e; }
+    .badge-trial { background: #dbeafe; color: #1e40af; }
+
+    .constitution-note { background: #fff; border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); font-size: 12px; color: var(--text-secondary); line-height: 1.6; border-left: 3px solid var(--primary); }
+    .constitution-note strong { color: var(--text); }
+
+    .empty-hint { text-align: center; padding: 48px 16px; color: var(--text-secondary); }
+    .empty-hint .big-icon { font-size: 56px; margin-bottom: 12px; }
+    .empty-hint p { font-size: 14px; line-height: 1.6; }
+
+    @media (min-width: 480px) {
+      .feature-grid { grid-template-columns: repeat(3, 1fr); }
+      .feature-card { flex-direction: column; text-align: center; }
+      .feature-card .card-icon { width: 56px; height: 56px; font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="translate-header">
+      <h1><span>🌐</span><span class="t-page-title">实时翻译</span></h1>
+      <p class="sub t-sub">AI 驱动的多语言翻译工具</p>
+    </div>
+
+    <!-- 状态栏：免费体验时长 / 套餐状态（前端仅展示，不可篡改） -->
+    <div class="status-bar" id="statusBar">
+      <div class="trial-info">
+        <span class="trial-icon">⏱️</span>
+        <span class="trial-text"><strong class="t-trial-label">免费体验</strong> <span id="trialTime" class="t-trial-time">5 分钟</span></span>
+      </div>
+      <button class="upgrade-btn t-upgrade-btn" onclick="location.href='/xuewaiyu/vip.html'">升级</button>
+    </div>
+
+    <!-- 三大功能入口（附件L） -->
+    <div class="feature-grid">
+      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('photo')">
+        <div class="card-icon photo">📷</div>
+        <div class="card-body">
+          <h3 class="t-photo-title">拍照翻译</h3>
+          <p class="t-photo-desc">拍摄文字即时翻译，支持 7 种语言识别</p>
+          <span class="badge badge-free t-photo-badge">永久免费</span>
+        </div>
+      </a>
+      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('scan')">
+        <div class="card-icon scan">📡</div>
+        <div class="card-body">
+          <h3 class="t-scan-title">实时扫描翻译</h3>
+          <p class="t-scan-desc">摄像头对准文字，实时叠加翻译结果</p>
+          <span class="badge badge-premium t-scan-badge">付费功能</span>
+        </div>
+      </a>
+      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('converse')">
+        <div class="card-icon converse">🎙️</div>
+        <div class="card-body">
+          <h3 class="t-converse-title">实时对话翻译</h3>
+          <p class="t-converse-desc">语音对话双向翻译，支持边说边译</p>
+          <span class="badge badge-trial t-converse-badge">限时体验</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 宪法规范提示 -->
+    <div class="constitution-note t-note">
+      <strong>📋 语言设置说明：</strong><br>
+      翻译页不提供语言切换控件。请在「<a href="/xuewaiyu/profile.html" style="color:var(--primary)">个人中心</a>」修改界面语言和学习语言，全站自动同步。
+    </div>
+
+    <!-- 功能开发中占位 -->
+    <div class="empty-hint" id="comingSoonHint" style="display:none">
+      <div class="big-icon">🚧</div>
+      <p class="t-coming-soon">功能开发中，敬请期待<br>预计按 Stage 11 节奏迭代上线</p>
+    </div>
+  </div>
+
+  <script src="/xuewaiyu/assets/common.js?v=20260726b"></script>
+  <script>
+    (function() {
+      var uiLang = 'zh';
+      var studyLang = 'ja';
+
+      // 7语种 i18n
+      var T = {
+        zh: {
+          pageTitle: '实时翻译', sub: 'AI 驱动的多语言翻译工具',
+          trialLabel: '免费体验', trialTime: '5 分钟', upgradeBtn: '升级',
+          photoTitle: '拍照翻译', photoDesc: '拍摄文字即时翻译，支持 7 种语言识别', photoBadge: '永久免费',
+          scanTitle: '实时扫描翻译', scanDesc: '摄像头对准文字，实时叠加翻译结果', scanBadge: '付费功能',
+          converseTitle: '实时对话翻译', converseDesc: '语音对话双向翻译，支持边说边译', converseBadge: '限时体验',
+          note: '<strong>📋 语言设置说明：</strong><br>翻译页不提供语言切换控件。请在「<a href="/xuewaiyu/profile.html" style="color:var(--primary)">个人中心</a>」修改界面语言和学习语言，全站自动同步。',
+          comingSoon: '功能开发中，敬请期待<br>预计按 Stage 11 节奏迭代上线'
+        },
+        en: {
+          pageTitle: 'Translate', sub: 'AI-powered multilingual translation tool',
+          trialLabel: 'Free Trial', trialTime: '5 minutes', upgradeBtn: 'Upgrade',
+          photoTitle: 'Photo Translate', photoDesc: 'Capture text for instant translation in 7 languages', photoBadge: 'Free Forever',
+          scanTitle: 'Live Scan Translate', scanDesc: 'Point camera at text for real-time translation overlay', scanBadge: 'Premium',
+          converseTitle: 'Live Conversation', converseDesc: 'Two-way voice translation with real-time speech', converseBadge: 'Limited Trial',
+          note: '<strong>📋 Language Note:</strong><br>This page has no language switch. Change UI/study language in <a href="/xuewaiyu/profile.html" style="color:var(--primary)">Profile</a>, auto-sync site-wide.',
+          comingSoon: 'Coming Soon<br>Expected in Stage 11 iteration'
+        },
+        ja: {
+          pageTitle: '翻訳', sub: 'AI搭載多言語翻訳ツール',
+          trialLabel: '無料体験', trialTime: '5分間', upgradeBtn: 'アップグレード',
+          photoTitle: '写真翻訳', photoDesc: '7言語対応の撮影即時翻訳', photoBadge: '永久無料',
+          scanTitle: 'リアルタイムスキャン', scanDesc: 'カメラで文字をスキャンし翻訳結果を重ねて表示', scanBadge: '有料機能',
+          converseTitle: 'リアルタイム会話', converseDesc: '音声双方向翻訳、話しながら翻訳', converseBadge: '期間限定体験',
+          note: '<strong>📋 言語設定について：</strong><br>このページには言語切り替え機能はありません。「<a href="/xuewaiyu/profile.html" style="color:var(--primary)">マイページ</a>」でUI言語と学習言語を変更してください。全サイト自動同期。',
+          comingSoon: '開発中、近日公開予定<br>Stage 11でリリース予定'
+        },
+        ko: {
+          pageTitle: '번역', sub: 'AI 기반 다국어 번역 도구',
+          trialLabel: '무료 체험', trialTime: '5분', upgradeBtn: '업그레이드',
+          photoTitle: '사진 번역', photoDesc: '7개 언어 즉시 번역 촬영', photoBadge: '영구 무료',
+          scanTitle: '실시간 스캔 번역', scanDesc: '카메라로 텍스트를 스캔하여 실시간 번역 오버레이', scanBadge: '유료 기능',
+          converseTitle: '실시간 대화 번역', converseDesc: '음성 양방향 번역, 말하면서 번역', converseBadge: '한정 체험',
+          note: '<strong>📋 언어 설정 안내：</strong><br>이 페이지는 언어 전환 기능이 없습니다. 「<a href="/xuewaiyu/profile.html" style="color:var(--primary)">내정보</a>」에서 UI 언어와 학습 언어를 변경하세요. 전 사이트 자동 동기화.',
+          comingSoon: '개발 중, 곧 출시 예정<br>Stage 11에서 출시 예정'
+        },
+        fr: {
+          pageTitle: 'Traduction', sub: 'Outil de traduction multilingue IA',
+          trialLabel: 'Essai gratuit', trialTime: '5 minutes', upgradeBtn: 'Mise à niveau',
+          photoTitle: 'Traduction photo', photoDesc: 'Capturez du texte pour traduction instantanée en 7 langues', photoBadge: 'Gratuit à vie',
+          scanTitle: 'Scan en direct', scanDesc: 'Pointez la caméra pour une superposition de traduction en temps réel', scanBadge: 'Premium',
+          converseTitle: 'Conversation en direct', converseDesc: 'Traduction vocale bidirectionnelle en temps réel', converseBadge: 'Essai limité',
+          note: '<strong>📋 Note linguistique :</strong><br>Cette page n\'a pas de sélecteur de langue. Modifiez la langue dans <a href="/xuewaiyu/profile.html" style="color:var(--primary)">Profil</a>, synchronisation automatique.',
+          comingSoon: 'Bientôt disponible<br>Prévu dans l\'itération Stage 11'
+        },
+        es: {
+          pageTitle: 'Traducción', sub: 'Herramienta de traducción multilingüe con IA',
+          trialLabel: 'Prueba gratuita', trialTime: '5 minutos', upgradeBtn: 'Mejorar',
+          photoTitle: 'Traducción por foto', photoDesc: 'Capture texto para traducción instantánea en 7 idiomas', photoBadge: 'Gratis para siempre',
+          scanTitle: 'Escaneo en vivo', scanDesc: 'Apunte la cámara para superposición de traducción en tiempo real', scanBadge: 'Premium',
+          converseTitle: 'Conversación en vivo', converseDesc: 'Traducción de voz bidireccional en tiempo real', converseBadge: 'Prueba limitada',
+          note: '<strong>📋 Nota de idioma:</strong><br>Esta página no tiene selector de idioma. Cambie el idioma en <a href="/xuewaiyu/profile.html" style="color:var(--primary)">Perfil</a>, sincronización automática.',
+          comingSoon: 'Próximamente<br>Previsto en la iteración Stage 11'
+        },
+        de: {
+          pageTitle: 'Übersetzung', sub: 'KI-gestütztes mehrsprachiges Übersetzungstool',
+          trialLabel: 'Kostenlos testen', trialTime: '5 Minuten', upgradeBtn: 'Upgrade',
+          photoTitle: 'Fotoübersetzung', photoDesc: 'Text erfassen für Sofortübersetzung in 7 Sprachen', photoBadge: 'Dauerhaft kostenlos',
+          scanTitle: 'Live-Scan', scanDesc: 'Kamera auf Text richten für Echtzeit-Übersetzungseinblendung', scanBadge: 'Premium',
+          converseTitle: 'Live-Gespräch', converseDesc: 'Zweiseitige Sprachübersetzung in Echtzeit', scanBadge: 'Limitierter Test',
+          note: '<strong>📋 Sprachnotiz:</strong><br>Diese Seite hat keine Sprachumschaltung. Ändern Sie die Sprache im <a href="/xuewaiyu/profile.html" style="color:var(--primary)">Profil</a>, automatische Synchronisation.',
+          comingSoon: 'Demnächst verfügbar<br>Geplant für Stage 11 Iteration'
+        }
+      };
+
+      function t(key) {
+        return (T[uiLang] && T[uiLang][key]) || T['zh'][key] || key;
+      }
+
+      function applyI18n() {
+        document.querySelectorAll('[class^="t-"]').forEach(function(el) {
+          var classes = el.className.split(' ');
+          classes.forEach(function(cls) {
+            if (cls.indexOf('t-') === 0) {
+              var key = cls.replace('t-', '').replace(/-/g, '');
+              // Map CSS class to i18n key
+              var keyMap = {
+                'pagetitle': 'pageTitle', 'sub': 'sub',
+                'triallabel': 'trialLabel', 'trialtime': 'trialTime', 'upgradebtn': 'upgradeBtn',
+                'phototitle': 'photoTitle', 'photodesc': 'photoDesc', 'photobadge': 'photoBadge',
+                'scantitle': 'scanTitle', 'scandesc': 'scanDesc', 'scanbadge': 'scanBadge',
+                'conversetitle': 'converseTitle', 'conversedesc': 'converseDesc', 'conversebadge': 'converseBadge',
+                'note': 'note', 'comingsoon': 'comingSoon'
+              };
+              var k = keyMap[cls.substring(2)];
+              if (k && T[uiLang] && T[uiLang][k]) {
+                if (k === 'note') { el.innerHTML = T[uiLang][k]; }
+                else { el.textContent = T[uiLang][k]; }
+              }
+            }
+          });
+        });
+        document.title = '🌐 ' + t('pageTitle') + ' · AILOS';
+      }
+
+      function init() {
+        // Phase4: UI语言优先，学习语言用于数据过滤
+        if (window.AILOS) {
+          if (typeof window.AILOS.getUILang === 'function') uiLang = window.AILOS.getUILang();
+          if (typeof window.AILOS.getStudyLang === 'function') studyLang = window.AILOS.getStudyLang();
+        }
+        if (!T[uiLang]) uiLang = 'en';
+        applyI18n();
+        fetchTrialStatus();
+
+        window.addEventListener('languageChanged', function(e) {
+          if (window.AILOS) {
+            if (typeof window.AILOS.getUILang === 'function') uiLang = window.AILOS.getUILang();
+            if (typeof window.AILOS.getStudyLang === 'function') studyLang = window.AILOS.getStudyLang();
+          }
+          if (!T[uiLang]) uiLang = 'en';
+          applyI18n();
+          fetchTrialStatus();
+        });
+      }
+
+      function fetchTrialStatus() {
+        var token = (window.AILOS && window.AILOS.getToken) ? window.AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+        if (!token) return;
+        fetch('/api/billing/status', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) {
+          if (d && d.success && d.data) {
+            var mins = d.data.trialMinutesRemaining || d.data.remainingMinutes || 0;
+            var el = document.getElementById('trialTime');
+            if (el) el.textContent = mins + ' ' + (mins <= 1 ? 'minute' : 'minutes');
+          }
+        }).catch(function() {});
+      }
+
+      document.addEventListener('DOMContentLoaded', init);
+    })();
+
+    function showComingSoon(type) {
+      var hint = document.getElementById('comingSoonHint');
+      hint.style.display = 'block';
+      setTimeout(function() { hint.scrollIntoView({ behavior: 'smooth' }); }, 100);
+    }
+  </script>
+</body>
+</html>
