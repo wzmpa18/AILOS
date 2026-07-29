@@ -30,6 +30,9 @@ model User {
   // Gamification
   xp  Int  @default(0) // Experience points
 
+  // Privacy
+  privacySettings Json? // { showOnline, allowFriendRequest, showXp, showLearningLanguages }
+
   // P0-1 Asset Ownership fields
   ownerType      String  @default("PLATFORM") // PLATFORM, USER
   ownerId        String? // Founder UID for PLATFORM traffic, inviter UID for USER
@@ -92,6 +95,11 @@ model User {
   classEnrollments       OrgClassStudent[]       @relation("OrgClassStudentUser")
   timelinePosts          SocialTimeline[]        @relation("SocialTimelineActor")
   timelineLikes          SocialTimelineLike[]    @relation("SocialTimelineLikeUser")
+  friendSettings         FriendSetting[]         @relation("FriendSettingOwner")
+  friendOf               FriendSetting[]         @relation("FriendSettingTarget")
+  ownedGroups            Group[]                 @relation("GroupOwner")
+  groupMemberships       GroupMember[]
+  sentMessages           Message[]
 
   @@index([phone])
   @@index([email])
@@ -1185,4 +1193,110 @@ model SocialTimelineLike {
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
+}
+
+// ==================== Stage 9 M5: Community Core Models (社群核心模型) — 纯增量 ====================
+
+// friend_setting — 好友关系与设置
+model FriendSetting {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("FriendSettingOwner", fields: [userId], references: [id], onDelete: Cascade)
+  friendId    String
+  friend      User     @relation("FriendSettingTarget", fields: [friendId], references: [id], onDelete: Cascade)
+  remarkName  String?  // 备注名
+  tags        String[] // 标签列表
+  isMuted     Boolean  @default(false)
+  isBlocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+  @@index([isBlocked])
+
+  @@map("friend_settings")
+}
+
+// group — 群组
+model Group {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  avatarUrl    String?
+  ownerId      String
+  owner        User     @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  maxMembers   Int      @default(50)
+  createdVia   String   @default("manual") // manual, system
+  announcement String?
+  muteAll      Boolean  @default(false)
+  status       String   @default("active") // active, archived
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members GroupMember[]
+
+  @@index([ownerId])
+  @@index([createdAt])
+
+  @@map("groups")
+}
+
+// group_member — 群成员
+model GroupMember {
+  id            String   @id @default(uuid())
+  groupId       String
+  group         Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String   @default("member") // owner, admin, member
+  groupNickname String?
+  mute          Boolean  @default(false)
+  joinTime      DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+  @@index([role])
+
+  @@map("group_members")
+}
+
+// conversation — 会话（单聊/群聊）
+model Conversation {
+  id             String    @id @default(uuid())
+  type           String    @default("single") // single, group
+  targetId       String?
+  participants   String[]  // userIds
+  lastMsgId      String?
+  lastMsgPreview String?
+  lastMsgTime    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([type])
+  @@index([lastMsgTime])
+
+  @@map("conversations")
+}
+
+// message — 消息
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  msgType        String   @default("text") // text, image, file
+  content        String
+  isRead         Boolean  @default(false)
+  isRevoked      Boolean  @default(false)
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+
+  @@map("messages")
 }

@@ -43,6 +43,20 @@ function getPrivacy(user) {
 
 class SocialService {
 
+  async getMyProfile(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, uniqueId: true, nickname: true, avatar: true, createdAt: true },
+    });
+    if (!user) throw fail('PROFILE_5001', '用户不存在', 404);
+    const friendCount = await prisma.friendSetting.count({ where: { userId, isBlocked: false } });
+    const groupCount = await prisma.groupMember.count({ where: { userId } });
+    return {
+      id: user.id, uniqueId: user.uniqueId, nickname: user.nickname,
+      avatar: user.avatar, friendCount, groupCount, createdAt: user.createdAt,
+    };
+  }
+
   async searchByUid(searcherId, targetUid) {
     if (!targetUid || targetUid.trim().length === 0) {
       throw fail('FRIEND_5001', '请输入要搜索的UID');
@@ -195,6 +209,21 @@ class SocialService {
     return { id: group.id, name: group.name, description: group.description, ownerId: group.ownerId, maxMembers: group.maxMembers, memberCount: 1, createdAt: group.createdAt };
   }
 
+  async getMyGroups(userId) {
+    const memberships = await prisma.groupMember.findMany({
+      where: { userId },
+      include: { group: true },
+      orderBy: { joinTime: 'desc' },
+    });
+    return memberships.map((m) => ({
+      id: m.group.id, name: m.group.name, description: m.group.description,
+      avatarUrl: m.group.avatarUrl, ownerId: m.group.ownerId,
+      maxMembers: m.group.maxMembers, status: m.group.status,
+      myRole: m.role, myMute: m.mute, joinTime: m.joinTime,
+      createdAt: m.group.createdAt,
+    }));
+  }
+
   async getGroupDetail(groupId, userId) {
     const group = await prisma.group.findUnique({
       where: { id: groupId },
@@ -332,10 +361,10 @@ class SocialService {
     const conversations = await prisma.$queryRawUnsafe(`
       SELECT id, type, "targetId", "lastMsgPreview", "lastMsgTime", "updatedAt"
       FROM conversations
-      WHERE participants @> '["${userId}"]'::jsonb
+      WHERE $1 = ANY(participants)
       ORDER BY "lastMsgTime" DESC NULLS LAST
-      LIMIT $1
-    `, limit);
+      LIMIT $2
+    `, userId, limit);
     return (conversations || []).map((c) => ({
       id: c.id, type: c.type, targetId: c.targetId,
       lastMsgPreview: c.lastMsgPreview, lastMsgTime: c.lastMsgTime, updatedAt: c.updatedAt,

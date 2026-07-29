@@ -122,6 +122,17 @@ router.post('/groups', auth, async (req, res, next) => {
   }
 });
 
+// GET /api/social/groups - List my groups
+router.get('/groups', auth, async (req, res, next) => {
+  try {
+    const svc = getSocialService();
+    const result = await svc.getMyGroups(getUid(req));
+    res.json({ success: true, data: result });
+  } catch (e) {
+    next(e);
+  }
+});
+
 // GET /api/social/groups/:id - Get group detail
 router.get('/groups/:id', auth, async (req, res, next) => {
   try {
@@ -231,6 +242,17 @@ router.post('/messages/:messageId/revoke', auth, async (req, res, next) => {
 // ============================================================
 // User Profile & Share (P0-5: Share Profile)
 // ============================================================
+
+// GET /api/social/profile - Get current user's own profile
+router.get('/profile', auth, async (req, res, next) => {
+  try {
+    const svc = getSocialService();
+    const result = await svc.getMyProfile(getUid(req));
+    res.json({ success: true, data: result });
+  } catch (e) {
+    next(e);
+  }
+});
 
 // GET /api/social/profile/:uid - View a user's shared profile
 router.get('/profile/:uid', auth, async (req, res, next) => {
