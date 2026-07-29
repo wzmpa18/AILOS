@@ -1,2432 +1,1188 @@
 generator client {
-
   provider = "prisma-client-js"
-
 }
-
-
 
 datasource db {
-
   provider = "postgresql"
-
   url      = env("DATABASE_URL")
-
 }
-
-
 
 // User model with multiple authentication methods
-
 model User {
-
   id            String  @id @default(uuid())
-
   uniqueId      String  @unique // Unified user ID across all auth methods
-
   phone         String? @unique
-
   email         String? @unique
-
   passwordHash  String?
-
   wechatOpenId  String? @unique
-
   wechatUnionId String? @unique
 
-
-
   // Profile information (encrypted)
-
   nickname  String?
-
   avatar    String?
-
   birthDate DateTime?
-
   gender    String?
 
-  // Privacy (Stage 9 Community)
-  privacySettings Json?
-
-
-
   // Membership
-
   membershipLevel  String    @default("free") // free, basic, premium
-
   membershipExpiry DateTime?
 
-
-
   // Gamification
-
   xp  Int  @default(0) // Experience points
 
-
-
   // P0-1 Asset Ownership fields
-
   ownerType      String  @default("PLATFORM") // PLATFORM, USER
-
   ownerId        String? // Founder UID for PLATFORM traffic, inviter UID for USER
-
   directReferrer String? // Direct referrer UID (first inviter)
-
   originChannel  String  @default("organic") // organic, wechat, referral, institution
-
   inviteCode     String? @unique // 6-digit YD permanent invite code
-
   referrer       String? // Commission chain referrer UID
 
-
-
   // Status
-
   isActive   Boolean @default(true)
-
   isVerified Boolean @default(false)
-
   isGuest    Boolean @default(false)
-
   disabled   Boolean @default(false) // P1-6 账号禁用：禁用后无法登录与使用核心功能
 
-
-
   // Security
-
   lastLoginAt         DateTime?
-
   lastLoginIp         String?
-
   failedLoginAttempts Int       @default(0)
-
   lockedUntil         DateTime?
 
-
-
   // Data sync
-
   lastSyncAt  DateTime?
-
   syncVersion Int       @default(0)
 
-
-
   // Timestamps
-
   createdAt DateTime  @default(now())
-
   updatedAt DateTime  @updatedAt
-
   deletedAt DateTime?
 
-
-
   // Relations
-
   sessions                Session[]
-
   learningProgress        LearningProgress[]
-
   userDevices             UserDevice[]
-
   membershipOrders        MembershipOrder[]
-
   dataExportRequests      DataExportRequest[]
-
   accountDeletionRequests AccountDeletionRequest[]
-
   userIdentity            UserIdentity?
-
   languagePreference      UserLanguagePreference?
-
   learningLanguages       UserLearningLanguage[]
-
   learningGoals           LearningGoal[]
-
   learningPlans           LearningPlan[]
-
   learningEvents          LearningEvent[]
-
   abilityModels           LearningAbilityModel[]
-
   learningProfile         LearningProfile?
-
   learningMemories        LearningMemory[]
-
   ownedWorkspaces         Workspace[]              @relation("WorkspaceOwner")
-
   organizationMemberships OrganizationMember[]
-
   reviewQueues            ReviewQueue[]
-
   aiTutorRecords          AiTutorRecord[]
-
   rewardLedgers           RewardLedger[]
-
   checkins                Checkin[]
-
   dailyLearningPlans      DailyLearningPlan[]
-
   speechEvaluations       SpeechEvaluationRecord[]
-
   companionProfile        CompanionProfile?
-
   ocrUsageLogs            OcrUsageLog[]
-
   translationBalance     TranslationBillingBalance?
-
   packageOrders          TranslationPackageOrder[]
-
   billingLogs            TranslationBillingLog[]
-
   taughtClasses          OrgClass[]              @relation("OrgClassTeacher")
-
   classEnrollments       OrgClassStudent[]       @relation("OrgClassStudentUser")
-
-  // Stage 9 Community Relations
-  friendSettings         FriendSetting[]          @relation("FriendAsUser")
-  friendOf               FriendSetting[]          @relation("FriendAsFriend")
-  ownedGroups            Group[]
-  groupMemberships       GroupMember[]
-  sentMessages           Message[]
+  timelinePosts          SocialTimeline[]        @relation("SocialTimelineActor")
+  timelineLikes          SocialTimelineLike[]    @relation("SocialTimelineLikeUser")
 
   @@index([phone])
-
   @@index([email])
-
   @@index([wechatOpenId])
-
   @@index([uniqueId])
-
   @@index([membershipLevel])
-
   @@index([createdAt])
-
 }
 
-
-
 // Session management
-
 model Session {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   token        String  @unique
-
   refreshToken String? @unique
 
-
-
   deviceInfo String?
-
   ipAddress  String?
-
   userAgent  String?
 
-
-
   expiresAt  DateTime
-
   lastUsedAt DateTime @default(now())
-
-
 
   createdAt DateTime @default(now())
 
-
-
   @@index([userId])
-
   @@index([token])
-
   @@index([expiresAt])
-
 }
-
-
 
 // Guest session for temporary users
-
 model GuestSession {
-
   id       String @id @default(uuid())
-
   deviceId String @unique
 
-
-
   // Local learning progress (stored as JSON)
-
   localProgress Json?
 
-
-
   createdAt    DateTime @default(now())
-
   lastActiveAt DateTime @default(now())
 
-
-
   // When guest converts to user
-
   convertedUserId String?
-
   convertedAt     DateTime?
 
-
-
   @@index([deviceId])
-
   @@index([convertedUserId])
-
 }
 
-
-
 // Device management for multi-device sync
-
 model UserDevice {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   deviceName  String
-
   deviceType  String // mobile, tablet, desktop
-
   deviceToken String?
 
-
-
   lastSyncAt  DateTime?
-
   syncVersion Int       @default(0)
-
-
 
   isActive Boolean @default(true)
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   @@unique([userId, deviceToken])
-
   @@index([userId])
-
   @@index([deviceToken])
-
 }
-
-
 
 // Learning progress tracking
-
 model LearningProgress {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   language String // Target language
-
   level    String // Current level (A1, A2, B1, B2, C1, C2)
 
-
-
   // Progress metrics
-
   totalWords   Int @default(0)
-
   totalLessons Int @default(0)
-
   totalTime    Int @default(0) // in minutes
 
-
-
   // Current position
-
   currentLessonId  String?
-
   currentWordIndex Int     @default(0)
 
-
-
   // Streak tracking
-
   currentStreak Int       @default(0)
-
   longestStreak Int       @default(0)
-
   lastStudyDate DateTime?
 
-
-
   // Sync control
-
   updatedAt   DateTime @updatedAt
-
   syncVersion Int      @default(0)
-
   isDirty     Boolean  @default(false)
 
-
-
   @@unique([userId, language])
-
   @@index([userId])
-
   @@index([language])
-
 }
-
-
 
 // Membership orders
-
 model MembershipOrder {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   orderNo         String @unique
-
   membershipLevel String
-
   duration        Int // in days
 
-
-
   amount   Decimal @db.Decimal(10, 2)
-
   currency String  @default("CNY")
 
-
-
   paymentMethod String
-
   paymentId     String?
 
-
-
   status String // pending, paid, failed, refunded
-
   paidAt DateTime?
 
-
-
   abnormal         Boolean  @default(false)
-
   abnormalNote     String?
-
   abnormalMarkedAt DateTime?
-
   abnormalMarkedBy String?
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([userId])
-
   @@index([orderNo])
-
   @@index([status])
-
 }
-
-
 
 // Data export requests (GDPR compliance)
-
 model DataExportRequest {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   status  String // pending, processing, completed, failed
-
   fileUrl String?
 
-
-
   requestedAt DateTime  @default(now())
-
   completedAt DateTime?
 
-
-
   @@index([userId])
-
   @@index([status])
-
 }
-
-
 
 // Account deletion requests (GDPR compliance)
-
 model AccountDeletionRequest {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   status String // pending, processing, completed, cancelled
-
   reason String?
 
-
-
   requestedAt DateTime  @default(now())
-
   completedAt DateTime?
 
-
-
   @@index([userId])
-
   @@index([status])
-
 }
 
-
-
 // SMS verification codes
-
 model SmsVerification {
-
   id    String @id @default(uuid())
-
   phone String
-
   code  String
-
   type  String // login, register, reset_password
 
-
-
   expiresAt DateTime
-
   verified  Boolean  @default(false)
-
-
 
   createdAt DateTime @default(now())
 
-
-
   @@index([phone])
-
   @@index([expiresAt])
-
 }
-
-
 
 // Rate limiting tracking
-
 model RateLimitLog {
-
   id         String @id @default(uuid())
-
   identifier String // IP, userId, phone, etc.
-
   action     String // sms_login, api_call, etc.
 
-
-
   count       Int      @default(1)
-
   windowStart DateTime @default(now())
 
-
-
   @@unique([identifier, action, windowStart])
-
   @@index([identifier])
-
   @@index([action])
-
   @@index([windowStart])
-
 }
 
-
-
 // System configuration
-
 model SystemConfig {
-
   id          String  @id @default(uuid())
-
   key         String  @unique
-
   value       String
-
   description String?
-
-
 
   updatedAt DateTime @updatedAt
 
-
-
   @@index([key])
-
 }
-
-
 
 // ==================== Phase 1 P0 v1.2: User Identity System ====================
 
-
-
 // user_identity — binds to User, stores default workspace config
-
 // 第2张新增业务表 (17张总表)
-
 model UserIdentity {
-
   id     String @id @default(uuid())
-
   userId String @unique
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   identityType       String  @default("personal") // personal, teacher, school, enterprise
-
   defaultWorkspaceId String?
 
-
-
   // Profile metadata (extensible)
-
   metadata Json?
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   @@index([userId])
-
   @@index([identityType])
-
 }
-
-
 
 // workspace — data isolation container (personal / organization)
-
 // 第3张新增业务表 (17张总表)
-
 model Workspace {
-
   id      String @id @default(uuid())
-
   name    String
-
   type    String @default("personal") // personal, organization
-
   ownerId String
-
   owner   User   @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-
-
   organizationId String?
-
   isDefault      Boolean @default(false)
 
-
-
   // Config (extensible)
-
   config Json?
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([ownerId])
-
   @@index([organizationId])
-
   @@index([type])
-
 }
 
-
-
 // organization — MVP light-weight institution model
-
 // 第4张新增业务表 (17张总表)
-
 model Organization {
-
   id          String  @id @default(uuid())
-
   name        String
-
   description String?
-
   logoUrl     String?
-
-
 
   status String @default("active") // active, suspended, archived
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   members OrganizationMember[]
-
   classes OrgClass[]
 
-
-
   @@index([status])
-
 }
-
-
 
 // organization_member — user-organization association
-
 // 第5张新增业务表 (17张总表)
-
 model OrganizationMember {
-
   id             String       @id @default(uuid())
-
   organizationId String
-
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
   userId         String
-
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   role   String @default("student") // admin, teacher, student
-
   status String @default("active") // active, suspended, left
 
-
-
   joinedAt  DateTime @default(now())
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@unique([organizationId, userId])
-
   @@index([organizationId])
-
   @@index([userId])
-
   @@index([role])
-
 }
-
-
 
 // ==================== Phase 1 P0 v1.2: GLOI Global Language System ====================
 
-
-
 // user_language_preference — user language preferences with fallback
-
 // 第6张新增业务表 (17张总表)
-
 // fallback_language 不再硬编码英文，由 system_config.gloi.fallback_language 全局统一配置
-
 model UserLanguagePreference {
-
   id     String @id @default(uuid())
-
   userId String @unique
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   interfaceLanguage          String @default("zh-CN") // UI display language
-
   nativeLanguage             String @default("zh-CN") // User's native language
-
   defaultExplanationLanguage String @default("zh-CN") // Default AI explanation language
-
   fallbackLanguage           String @default("zh-CN") // Fallback when translation unavailable (system_config.gloi.fallback_language)
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([userId])
-
   @@index([interfaceLanguage])
-
 }
-
-
 
 // user_learning_language — support parallel multi-language learning
-
 // 第7张新增业务表 (17张总表)
-
 model UserLearningLanguage {
-
   id     String @id @default(uuid())
-
   userId String
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   languageCode String // ja, en, ko, de, es, fr
-
   level        String @default("beginner") // N2, B2, A1, beginner
-
   priority     Int    @default(0) // Sort weight, lower = higher priority
-
   status       String @default("active") // active, inactive
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@unique([userId, languageCode])
-
   @@index([userId])
-
   @@index([languageCode])
-
   @@index([status])
-
 }
-
-
 
 // ==================== Phase 1 P0 v1.2: Goal-Driven Learning Model ====================
 
-
-
 // learning_goal — learning goal, the driver of the entire learning chain
-
 // 第8张新增业务表 (17张总表)
-
 // Business order: Learning Goal → Learning Plan → Learning Event → Ability Model → Profile → Memory
-
 model LearningGoal {
-
   id          String  @id @default(uuid())
-
   userId      String
-
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   workspaceId String?
 
-
-
   goalType       String  @default("language_proficiency") // language_proficiency, exam_prep, travel, business
-
   targetLanguage String // Target language code (ja, en, ko, etc.)
-
   targetLevel    String  @default("beginner") // Target level (N2, B2, A1, beginner)
-
   description    String?
 
-
-
   status      String    @default("active") // active, completed, paused, archived
-
   deadlineAt  DateTime?
-
   completedAt DateTime?
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   plans LearningPlan[]
 
-
-
   @@index([userId])
-
   @@index([targetLanguage])
-
   @@index([status])
-
 }
 
-
-
 // learning_plan — AI-generated learning plan based on goal
-
 // 第9张新增业务表 (17张总表)
-
 model LearningPlan {
-
   id     String       @id @default(uuid())
-
   goalId String
-
   goal   LearningGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
-
   userId String
-
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   planType String @default("daily") // daily, weekly, monthly
-
   schedule Json // Schedule config (JSON)
-
   content  Json? // Plan content details
-
-
 
   status String @default("active") // active, completed, paused
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   @@index([goalId])
-
   @@index([userId])
-
   @@index([status])
-
 }
-
-
 
 // learning_event — user learning behavior events (append-only log)
-
 // 第10张新增业务表 (17张总表)
-
 // Events only serve as logs, do NOT reverse-write goals
-
 model LearningEvent {
-
   id          String  @id @default(uuid())
-
   userId      String
-
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   workspaceId String?
-
   planId      String? // Reference to learning plan (chain link: Plan → Event)
 
-
-
   eventType    String // lesson_complete, quiz_complete, vocabulary_learned, grammar_practice, etc.
-
   languageCode String // Language code for this event
-
   data         Json // Event data payload
-
   duration     Int? // Duration in seconds
 
-
-
   createdAt DateTime @default(now())
 
-
-
   @@index([userId])
-
   @@index([planId])
-
   @@index([eventType])
-
   @@index([languageCode])
-
   @@index([createdAt])
-
 }
-
-
 
 // learning_ability_model — per-language ability scores, fully isolated by language
-
 // 第11张新增业务表 (17张总表)
-
 // Different language data is COMPLETELY isolated, scores are NOT merged
-
 model LearningAbilityModel {
-
   id           String  @id @default(uuid())
-
   userId       String
-
   user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   languageCode String // Language code — MANDATORY binding
-
   lastEventId  String? // Reference to last learning event (chain link: Event → AbilityModel)
 
-
-
   dimension String // vocabulary, grammar, listening, speaking, reading, writing
-
   score     Float  @default(0) // 0-100 score
-
   level     String @default("beginner") // Level label
-
   data      Json? // Detailed metrics
 
-
-
   updatedAt DateTime @updatedAt
-
   createdAt DateTime @default(now())
-
-
 
   @@unique([userId, languageCode, dimension])
-
   @@index([userId])
-
   @@index([languageCode])
-
   @@index([dimension])
-
 }
-
-
 
 // learning_profile — comprehensive user learning profile
-
 // 第12张新增业务表 (17张总表)
-
 model LearningProfile {
-
   id          String  @id @default(uuid())
-
   userId      String  @unique
-
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   lastEventId String? // Reference to last learning event (chain link: Event → AbilityModel → Profile)
 
-
-
   overallLevel  String  @default("beginner") // Overall assessment
-
   strengths     Json    @default("[]") // Strengths (JSON array)
-
   weaknesses    Json    @default("[]") // Weaknesses (JSON array)
-
   learningStyle String? // visual, auditory, kinesthetic, reading
-
   data          Json? // Additional profile data
 
-
-
   updatedAt DateTime @updatedAt
-
   createdAt DateTime @default(now())
 
-
-
   @@index([userId])
-
 }
-
-
 
 // learning_memory — long-term learning memory with privacy tier
-
 // 第13张新增业务表 (17张总表)
-
 // Privacy tiers: AI_PRIVATE_MEMORY (AI-only, internal reasoning) vs USER_VISIBLE_MEMORY (user-facing)
-
 model LearningMemory {
-
   id            String  @id @default(uuid())
-
   userId        String
-
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   sourceEventId String? // Reference to source learning event (chain link: Event → Profile → Memory)
 
-
-
   memoryType String // Content type: vocabulary, grammar_pattern, mistake, correction, insight
-
   content    Json // Memory content
-
   importance Float  @default(0.5) // 0-1 importance score
-
   visibility String @default("USER_VISIBLE_MEMORY") // Permission tier: AI_PRIVATE_MEMORY (AI-only), USER_VISIBLE_MEMORY (user-facing)
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([userId])
-
   @@index([memoryType])
-
   @@index([visibility])
-
   @@index([createdAt])
-
 }
-
-
 
 // ==================== Phase 1 P0 v1.2: AI Gateway + Content Asset + Cost ====================
 
-
-
 // ai_prompt_template — versioned scene-specific prompt templates
-
 // 第14张新增业务表 (17张总表)
-
 model AiPromptTemplate {
-
   id              String @id @default(uuid())
-
   scene           String // lesson_generate, explanation, conversation, review
-
   version         String @default("1.0.0")
-
   languageCode    String @default("zh-CN") // Language code for this template
-
   templateContent String // Prompt template text
-
   variables       Json   @default("[]") // Template variables (JSON)
-
-
 
   status String @default("active") // active, deprecated, archived
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   @@unique([scene, version, languageCode])
-
   @@index([scene])
-
   @@index([status])
-
 }
-
-
 
 // ai_usage_daily_statistic — daily AI cost aggregation
-
 // 第15张新增业务表 (17张总表)
-
 model AiUsageDailyStatistic {
-
   id          String   @id @default(uuid())
-
   date        DateTime // Date (day-level granularity)
-
   userId      String?
-
   workspaceId String?
-
-
 
   requestType   String // lesson_generate, explanation, conversation, review
-
   totalRequests Int    @default(0)
-
   inputTokens   Int    @default(0)
-
   outputTokens  Int    @default(0)
-
   estimatedCost Float  @default(0) // Estimated cost in USD
-
   assetHitRate  Float  @default(0) // Asset reuse rate (0-1)
 
-
-
   createdAt DateTime @default(now())
-
-
 
   @@unique([date, userId, requestType])
-
   @@index([date])
-
   @@index([userId])
-
   @@index([requestType])
-
 }
-
-
 
 // learning_content — AI-generated content asset library
-
 // 第16张新增业务表 (17张总表)
-
 // Core business moat: AI-generated content standardized into library, reuse to reduce cost
-
 model LearningContent {
-
   id String @id @default(uuid())
 
-
-
   contentType String // lesson, quiz, vocabulary, grammar, dialogue, pronunciation
-
   sourceType  String @default("AI_GENERATED") // AI_GENERATED, MANUAL
 
-
-
   sourceLanguage      String // Source language of content
-
   targetLanguage      String // Target learning language
-
   explanationLanguage String // Explanation language
 
-
-
   difficultyLevel String @default("beginner") // beginner, intermediate, advanced
-
   contentVersion  String @default("1.0.0") // Version for multi-version coexistence
-
   status          String @default("draft") // draft, generating, reviewing, approved, published, archived, failed
 
-
-
   qualityScore Float @default(0) // Quality score (0-100)
-
   reuseCount   Int   @default(0) // Reuse count
-
   contentData  Json // Actual content data
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([contentType])
-
   @@index([sourceLanguage])
-
   @@index([targetLanguage])
-
   @@index([status])
-
   @@index([difficultyLevel])
-
   @@index([sourceType])
-
 }
 
-
-
 // ai_request_log — full-chain traceable AI request log
-
 // 第17张新增业务表 (17张总表)
-
 model AiRequestLog {
-
   id          String  @id @default(uuid())
-
   userId      String?
-
   workspaceId String?
 
-
-
   scene            String // lesson_generate, explanation, conversation, review
-
   requestType      String // Same as scene
-
   model            String  @default("hunyuan") // AI model used
-
   promptTemplateId String?
 
-
-
   inputTokens  Int @default(0)
-
   outputTokens Int @default(0)
-
   latencyMs    Int @default(0) // Response latency in ms
 
-
-
   languageContext Json? // Language context at request time
-
   assetHit        Boolean @default(false) // Whether content was served from asset library
-
   success         Boolean @default(true) // Whether request succeeded
-
   errorMessage    String? // Error message if failed
-
-
 
   createdAt DateTime @default(now())
 
-
-
   @@index([userId])
-
   @@index([scene])
-
   @@index([assetHit])
-
   @@index([success])
-
   @@index([createdAt])
-
 }
-
-
 
 // ==================== Phase 1 P1 Batch 1: New Tables (P0 Schema Frozen) ====================
 
-
-
 // ai_language_violation_log — independent language violation audit table
-
 // DO NOT modify ai_request_log. This is a standalone audit table.
-
 // Purpose: Prompt optimization, model evaluation, commercial language statistics
-
 model AiLanguageViolationLog {
-
   id                  String   @id @default(uuid())
-
   requestId           String? // Optional reference to ai_request_log
-
   userId              String?
-
   workspaceId         String?
-
   expectedExplainLang String // Expected explanation language (e.g. zh-CN)
-
   detectOutputLang    String? // Auto-detected output language
-
   violationType       String // mixed_language, wrong_explanation_lang, unexpected_script
-
   violationDetail     Json? // Detailed violation info (scripts detected, sample text, etc.)
-
   retryTimes          Int      @default(0) // Number of retries attempted before logging
-
   createdAt           DateTime @default(now())
 
-
-
   @@index([userId])
-
   @@index([requestId])
-
   @@index([violationType])
-
   @@index([createdAt])
-
 }
 
-
-
 model Checkin {
-
   id          String   @id @default(uuid())
-
   userId      String
-
   checkinDate DateTime @default(now())
-
   streak      Int      @default(1)
-
   xpAwarded   Int      @default(0)
-
   createdAt   DateTime @default(now())
-
-
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   @@unique([userId, checkinDate])
-
   @@index([userId])
-
   @@map("checkins")
-
 }
-
-
 
 // ==================== Module 02: 学习生态闭环 (V3.1) ====================
 
-
-
 // ReviewQueue — SRS 间隔复习队列 (SM-2 算法)
-
 model ReviewQueue {
-
   id          String    @id @default(uuid())
-
   userId      String
-
   contentId   String
-
   contentType String // word/sentence/grammar
-
   interval    Int       @default(0) // SM-2 interval days
-
   easeFactor  Float     @default(2.5)
-
   repetitions Int       @default(0)
-
   dueDate     DateTime  @default(now())
-
   lastReview  DateTime?
-
   createdAt   DateTime  @default(now())
-
   updatedAt   DateTime  @updatedAt
 
-
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   @@index([userId, dueDate])
-
 }
-
-
 
 // OcrUsageLog — Stage11 子模块1：拍照翻译 OCR 计量/计费日志（宪法 Appendix E 成本管控）
-
 // status: pending(占坑预扣) / success / failed(不计入配额)
-
 model OcrUsageLog {
-
   id          String    @id @default(uuid())
-
   userId      String
-
   provider    String // hunyuan-vision / tencent-ocr / ...
-
   scene       String    @default("photo_translate")
-
   imageCount  Int       @default(1)
-
   ocrTextLen  Int       @default(0)
-
   estCostCny  Decimal   @default(0) @db.Decimal(10, 4) // 预估成本（元）
-
   status      String    @default("pending")
-
   errorCode   String?
-
   latencyMs   Int       @default(0)
-
   createdAt   DateTime  @default(now())
-
   updatedAt   DateTime  @updatedAt
 
-
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   @@index([userId, createdAt])
-
   @@index([status, createdAt])
-
 }
-
-
 
 // AiTutorRecord — AI 导师对话记录
-
 model AiTutorRecord {
-
   id         String   @id @default(uuid())
-
   userId     String
-
   goalId     String?
-
   role       String // user/assistant
-
   content    String // 对话内容
-
   tokensUsed Int      @default(0)
-
   createdAt  DateTime @default(now())
-
-
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   @@index([userId, createdAt])
-
 }
-
-
 
 // RewardLedger — XP/积分流水
-
 model RewardLedger {
-
   id        String   @id @default(uuid())
-
   userId    String
-
   type      String // xp/checkin/streak/referral
-
   amount    Int
-
   balance   Int // 变动后余额
-
   refId     String? // 关联业务ID
-
   createdAt DateTime @default(now())
-
-
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   @@index([userId, createdAt])
-
 }
-
-
 
 // QuestionBlueprint — 测验题目模板
-
 model QuestionBlueprint {
-
   id         String   @id @default(uuid())
-
   contentId  String
-
   question   String
-
   answer     String
-
   options    String? // JSON数组，选择题用
-
   difficulty Int      @default(1)
-
   createdAt  DateTime @default(now())
-
 }
-
-
 
 // ==================== M0: CourseBlueprint — 课程蓝图 ====================
 
-
-
 model CourseBlueprint {
-
   id          String   @id @default(uuid())
-
   title       String   // 课程标题
-
   description String?  // 课程描述
-
   languageCode String  // 目标语言代码
-
   level       String   @default("beginner") // beginner, intermediate, advanced
-
   category    String   @default("general") // general, business, travel, exam
-
   duration    Int      @default(30) // 建议学习时长（分钟）
-
   modules     Json     @default("[]") // 课程模块结构 JSON
-
   status      String   @default("draft") // draft, active, archived
-
   createdAt   DateTime @default(now())
-
   updatedAt   DateTime @updatedAt
 
-
-
   @@index([languageCode])
-
   @@index([level])
-
   @@index([status])
-
 }
-
-
 
 // ==================== M1: GLOI Global Language Operating Infrastructure ====================
 
-
-
 // language_identities — 语言身份定义（BCP-47 + 扩展元数据）
-
 model LanguageIdentity {
-
   id            String   @id @default(uuid())
-
   languageCode  String   @unique // BCP-47 代码，如 zh-CN, ja-JP, en-US
-
   displayName   String   // 显示名称
-
   nativeName    String   // 本地名称
-
   script        String   // 书写系统: Latin, Han, Kana, Hangul, Arabic, Cyrillic
-
   direction     String   @default("ltr") // ltr, rtl
-
   isCustom      Boolean  @default(false) // 是否为用户自定义语言
-
   metadata      Json?    // 扩展元数据（语音、语法特征等）
-
   createdAt     DateTime @default(now())
-
   updatedAt     DateTime @updatedAt
 
-
-
   @@index([script])
-
   @@index([isCustom])
-
 }
-
-
 
 // content_language_versions — 内容多语言版本管理
-
 model ContentLanguageVersion {
-
   id                String   @id @default(uuid())
-
   contentId         String   // 关联的 LearningContent.id
-
   languageCode      String   // 语言代码
-
   version           String   @default("1.0.0")
-
   translatedContent Json     // 翻译后的内容数据
-
   qualityScore      Float    @default(0)
-
   reviewedBy        String?  // 审核人（AI或人工）
-
   status            String   @default("draft") // draft, reviewed, published
-
   createdAt         DateTime @default(now())
-
   updatedAt         DateTime @updatedAt
 
-
-
   @@unique([contentId, languageCode, version])
-
   @@index([contentId])
-
   @@index([languageCode])
-
   @@index([status])
-
 }
-
-
 
 // translation_memory_entries — 翻译记忆库
-
 model TranslationMemoryEntry {
-
   id              String   @id @default(uuid())
-
   sourceLanguage  String   // 源语言
-
   targetLanguage  String   // 目标语言
-
   sourceText      String   // 源文本
-
   targetText      String   // 目标文本
-
   context         String?  // 上下文/场景
-
   qualityScore    Float    @default(0)
-
   reuseCount      Int      @default(0) // 复用次数
-
   source          String   @default("AI") // AI, HUMAN, IMPORTED
-
   createdAt       DateTime @default(now())
-
   updatedAt       DateTime @updatedAt
-
-
 
   @@index([sourceLanguage, targetLanguage])
-
   @@index([sourceText(100)]) // 前缀索引用于模糊匹配
-
   @@index([reuseCount])
-
 }
-
-
 
 // terminology_entries — 术语库
-
 model TerminologyEntry {
-
   id              String   @id @default(uuid())
-
   languageCode    String   // 语言代码
-
   term            String   // 术语
-
   definition      String   // 定义
-
   partOfSpeech    String?  // 词性
-
   domain          String?  // 领域: general, business, medical, tech
-
   examples        Json?    // 例句
-
   synonyms        Json?    // 同义词
-
   status          String   @default("active") // active, deprecated
-
   createdAt       DateTime @default(now())
-
   updatedAt       DateTime @updatedAt
 
-
-
   @@unique([languageCode, term])
-
   @@index([languageCode])
-
   @@index([domain])
-
 }
-
-
 
 // ==================== M2: 30天口语速成 ====================
 
-
-
 // daily_learning_plans — 30天每日学习计划
-
 model DailyLearningPlan {
-
   id              String   @id @default(uuid())
-
   userId          String
-
   dayNumber       Int      // 第几天 (1-30)
-
   planDate        DateTime // 计划日期
-
   targetLanguage  String   // 目标语言
-
   focusArea       String   // 当日重点: listening, speaking, vocabulary, grammar
-
   scene           String   // 场景: shopping, dining, travel, medical, housing, social
-
   duration        Int      @default(30) // 建议学习时长（分钟）
-
   tasks           Json     @default("[]") // 当日任务列表 JSON
-
   contentSnapshot Json?    // 当日生成内容快照
-
   status          String   @default("pending") // pending, in_progress, completed, skipped
-
   completedAt     DateTime?
-
   score           Int?     // 当日得分
-
   createdAt       DateTime @default(now())
-
   updatedAt       DateTime @updatedAt
 
-
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-
 
   @@unique([userId, dayNumber])
-
   @@index([userId, planDate])
-
   @@index([status])
-
 }
-
-
 
 // speech_evaluation_records — 口语评测记录
-
 // AI 伴读角色（Stage 4 — 用户自定义学习搭子）
-
 model CompanionProfile {
-
   id     String @id @default(uuid())
-
   userId String @unique
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   name         String  // 角色名字
-
   description  String  // 用户原始的几句话描述
-
   personality  String? // AI 提炼的性格特征
-
   voiceStyle   String? // 声音风格（温柔女声/元气少年等）
-
   catchphrase  String? // 口头禅
-
   greeting     String? // 见面问候语
-
   systemPrompt String? // 用于 AI 对话的角色人设 prompt
-
   avatarEmoji  String? @default("🤖") // 头像 emoji
-
   metadata     Json?   // 扩展信息
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   @@index([userId])
-
 }
 
-
-
 model SpeechEvaluationRecord {
-
   id              String   @id @default(uuid())
-
   userId          String
-
   planId          String?  // 关联 DailyLearningPlan
-
   audioUrl        String?  // 音频文件 URL
-
   transcript      String   // 语音转文字内容
-
   referenceText   String?  // 参考文本
-
   pronunciation   Float    @default(0) // 发音评分 (0-100)
-
   fluency         Float    @default(0) // 流利度 (0-100)
-
   accuracy        Float    @default(0) // 准确度 (0-100)
-
   completeness    Float    @default(0) // 完整度 (0-100)
-
   overallScore    Float    @default(0) // 综合评分 (0-100)
-
   feedback        Json?    // AI 反馈详情
-
   weakWords       Json?    // 薄弱发音词汇
-
   createdAt       DateTime @default(now())
-
-
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
   @@index([userId, createdAt])
-
   @@index([planId])
-
 }
 
-
-
 // ============================================================
-
 // P2 任务二：双语言一致性校验（GAP / 双宪法第十章）
-
 // 说明：以 ContextResolver 归一化规则为唯一基准，逐用户核对母语/目标语言语义一致性。
-
 // 纯 additive：不建立指向 User 的外键关系（避免改动 User 模型 / 反向关系校验），
-
 // userId 以普通字段存储，便于历史追溯与对账。
-
 // ============================================================
-
-
 
 // language_consistency_log — 每次校验的完整审计日志（对齐审计字段规范）
-
 model LanguageConsistencyLog {
-
   id                 String   @id @default(uuid())
-
   userId             String // 校验用户 ID
-
   checkTime          DateTime @default(now()) // 校验执行时间
-
   nativeLangCurrent  String? // 当前母语字段实际取值
-
   nativeLangExpected String? // 母语预期归一化值
-
   targetLangCurrent  String? // 当前目标语言字段实际取值
-
   targetLangExpected String? // 目标语言预期归一化值
-
   anomalyType        String // 正常 / 轻度漂移 / 重度冲突
-
   handleResult       String // 已修复 / 待人工介入 / 无操作 / 窗口期保护
-
   protectWindowFlag  Boolean  @default(false) // 是否处于用户修改保护窗口期
-
   operator           String   @default("system") // system / admin:<userId>
-
   detail             Json? // 各表取值明细、修复项、冲突原因等
-
   runId              String? // 关联本次巡检批次
 
-
-
   @@index([userId])
-
   @@index([checkTime])
-
   @@index([anomalyType])
-
   @@index([runId])
-
 }
-
-
 
 // language_consistency_alert — 重度冲突告警（同步账簿「待处理告警清单」P2_ALERT）
-
 model LanguageConsistencyAlert {
-
   id             String    @id @default(uuid()) // 唯一告警 ID
-
   userId         String // 关联用户
-
   conflictFields Json // 冲突字段清单
-
   tableValues    Json // 当前各表取值
-
   reason         String // 异常原因
-
   status         String    @default("P2_ALERT") // P2_ALERT / RESOLVED
-
   operator       String    @default("system") // 生成主体
-
   resolvedBy     String? // 处置管理员
-
   resolvedAt     DateTime? // 处置时间
-
   resolveNote    String? // 处置备注 / 修复后真值
-
   createdAt      DateTime  @default(now())
-
   updatedAt      DateTime  @updatedAt
 
-
-
   @@index([userId])
-
   @@index([status])
-
   @@index([createdAt])
-
 }
-
-
-
 
 
 // Stage11 子模块2 — 翻译时长计费（附件 L v1.0.3）
-
 model TranslationBillingBalance {
-
   id            String   @id @default(uuid())
-
   userId        String   @unique
-
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   trialTotalSec Int      @default(300)
-
   trialUsedSec  Int      @default(0)
-
   subType       String?  // 'daily' | 'weekly' | 'monthly'
-
   subExpiresAt  DateTime?
-
   subUsedSec    Int      @default(0)
-
   adminTimeSec  Int      @default(0) // 管理员手动调整时长（增加/扣减），纳入剩余时长与消耗扣减
-
   updatedAt     DateTime @updatedAt
-
   createdAt     DateTime @default(now())
-
   @@index([userId])
-
 }
-
-
 
 model TranslationPackageOrder {
-
   id           String   @id @default(uuid())
-
   userId       String
-
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   orderNo      String   @unique
-
   packageType  String   // pay_1h|pay_10h|pay_30h|pay_100h|daily|weekly|monthly
-
   minutesTotal Int
-
   minutesUsed  Int      @default(0)
-
   priceCny     Float
-
   expiresAt    DateTime
-
   status       String   @default("paid") // paid|refunded|expired
-
   paidAt       DateTime?
-
   abnormal         Boolean  @default(false)
-
   abnormalNote     String?
-
   abnormalMarkedAt DateTime?
-
   abnormalMarkedBy String?
-
   createdAt    DateTime @default(now())
-
   @@index([userId])
-
 }
-
-
 
 model TranslationBillingLog {
-
   id              String   @id @default(uuid())
-
   userId          String
-
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   scene           String   // photo(免费)|scan|conversation|trial
-
   consumedSec     Int
-
   source          String   // trial|subscription|paid_package
-
   orderId         String?
-
   requestId       String?  // DEF-P3-01 幂等键（body.requestId / X-Request-Id 头）
-
   balanceAfterSec Int
-
   createdAt       DateTime @default(now())
-
   @@unique([userId, requestId])
-
   @@index([userId])
-
   @@index([createdAt])
-
 }
 
-
-
 // ============================================================
-
 // P2 基础运营管理后台：独立操作审计日志（与业务表解耦，全程可审计）
-
 // ============================================================
-
 model AdminOperationLog {
-
   id          String   @id @default(uuid())
-
   adminId     String
-
   action      String   // ADJUST_TIME | MARK_ABNORMAL
-
   targetType  String   // USER | ORDER
-
   targetId    String
-
   reason      String?
-
   detail      Json?
-
   createdAt   DateTime @default(now())
 
-
-
   @@index([adminId])
-
   @@index([targetType, targetId])
-
   @@index([createdAt])
-
 }
-
-
 
 // P1-5 管理员登录审计日志
-
 model LoginLog {
-
   id        String   @id @default(uuid())
-
   adminId   String
-
   account   String?
-
   ip        String?
-
   userAgent String?
-
   createdAt DateTime @default(now())
 
-
-
   @@index([adminId])
-
   @@index([account])
-
   @@index([createdAt])
-
 }
-
-
 
 // ==================== Phase 4 P2: Organization B-end (机构端) — 纯增量模型 ====================
 
-
-
 // org_class — 机构班级（新增表，零修改已有模型）
-
 model OrgClass {
-
   id             String       @id @default(uuid())
-
   organizationId String
-
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
   name           String
-
   description    String?
-
   teacherId      String?
-
   teacher        User?        @relation("OrgClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
-
   status         String       @default("active") // active, archived
-
   studentCount   Int          @default(0)
 
-
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   students OrgClassStudent[]
 
-
-
   @@index([organizationId])
-
   @@index([teacherId])
-
   @@index([status])
-
 }
 
-
-
 // org_class_student — 班级学生关联（新增表，零修改已有模型）
-
 model OrgClassStudent {
-
   id      String   @id @default(uuid())
-
   classId String
-
   class   OrgClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-
   userId  String
-
   user    User     @relation("OrgClassStudentUser", fields: [userId], references: [id], onDelete: Cascade)
-
   status  String   @default("active") // active, left
 
-
-
   joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([classId, userId])
+  @@index([classId])
+  @@index([userId])
+}
+
+// ==================== Stage 9 M5: Social Dynamics (动态模块) — 纯增量模型 ====================
+
+// social_timeline — 社群动态时间线（发布/内容/互动计数）
+model SocialTimeline {
+  id           String   @id @default(uuid())
+  actorId      String
+  actor        User     @relation("SocialTimelineActor", fields: [actorId], references: [id], onDelete: Cascade)
+  type         String   @default("post") // post|share|achievement
+  content      String
+  metadata     String?  // JSON: { images[], tags[], etc. }
+  likeCount    Int      @default(0)
+  commentCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  likes SocialTimelineLike[]
+
+  @@index([actorId])
+  @@index([createdAt])
+  @@index([likeCount])
+}
+
+// social_timeline_like — 动态点赞记录（唯一用户-动态复合键防重）
+model SocialTimelineLike {
+  id     String   @id @default(uuid())
+  postId String
+  post   SocialTimeline @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation("SocialTimelineLikeUser", fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-
-
-  @@unique([classId, userId])
-
-  @@index([classId])
-
+  @@unique([postId, userId])
+  @@index([postId])
   @@index([userId])
-
 }
-
-
-
-// ============================================================
-// Stage 9 Community: Friend (Constitution §11.1, Appendix C.5)
-// ============================================================
-
-model FriendSetting {
-  id         String   @id @default(uuid())
-  userId     String
-  friendId   String
-  remarkName String?
-  tags       Json     @default("[]")
-  isMuted    Boolean  @default(false)
-  isBlocked  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user   User @relation("FriendAsUser", fields: [userId], references: [id], onDelete: Cascade)
-  friend User @relation("FriendAsFriend", fields: [friendId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, friendId])
-  @@index([userId])
-  @@index([friendId])
-  @@map("friend_settings")
-}
-
-// ============================================================
-// Stage 9 Community: Group (Constitution §11.2, Appendix C.5)
-// ============================================================
-
-model Group {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  ownerId     String
-  createdVia  String   @default("manual")
-  maxMembers  Int      @default(50)
-  muteAll     Boolean  @default(false)
-  avatarUrl   String?
-  announcement String?
-  status      String   @default("active")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  owner   User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  members GroupMember[]
-
-  @@index([ownerId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("groups")
-}
-
-// ============================================================
-// Stage 9 Community: GroupMember (Constitution §11.2)
-// ============================================================
-
-model GroupMember {
-  id            String   @id @default(uuid())
-  groupId       String
-  userId        String
-  role          String   @default("member")
-  mute          Boolean  @default(false)
-  joinTime      DateTime @default(now())
-  groupNickname String?
-  createdAt     DateTime @default(now())
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([groupId, userId])
-  @@index([groupId])
-  @@index([userId])
-  @@map("group_members")
-}
-
-// ============================================================
-// Stage 9 Community: Conversation (Constitution §11.3)
-// ============================================================
-
-model Conversation {
-  id             String    @id @default(uuid())
-  type           String    @default("single")
-  targetId       String
-  participants   Json      @default("[]")
-  lastMsgId      String?
-  lastMsgPreview String?
-  lastMsgTime    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  messages       Message[]
-
-  @@index([type, targetId])
-  @@index([type])
-  @@index([lastMsgTime])
-  @@map("conversations")
-}
-
-// ============================================================
-// Stage 9 Community: Message (Constitution §11.3)
-// ============================================================
-
-model Message {
-  id             String    @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String
-  msgType        String    @default("text")
-  isRead         Boolean   @default(false)
-  isRevoked      Boolean   @default(false)
-  revokedAt      DateTime?
-  createdAt      DateTime  @default(now())
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([createdAt])
-  @@index([conversationId, createdAt])
-  @@map("messages")
-}
-

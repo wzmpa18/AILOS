@@ -57,6 +57,17 @@
   .nav-title {
     font-size: 16px; font-weight: 700; color: var(--text);
   }
+  .lang-switch {
+    display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .lang-flag {
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent; white-space: nowrap;
+  }
+  .lang-flag:hover { background: var(--primary-light); color: var(--primary); }
+  .lang-flag.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
   /* ===== Container ===== */
   .container {
     width: 100%; max-width: 680px; margin: 0 auto;
@@ -274,30 +285,6 @@
   .toast.info { background: var(--primary); color: #fff; }
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
-  /* ===== Stage9 M5: Privacy Toggles ===== */
-  .privacy-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 0; border-bottom: 1px solid var(--border); gap: 12px;
-  }
-  .privacy-row:last-child { border-bottom: none; }
-  .privacy-info { flex: 1; }
-  .privacy-info .privacy-title { font-size: 14px; font-weight: 600; color: var(--text); }
-  .privacy-info .privacy-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
-    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-    background: #CBD5E1; border-radius: 26px; transition: .3s;
-  }
-  .toggle-slider:before {
-    content: ""; position: absolute; height: 20px; width: 20px;
-    left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s;
-    box-shadow: 0 1px 3px rgba(0,0,0,.15);
-  }
-  .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
-  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
-  .toggle-switch.loading { opacity: .5; pointer-events: none; }
-
   /* ===== Loading ===== */
   .loading-spinner {
     display: flex; align-items: center; justify-content: center; padding: 40px;
@@ -325,7 +312,8 @@
     .badges-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .badge-item { padding: 8px 4px; }
     .badge-icon { font-size: 22px; }
-.navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .lang-switch { justify-content: center; width: 100%; }
+    .navbar { flex-direction: column; align-items: flex-start; gap: 8px; }
     .modal { padding: 20px 16px; }
     .modal-actions { flex-direction: column; }
     .modal-actions .btn { width: 100%; }
@@ -427,6 +415,7 @@
   <nav class="navbar">
     <a class="nav-back" href="/xuewaiyu/landing.html" data-i18n="back_to_home">← 返回首页</a>
     <span class="nav-title" data-i18n="page_title">个人中心</span>
+    <div class="lang-switch" id="langSwitch"></div>
   </nav>
 
   <!-- Guest / Not Logged In -->
@@ -565,38 +554,6 @@
         <span data-i18n="settings_title">设置</span>
       </div>
       <div class="settings-list">
-        <!-- Stage9 M5: Privacy Settings -->
-        <div class="settings-item" onclick="togglePrivacySection()">
-          <span class="si-icon">🔒</span>
-          <div class="si-text">
-            <div class="si-title" data-i18n="privacy_title">隐私设置</div>
-            <div class="si-desc" data-i18n="privacy_desc">管理你的社交隐私偏好</div>
-          </div>
-          <span class="si-arrow" id="privacyArrow">›</span>
-        </div>
-        <div class="pwd-form" id="privacySection" style="display:none;">
-          <div class="privacy-row">
-            <div class="privacy-info">
-              <div class="privacy-title" data-i18n="privacy_allow_discover">允许被发现</div>
-              <div class="privacy-desc" data-i18n="privacy_allow_discover_desc">其他用户可以在社交中发现你</div>
-            </div>
-            <label class="toggle-switch" id="toggleDiscoverWrap">
-              <input type="checkbox" id="toggleAllowDiscover" onchange="onPrivacyToggle('allowDiscover', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="privacy-row">
-            <div class="privacy-info">
-              <div class="privacy-title" data-i18n="privacy_allow_uid_search">允许通过UID搜索</div>
-              <div class="privacy-desc" data-i18n="privacy_allow_uid_search_desc">其他用户可以通过UID搜索到你</div>
-            </div>
-            <label class="toggle-switch" id="toggleUidSearchWrap">
-              <input type="checkbox" id="toggleAllowUidSearch" onchange="onPrivacyToggle('allowUidSearch', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-
         <div class="settings-item" onclick="togglePasswordForm()">
           <span class="si-icon">🔑</span>
           <div class="si-text">
@@ -692,14 +649,6 @@ const I18N = {
     stat_points: '总积分',
     badges_title: '成就徽章',
     settings_title: '设置',
-    privacy_title: '隐私设置',
-    privacy_desc: '管理你的社交隐私偏好',
-    privacy_allow_discover: '允许被发现',
-    privacy_allow_discover_desc: '其他用户可以在社交中发现你',
-    privacy_allow_uid_search: '允许通过UID搜索',
-    privacy_allow_uid_search_desc: '其他用户可以通过UID搜索到你',
-    toast_privacy_updated: '隐私设置已更新',
-    toast_privacy_failed: '隐私设置保存失败',
     settings_change_pwd: '修改密码',
     settings_change_pwd_desc: '更新你的登录密码',
     settings_delete_account: '注销账号',
@@ -789,14 +738,6 @@ const I18N = {
     stat_points: 'Total Points',
     badges_title: 'Achievement Badges',
     settings_title: 'Settings',
-    privacy_title: 'Privacy Settings',
-    privacy_desc: 'Manage your social privacy preferences',
-    privacy_allow_discover: 'Allow Discovery',
-    privacy_allow_discover_desc: 'Other users can discover you in social',
-    privacy_allow_uid_search: 'Allow UID Search',
-    privacy_allow_uid_search_desc: 'Others can find you by UID',
-    toast_privacy_updated: 'Privacy settings updated',
-    toast_privacy_failed: 'Failed to save privacy settings',
     settings_change_pwd: 'Change Password',
     settings_change_pwd_desc: 'Update your login password',
     settings_delete_account: 'Delete Account',
@@ -886,14 +827,6 @@ const I18N = {
     stat_points: '総ポイント',
     badges_title: '達成バッジ',
     settings_title: '設定',
-    privacy_title: 'プライバシー設定',
-    privacy_desc: 'ソーシャルプライバシー設定を管理',
-    privacy_allow_discover: '発見を許可',
-    privacy_allow_discover_desc: '他のユーザーがソーシャルであなたを発見できます',
-    privacy_allow_uid_search: 'UID検索を許可',
-    privacy_allow_uid_search_desc: '他のユーザーがUIDであなたを検索できます',
-    toast_privacy_updated: 'プライバシー設定を更新しました',
-    toast_privacy_failed: 'プライバシー設定の保存に失敗しました',
     settings_change_pwd: 'パスワード変更',
     settings_change_pwd_desc: 'ログインパスワードを更新',
     settings_delete_account: 'アカウント削除',
@@ -983,14 +916,6 @@ const I18N = {
     stat_points: '총 포인트',
     badges_title: '성취 배지',
     settings_title: '설정',
-    privacy_title: '개인정보 설정',
-    privacy_desc: '소셜 개인정보 설정 관리',
-    privacy_allow_discover: '발견 허용',
-    privacy_allow_discover_desc: '다른 사용자가 소셜에서 당신을 발견할 수 있습니다',
-    privacy_allow_uid_search: 'UID 검색 허용',
-    privacy_allow_uid_search_desc: '다른 사용자가 UID로 당신을 검색할 수 있습니다',
-    toast_privacy_updated: '개인정보 설정이 업데이트되었습니다',
-    toast_privacy_failed: '개인정보 설정 저장 실패',
     settings_change_pwd: '비밀번호 변경',
     settings_change_pwd_desc: '로그인 비밀번호 업데이트',
     settings_delete_account: '계정 삭제',
@@ -1080,14 +1005,6 @@ const I18N = {
     stat_points: 'Points totaux',
     badges_title: 'Badges',
     settings_title: 'Paramètres',
-    privacy_title: 'Confidentialité',
-    privacy_desc: 'Gérer vos préférences de confidentialité sociale',
-    privacy_allow_discover: 'Autoriser la découverte',
-    privacy_allow_discover_desc: 'D\'autres utilisateurs peuvent vous découvrir',
-    privacy_allow_uid_search: 'Autoriser la recherche par UID',
-    privacy_allow_uid_search_desc: 'D\'autres peuvent vous trouver par UID',
-    toast_privacy_updated: 'Paramètres de confidentialité mis à jour',
-    toast_privacy_failed: 'Échec de la mise à jour des paramètres',
     settings_change_pwd: 'Changer le mot de passe',
     settings_change_pwd_desc: 'Mettre à jour votre mot de passe',
     settings_delete_account: 'Supprimer le compte',
@@ -1177,14 +1094,6 @@ const I18N = {
     stat_points: 'Puntos totales',
     badges_title: 'Insignias',
     settings_title: 'Configuración',
-    privacy_title: 'Privacidad',
-    privacy_desc: 'Gestiona tus preferencias de privacidad social',
-    privacy_allow_discover: 'Permitir descubrimiento',
-    privacy_allow_discover_desc: 'Otros usuarios pueden descubrirte en social',
-    privacy_allow_uid_search: 'Permitir búsqueda por UID',
-    privacy_allow_uid_search_desc: 'Otros pueden encontrarte por UID',
-    toast_privacy_updated: 'Configuración de privacidad actualizada',
-    toast_privacy_failed: 'Error al guardar la configuración de privacidad',
     settings_change_pwd: 'Cambiar contraseña',
     settings_change_pwd_desc: 'Actualiza tu contraseña',
     settings_delete_account: 'Eliminar cuenta',
@@ -1274,14 +1183,6 @@ const I18N = {
     stat_points: 'Gesamtpunkte',
     badges_title: 'Abzeichen',
     settings_title: 'Einstellungen',
-    privacy_title: 'Datenschutz',
-    privacy_desc: 'Verwalten Sie Ihre sozialen Datenschutzeinstellungen',
-    privacy_allow_discover: 'Entdeckung erlauben',
-    privacy_allow_discover_desc: 'Andere Benutzer können Sie in sozialen Netzwerken entdecken',
-    privacy_allow_uid_search: 'UID-Suche erlauben',
-    privacy_allow_uid_search_desc: 'Andere können Sie per UID finden',
-    toast_privacy_updated: 'Datenschutzeinstellungen aktualisiert',
-    toast_privacy_failed: 'Fehler beim Speichern der Datenschutzeinstellungen',
     settings_change_pwd: 'Passwort ändern',
     settings_change_pwd_desc: 'Aktualisieren Sie Ihr Anmeldepasswort',
     settings_delete_account: 'Konto löschen',
@@ -1357,10 +1258,17 @@ let currentLang = detectLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N['zh'] && I18N['zh'][key]) || key; }
 
 // ==================== Render ====================
+function renderLangSwitch() {
+  document.getElementById('langSwitch').innerHTML = LANG_CODES.map(code =>
+    '<span class="lang-flag' + (code === currentLang ? ' active' : '') + '" onclick="switchLang(\'' + code + '\')">' + LANG_NAMES[code] + '</span>'
+  ).join('');
+}
+
 function switchLang(code) {
   currentLang = code;
   try { localStorage.setItem('yandao_ui_lang_v1', code); } catch(e) {}
   updateI18n();
+  renderLangSwitch();
   renderLanguageSelects();
   renderBadges();
 }
@@ -1748,59 +1656,6 @@ function renderBadges() {
   }).join('');
 }
 
-// ==================== Stage9 M5: Privacy Settings ====================
-var privacySectionOpen = false;
-
-function togglePrivacySection() {
-  privacySectionOpen = !privacySectionOpen;
-  var section = document.getElementById('privacySection');
-  var arrow = document.getElementById('privacyArrow');
-  section.style.display = privacySectionOpen ? 'block' : 'none';
-  arrow.textContent = privacySectionOpen ? '\u2304' : '\u203A';
-  if (privacySectionOpen) { loadPrivacySettings(); }
-}
-
-async function loadPrivacySettings() {
-  try {
-    var token = getToken();
-    if (!token) return;
-    var resp = await fetch(API_BASE + '/api/v1/social/privacy', {
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
-    });
-    var d = await resp.json();
-    var data = d.data || d;
-    document.getElementById('toggleAllowDiscover').checked = !!data.allowDiscover;
-    document.getElementById('toggleAllowUidSearch').checked = !!data.allowUidSearch;
-  } catch (e) { /* silent - toggles remain in initial state */ }
-}
-
-async function onPrivacyToggle(field, value) {
-  var wrap = field === 'allowDiscover' ? 'toggleDiscoverWrap' : 'toggleUidSearchWrap';
-  var toggleWrap = document.getElementById(wrap);
-  var checkbox = document.getElementById(field === 'allowDiscover' ? 'toggleAllowDiscover' : 'toggleAllowUidSearch');
-  toggleWrap.classList.add('loading');
-  checkbox.disabled = true;
-  try {
-    var token = getToken();
-    if (!token) throw new Error('Unauthorized');
-    var body = {};
-    body[field] = value;
-    var resp = await fetch(API_BASE + '/api/v1/social/privacy', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(body)
-    });
-    var d = await resp.json();
-    if (!resp.ok && !d.success) throw new Error(d.message || 'Failed');
-    showToast(t('toast_privacy_updated'), 'success');
-  } catch (e) {
-    checkbox.checked = !value; // revert
-    showToast(t('toast_privacy_failed'), 'error');
-  }
-  toggleWrap.classList.remove('loading');
-  checkbox.disabled = false;
-}
-
 // ==================== Password Change ====================
 function togglePasswordForm() {
   const form = document.getElementById('pwdForm');
@@ -1877,6 +1732,7 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 
 // ==================== Init ====================
 function init() {
+  renderLangSwitch();
   updateI18n();
   loadUserProfile();
 }
@@ -1889,9 +1745,9 @@ function showQRCode() {
   var userId = getUserId();
   var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
   urlEl.textContent = profileUrl;
-  // Use goQR.me API (free, no rate limit, UTF-8 support)
-  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(profileUrl);
-  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR\u751f\u6210\u5931\u8d25</p>\'">';
+  // Google Charts QR API
+  var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(profileUrl) + '&choe=UTF-8';
+  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR生成失败</p>\'">';
   modal.style.display = 'flex';
 }
 
@@ -2001,8 +1857,29 @@ document.addEventListener('keydown', function(e) {
 init();
 </script>
 
-<!-- Bottom Navigation Bar (injected by common.js with 7-tab i18n) -->
-<nav class="bottom-nav"></nav>
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="/xuewaiyu/home">
+    <span class="nav-icon">🏠</span>
+    <span>首页</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/learn.html">
+    <span class="nav-icon">📚</span>
+    <span>学习</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/chat.html">
+    <span class="nav-icon">💬</span>
+    <span>AI对话</span>
+  </a>
+  <a class="nav-item" href="/xuewaiyu/review.html">
+    <span class="nav-icon">🔄</span>
+    <span>复习</span>
+  </a>
+  <a class="nav-item active" href="/xuewaiyu/profile.html">
+    <span class="nav-icon">👤</span>
+    <span>我的</span>
+  </a>
+</nav>
 
 </body>
 </html>

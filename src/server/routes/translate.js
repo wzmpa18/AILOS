@@ -22,4 +22,25 @@ router.post('/notebook', translateController.addToNotebook);
 router.post('/package/buy', billingController.buyPackage);
 router.get('/trial/status', billingController.getStatus);
 
+
+// 子模块3 双向实时对话翻译流式接口
+const conversationService = require('../../services/conversationTranslationService');
+router.post('/conversation/stream', conversationService.handleConversationStream);
+
+// 子模块3 对话内容解密接口（用于收回收藏内容）
+router.post('/conversation/decrypt-stored', authenticate, (req, res) => {
+  const { encryptedDataBase64 } = req.body || {};
+  if (!encryptedDataBase64) {
+    return res.status(400).json({ error: 'INVALID_PARAMS', message: 'encryptedDataBase64 required' });
+  }
+  try {
+    const storage = require('../../services/conversationStorageService');
+    const userId = req.user?.id || req.user?.userId;
+    const decrypted = storage.decrypt(userId, Buffer.from(encryptedDataBase64, 'base64'));
+    return res.json({ success: true, plaintext: decrypted });
+  } catch (e) {
+    return res.status(400).json({ error: 'DECRYPT_FAILED', message: e.message });
+  }
+});
+
 module.exports = router;

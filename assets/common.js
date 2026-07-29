@@ -47,20 +47,20 @@
 
   // ===== Stage9 M5: 社群模块 4Tab 导航本地化 =====
   var COMMUNITY_NAV_LABELS = {
-    zh: { home: '首页', friends: '好友', messages: '消息', discover: '搭子' },
-    en: { home: 'Home', friends: 'Friends', messages: 'Messages', discover: 'Partners' },
-    ja: { home: 'ホーム', friends: '友達', messages: 'メッセージ', discover: 'パートナー' },
-    ko: { home: '홈', friends: '친구', messages: '메시지', discover: '파트너' },
-    fr: { home: 'Accueil', friends: 'Amis', messages: 'Messages', discover: 'Partenaires' },
-    es: { home: 'Inicio', friends: 'Amigos', messages: 'Mensajes', discover: 'Amigos' },
-    de: { home: 'Start', friends: 'Freunde', messages: 'Nachrichten', discover: 'Partner' }
+    zh: { home: '首页', friends: '好友', messages: '消息', trend: '动态' },
+    en: { home: 'Home', friends: 'Friends', messages: 'Messages', trend: 'Trends' },
+    ja: { home: 'ホーム', friends: '友達', messages: 'メッセージ', trend: '動向' },
+    ko: { home: '홈', friends: '친구', messages: '메시지', trend: '트렌드' },
+    fr: { home: 'Accueil', friends: 'Amis', messages: 'Messages', trend: 'Tendances' },
+    es: { home: 'Inicio', friends: 'Amigos', messages: 'Mensajes', trend: 'Tendencias' },
+    de: { home: 'Start', friends: 'Freunde', messages: 'Nachrichten', trend: 'Trends' }
   };
 
   var COMMUNITY_NAV_ITEMS = [
     { key: 'home',     icon: '🏠', href: '/xuewaiyu/home' },
     { key: 'friends',  icon: '👥', href: '/xuewaiyu/community-friends.html' },
     { key: 'messages', icon: '💬', href: '/xuewaiyu/community-messages.html' },
-    { key: 'discover', icon: '🌐', href: '/xuewaiyu/discover.html' }
+    { key: 'trend',    icon: '📰', href: '/xuewaiyu/community-trend.html' }
   ];
 
   function isValidLang(c) { return !!(c && LANG_NAMES[c]); }

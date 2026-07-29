@@ -62,6 +62,11 @@ router.use('/translate', require('./translate'));
 
 // Organization (Phase 4 P2 — 机构端 B-end 管理后台，独立路由 /api/org)
 router.use('/org', require('./org'));
+
+// Social (Stage 9 M5 — 社群模块：好友/群组/消息/隐私/动态)
 router.use('/v1/social', require('./social'));
+
+// Social Dynamics (Stage 9 M5 — 社群动态时间线)
+router.use('/v1/social/timeline', require('./socialTimeline'));
 
 module.exports = router;

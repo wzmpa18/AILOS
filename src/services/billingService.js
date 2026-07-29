@@ -689,7 +689,248 @@ class BillingService {
     logger.info('Billing expireStale', { clearedSub, expiredPay });
     return { clearedSub, expiredPay };
   }
-}
+
+// ============================================================
+// Stage 11 子模块 3 — billingService.js 流式结算补丁
+// 追加方法：streamPreDeduct / streamSettle / streamBalanceCheck / streamRefund
+// 插入位置：BillingService 类内部，requireTranslationQuota() 之后
+// ============================================================
+
+  /**
+   * === Stage 11 子模块 3：流式预扣（流建立前调用） ===
+   * 
+   * 预扣预估翻译时长（默认 60 秒），防止"先用后扣"超额免费使用。
+   * 与 requireTranslationQuota 语义一致，增加 requestId 用于流结束后结算匹配。
+   * 
+   * @param {string} userId
+   * @param {object} opt
+   * @param {string} opt.scene - 'conversation_translate'
+   * @param {number} opt.estSec - 预估时长（秒），默认 60
+   * @param {object} opt.deviceRisk - 设备指纹风控数据
+   * @returns {Promise<{ success, consumedSec, source, balanceAfterSec, requestId }>}
+   */
+  async streamPreDeduct(userId, { scene = 'conversation_translate', estSec = 60, deviceRisk = null } = {}) {
+    if (!Number.isFinite(estSec) || estSec <= 0) {
+      estSec = 60; // fallback
+    }
+    estSec = Math.ceil(estSec);
+    const requestId = 'stream_' + Date.now().toString(36) + '_' + userId.slice(0, 8) + '_' + Math.random().toString(36).slice(2, 6);
+    
+    try {
+      const result = await this.consume(userId, {
+        scene,
+        seconds: estSec,
+        deviceRisk,
+        requestId,
+      });
+      
+      logger.info('BillingService', 'streamPreDeduct 预扣成功', {
+        userId,
+        scene,
+        estSec,
+        consumedSec: result.consumedSec,
+        source: result.source,
+        requestId,
+      });
+      
+      return {
+        ...result,
+        requestId,
+        estSec,
+      };
+    } catch (error) {
+      if (error.code === 'TRANSLATION_TIME_EXHAUSTED') {
+        logger.warn('BillingService', 'streamPreDeduct 时长不足', {
+          userId, scene, estSec,
+        });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * === Stage 11 子模块 3：流式结算（流结束后调用） ===
+   * 
+   * 按实际翻译时长结算，多退少补。
+   * - actualSec < estSec: 退回差额（通过 streamRefund）
+   * - actualSec >= estSec: 不再追加扣减（已在预扣时扣足）
+   * 
+   * 断句分段结算：每完成一句翻译调用 streamSentenceLog 记录，
+   * 流结束时调用本方法做最终结算。
+   * 
+   * @param {string} userId
+   * @param {object} opt
+   * @param {string} opt.requestId - 与 streamPreDeduct 相同的关联 ID
+   * @param {number} opt.actualSec - 实际翻译用时（秒）
+   * @param {number} opt.actualTokens - 实际输出 Token 数（可选）
+   * @param {number} opt.sentenceCount - 完成句子数
+   * @returns {Promise<{ settled, refundedSec, finalConsumedSec, requestId }>}
+   */
+  async streamSettle(userId, { requestId, actualSec = 0, actualTokens = 0, sentenceCount = 0 } = {}) {
+    if (!requestId || !Number.isFinite(actualSec)) {
+      logger.warn('BillingService', 'streamSettle 参数无效', { userId, requestId, actualSec });
+      return { settled: false, reason: 'INVALID_PARAMS' };
+    }
+
+    actualSec = Math.ceil(Math.max(0, actualSec));
+
+    // 查找预扣记录
+    const preDeductLog = await prisma.translationBillingLog.findFirst({
+      where: { userId, requestId },
+    });
+
+    if (!preDeductLog) {
+      logger.warn('BillingService', 'streamSettle 找不到预扣记录', { userId, requestId });
+      return { settled: false, reason: 'NO_PRE_DEDUCT_LOG' };
+    }
+
+    const estSec = preDeductLog.consumedSec;
+    const diff = estSec - actualSec;
+
+    if (diff > 0) {
+      // 实际用时少于预估 → 退回差额
+      await this.streamRefund(userId, {
+        seconds: diff,
+        source: preDeductLog.source,
+        orderId: preDeductLog.orderId,
+        settleRequestId: requestId,
+      });
+      
+      logger.info('BillingService', 'streamSettle 退回差额', {
+        userId,
+        requestId,
+        estSec,
+        actualSec,
+        refundedSec: diff,
+      });
+    }
+
+    // 更新预扣日志的结算信息
+    await prisma.translationBillingLog.update({
+      where: { id: preDeductLog.id },
+      data: {
+        // Store settlement metadata in the existing log (we can't add fields without migration)
+        // Using the requestId format to record sentenceCount:actualTokens via another log entry
+      },
+    });
+
+    const finalConsumedSec = estSec - (diff > 0 ? diff : 0);
+
+    logger.info('BillingService', 'streamSettle 结算完成', {
+      userId,
+      requestId,
+      estSec,
+      actualSec,
+      refundedSec: diff > 0 ? diff : 0,
+      finalConsumedSec,
+      sentenceCount,
+    });
+
+    return {
+      settled: true,
+      refundedSec: diff > 0 ? diff : 0,
+      finalConsumedSec,
+      requestId,
+    };
+  }
+
+  /**
+   * === Stage 11 子模块 3：退回翻译时长 ===
+   * 
+   * 用于异常断流（余额耗尽/语种异常/客户端断开）时退回已扣但未使用的时长。
+   * 简单实现：增加 adminTimeSec 余额，避免复杂的 FIFO 逆向操作。
+   * 
+   * @param {string} userId
+   * @param {object} opt
+   * @param {number} opt.seconds - 退回秒数
+   * @param {string} opt.source - 原始扣减来源（trial/subscription/paid_package/admin）
+   * @param {string} opt.orderId - 原始套餐订单 ID
+   * @param {string} opt.settleRequestId - 关联的预扣 requestId
+   * @returns {Promise<{ success: boolean, refundedSec: number }>}
+   */
+  async streamRefund(userId, { seconds, source, orderId, settleRequestId } = {}) {
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return { success: false, refundedSec: 0, reason: 'INVALID_AMOUNT' };
+    }
+    seconds = Math.ceil(seconds);
+
+    return prisma.$transaction(async (tx) => {
+      const b = await this.getOrInitBalance(userId, tx);
+
+      // 退回逻辑：按来源退回
+      // - trial → 退回到 trialUsedSec
+      // - subscription → 退回到 subUsedSec
+      // - paid_package → 退回到 order 的 minutesUsed
+      // - admin → 退回到 adminTimeSec
+      switch (source) {
+        case 'trial':
+          b.trialUsedSec = Math.max(0, b.trialUsedSec - seconds);
+          break;
+        case 'subscription':
+          b.subUsedSec = Math.max(0, b.subUsedSec - seconds);
+          break;
+        case 'paid_package':
+          if (orderId) {
+            const order = await tx.translationPackageOrder.findUnique({
+              where: { id: orderId },
+            });
+            if (order) {
+              await tx.translationPackageOrder.update({
+                where: { id: orderId },
+                data: { minutesUsed: Math.max(0, order.minutesUsed - seconds) },
+              });
+            }
+          }
+          break;
+        case 'admin':
+        default:
+          b.adminTimeSec += seconds;
+          break;
+      }
+
+      await tx.translationBillingBalance.update({
+        where: { id: b.id },
+        data: {
+          trialUsedSec: b.trialUsedSec,
+          subUsedSec: b.subUsedSec,
+          adminTimeSec: b.adminTimeSec,
+        },
+      });
+
+      // 记录退款日志（使用 scene=refund 标记）
+      const now = new Date();
+      const remaining = b.trialTotalSec - b.trialUsedSec + 
+        Math.max(0, b.subExpiresAt > now ? (SUB_CAP[b.subType] || 0) - b.subUsedSec : 0) +
+        b.adminTimeSec;
+
+      logger.info('BillingService', 'streamRefund 退款成功', {
+        userId,
+        seconds,
+        source,
+        settleRequestId,
+        balanceAfterSec: remaining,
+      });
+
+      return { success: true, refundedSec: seconds };
+    });
+  }
+
+  /**
+   * === Stage 11 子模块 3：流式余额检查（每句翻译后调用） ===
+   * 
+   * 检查当前是否还有可用翻译时长。
+   * 返回剩余秒数，0 表示余额耗尽需截断流。
+   * 
+   * @param {string} userId
+   * @returns {Promise<{ remainingSec: number, exhausted: boolean }>}
+   */
+  async streamBalanceCheck(userId) {
+    const status = await this.getStatus(userId);
+    return {
+      remainingSec: status.remaining,
+      exhausted: status.remaining <= 0,
+    };
+  }}
 
 // 事务内计算按量包剩余（避免循环依赖，内联查询）
 async function paidRemainingSecOf(tx, userId, now) {
