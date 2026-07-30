@@ -117,7 +117,7 @@ const userController = {
   },
 
   /**
-   * GET /api/user/profile
+   * GET /api/user/profile  &  GET /api/user/me
    * 返回用户基本信息（供前端各页面使用）
    */
   async getProfile(req, res, next) {
@@ -137,6 +137,8 @@ const userController = {
           email: true,
           xp: true,
           membershipLevel: true,
+          nativeLanguage: true,
+          targetLanguage: true,
           createdAt: true,
           lastLoginAt: true,
         },
@@ -149,6 +151,141 @@ const userController = {
       return res.json({
         success: true,
         data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * PUT /api/user/profile
+   * Stage 9 P0 Fix: 更新个人资料（昵称/头像/母语/目标语言/界面语言/密码等）
+   * 前端 profile.html 调用此接口保存昵称、语言设置等
+   * 注意：nativeLanguage/targetLanguage/interfaceLanguage 存储在 UserLanguagePreference 表
+   */
+  async updateProfile(req, res, next) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+
+      // User 表字段
+      const userFields = ['nickname', 'avatar'];
+      const userUpdateData = {};
+
+      for (const field of userFields) {
+        if (req.body[field] !== undefined) {
+          userUpdateData[field] = req.body[field];
+        }
+      }
+
+      // 密码修改单独处理
+      if (req.body.oldPassword && req.body.newPassword) {
+        const bcrypt = require('bcryptjs');
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        const valid = await bcrypt.compare(req.body.oldPassword, user.passwordHash);
+        if (!valid) {
+          return res.status(400).json({ success: false, error: '原密码不正确' });
+        }
+        userUpdateData.passwordHash = await bcrypt.hash(req.body.newPassword, 10);
+      }
+
+      // 语言设置写入 UserLanguagePreference 表
+      const langFields = ['nativeLanguage', 'targetLanguage', 'interfaceLanguage'];
+      const langUpdateData = {};
+
+      for (const field of langFields) {
+        if (req.body[field] !== undefined) {
+          langUpdateData[field] = req.body[field];
+        }
+      }
+
+      // 执行更新
+      const promises = [];
+
+      if (Object.keys(userUpdateData).length > 0) {
+        promises.push(
+          prisma.user.update({
+            where: { id: userId },
+            data: userUpdateData,
+          })
+        );
+      }
+
+      if (Object.keys(langUpdateData).length > 0) {
+        promises.push(
+          prisma.userLanguagePreference.upsert({
+            where: { userId },
+            update: langUpdateData,
+            create: { userId, ...langUpdateData },
+          })
+        );
+      }
+
+      if (promises.length === 0) {
+        return res.status(400).json({ success: false, error: 'No valid fields to update' });
+      }
+
+      await Promise.all(promises);
+
+      // 读取更新后的用户信息
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          nickname: true,
+          avatar: true,
+          phone: true,
+          email: true,
+          xp: true,
+          membershipLevel: true,
+          createdAt: true,
+          lastLoginAt: true,
+        },
+      });
+
+      const langPref = await prisma.userLanguagePreference.findUnique({
+        where: { userId },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          ...updatedUser,
+          nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
+          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
+          interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/user/me
+   * 删除当前用户账号
+   */
+  async deleteAccount(req, res, next) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+
+      // 软删除：标记为 deleted
+      await prisma.user.update({
+        where: { id: userId },
+        data: { deletedAt: new Date() },
+      });
+
+      return res.json({
+        success: true,
+        message: 'Account deleted',
       });
     } catch (error) {
       next(error);
