@@ -147,7 +147,7 @@
     var token = getToken();
     if (!token) return;
     try {
-      fetch('/api/user/languages', { headers: { 'Authorization': 'Bearer ' + token } })
+      fetch('/api/language', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d) return;

@@ -301,7 +301,7 @@
           body: JSON.stringify({ language: lang, level: level })
         }).catch(function () {});
         // Also save user level to learning profile
-        fetch('/api/user/languages', {
+        fetch('/api/language', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ language: lang, level: level })

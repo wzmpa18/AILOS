@@ -17,6 +17,8 @@ router.use('/auth', require('./auth'));
 
 // Language
 router.use('/language', require('./language'));
+// Alias for legacy /api/user/languages – prevents BUG-018 regression
+router.use('/user/languages', require('./language'));
 
 // Content (Module 02 Step 1 — 学习内容体系)
 router.use('/content', require('./content'));

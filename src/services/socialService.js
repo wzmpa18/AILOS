@@ -358,17 +358,15 @@ class SocialService {
   }
 
   async getConversations(userId, { limit = 20 } = {}) {
-    const conversations = await prisma.$queryRawUnsafe(`
-      SELECT id, type, "targetId", "lastMsgPreview", "lastMsgTime", "updatedAt"
-      FROM conversations
-      WHERE $1 = ANY(participants)
-      ORDER BY "lastMsgTime" DESC NULLS LAST
-      LIMIT $2
-    `, userId, limit);
-    return (conversations || []).map((c) => ({
-      id: c.id, type: c.type, targetId: c.targetId,
-      lastMsgPreview: c.lastMsgPreview, lastMsgTime: c.lastMsgTime, updatedAt: c.updatedAt,
-    }));
+    // P0-2 Fix: raw SQL $1 = ANY(participants) causes PostgreSQL type mismatch;
+    // use Prisma native has operator instead.
+    const conversations = await prisma.conversation.findMany({
+      where: { participants: { has: userId } },
+      select: { id: true, type: true, targetId: true, lastMsgPreview: true, lastMsgTime: true, updatedAt: true },
+      orderBy: { lastMsgTime: { sort: 'desc', nulls: 'last' } },
+      take: limit,
+    });
+    return conversations;
   }
 
   async revokeMessage(messageId, userId) {
