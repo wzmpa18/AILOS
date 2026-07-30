@@ -6,6 +6,7 @@ router.post('/send-code', authController.sendSmsCode);
 router.post('/send-email-code', authController.sendEmailCode);
 router.post('/phone', authController.phoneAuth);
 router.post('/password', authController.passwordAuth);
+router.post('/login', authController.passwordAuth); // Alias: frontend uses /login, actual endpoint is /password
 router.post('/register', authController.register);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
