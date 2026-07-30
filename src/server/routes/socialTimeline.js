@@ -51,8 +51,25 @@ router.get('/feed', async (req, res) => {
       }
     });
 
+    // Stage 9 S3 VETO: privacy filter - exclude allowDiscover=false users
+    const actorIds = [...new Set(items.map(i => i.actor?.id).filter(Boolean))];
+    const privacyUsers = await prisma.user.findMany({
+      where: { id: { in: actorIds }, privacySettings: { not: null } },
+      select: { id: true, privacySettings: true },
+    });
+    const hiddenIds = new Set();
+    for (const u of privacyUsers) {
+      try {
+        const ps = typeof u.privacySettings === "string" ? JSON.parse(u.privacySettings) : u.privacySettings;
+        if (ps && ps.allowDiscover === false) hiddenIds.add(u.id);
+      } catch {}
+    }
+    const filteredItems = hiddenIds.size > 0
+      ? items.filter(i => !i.actor || !hiddenIds.has(i.actor.id))
+      : items;
+
     return ok(res, {
-      items: items.map(item => ({
+      items: filteredItems.map(item => ({
         id: item.id,
         actor: item.actor ? {
           id: item.actor.id,
