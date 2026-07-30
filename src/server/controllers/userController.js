@@ -4,6 +4,7 @@
 // GET /api/user/progress/:lang — 返回 LearningProgress 分层数据
 // ============================================================
 const prisma = require('../../config/database');
+const contentFilter = require('../../utils/contentFilter');
 
 const userController = {
   /**
@@ -185,6 +186,21 @@ const userController = {
       for (const field of userFields) {
         if (req.body[field] !== undefined) {
           userUpdateData[field] = req.body[field];
+        }
+      }
+
+      // Stage 9 VETO: 昵称敏感词过滤 (使用 contentFilter.filterContent)
+      if (userUpdateData.nickname) {
+        const filterResult = contentFilter.auditAndFilter(userUpdateData.nickname, {
+          userId,
+          scene: 'user_nickname',
+        });
+        if (!filterResult.passed) {
+          return res.status(400).json(filterResult.errorResponse || {
+            success: false,
+            code: 9004,
+            error: 'Nickname contains prohibited content',
+          });
         }
       }
 
