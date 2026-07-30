@@ -100,6 +100,7 @@ model User {
   ownedGroups            Group[]                 @relation("GroupOwner")
   groupMemberships       GroupMember[]
   sentMessages           Message[]
+ contentAuditLogs ContentAuditLog[]
 
   @@index([phone])
   @@index([email])
@@ -1300,3 +1301,22 @@ model Message {
 
   @@map("messages")
 }
+
+model ContentAuditLog {
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  content       String
+  scene         String   @default("post")
+  endpoint      String?
+  ip            String?
+  words         Json?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([scene])
+  @@index([createdAt])
+
+  @@map("content_audit_logs")
+}
+
