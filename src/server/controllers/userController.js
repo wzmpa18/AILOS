@@ -137,8 +137,6 @@ const userController = {
           email: true,
           xp: true,
           membershipLevel: true,
-          nativeLanguage: true,
-          targetLanguage: true,
           createdAt: true,
           lastLoginAt: true,
         },
@@ -148,9 +146,19 @@ const userController = {
         return res.status(404).json({ success: false, error: 'User not found' });
       }
 
+      // 从 UserLanguagePreference 表获取语言偏好
+      const langPref = await prisma.userLanguagePreference.findUnique({
+        where: { userId },
+      });
+
       return res.json({
         success: true,
-        data: user,
+        data: {
+          ...user,
+          nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
+          targetLanguage: langPref?.targetLanguage || 'en',
+          interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
+        },
       });
     } catch (error) {
       next(error);
@@ -257,7 +265,7 @@ const userController = {
         data: {
           ...updatedUser,
           nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
-          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
+          targetLanguage: langPref?.targetLanguage || 'en',
           interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
         },
       });
