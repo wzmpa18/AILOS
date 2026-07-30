@@ -166,7 +166,7 @@
     { key: 'learn',     icon: '📚', label: '学习',   href: '/xuewaiyu/learn.html' },
     { key: 'chat',      icon: '💬', label: 'AI对话', href: '/xuewaiyu/chat.html' },
     { key: 'review',    icon: '🔄', label: '复习',   href: '/xuewaiyu/review.html' },
-    { key: 'discover',  icon: '🌐', label: '社交',   href: '/xuewaiyu/discover.html' },
+    { key: 'discover',  icon: '🌐', label: '社交',   href: '/xuewaiyu/community-friends.html' },
     { key: 'companion', icon: '🤝', label: '伴读',   href: '/xuewaiyu/ai-companion-builder.html' },
     { key: 'profile',   icon: '👤', label: '我的',   href: '/xuewaiyu/profile.html' }
   ];
@@ -176,7 +176,8 @@
     var p = location.pathname;
     return p.indexOf('community-friends') >= 0 ||
            p.indexOf('community-messages') >= 0 ||
-           p.indexOf('community-groups') >= 0;
+           p.indexOf('community-groups') >= 0 ||
+           p.indexOf('community-trend') >= 0;
   }
 
   function getCommunityNavLabel(key) {

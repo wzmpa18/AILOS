@@ -330,8 +330,8 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <!-- Bottom Navigation Bar -->
-  <div class="bottom-nav" id="bottomNav"></div>
+  <!-- Bottom Navigation Bar (auto-injected by common.js ensureNav) -->
+  <nav class="bottom-nav"></nav>
 
   <script>
   // ============================================================================
@@ -876,34 +876,11 @@
   // ============================================================================
   // Bottom Nav
   // ============================================================================
-  function renderBottomNav() {
-    var nav = document.getElementById('bottomNav');
-    nav.innerHTML = '';
-    var items = [
-      { href: '/xuewaiyu/home', icon: '\uD83C\uDFE0', label: { zh: '首页', en: 'Home', ja: 'ホーム', ko: '홈' } },
-      { href: '/xuewaiyu/learn.html', icon: '\uD83D\uDCDA', label: { zh: '学习', en: 'Learn', ja: '学習', ko: '학습' } },
-      { href: '/xuewaiyu/chat.html', icon: '\uD83D\uDCAC', label: { zh: 'AI对话', en: 'AI Chat', ja: 'AI会話', ko: 'AI 대화' } },
-      { href: '/xuewaiyu/review.html', icon: '\uD83D\uDD04', label: { zh: '复习', en: 'Review', ja: '復習', ko: '복습' }, active: true },
-      { href: '/xuewaiyu/profile.html', icon: '\uD83D\uDC64', label: { zh: '我的', en: 'Me', ja: 'マイ', ko: '내정보' } }
-    ];
-
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      var a = document.createElement('a');
-      a.className = 'nav-item' + (it.active ? ' active' : '');
-      a.href = it.href;
-      a.innerHTML = '<span class="nav-icon">' + it.icon + '</span><span>' + (it.label[currentLang] || it.label.zh) + '</span>';
-      nav.appendChild(a);
-    }
-  }
-
-  // ============================================================================
   // Init
   // ============================================================================
   function init() {
     document.getElementById('headerTitle').textContent = t('title');
     document.getElementById('loadingText').textContent = t('loading');
-    renderBottomNav();
     renderApp();
   }
 
