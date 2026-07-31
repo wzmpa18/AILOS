@@ -4203,3 +4203,43 @@ Stage 10：计费与会员模块 — 套餐配置→订单生成→支付回调�
 
 ---
 
+
+### Stage 10 阶段3 完成记录（2026-07-31 多级权益接入与全功能回归验收）
+
+**1. 阶段核心交付物与实现逻辑**：
+- 权益映射标准化：3级权益（免费5码/基础8码/高级13码）写入MembershipRights表，与MembershipPlan一一绑定
+- 权益校验中间件：requireRight(rightCode)白名单放行+requireQuota(quotaName)配额校验，60秒缓存
+- membershipController：套餐查询/会员状态/订单/支付回调/代付/订单历史 全功能
+- membership路由：/api/membership/plans|status|orders|order|payment/callback|proxy/create|proxy/order|proxy/pay
+- 并发幂等修复：乐观锁（pending→processing→paid）防止并发回调重复开通会员
+
+**2. 全量验证场景清单与通过率**：
+- 3.1存量功能回归：9/9 PASS（Health/Dashboard/Content/Checkin/AI/Social/Membership）
+- 3.2权限7场景：7/7 PASS
+  - 场景1免费越权拦截 ✓
+  - 场景2基础会员权限匹配 ✓（group_200/client_unlimited有，group_500/discover_image无）
+  - 场景3高级会员全量放行 ✓（group_500/discover_image/ai_screenshot/ai_tongue/ai_deep_analysis全有）
+  - 场景4会员到期降级 ✓（expired=true, level=free）
+  - 场景5续费即时生效 ✓（支付后level=basic, expired=false）
+  - 场景6代付开通生效 ✓（代付支付后level=basic, expired=false）
+  - 场景7异常容错 ✓（无效权益码200/空token 401/无效代付token 500）
+- 3.3边界场景：2/2 PASS
+  - 多笔订单叠加：时长正确累加 ✓
+  - 并发幂等：Memberships for order=1（修复后）✓
+
+**3. 关键问题与修复记录**：
+- 并发幂等Bug：原实现检查status≠paid后直接更新，并发请求同时通过检查导致重复开通
+- 修复方案：乐观锁updateMany(where status=pending→processing)，count=0则视为重复回调
+- 修复验证：并发两次回调→1个成功+1个幂等返回，会员记录=1
+
+**4. Git提交哈希、三端一致性确认**：
+- 阶段3提交SHA：（见git log）
+- 三端一致：服务器=GitHub=本地（git push确认）
+
+**5. 验收结论**：
+- 功能兼容：存量功能9/9可用，无回归bug ✓
+- 权限精准：7个场景全部通过，无误放误拦越权 ✓
+- 宪制合规：无Schema违规修改、无直改生产、无数据丢失 ✓
+- 证据完整：自动化验证脚本+测试报告+账簿记录+Git提交链齐全 ✓
+- 三端一致：服务器代码与仓库主分支完全同步 ✓
+

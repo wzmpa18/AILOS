@@ -156,17 +156,45 @@ async function handlePaymentCallback(orderNo, payAmount, channel, notifyId, rawD
     throw new Error('Amount mismatch');
   }
 
-  // 4. 事务：更新订单 + 开通会员 + 写流水
+  // 4. 乐观锁：仅当status=pending时更新，防止并发重复
+  const lockResult = await prisma.membershipOrder.updateMany({
+    where: { orderNo, status: 'pending' },
+    data: { status: 'processing' },
+  });
+
+  if (lockResult.count === 0) {
+    // 订单已被其他请求处理中或已支付
+    await prisma.paymentLog.create({
+      data: {
+        orderNo,
+        notifyId,
+        amount: payAmount,
+        payStatus: 'duplicate',
+        channel,
+        rawData,
+        errorMessage: 'Concurrent callback: order already being processed',
+      },
+    });
+    return { success: true, message: 'Order already paid (idempotent)', order };
+  }
+
+  // 5. 事务：更新订单 + 开通会员 + 写流水
   const result = await prisma.$transaction(async (tx) => {
-    // 4a. 更新订单状态
-    const updatedOrder = await tx.membershipOrder.update({
-      where: { orderNo },
+    // 5a. 更新订单状态（条件更新：仅processing→paid）
+    const updateResult = await tx.membershipOrder.updateMany({
+      where: { orderNo, status: 'processing' },
       data: {
         status: 'paid',
         paidAt: new Date(),
         paymentId: notifyId,
       },
     });
+
+    if (updateResult.count === 0) {
+      throw new Error('Order status changed during transaction');
+    }
+
+    const updatedOrder = await tx.membershipOrder.findUnique({ where: { orderNo } });
 
     // 4b. 开通会员
     const plan = await tx.membershipPlan.findFirst({
