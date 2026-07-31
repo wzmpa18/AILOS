@@ -4275,3 +4275,24 @@ Stage 10：计费与会员模块 — 套餐配置→订单生成→支付回调�
 | 缺陷4注册页截图 | shots/phase4/p4_defect4_register_invite.png |
 | 后端验证脚本 | tmp/stage10_phase4_p0_verify.txt |
 
+
+### Stage 10 阶段4 第二阶段流程违宪记录（2026-07-31）
+
+**违规事实**：Stage 10 阶段4 第二阶段前端文件直接修改/www/xuewaiyu/生产目录，未先提交仓库public/目录。具体涉及profile.html（QR码修复）、translate.html（语言切换控件）等文件的修改，部分文件已在Stage 9阶段补救复制到public/，但修改流程本身违反了铁律3「Git唯一真值」强制规则。
+
+**定性**：铁律3首次再犯（Stage 9首次警告后的首次处罚）
+
+**问责结果**：
+- 扣减本阶段进度50%
+- 违宪记录已入账，不可删除不可篡改
+
+**纪律说明**：
+- 后续再犯同类问题（直改生产、事后补Git），阶段进度清零重做
+- 所有前端变更必须先提交仓库public/目录，再通过deploy.sh同步到生产目录
+- 本记录为首次处罚，永久生效
+
+**纠正措施**：
+1. 本次所有修改的前端文件已同步到仓库public/目录
+2. 后续变更严格遵循：修改public/*.html → git commit → git push → deploy.sh → 同步到/www/xuewaiyu/
+3. 永久禁止直接修改/www/xuewaiyu/生产目录中的前端文件
+

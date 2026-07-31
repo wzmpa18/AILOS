@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>代付支付 - AILOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f6fa; color: #333; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+    .card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #333; }
+    .header p { font-size: 14px; color: #999; margin-top: 4px; }
+    .order-detail { background: #f8f9fa; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+    .order-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .order-row .label { color: #999; }
+    .order-row .value { color: #333; font-weight: 500; }
+    .amount-section { text-align: center; margin: 20px 0; }
+    .amount-section .amount { font-size: 36px; font-weight: 700; color: #667eea; }
+    .amount-section .unit { font-size: 18px; color: #999; }
+    .btn-pay { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; border: none; border-radius: 10px; font-size: 17px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; }
+    .btn-pay:active { opacity: 0.9; }
+    .status { text-align: center; padding: 20px; font-size: 16px; }
+    .status.success { color: #4caf50; }
+    .status.error { color: #f44336; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="content">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script>
+    var API_BASE = '/xuewaiyu/api';
+    var params = new URLSearchParams(window.location.search);
+    var proxyToken = params.get('token');
+
+    async function init() {
+      if (!proxyToken) {
+        document.getElementById('content').innerHTML = '<div class="card"><div class="status error">❌ 无效的代付链接</div></div>';
+        return;
+      }
+
+      try {
+        // 获取代付订单信息（无需登录）
+        var resp = await fetch(API_BASE + '/membership/proxy/order?token=' + encodeURIComponent(proxyToken));
+        var data = await resp.json();
+
+        if (!data.success || !data.data) {
+          document.getElementById('content').innerHTML = '<div class="card"><div class="status error">❌ ' + (data.error || '代付链接无效或已过期') + '</div></div>';
+          return;
+        }
+
+        renderOrder(data.data);
+      } catch(e) {
+        document.getElementById('content').innerHTML = '<div class="card"><div class="status error">❌ 网络错误，请重试</div></div>';
+      }
+    }
+
+    function renderOrder(order) {
+      var amount = (order.amount / 100).toFixed(2);
+      document.getElementById('content').innerHTML =
+        '<div class="card">' +
+          '<div class="header"><h1>代付订单</h1><p>您正在为 ' + order.userNickname + ' 代付</p></div>' +
+          '<div class="order-detail">' +
+            '<div class="order-row"><span class="label">套餐</span><span class="value">' + order.planName + '</span></div>' +
+            '<div class="order-row"><span class="label">时长</span><span class="value">' + order.duration + '天</span></div>' +
+            '<div class="order-row"><span class="label">订单号</span><span class="value">' + order.orderNo + '</span></div>' +
+          '</div>' +
+          '<div class="amount-section"><span class="unit">¥</span><span class="amount">' + amount + '</span></div>' +
+          '<button class="btn-pay" onclick="pay(' + JSON.stringify(order).replace(/"/g, '&quot;') + ')">确认支付 ¥' + amount + '</button>' +
+        '</div>';
+    }
+
+    async function pay(order) {
+      var btn = document.querySelector('.btn-pay');
+      btn.textContent = '支付中...';
+      btn.disabled = true;
+
+      try {
+        var resp = await fetch(API_BASE + '/membership/proxy/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            proxyToken: proxyToken,
+            payAmount: order.amount,
+            payerInfo: { source: 'proxy_landing', timestamp: Date.now() }
+          })
+        });
+        var data = await resp.json();
+
+        if (data.success) {
+          document.getElementById('content').innerHTML =
+            '<div class="card">' +
+              '<div class="status success">✅ 支付成功！</div>' +
+              '<p style="text-align:center;color:#999;font-size:14px;margin-top:12px;">会员权益已自动到账，' + order.userNickname + ' 即可享受全部权益</p>' +
+            '</div>';
+        } else {
+          document.getElementById('content').innerHTML = '<div class="card"><div class="status error">❌ ' + (data.error || '支付失败') + '</div></div>';
+        }
+      } catch(e) {
+        document.getElementById('content').innerHTML = '<div class="card"><div class="status error">❌ 网络错误，请重试</div></div>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

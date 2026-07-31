@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会员中心 - AILOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f6fa; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+    .header { text-align: center; padding: 24px 0; }
+    .header h1 { font-size: 24px; font-weight: 700; }
+    .header p { font-size: 14px; color: #999; margin-top: 4px; }
+    .current-status { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
+    .current-status .level { font-size: 20px; font-weight: 600; }
+    .current-status .expiry { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .plans { display: flex; flex-direction: column; gap: 16px; }
+    .plan-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 2px solid transparent; transition: border-color 0.2s; }
+    .plan-card.recommended { border-color: #667eea; }
+    .plan-card .badge { display: inline-block; padding: 2px 10px; background: #667eea; color: #fff; border-radius: 12px; font-size: 12px; margin-bottom: 8px; }
+    .plan-card .name { font-size: 20px; font-weight: 600; }
+    .plan-card .price { font-size: 32px; font-weight: 700; color: #667eea; margin: 8px 0; }
+    .plan-card .price .unit { font-size: 14px; color: #999; }
+    .plan-card .price .period { font-size: 14px; color: #999; font-weight: 400; }
+    .plan-card .features { list-style: none; margin: 16px 0; }
+    .plan-card .features li { padding: 4px 0; font-size: 14px; color: #666; }
+    .plan-card .features li:before { content: '✓ '; color: #4caf50; font-weight: bold; }
+    .plan-card .actions { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; display: block; }
+    .btn-buy { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .btn-proxy { background: #f0f0f0; color: #666; }
+    .orders-section { margin-top: 24px; }
+    .orders-section h2 { font-size: 18px; margin-bottom: 12px; }
+    .order-item { background: #fff; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+    .order-item .status-paid { color: #4caf50; }
+    .order-item .status-pending { color: #ff9800; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="content">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script>
+    var API_BASE = '/xuewaiyu/api';
+    var token = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token') || '';
+    if (!token) { try { token = JSON.parse(localStorage.getItem('auth_tokens') || '{}').accessToken || ''; } catch(e) {} }
+
+    async function apiCall(method, path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      var resp = await fetch(API_BASE + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+      return resp.json();
+    }
+
+    var plansData = [];
+    var userStatus = null;
+
+    async function init() {
+      var [plansResp, statusResp, ordersResp] = await Promise.all([
+        apiCall('GET', '/membership/plans'),
+        apiCall('GET', '/membership/status'),
+        apiCall('GET', '/membership/orders?limit=10')
+      ]);
+
+      plansData = (plansResp.success && plansResp.data) ? plansResp.data : [];
+      userStatus = (statusResp.success && statusResp.data) ? statusResp.data : null;
+      var orders = (ordersResp.success && ordersResp.data) ? ordersResp.data.orders : [];
+
+      renderPage(plansData, userStatus, orders);
+    }
+
+    function renderPage(plans, status, orders) {
+      var currentLevel = status ? status.rights.levelCode : 'free';
+      var expiry = status && status.rights && status.rights.expiry ? new Date(status.rights.expiry).toLocaleDateString('zh-CN') : '—';
+
+      var html = '<div class="header"><h1>会员中心</h1><p>升级解锁全部权益</p></div>';
+
+      // 当前状态
+      var levelName = status && status.rights ? status.rights.levelName : '免费用户';
+      html += '<div class="current-status"><div class="level">' + levelName + '</div><div class="expiry">到期时间: ' + expiry + '</div></div>';
+
+      // 套餐列表
+      html += '<div class="plans">';
+      plans.filter(function(p) { return p.planCode !== 'free'; }).forEach(function(plan) {
+        var isRecommended = plan.planCode === 'premium';
+        var features = plan.features || [];
+        var featureHtml = features.map(function(f) { return '<li>' + f + '</li>'; }).join('');
+
+        html += '<div class="plan-card' + (isRecommended ? ' recommended' : '') + '">' +
+          (isRecommended ? '<span class="badge">推荐</span>' : '') +
+          '<div class="name">' + plan.name + '</div>' +
+          '<div class="price"><span class="unit">¥</span>' + (plan.price / 100).toFixed(2) + '<span class="period">/' + plan.durationDays + '天</span></div>' +
+          '<ul class="features">' + featureHtml + '</ul>' +
+          '<div class="actions">' +
+            '<a class="btn btn-buy" href="/xuewaiyu/proxy-payment.html?planId=' + plan.id + '">立即购买</a>' +
+            '<a class="btn btn-proxy" href="/xuewaiyu/proxy-payment.html?planId=' + plan.id + '">发起代付</a>' +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+
+      // 订单历史
+      if (orders.length > 0) {
+        html += '<div class="orders-section"><h2>订单历史</h2>';
+        orders.forEach(function(order) {
+          var statusClass = order.status === 'paid' ? 'status-paid' : 'status-pending';
+          var statusText = order.status === 'paid' ? '已支付' : '待支付';
+          html += '<div class="order-item">' +
+            '<div><div>' + order.membershipLevel + '</div><div style="color:#999;font-size:12px;">' + new Date(order.createdAt).toLocaleString('zh-CN') + '</div></div>' +
+            '<div style="text-align:right;"><div>¥' + (order.amount / 100).toFixed(2) + '</div><div class="' + statusClass + '">' + statusText + '</div></div>' +
+          '</div>';
+        });
+        html += '</div>';
+      }
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    init();
+  </script>
+</body>
+</html>
