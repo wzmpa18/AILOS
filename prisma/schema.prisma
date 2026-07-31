@@ -1311,11 +1311,13 @@ model ContentAuditLog {
   endpoint      String?
   ip            String?
   words         Json?
+  level         String?  @default("normal") // normal | severe
   createdAt     DateTime @default(now())
 
   @@index([userId])
   @@index([scene])
   @@index([createdAt])
+  @@index([level])
 
   @@map("content_audit_logs")
 }

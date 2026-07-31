@@ -144,11 +144,7 @@ router.post('/groups', auth, async (req, res, next) => {
         clientIP: req.ip || req.connection?.remoteAddress,
       });
       if (!filterResult.passed) {
-        return res.status(400).json({
-          success: false,
-          code: 9004,
-          error: 'Group name contains prohibited content',
-        });
+        return res.status(filterResult.details?.severity === 'severe' ? 403 : 400).json(filterResult.errorResponse || { success: false, code: 9004, error: 'Group name contains prohibited content' });
       }
     }
     const svc = getSocialService();
@@ -252,11 +248,7 @@ router.post('/messages', auth, async (req, res, next) => {
         clientIP: req.ip || req.connection?.remoteAddress,
       });
       if (!filterResult.passed) {
-        return res.status(400).json({
-          success: false,
-          code: 9004,
-          error: 'Message contains prohibited content',
-        });
+        return res.status(filterResult.details?.severity === 'severe' ? 403 : 400).json(filterResult.errorResponse || { success: false, code: 9004, error: 'Message contains prohibited content' });
       }
     }
     const svc = getSocialService();

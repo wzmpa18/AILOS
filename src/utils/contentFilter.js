@@ -148,16 +148,22 @@ const SCENE_LABELS = {
 // 统一过滤错误
 // ============================================================
 
-const FILTER_ERROR = {
+const FILTER_ERROR_NORMAL = {
   success: false,
   code: 9004,
   error: '内容包含违规信息，请修改后重试',
 };
 
+const FILTER_ERROR_SEVERE = {
+  success: false,
+  code: 9005,
+  error: '内容包含严重违规信息，禁止发布',
+};
+
 // 违规分级
 const SEVERITY = {
-  SENSITIVE: 'high',      // 一级敏感词：直接拦截
-  PROFANITY: 'medium',    // 二级脏话：拦截+警告
+  SENSITIVE: 'severe',    // 一级敏感词：严重违规
+  PROFANITY: 'normal',    // 二级脏话：一般违规
 };
 
 // ============================================================
@@ -190,8 +196,8 @@ function filterContent(text, options = {}) {
         );
         return {
           passed: false,
-          reason: FILTER_ERROR.error,
-          errorResponse: FILTER_ERROR,
+          reason: FILTER_ERROR_SEVERE.error,
+          errorResponse: FILTER_ERROR_SEVERE,
           details: {
             layer: 'sensitive',
             severity: SEVERITY.SENSITIVE,
@@ -212,9 +218,9 @@ function filterContent(text, options = {}) {
         );
         return {
           passed: false,
-          reason: FILTER_ERROR.error,
-          errorResponse: FILTER_ERROR,
-          details: {
+          reason: FILTER_ERROR_NORMAL.error,
+          errorResponse: FILTER_ERROR_NORMAL,
+            details: {
             layer: 'profanity',
             severity: SEVERITY.PROFANITY,
             matched: matched ? matched[0] : null,
@@ -254,6 +260,7 @@ function auditAndFilter(text, context = {}) {
       context.endpoint || null,
       context.clientIP || null,
       matchedWords,
+      result.details?.severity || 'normal',
     ).catch((e) => {
       // 异常兜底：不影响主业务流程
       logger.warn('[ContentFilter] auditLog async error:', e.message);
@@ -265,7 +272,7 @@ function auditAndFilter(text, context = {}) {
 }
 
 // Stage 9 S3: Write audit log to database (异常兜底)
-async function auditLog(userId, content_text, scene, endpoint, ip, words) {
+async function auditLog(userId, content_text, scene, endpoint, ip, words, level) {
   try {
     await prisma.contentAuditLog.create({
       data: {
@@ -275,6 +282,7 @@ async function auditLog(userId, content_text, scene, endpoint, ip, words) {
         endpoint: endpoint || null,
         ip: ip || null,
         words: words || [],
+        level: level || 'normal',
       },
     });
   } catch (err) {
@@ -298,7 +306,8 @@ module.exports = {
   filterMessage,
   auditAndFilter,
   normalizeText,
-  FILTER_ERROR,
+  FILTER_ERROR_NORMAL,
+  FILTER_ERROR_SEVERE,
   SENSITIVE_PATTERNS,
   PROFANITY_PATTERNS,
   SCENE_LABELS,

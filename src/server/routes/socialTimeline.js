@@ -112,7 +112,8 @@ router.post('/post', async (req, res) => {
       clientIP: req.ip || req.connection?.remoteAddress,
     });
     if (!filterResult.passed) {
-      return err(res, 'TIMELINE_4008', filterResult.errorResponse?.error || 'content blocked', 400);
+      const httpCode = filterResult.details?.severity === 'severe' ? 403 : 400;
+      return res.status(httpCode).json(filterResult.errorResponse || { success: false, code: 9004, error: 'content blocked' });
     }
 
     const post = await prisma.socialTimeline.create({
