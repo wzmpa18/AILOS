@@ -1,5 +1,5 @@
 /**
- * Stage 10 阶段3：会员路由
+ * Stage 10 阶段4：会员路由
  * 套餐查询/会员状态/订单/支付回调/代付/订单历史
  */
 const express = require('express');
@@ -9,6 +9,10 @@ const { authenticate } = require('../middleware/auth');
 
 // Public: 查看套餐（无需登录）
 router.get('/plans', membershipController.getPlans);
+
+// Public: 代付落地页相关接口（第三方无需登录即可查看和支付）
+router.get('/proxy/order', membershipController.getProxyOrder);
+router.post('/proxy/pay', membershipController.processProxyPayment);
 
 // Protected: 需登录
 router.use(authenticate);
@@ -24,9 +28,7 @@ router.post('/order', membershipController.createOrder);
 // 支付回调
 router.post('/payment/callback', membershipController.processPayment);
 
-// 代付机制
+// 代付创建（需登录，下单方发起）
 router.post('/proxy/create', membershipController.createProxyPayment);
-router.get('/proxy/order', membershipController.getProxyOrder);
-router.post('/proxy/pay', membershipController.processProxyPayment);
 
 module.exports = router;
