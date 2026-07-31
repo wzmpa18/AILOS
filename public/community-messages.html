@@ -241,10 +241,7 @@
 <!-- Bottom Nav injected by common.js (Stage9 M5: Community 4-Tab) -->
 
 <script src="/xuewaiyu/assets/common.js">
-function viewMsgSenderProfile(uniqueId) {
-  if (!uniqueId) return;
-  window.location.href = '/xuewaiyu/profile.html?share=' + encodeURIComponent(uniqueId);
-}
+
 
 </script>
 <script>
@@ -352,7 +349,7 @@ var allConvs = [];
 
 async function loadConversations() {
   try {
-    var convs = await api('GET', '/conversation/list');
+    var convs = await api('GET', '/conversations');
     allConvs = Array.isArray(convs) ? convs : (convs.conversations || []);
     renderConvs(allConvs);
   } catch (e) { if (e.message !== 'NOT_AUTH') showToast(t('error_network'), 'error'); }
@@ -421,7 +418,7 @@ function backToList() {
 
 async function loadMessages() {
   try {
-    var result = await api('GET', '/message/list?conversationId=' + chatConvId + '&page=' + chatPage + '&limit=30');
+    var result = await api('GET', '/messages/' + chatConvId + '?page=' + chatPage + '&limit=30');
     var msgs = result.messages || [];
     renderMessages(msgs, chatPage > 1);
     if (msgs.length < 30) { chatHasMore = false; document.getElementById('loadMoreBtn').style.display = 'none'; }
@@ -440,7 +437,12 @@ function renderMessages(msgs, prepend) {
     var revoked = m.isRevoked ? ' chat-msg-revoked' : '';
     var displayContent = m.isRevoked ? t('revoked') : escapeHtml(m.content || '');
 
+    var senderName = m.senderName || m.senderNickname || (m.isMe ? '我' : '对方');
+    var senderUid = m.senderUniqueId || m.senderUid || m.senderId || '';
     html += '<div class="chat-msg' + me + revoked + '" data-msg-id="' + m.id + '" oncontextmenu="onMsgContext(event,\'' + m.id + '\',' + m.isMe + ',' + m.isRevoked + ',\'' + m.createdAt + '\'); return false">';
+    if (!m.isMe) {
+      html += '<div class="chat-msg-avatar" onclick="viewMsgSenderProfile(\'' + senderUid + '\')" style="width:32px;height:32px;border-radius:50%;background:' + avatarColor(senderName) + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;margin-right:8px;flex-shrink:0;">' + avatarText(senderName) + '</div>';
+    }
     html += '<div class="chat-msg-bubble" onclick="onMsgClick(event,\'' + m.id + '\',' + m.isMe + ',' + m.isRevoked + ',\'' + m.createdAt + '\')">' + (revoked ? '' : displayContent) + '</div>';
     if (m.isRevoked) html += '<div class="chat-msg-status">' + (!m.isMe ? '' : '') + '</div>';
     html += '</div>';
@@ -484,7 +486,7 @@ async function sendMsg() {
   btn.disabled = true;
 
   try {
-    await api('POST', '/message/send', { conversationId: chatConvId, content: content });
+    await api('POST', '/messages/send', { conversationId: chatConvId, content: content });
     chatPage = 1;
     // Reload messages
     await loadMessages();
@@ -549,7 +551,7 @@ function copyMsg() {
 async function revokeMsg() {
   if (!contextMsgId) return;
   try {
-    await api('POST', '/message/revoke', { messageId: contextMsgId });
+    await api('POST', '/messages/revoke', { messageId: contextMsgId });
     showToast(t('msg_revoked'), 'success');
     chatPage = 1;
     await loadMessages();
@@ -567,5 +569,16 @@ function init() {
 
 init();
 </script>
+
+<script>
+function viewMsgSenderProfile(uniqueId) {
+  if (!uniqueId) {
+    console.warn('viewMsgSenderProfile: uniqueId is empty');
+    return;
+  }
+  window.location.href = '/xuewaiyu/profile.html?share=' + encodeURIComponent(uniqueId);
+}
+</script>
+
 </body>
 </html>
