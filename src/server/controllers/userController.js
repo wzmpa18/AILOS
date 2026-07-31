@@ -157,7 +157,7 @@ const userController = {
         data: {
           ...user,
           nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
-          targetLanguage: langPref?.targetLanguage || 'en',
+          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
           interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
         },
       });
@@ -221,12 +221,16 @@ const userController = {
       }
 
       // 语言设置写入 UserLanguagePreference 表
-      const langFields = ['nativeLanguage', 'targetLanguage', 'interfaceLanguage'];
+      const langFields = ['nativeLanguage', 'defaultExplanationLanguage', 'interfaceLanguage'];
       const langUpdateData = {};
 
       for (const field of langFields) {
         if (req.body[field] !== undefined) {
+          if (field === 'defaultExplanationLanguage' && req.body['targetLanguage'] !== undefined) {
+          langUpdateData['defaultExplanationLanguage'] = req.body['targetLanguage'];
+        } else if (req.body[field] !== undefined) {
           langUpdateData[field] = req.body[field];
+        }
         }
       }
 
@@ -283,7 +287,7 @@ const userController = {
         data: {
           ...updatedUser,
           nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
-          targetLanguage: langPref?.targetLanguage || 'en',
+          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
           interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
         },
       });

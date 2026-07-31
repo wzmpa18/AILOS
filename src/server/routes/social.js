@@ -139,8 +139,8 @@ router.post('/groups', auth, async (req, res, next) => {
     if (req.body.name) {
       const filterResult = contentFilter.auditAndFilter(req.body.name, {
         userId: getUid(req),
-        scene: 'group_create',
-        endpoint: '/api/v1/social/groups',
+        scene: 'group_name',
+        endpoint: '/api/v1/social/group',
         clientIP: req.ip || req.connection?.remoteAddress,
       });
       if (!filterResult.passed) {
@@ -248,7 +248,7 @@ router.post('/messages', auth, async (req, res, next) => {
       const filterResult = contentFilter.auditAndFilter(req.body.content, {
         userId: getUid(req),
         scene: 'message',
-        endpoint: '/api/v1/social/messages',
+        endpoint: '/api/v1/social/message',
         clientIP: req.ip || req.connection?.remoteAddress,
       });
       if (!filterResult.passed) {
