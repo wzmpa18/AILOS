@@ -4114,5 +4114,52 @@ Stage 9 整改期间（2026-07-30至2026-07-31），开发端在修复审计日�
 3. 本记录为首次警告，不可删除不可篡改
 
 
+### 标准化账簿记录（2026-07-31 Stage 9 最终冻结）
+
+**1. 任务名称与阶段**：Stage 9 社群模块终审整改与冻结
+
+**2. 核心交付内容**：
+- 审计日志系统：4场景全覆盖（post/user_nickname/group_name/message），scene/endpoint/ip/words/level字段完整，异常兜底（console.error不影响主流程）
+- 敏感词分级：212词库（174敏感+38脏话），severe(403/9005)vs normal(400/9004)，繁体/拆字/空格防绕过
+- 隐私联动6场景：S3模糊搜索/S4主页隐藏/S5群聊双入口/S7好友边界/S8缓存失效/REVERSE恢复
+- P1项：事务回滚验证/个人中心6功能（昵称/隐私/二维码/邀请码/语言/退出）
+- 前端修复：API_BASE路径适配nginx代理/token读取兼容/群组API路径/消息API路径/头像点击跳转
+- 宪制升级：C.2.1四条铁律（双读双入/验收零降格/Git唯一真值/证据链可追溯）
+
+**3. 验收通过/驳回结果**：有条件正式FROZEN（基线d0f64d6）
+
+**4. 违宪行为记录**：
+- 首次违宪（铁律3）：Stage 9整改期间多次先改/www/xuewaiyu/生产目录、后复制到仓库public/补提交
+- 定性：违反"Git先提交、deploy.sh再部署"的宪制流程
+- 处理：首次警告，已入账簿不可删除
+
+**5. 对应问责说明**：
+- 首次违宪：记警告一次，不扣减进度
+- Stage 10起再犯：第一次扣减50%进度，第二次清零重做，第三次冻结开发权限
+- 宪制升级已落地：C.2.1四条铁律永久生效
+
+**6. 全部证据文件索引**：
+| 证据 | 文件路径 |
+|------|----------|
+| 审计日志4场景验证 | tmp/step1_audit_result.txt |
+| 隐私联动6场景验证 | tmp/step2_privacy_result.txt |
+| P1项全量验证 | tmp/step3_p1_result.txt |
+| 敏感词分级验证 | tmp/step3_grading_result.txt |
+| Redis缓存实锤验证 | tmp/step5_redis_cache_proof.txt |
+| deploy.sh真实部署日志 | tmp/deploy_real_log.txt |
+| deploy.sh首次部署日志 | tmp/deploy_full_log.txt |
+| 二维码+邀请码验证 | tmp/step5_qr_invite_result.txt |
+| 三端账簿一致性比对 | tmp/ledger_three_end_comparison.txt |
+| 账簿第60章完整原文 | tmp/ledger_ch60_full.txt |
+| Playwright群成员头像截图 | shots/step1_https/v3_member_avatar_click_profile.png |
+| Playwright消息头像截图 | shots/step1_https/v4_msg_avatar_final.png |
+| Playwright社交页面数据截图 | shots/step1_https/v3_trend_data.png, v3_friends_data.png, v3_groups_rendered.png |
+| Playwright登录流程截图 | shots/step1_https/08_login_filled.png, 09_login_after.png |
+| Playwright移动端截图 | shots/step1_https/01_index_mobile_375.png |
+| 宪法C.2.1四条铁律 | docs/AILOS_CONSTITUTION.md (C.2.1章节) |
+| 账簿第60章问责记录 | docs/AILOS_MASTER_LEDGER.md (第60章) |
+| 终验报告V3 | docs/STAGE9_FROZEN_FINAL_V3.md |
+
+
 ---
 
