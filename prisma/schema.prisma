@@ -68,6 +68,8 @@ model User {
   userDevices             UserDevice[]
   membershipOrders        MembershipOrder[]
   userMemberships         UserMembership[] @relation("UserMemberships")
+  referralsMade            ReferralLink[] @relation("ReferralReferrer")
+  referralReceived         ReferralLink?  @relation("ReferralReferee")
   dataExportRequests      DataExportRequest[]
   accountDeletionRequests AccountDeletionRequest[]
   userIdentity            UserIdentity?
@@ -1416,5 +1418,23 @@ model MembershipRights {
   updatedAt   DateTime @updatedAt
 
   @@map("membership_rights")
+}
+
+
+/// 邀请关系表（Stage 10 阶段4 增量）
+model ReferralLink {
+  id          String   @id @default(uuid())
+  referrerId  String                                    // 邀请人用户ID
+  refereeId   String   @unique                          // 被邀请人用户ID（唯一，不可重复绑定）
+  inviteCode  String?                                   // 邀请码
+  source      String   @default("share_link")           // 来源渠道
+  boundAt     DateTime @default(now())
+
+  referrer    User?    @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: SetNull)
+  referee     User?    @relation("ReferralReferee", fields: [refereeId], references: [id], onDelete: SetNull)
+
+  @@index([referrerId])
+  @@index([inviteCode])
+  @@map("referral_links")
 }
 
