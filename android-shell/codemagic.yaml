@@ -1,0 +1,26 @@
+# AILOS v1.0 Beta - Codemagic构建配置
+# 云端标准化打包，无需本地环境
+
+environment:
+  groups:
+    - keystore_credentials  # 包含CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD
+
+scripts:
+  - name: Build Release APK
+    script: |
+      ./gradlew assembleRelease
+      
+  - name: Sign and Verify
+    script: |
+      # 签名由gradle自动注入（环境变量）
+      # 验证APK签名
+      $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+
+artifacts:
+  - app/build/outputs/apk/release/app-release.apk
+  - app/build/outputs/mapping/release/mapping.txt
+
+publishing:
+  email:
+    recipients:
+      - deploy@yandao.ai

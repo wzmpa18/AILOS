@@ -1,0 +1,70 @@
+// build.gradle (Module: app)
+// AILOS v1.0 Beta - Android WebView Shell
+// 极致轻量：仅容器+适配+原生桥接+基础配置
+
+android {
+    namespace 'ai.yandao.ailos'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ai.yandao.ailos"
+        minSdk 26          // Android 8.0, 覆盖98%+活跃机型
+        targetSdk 34
+        versionCode 1      // 构建号，Codemagic自动递增
+        versionName "1.0.0" // 对应Stage 10基线
+
+        // 默认站点域名（buildConfig注入）
+        buildConfigField "String", "BASE_URL", '"https://yandao.vip/xuewaiyu/"'
+        buildConfigField "String", "API_BASE", '"https://yandao.vip/xuewaiyu/api/"'
+    }
+
+    signingConfigs {
+        release {
+            // 签名文件+密码通过环境变量注入，严禁入库
+            storeFile file(System.getenv("CM_KEYSTORE_PATH") ?: "debug.keystore")
+            storePassword System.getenv("CM_KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("CM_KEY_ALIAS") ?: ""
+            keyPassword System.getenv("CM_KEY_PASSWORD") ?: ""
+            // v1+v2+v3签名方案全启用
+            v1SigningEnabled true
+            v2SigningEnabled true
+            v3SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true       // 代码混淆
+            shrinkResources true     // 资源压缩
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            buildConfigField "boolean", "DEBUG_MODE", "false"
+            // 移除调试日志
+            buildConfigField "boolean", "ENABLE_LOG", "false"
+        }
+        debug {
+            buildConfigField "String", "BASE_URL", '"https://yandao.vip/xuewaiyu/"'
+            buildConfigField "boolean", "DEBUG_MODE", "true"
+            buildConfigField "boolean", "ENABLE_LOG", "true"
+        }
+    }
+
+    // 硬件加速
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.webkit:webkit:1.9.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+}

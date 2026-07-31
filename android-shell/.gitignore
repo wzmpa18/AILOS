@@ -1,0 +1,10 @@
+# AILOS Android Shell .gitignore
+*.apk
+*.keystore
+*.jks
+local.properties
+.gradle/
+build/
+.idea/
+*.iml
+captures/
