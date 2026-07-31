@@ -1510,7 +1510,7 @@ async function loadUserProfile() {
 
   try {
     const data = await apiCall('GET', '/user/me');
-    userData = data.user || data;
+    userData = data.user || data.data || data;
     populateProfile(userData);
     document.getElementById('loadingSpinner').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
@@ -1952,41 +1952,29 @@ function showQRCode() {
   var userId = getUserId();
   var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
   urlEl.textContent = profileUrl;
-  // Use goQR.me API (free, no rate limit, UTF-8 support)
-  // 纯前端QR码生成（不依赖第三方接口）
-  var qrCanvas = document.getElementById('qrCanvas');
-  if (!qrCanvas) {
-    qrCanvas = document.createElement('canvas');
-    qrCanvas.id = 'qrCanvas';
-    qrCanvas.style.cssText = 'width:200px;height:200px;margin:10px auto;display:block;';
+
+  // 清空容器
+  canvasEl.innerHTML = '';
+
+  // 纯前端QR码生成（使用qrcodejs库）
+  function renderQR() {
+    canvasEl.innerHTML = '';
+    new QRCode(canvasEl, { text: profileUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
   }
-  // 使用qrcode.js生成
+
   if (typeof QRCode !== 'undefined') {
-    qrCanvas.innerHTML = '';
-    new QRCode(qrCanvas, { text: profileUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
-    var qrImg = qrCanvas.querySelector('img') || qrCanvas.querySelector('canvas');
-    if (qrImg) {
-      var qrContainer = document.getElementById('qrCodeContainer') || document.querySelector('.qr-code-area');
-      if (qrContainer) {
-        qrContainer.innerHTML = '';
-        qrContainer.appendChild(qrImg.cloneNode(true));
-      }
-    }
+    renderQR();
   } else {
-    // Fallback: 使用在线库动态加载
+    // 动态加载qrcodejs库
     var script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-    script.onload = function() {
-      var container = document.getElementById('qrCodeContainer') || document.querySelector('.qr-code-area');
-      if (container) {
-        container.innerHTML = '';
-        new QRCode(container, { text: profileUrl, width: 200, height: 200 });
-      }
+    script.onload = function() { renderQR(); };
+    script.onerror = function() {
+      canvasEl.innerHTML = '<p style="color:#f44336;">QR库加载失败，请检查网络</p>';
     };
     document.head.appendChild(script);
   }
-  var qrUrl = profileUrl; // 不再使用第三方URL
-  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR\u751f\u6210\u5931\u8d25</p>\'">';
+
   modal.style.display = 'flex';
 }
 

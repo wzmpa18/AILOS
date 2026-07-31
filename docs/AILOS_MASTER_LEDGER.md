@@ -4243,3 +4243,35 @@ Stage 10：计费与会员模块 — 套餐配置→订单生成→支付回调�
 - 证据完整：自动化验证脚本+测试报告+账簿记录+Git提交链齐全 ✓
 - 三端一致：服务器代码与仓库主分支完全同步 ✓
 
+
+### Stage 10 阶段4 P0缺陷修复完成记录（2026-07-31 Playwright实机验证）
+
+**1. 任务名称**：Stage 10 阶段4 P0用户反馈缺陷专项修复
+
+**2. 核心交付**：
+- 缺陷1昵称保存：修复loadProfile的data.data解析+API_BASE路径+本地状态同步
+- 缺陷2二维码：移除第三方api.qrserver.com依赖+改用纯前端qrcodejs库+移除错误img src+UID显示修复
+- 缺陷3翻译页语言切换：移除"翻译页不提供语言切换控件"旧提示+添加源/目标语言选择器(7种语言)+onLangChange实时翻译
+- 缺陷4邀请绑定：新增ReferralLink模型+referralService+register.html邀请码缓存+重复绑定拦截
+
+**3. 验收结果**：4项全量通过，Playwright实机验证闭环
+- 缺陷1：修改昵称→保存→刷新→NICKNAME_PERSISTED（0 JS错误）
+- 缺陷2：点击我的二维码→弹窗打开→QR码渲染为base64图片（0 JS错误）
+- 缺陷3：翻译页旧提示移除(OLD_NOTE_REMOVED)+sourceLang/targetLang选择器存在
+- 缺陷4：带invite参数链接→localStorage缓存inviteCode=test123
+
+**4. 违宪记录**：无新增流程违规（所有变更先提交仓库再部署）
+
+**5. 问责说明**：无
+
+**6. 全部证据文件索引**：
+| 证据 | 文件路径 |
+|------|----------|
+| 缺陷1修改前截图 | shots/phase4/p4_defect1_profile_before.png |
+| 缺陷1保存后截图 | shots/phase4/p4_defect1_after_save.png |
+| 缺陷1刷新后截图 | shots/phase4/p4_defect1_persisted.png |
+| 缺陷2二维码截图 | shots/phase4/p4_defect2_qr_rendered.png |
+| 缺陷3翻译页截图 | shots/phase4/p4_defect3_translate_page.png |
+| 缺陷4注册页截图 | shots/phase4/p4_defect4_register_invite.png |
+| 后端验证脚本 | tmp/stage10_phase4_p0_verify.txt |
+
