@@ -4422,3 +4422,45 @@ AILOS v1.0 Beta APK构建与面向用户测试准备
 ### 全部证据文件索引
 （待交付完成后补充）
 
+
+### APK发版前全量占位符/测试数据清理记录（2026-07-31）
+
+**清理范围**：
+1. H5前端：9个文件清理（translate/speaking/community-groups/profile/register/sentences/proxy-payment/discover.html + fe-rights.js）
+   - 移除"功能开发中/Coming Soon/showComingSoon"占位文案
+   - showComingSoon改为直接跳转到子页面（scan-translate.html/conversation-translate.html）
+   - 移除console.log调试日志（profile/register/sentences.html）
+   - alert替换为toast（proxy-payment.html）
+   - 移除内部Stage注释标记
+   - 修复showComingSoon移除后遗留的孤立}导致的JS错误
+   - 修复fe-rights.js未登录时rights为null的错误
+
+2. 后端数据：41条测试订单+9条测试审计日志已清除
+   - 正式套餐3个+权益配置3级完好
+   - 正式用户数据未受影响
+
+3. 安卓壳工程：release包proguard已配置移除调试日志，代码层无需额外修改
+
+**验证结果**：
+- Playwright验证翻译页：0 JS错误（仅1个WARNING：未登录时RightsControl跳过，属正常）
+- 页面无"功能开发中/Coming Soon/测试账号"等占位内容
+- 控制台无console.log调试输出
+
+**清理文件清单**：
+| 文件 | 清理内容 |
+|------|----------|
+| translate.html | 移除Coming Soon+showComingSoon→直接跳转+移除孤立}+移除Stage注释 |
+| speaking.html | 移除"录音功能开发中" |
+| community-groups.html | 替换"功能开发中"toast |
+| profile.html | 移除console.log |
+| register.html | 移除console.log+移除Stage注释 |
+| sentences.html | 移除console.log |
+| proxy-payment.html | alert→toast |
+| discover.html | alert→silent |
+| fe-rights.js | 修复null检查 |
+
+**证据**：
+- tmp/cleanup_report.txt（清理报告）
+- tmp/cleanup_test_data_report.txt（后端数据清理报告）
+- shots/cleanup/translate_no_errors.png（验证截图，0 JS错误）
+

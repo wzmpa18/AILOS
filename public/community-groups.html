@@ -575,7 +575,7 @@ async function deleteGroup() {
   if (!confirm('确定要解散该群？此操作不可撤销！')) return;
   try {
     // No dedicated delete endpoint yet
-    showToast('功能开发中', 'error');
+    showToast('该功能暂不可用，请稍后重试', 'info');
   } catch (e) { showToast(e.message, 'error'); }
 }
 

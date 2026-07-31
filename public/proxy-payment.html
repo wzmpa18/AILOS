@@ -122,9 +122,17 @@
       }
     }
 
+    function showCopyToast() {
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:999;';
+      toast.textContent = '链接已复制';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 2000);
+    }
+
     function copyLink(url) {
       navigator.clipboard.writeText(url).then(function() {
-        alert('链接已复制');
+        showCopyToast();
       }).catch(function() {
         var input = document.createElement('input');
         input.value = url;
@@ -132,7 +140,7 @@
         input.select();
         document.execCommand('copy');
         document.body.removeChild(input);
-        alert('链接已复制');
+        showCopyToast();
       });
     }
 

@@ -410,12 +410,9 @@ async function loadSharedProfile() {
         const editBtn = document.querySelector('.edit-btn, #editProfile, .edit-profile');
         if (editBtn) editBtn.style.display = 'none';
 
-        console.log('[Profile] Privacy mode: showing basic info only, posts hidden');
-      } else if (isFriend) {
-        console.log('[Profile] Friend view: showing full profile');
-      } else {
-        console.log('[Profile] Public view: showing full profile');
-      }
+              } else if (isFriend) {
+              } else {
+              }
     }
   } catch(e) {
     console.warn('[Profile] loadSharedProfile error:', e.message);

@@ -67,7 +67,7 @@
 
     <!-- 三大功能入口（附件L） -->
     <div class="feature-grid">
-      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('photo')">
+      <a class="feature-card" href="javascript:void(0)" onclick="window.location.href='/xuewaiyu/translate.html'">
         <div class="card-icon photo">📷</div>
         <div class="card-body">
           <h3 class="t-photo-title">拍照翻译</h3>
@@ -75,7 +75,7 @@
           <span class="badge badge-free t-photo-badge">永久免费</span>
         </div>
       </a>
-      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('scan')" data-right="ai_screenshot" data-feature-name="实时扫描翻译">
+      <a class="feature-card" href="javascript:void(0)" onclick="window.location.href='/xuewaiyu/scan-translate.html'" data-right="ai_screenshot" data-feature-name="实时扫描翻译">
         <div class="card-icon scan">📡</div>
         <div class="card-body">
           <h3 class="t-scan-title">实时扫描翻译</h3>
@@ -83,7 +83,7 @@
           <span class="badge badge-premium t-scan-badge">付费功能</span>
         </div>
       </a>
-      <a class="feature-card" href="javascript:void(0)" onclick="showComingSoon('converse')" data-right="ai_deep_analysis" data-feature-name="对话翻译">
+      <a class="feature-card" href="javascript:void(0)" onclick="window.location.href='/xuewaiyu/conversation-translate.html'" data-right="ai_deep_analysis" data-feature-name="对话翻译">
         <div class="card-icon converse">🎙️</div>
         <div class="card-body">
           <h3 class="t-converse-title">实时对话翻译</h3>
@@ -93,8 +93,7 @@
       </a>
     </div>
 
-    <!-- Stage 10 阶段4: 语言切换控件 -->
-    <div class="lang-control-bar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px;background:var(--bg-card,#fff);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div class="lang-control-bar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px;background:var(--bg-card,#fff);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
       <div style="display:flex;align-items:center;gap:6px;">
         <label style="font-size:13px;color:var(--text-secondary,#666);">源语言</label>
         <select id="sourceLang" onchange="onLangChange()" style="padding:6px 10px;border:1px solid var(--border,#ddd);border-radius:6px;font-size:14px;background:var(--bg-input,#fff);color:var(--text-primary,#333);">
@@ -127,10 +126,10 @@
       📷 将摄像头对准街道招牌、商品货架、路牌标识，即可自动识别并翻译
     </div>
 
-    <!-- 功能开发中占位 -->
+    <!-- 付费功能入口 -->
     <div class="empty-hint" id="comingSoonHint" style="display:none">
       <div class="big-icon">🚧</div>
-      <p class="t-coming-soon">功能开发中，敬请期待<br>预计按 Stage 11 节奏迭代上线</p>
+      <p class="t-coming-soon">该功能需要高级会员权限，点击升级</p>
     </div>
   </div>
 
@@ -149,7 +148,7 @@
           scanTitle: '实时扫描翻译', scanDesc: '摄像头对准文字，实时叠加翻译结果', scanBadge: '付费功能',
           converseTitle: '实时对话翻译', converseDesc: '语音对话双向翻译，支持边说边译', converseBadge: '限时体验',
           note: '<strong>📋 语言切换：</strong><br>支持源语言自动识别与手动切换，目标语言跟随母语设置。切换后实时重新翻译。',
-          comingSoon: '功能开发中，敬请期待<br>预计按 Stage 11 节奏迭代上线'
+          comingSoon: '该功能需要高级会员权限，点击升级'
         },
         en: {
           pageTitle: 'Translate', sub: 'AI-powered multilingual translation tool',
@@ -158,7 +157,7 @@
           scanTitle: 'Live Scan Translate', scanDesc: 'Point camera at text for real-time translation overlay', scanBadge: 'Premium',
           converseTitle: 'Live Conversation', converseDesc: 'Two-way voice translation with real-time speech', converseBadge: 'Limited Trial',
           note: '<strong>📋 Language Note:</strong><br>This page has no language switch. Change UI/study language in <a href="/xuewaiyu/profile.html" style="color:var(--primary)">Profile</a>, auto-sync site-wide.',
-          comingSoon: 'Coming Soon<br>Expected in Stage 11 iteration'
+          comingSoon: 'This feature requires premium membership'
         },
         ja: {
           pageTitle: '翻訳', sub: 'AI搭載多言語翻訳ツール',
@@ -275,12 +274,6 @@
 
       document.addEventListener('DOMContentLoaded', init);
     })();
-
-    function showComingSoon(type) {
-      var hint = document.getElementById('comingSoonHint');
-      hint.style.display = 'block';
-      setTimeout(function() { hint.scrollIntoView({ behavior: 'smooth' }); }, 100);
-    }
   </script>
 
   <!-- Bottom Navigation (auto-injected by common.js ensureNav) -->
@@ -288,7 +281,6 @@
 
 
 <script>
-// Stage 10 阶段4: 翻译页语言切换
 function getSourceLang() {
   var el = document.getElementById('sourceLang');
   return el ? el.value : 'auto';

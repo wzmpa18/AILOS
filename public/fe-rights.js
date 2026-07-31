@@ -67,6 +67,10 @@ const RightsControl = {
   // 扫描页面所有data-right元素，绑定拦截
   async init() {
     await this.loadRights();
+    if (!this.userRights) {
+      console.warn('[RightsControl] No user rights loaded, skipping init');
+      return;
+    }
     var elements = document.querySelectorAll('[data-right]');
     var self = this;
     elements.forEach(function(el) {
@@ -81,10 +85,10 @@ const RightsControl = {
           self.showUpgradePrompt(rightCode, featureName);
           return false;
         }
-      }, true); // 使用捕获阶段，确保先于其他handler执行
+      }, true);
     });
 
-    console.log('[RightsControl] Initialized: ' + elements.length + ' protected elements, level=' + this.userRights.levelCode);
+    console.log('[RightsControl] Initialized: ' + elements.length + ' protected elements');
   }
 };
 

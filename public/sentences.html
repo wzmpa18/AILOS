@@ -853,8 +853,7 @@ body {
       }).filter(function(s) { return s.original; }); // 过滤空记录
 
       apiLoaded = true;
-      console.log('[Sentences] API loaded ' + apiSentences.length + ' items for lang=' + studyLang);
-      renderAll();
+            renderAll();
     })
     .catch(function(err) {
       console.warn('[Sentences] API fetch failed, using seed data only:', err.message);

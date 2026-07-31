@@ -956,14 +956,12 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <script>
-// Stage 10 阶段4: 邀请关系绑定
 (function() {
   var params = new URLSearchParams(window.location.search);
   var inviteCode = params.get('invite') || params.get('referral') || params.get('ref');
   if (inviteCode) {
     localStorage.setItem('inviteCode', inviteCode);
-    console.log('[Invite] Cached invite code:', inviteCode);
-    // 显示邀请提示
+        // 显示邀请提示
     var hint = document.querySelector('.invite-hint');
     if (hint) {
       hint.textContent = '您通过邀请链接注册，注册后将自动绑定推荐人';
