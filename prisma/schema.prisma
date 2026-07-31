@@ -67,6 +67,7 @@ model User {
   learningProgress        LearningProgress[]
   userDevices             UserDevice[]
   membershipOrders        MembershipOrder[]
+  userMemberships         UserMembership[] @relation("UserMemberships")
   dataExportRequests      DataExportRequest[]
   accountDeletionRequests AccountDeletionRequest[]
   userIdentity            UserIdentity?
@@ -235,9 +236,19 @@ model MembershipOrder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Stage 10 增量：代付机制字段
+  proxyPayerId  String?
+  proxyToken    String?  @unique
+  proxyStatus   String   @default("none")
+  proxyExpireAt DateTime?
+  payChannel    String   @default("wechat")
+  refundStatus  String   @default("none")
+
   @@index([userId])
   @@index([orderNo])
   @@index([status])
+  @@index([proxyToken])
+  @@index([proxyStatus])
 }
 
 // Data export requests (GDPR compliance)
@@ -1320,5 +1331,90 @@ model ContentAuditLog {
   @@index([level])
 
   @@map("content_audit_logs")
+}
+
+
+// ============================================================
+// Stage 10: 计费与会员模块（2026-07-31 增量追加）
+// 纯追加，不修改已有模型。宪法C.2.1铁律3：Git唯一真值
+// ============================================================
+
+/// 套餐配置表
+model MembershipPlan {
+  id           String   @id @default(uuid())
+  planCode     String   @unique
+  name         String
+  level        Int      @default(0)
+  price        Int      @default(0)                      // 整数分单位
+  durationDays Int      @default(30)
+  description  String   @default("")
+  features     Json     @default("[]")
+  status       String   @default("active")
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userMemberships UserMembership[]
+
+  @@index([status])
+  @@index([level])
+  @@map("membership_plans")
+}
+
+/// 用户会员表（记录开通历史，独立于User字段）
+model UserMembership {
+  id           String   @id @default(uuid())
+  userId       String
+  planId       String?
+  planCode     String
+  level        Int      @default(0)
+  startTime    DateTime
+  endTime      DateTime
+  status       String   @default("active")
+  source       String   @default("direct")               // direct/proxy/gift
+  orderId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User?    @relation("UserMemberships", fields: [userId], references: [id], onDelete: SetNull)
+  plan         MembershipPlan? @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([endTime])
+  @@index([source])
+  @@map("user_memberships")
+}
+
+/// 支付流水表
+model PaymentLog {
+  id           String   @id @default(uuid())
+  orderNo      String
+  notifyId     String?
+  amount       Int                                      // 整数分
+  payStatus    String   @default("pending")
+  channel      String   @default("wechat")
+  rawData      Json?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([orderNo])
+  @@index([payStatus])
+  @@index([createdAt])
+  @@map("payment_logs")
+}
+
+/// 权益配置表
+model MembershipRights {
+  id          String   @id @default(uuid())
+  level       Int      @unique
+  levelName   String
+  features    Json     @default("[]")
+  quotas      Json     @default("{}")
+  dailyLimits Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("membership_rights")
 }
 
