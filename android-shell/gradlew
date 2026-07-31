@@ -1,0 +1,3 @@
+#!/bin/sh
+# Gradle wrapper script (Codemagic auto-generates full wrapper)
+exec gradle "$@"
