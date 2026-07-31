@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
+const contentFilter = require('../../utils/contentFilter');
 
 const prisma = new PrismaClient();
 
@@ -101,6 +102,17 @@ router.post('/post', async (req, res) => {
     }
     if (content.length > 2000) {
       return err(res, 'TIMELINE_4003', '内容不能超过2000字', 400);
+    }
+
+    // Stage 9 S3: 敏感词过滤
+    const filterResult = contentFilter.auditAndFilter(content, {
+      userId: req.userId,
+      scene: "post",
+      endpoint: "/api/v1/social/timeline/post",
+      clientIP: req.ip || req.connection?.remoteAddress,
+    });
+    if (!filterResult.passed) {
+      return err(res, 'TIMELINE_4008', filterResult.errorResponse?.error || 'content blocked', 400);
     }
 
     const post = await prisma.socialTimeline.create({

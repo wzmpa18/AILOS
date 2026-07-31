@@ -195,6 +195,80 @@ class SocialService {
   // Group System (M2)
   // ============================================================
 
+  // ============================================================
+  // Profile & Search (Stage 9 S3)
+  // ============================================================
+
+  async getUserProfile(viewerId, targetUidOrId) {
+    if (!targetUidOrId) throw fail('PROFILE_5100', 'Missing user identifier');
+    const target = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { uniqueId: targetUidOrId.trim() },
+          { id: targetUidOrId.trim() },
+        ],
+      },
+      select: { id: true, uniqueId: true, nickname: true, avatar: true, privacySettings: true },
+    });
+    if (!target) throw fail('PROFILE_5101', 'User not found', 404);
+    if (target.id === viewerId) {
+      // Self: return full profile with stats
+      const friendCount = await prisma.friendSetting.count({ where: { userId: viewerId, isBlocked: false } });
+      const groupCount = await prisma.groupMember.count({ where: { userId: viewerId } });
+      return { id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
+        avatar: target.avatar, friendCount, groupCount, isSelf: true };
+    }
+    // Others: check privacy
+    const privacy = getPrivacy(target);
+    const isFriend = !!(await prisma.friendSetting.findUnique({
+      where: { userId_friendId: { userId: viewerId, friendId: target.id } },
+    }));
+    if (!isFriend && !privacy.allowDiscover) {
+      // Privacy ON: show basic info only, no dynamic list
+      return {
+        id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
+        avatar: target.avatar, isFriend: false, isPrivate: true,
+        message: 'User has disabled public display',
+        posts: [],
+      };
+    }
+    // Friend or privacy OFF: show full info + recent posts
+    const recentPosts = await prisma.socialTimeline.findMany({
+      where: { actorId: target.id, type: 'post' },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: { id: true, content: true, createdAt: true, likeCount: true, commentCount: true },
+    });
+    return {
+      id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
+      avatar: target.avatar, isFriend, isPrivate: false,
+      posts: recentPosts,
+    };
+  }
+
+  async searchByNickname(searcherId, query) {
+    if (!query || query.trim().length === 0) throw fail('SEARCH_5200', 'Search query required');
+    if (query.trim().length < 2) throw fail('SEARCH_5201', 'Search query too short (min 2 chars)');
+    const results = await prisma.user.findMany({
+      where: {
+        nickname: { contains: query.trim(), mode: 'insensitive' },
+        id: { not: searcherId },
+        isActive: true,
+      },
+      select: { id: true, uniqueId: true, nickname: true, avatar: true, privacySettings: true },
+      take: 20,
+    });
+    // Filter out users with privacy ON (allowDiscover=false)
+    const filtered = [];
+    for (const u of results) {
+      const privacy = getPrivacy(u);
+      if (privacy.allowDiscover !== false) {
+        filtered.push({ id: u.id, uniqueId: u.uniqueId, nickname: u.nickname, avatar: u.avatar });
+      }
+    }
+    return { results: filtered, total: filtered.length };
+  }
+
   async createGroup(userId, { name, description, avatarUrl } = {}) {
     if (!name || name.trim().length === 0) throw fail('GROUP_5200', '群名称不能为空');
     if (name.trim().length > 50) throw fail('GROUP_5201', '群名称不能超过50个字符');

@@ -5,6 +5,7 @@
  */
 
 const logger = require('./logger');
+const prisma = require('../config/database');
 
 // ============================================================
 // 防绕过预处理: 归一化文本
@@ -204,12 +205,42 @@ function auditAndFilter(text, context = {}) {
   const result = filterContent(text, { scene: context.scene || 'unknown' });
 
   if (!result.passed) {
+    const matchedWord = result.details?.matched || null;
+    const matchedWords = matchedWord ? [matchedWord] : [];
     logger.info(
       `[ContentFilter.AUDIT] REJECT | userId=${context.userId || 'anonymous'} | scene=${context.scene} | wasNormalized=${result.details?.wasNormalized || false} | detail=${JSON.stringify(result.details)}`,
     );
+    // Stage 9 S3: Write audit log to DB (fire-and-forget)
+    auditLog(
+      context.userId || null,
+      text,
+      context.scene || 'unknown',
+      context.endpoint || null,
+      context.clientIP || null,
+      matchedWords,
+    ).catch((e) => logger.warn('[ContentFilter] auditLog async error:', e.message));
   }
 
   return result;
+}
+
+
+// Stage 9 S3: Write audit log to database
+async function auditLog(userId, content_text, scene, endpoint, ip, words) {
+  try {
+    await prisma.contentAuditLog.create({
+      data: {
+        userId: userId || null,
+        content: content_text.substring(0, 500),
+        scene: scene || 'post',
+        endpoint: endpoint || null,
+        ip: ip || null,
+        words: words || [],
+      },
+    });
+  } catch (err) {
+    logger.warn('[ContentFilter] Audit log write failed:', err.message);
+  }
 }
 
 module.exports = {

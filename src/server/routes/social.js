@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { getSocialService } = require('../../services/socialService');
 const { authenticate } = require('../middleware/auth');
+const contentFilter = require('../../utils/contentFilter');
 
 // ============================================================
 // Auth middleware wrapper
@@ -39,6 +40,15 @@ router.put('/privacy', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
     const result = await svc.updatePrivacy(getUid(req), req.body);
+    // Stage 9 S3: Clear Redis cache on privacy change
+    try {
+      const redis = require('../../config/redis');
+      const userId = getUid(req);
+      await redis.del(`profile:${userId}`);
+      await redis.del(`feed:${userId}`);
+    } catch (cacheErr) {
+      console.warn(`[Privacy] cache clear: ${cacheErr.message}`);
+    }
     res.json({ success: true, data: result });
   } catch (e) {
     next(e);
@@ -74,7 +84,18 @@ router.get('/friends/search-by-uid', auth, async (req, res, next) => {
   }
 });
 
-// POST /api/social/friends/add - Add a friend
+// GET /api/social/friends/search-by-nickname - Search user by nickname (privacy-aware)
+router.get('/friends/search-by-nickname', auth, async (req, res, next) => {
+  try {
+    const svc = getSocialService();
+    const result = await svc.searchByNickname(getUid(req), req.query.q || '');
+    res.json({ success: true, data: { results: result } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// POST /api/social/friends/add - Send friend request
 router.post('/friends/add', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
@@ -85,7 +106,7 @@ router.post('/friends/add', auth, async (req, res, next) => {
   }
 });
 
-// PUT /api/social/friends/:friendId - Update friend settings (remark/tags/mute/block)
+// PUT /api/social/friends/:friendId - Update friend settings (tag/alias)
 router.put('/friends/:friendId', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
@@ -96,7 +117,7 @@ router.put('/friends/:friendId', auth, async (req, res, next) => {
   }
 });
 
-// DELETE /api/social/friends/:friendId - Remove a friend
+// DELETE /api/social/friends/:friendId - Remove friend
 router.delete('/friends/:friendId', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
@@ -108,12 +129,28 @@ router.delete('/friends/:friendId', auth, async (req, res, next) => {
 });
 
 // ============================================================
-// Group System (M2)
+// Group Management (M1)
 // ============================================================
 
 // POST /api/social/groups - Create a group
 router.post('/groups', auth, async (req, res, next) => {
   try {
+    // Stage 9 VETO: 群组名称敏感词过滤
+    if (req.body.name) {
+      const filterResult = contentFilter.auditAndFilter(req.body.name, {
+        userId: getUid(req),
+        scene: 'group_create',
+        endpoint: '/api/v1/social/groups',
+        clientIP: req.ip || req.connection?.remoteAddress,
+      });
+      if (!filterResult.passed) {
+        return res.status(400).json({
+          success: false,
+          code: 9004,
+          error: 'Group name contains prohibited content',
+        });
+      }
+    }
     const svc = getSocialService();
     const result = await svc.createGroup(getUid(req), req.body);
     res.json({ success: true, data: result });
@@ -155,29 +192,29 @@ router.get('/groups/:id/members', auth, async (req, res, next) => {
   }
 });
 
-// POST /api/social/groups/:id/members - Add a member to group
+// POST /api/social/groups/:id/members - Join group / add member
 router.post('/groups/:id/members', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
-    const result = await svc.addGroupMember(req.params.id, req.body.userId, getUid(req));
+    const result = await svc.addGroupMember(req.params.id, getUid(req), req.body.userId);
     res.json({ success: true, data: result });
   } catch (e) {
     next(e);
   }
 });
 
-// DELETE /api/social/groups/:id/members/:userId - Remove member from group
+// DELETE /api/social/groups/:id/members/:userId - Remove member / leave group
 router.delete('/groups/:id/members/:userId', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
-    const result = await svc.removeGroupMember(req.params.id, req.params.userId, getUid(req));
+    const result = await svc.removeGroupMember(req.params.id, getUid(req), req.params.userId);
     res.json({ success: true, data: result });
   } catch (e) {
     next(e);
   }
 });
 
-// PUT /api/social/groups/:id/mute-all - Toggle mute all
+// PUT /api/social/groups/:id/mute-all - Toggle mute-all (group announcement)
 router.put('/groups/:id/mute-all', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
@@ -189,24 +226,39 @@ router.put('/groups/:id/mute-all', auth, async (req, res, next) => {
 });
 
 // ============================================================
-// Message System (M3)
+// Messaging (M1)
 // ============================================================
 
 // GET /api/social/conversations - List conversations
 router.get('/conversations', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
-    const limit = parseInt(req.query.limit) || 20;
-    const result = await svc.getConversations(getUid(req), { limit });
+    const result = await svc.getConversations(getUid(req));
     res.json({ success: true, data: result });
   } catch (e) {
     next(e);
   }
 });
 
-// POST /api/social/messages - Send a message
+// POST /api/social/messages - Send message
 router.post('/messages', auth, async (req, res, next) => {
   try {
+    // Stage 9 VETO: 消息内容敏感词过滤
+    if (req.body.content) {
+      const filterResult = contentFilter.auditAndFilter(req.body.content, {
+        userId: getUid(req),
+        scene: 'message',
+        endpoint: '/api/v1/social/messages',
+        clientIP: req.ip || req.connection?.remoteAddress,
+      });
+      if (!filterResult.passed) {
+        return res.status(400).json({
+          success: false,
+          code: 9004,
+          error: 'Message contains prohibited content',
+        });
+      }
+    }
     const svc = getSocialService();
     const result = await svc.sendMessage(getUid(req), req.body);
     res.json({ success: true, data: result });
@@ -254,12 +306,11 @@ router.get('/profile', auth, async (req, res, next) => {
   }
 });
 
-// GET /api/social/profile/:uid - View a user's shared profile
+// GET /api/social/profile/:uid - View user profile (Stage 9 S3: privacy-aware)
 router.get('/profile/:uid', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
-    const uid = req.params.uid;
-    const result = await svc.searchByUid(getUid(req), uid);
+    const result = await svc.getUserProfile(getUid(req), req.params.uid);
     res.json({ success: true, data: result });
   } catch (e) {
     next(e);

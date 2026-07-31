@@ -194,6 +194,8 @@ const userController = {
         const filterResult = contentFilter.auditAndFilter(userUpdateData.nickname, {
           userId,
           scene: 'user_nickname',
+          endpoint: '/api/user/profile',
+          clientIP: req.ip || req.connection?.remoteAddress,
         });
         if (!filterResult.passed) {
           return res.status(400).json(filterResult.errorResponse || {
