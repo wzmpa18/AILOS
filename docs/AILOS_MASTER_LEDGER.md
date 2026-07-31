@@ -4464,3 +4464,52 @@ AILOS v1.0 Beta APK构建与面向用户测试准备
 - tmp/cleanup_test_data_report.txt（后端数据清理报告）
 - shots/cleanup/translate_no_errors.png（验证截图，0 JS错误）
 
+
+### Stage 10 第62章终验登记：AILOS v1.0 Beta APK构建与面向用户测试发版（2026-07-31）
+
+**1. 任务名称**：AILOS v1.0 Beta APK构建与面向用户测试发版
+
+**2. 核心交付**：
+- 安卓WebView壳工程（22文件）：build.gradle/AndroidManifest/MainActivity(10项兜底)/SplashActivity/AilosJsBridge/AilosApp/PrivacyActivity/布局/资源/proguard
+- Codemagic云端构建流水线（codemagic.yaml）：手动触发→assembleRelease→签名验证→APK+mapping产物
+- H5移动端专项适配：viewport/48dp热区/:active/键盘适配/支付返回刷新（Playwright 375px验证通过）
+- 全量真机冒烟测试用例（SMOKE_TEST_CASES.md）：6大类24项+终极验收6项
+- 假数据专项清理：9个前端文件清理（Coming Soon/console.log/alert/Stage注释）+41条测试订单+9条审计日志清除
+- 运营迭代规范（OPERATIONS_VERSIONING.md）：零发版/版本兼容2代/灰度/强制升级/版本台账
+- 回滚预案：服务端git revert+APK回滚+强制升级+灰度控制+紧急关闭
+
+**3. 验收结果**：
+- 阶段0 Stage 10永久冻结：4/4准入校验PASS（基线9b2cef8）
+- 阶段1 壳工程开发：22文件完整，10项兜底能力全实现
+- 阶段1 基线校验：代码f9b5a63/HTTPS 200/会员API正常
+- 阶段2 H5适配：Playwright全页面0 JS错误（375px无溢出）
+- 阶段3 Codemagic配置：codemagic.yaml就绪，待云端构建
+- 阶段4 占位符清理：9文件+50条测试数据已清除，Playwright验证CLEAN
+- 全量回归测试：36/36 PASS（100%）
+- 三端SHA一致：本地=GitHub=服务器=f9b5a63
+- 终验结论：代码与配置层面终验通过，待Codemagic构建+真机冒烟测试
+
+**4. 违宪记录**：无（本阶段所有变更均先提交仓库再部署）
+
+**5. 问责说明**：无
+
+**6. 全部证据文件索引**：
+| 证据 | 文件路径 |
+|------|----------|
+| Stage 10冻结公告 | docs/Stage10_PERMANENT_FROZEN.md |
+| Codemagic构建检查清单 | docs/CODEMAGIC_BUILD_CHECKLIST.md |
+| 真机冒烟测试用例 | docs/SMOKE_TEST_CASES.md |
+| 终验报告 | docs/STAGE10_V1_BETA_FINAL_REPORT.md |
+| 运营迭代规范 | docs/OPERATIONS_VERSIONING.md |
+| 安卓壳工程 | android-shell/ (22文件) |
+| 占位符清理报告 | tmp/cleanup_report.txt |
+| 后端数据清理报告 | tmp/cleanup_test_data_report.txt |
+| 全量回归测试 | tmp/stage10_phase5_regression.txt |
+| Playwright验证截图 | shots/cleanup/translate_no_errors.png |
+| 三端一致性报告 | tmp/stage10_freeze_consistency.txt |
+
+**三端一致性确认**：
+- 代码SHA: f9b5a63 (本地=GitHub=服务器)
+- 账簿SHA256: (见下方核验)
+- 宪法SHA256: (见下方核验)
+
