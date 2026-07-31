@@ -1,0 +1,64 @@
+# AILOS v1.0 Beta - Docker+Jenkins自建云端打包环境
+# 部署至腾讯云服务器 82.156.228.87
+# 内置JDK17+Node22+Android SDK34+Gradle
+# 基线: f13eddb
+
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: ailos-jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /www/xuewaiyu-backend:/workspace/ailos:ro
+      - apk_output:/output
+    environment:
+      - JAVA_OPTS=-Xmx2048m
+      - JENKINS_OPTS=--prefix=/jenkins
+    networks:
+      - ailos-net
+
+  android-builder:
+    image: thyrlian/android-sdk:latest
+    container_name: ailos-android-builder
+    restart: unless-stopped
+    volumes:
+      - android_sdk:/android-sdk
+      - gradle_cache:/root/.gradle
+      - /www/xuewaiyu-backend:/workspace/ailos:ro
+      - apk_output:/output
+    environment:
+      - ANDROID_HOME=/android-sdk
+      - GRADLE_USER_HOME=/root/.gradle
+      - BASELINE_SHA=f13eddb
+      - BASE_URL=https://yandao.vip/xuewaiyu/
+    networks:
+      - ailos-net
+    command: tail -f /dev/null  # 保持运行，由Jenkins远程调用
+
+  nginx-apk:
+    image: nginx:alpine
+    container_name: ailos-apk-nginx
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    volumes:
+      - apk_output:/usr/share/nginx/html/download:ro
+      - ./nginx-apk.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - ailos-net
+
+volumes:
+  jenkins_home:
+  android_sdk:
+  gradle_cache:
+  apk_output:
+
+networks:
+  ailos-net:
+    driver: bridge

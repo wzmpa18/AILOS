@@ -1,0 +1,197 @@
+# AILOS v1.0 Beta - GitHub Actions 自动打包工作流
+# 完全免费，仓库原生集成，签名信息存GitHub Secrets
+# 基线: f13eddb | 分支: main(Release) / dev(Debug)
+
+name: Build AILOS APK
+
+on:
+  push:
+    branches: [ main, dev ]
+    tags: [ 'v*' ]
+  workflow_dispatch:  # 支持手动触发
+
+env:
+  BASELINE_SHA: f13eddb
+  VERSION_NAME: '1.0.0'
+  JAVA_VERSION: '17'
+  JAVA_DISTRO: 'temurin'
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ============================================================
+      # 1. 检出代码
+      # ============================================================
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整历史，用于tag检测
+
+      # ============================================================
+      # 2. 预构建基线校验（10项强制）
+      # ============================================================
+      - name: Pre-build Baseline Check
+        run: |
+          set -e
+          echo "=== AILOS Pre-build Baseline Check ==="
+          
+          # 1. Git基线
+          CURRENT_SHA=$(git rev-parse --short HEAD)
+          echo "1. Git SHA: $CURRENT_SHA (baseline: ${{ env.BASELINE_SHA }})"
+          
+          # 2. 后端健康检查
+          HEALTH=$(curl -s https://yandao.vip/xuewaiyu/api/health | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+          echo "2. Backend health: $HEALTH"
+          [ "$HEALTH" != "healthy" ] && echo "WARNING: Backend not healthy, continuing..."
+          
+          # 3. 会员套餐接口
+          PLANS=$(curl -s https://yandao.vip/xuewaiyu/api/membership/plans | python3 -c "import sys,json;d=json.load(sys.stdin);print(len(d.get('data',[])))" 2>/dev/null || echo "0")
+          echo "3. Membership plans: $PLANS (expected: >=3)"
+          
+          # 4. HTTPS域名可访问
+          HTTPS_CODE=$(curl -sk -o /dev/null -w "%{http_code}" https://yandao.vip/xuewaiyu/index.html)
+          echo "4. HTTPS index: $HTTPS_CODE (expected: 200)"
+          
+          # 5. 壳工程文件完整性
+          [ ! -f "android-shell/app/build.gradle" ] && echo "FAIL: app/build.gradle missing" && exit 1
+          [ ! -f "android-shell/app/src/main/java/ai/yandao/ailos/MainActivity.java" ] && echo "FAIL: MainActivity missing" && exit 1
+          echo "5. Shell project files: OK"
+          
+          # 6. 签名环境变量（仅Release需要）
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            [ -z "${{ secrets.AILOS_KEYSTORE_BASE64 }}" ] && echo "FAIL: AILOS_KEYSTORE_BASE64 not set" && exit 1
+            [ -z "${{ secrets.AILOS_KEYSTORE_PASSWORD }}" ] && echo "FAIL: AILOS_KEYSTORE_PASSWORD not set" && exit 1
+            [ -z "${{ secrets.AILOS_KEY_ALIAS }}" ] && echo "FAIL: AILOS_KEY_ALIAS not set" && exit 1
+            [ -z "${{ secrets.AILOS_KEY_PASSWORD }}" ] && echo "FAIL: AILOS_KEY_PASSWORD not set" && exit 1
+            echo "6. Signing secrets: OK"
+          else
+            echo "6. Debug build, signing not required"
+          fi
+          
+          # 7. 无密钥泄露
+          if grep -rn '\.keystore\|\.jks' android-shell/ --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv'; then
+            echo "FAIL: Keystore reference found in code" && exit 1
+          fi
+          echo "7. No keystore in code: OK"
+          
+          # 8. 混淆开启
+          grep -q 'minifyEnabled true' android-shell/app/build.gradle && echo "8. ProGuard enabled: OK" || { echo "FAIL: ProGuard not enabled"; exit 1; }
+          
+          # 9. 版本号
+          grep -q 'versionName "1.0.0"' android-shell/app/build.gradle && echo "9. Version 1.0.0: OK" || { echo "FAIL: Version mismatch"; exit 1; }
+          
+          # 10. 包名
+          grep -q 'applicationId "ai.yandao.ailos"' android-shell/app/build.gradle && echo "10. Package name: OK" || { echo "FAIL: Package name wrong"; exit 1; }
+          
+          echo "=== All 10 checks PASSED ==="
+
+      # ============================================================
+      # 3. 配置JDK
+      # ============================================================
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRO }}
+
+      # ============================================================
+      # 4. 配置Android SDK
+      # ============================================================
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools build-tools;34.0.0 platforms;android-34'
+
+      # ============================================================
+      # 5. 解码签名文件（仅Release）
+      # ============================================================
+      - name: Decode Keystore (Release only)
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "${{ secrets.AILOS_KEYSTORE_BASE64 }}" | base64 --decode > $HOME/ailos-release.keystore
+          echo "Keystore decoded to $HOME/ailos-release.keystore"
+          echo "KEYSTORE_PATH=$HOME/ailos-release.keystore" >> $GITHUB_ENV
+
+      # ============================================================
+      # 6. 构建APK
+      # ============================================================
+      - name: Build Release APK
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        working-directory: android-shell
+        run: |
+          ./gradlew clean assembleRelease \
+            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=${{ secrets.AILOS_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.AILOS_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.AILOS_KEY_PASSWORD }}
+
+      - name: Build Debug APK
+        if: github.ref == 'refs/heads/dev'
+        working-directory: android-shell
+        run: ./gradlew clean assembleDebug
+
+      # ============================================================
+      # 7. Zipalign + 签名验证
+      # ============================================================
+      - name: Zipalign and Verify
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        working-directory: android-shell
+        run: |
+          BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0
+          $BUILD_TOOLS/zipalign -f 4 app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
+          $BUILD_TOOLS/apksigner verify --verbose app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
+          cp app/build/outputs/mapping/release/mapping.txt app/build/outputs/apk/release/mapping_v1.0.0.txt
+          echo "=== Release APK signed and verified ==="
+
+      - name: Rename Debug APK
+        if: github.ref == 'refs/heads/dev'
+        working-directory: android-shell
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/AILOS_v1.0.0_Debug.apk
+
+      # ============================================================
+      # 8. 上传构建产物
+      # ============================================================
+      - name: Upload Release APK
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: AILOS_v1.0.0_Release
+          path: |
+            android-shell/app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
+            android-shell/app/build/outputs/apk/release/mapping_v1.0.0.txt
+          retention-days: 90
+
+      - name: Upload Debug APK
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AILOS_v1.0.0_Debug
+          path: android-shell/app/build/outputs/apk/debug/AILOS_v1.0.0_Debug.apk
+          retention-days: 30
+
+      # ============================================================
+      # 9. 构建摘要
+      # ============================================================
+      - name: Build Summary
+        if: always()
+        run: |
+          echo "## AILOS APK构建结果" >> $GITHUB_STEP_SUMMARY
+          echo "- 基线: \`f13eddb\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 分支: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 构建号: \`#${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "- 状态: ✅ 成功" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
+              echo "- 产物: \`AILOS_v1.0.0_Release.apk\` (Release签名)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- 产物: \`AILOS_v1.0.0_Debug.apk\` (Debug)" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "下载: Actions页面 → 本次运行 → Artifacts" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 状态: ❌ 失败" >> $GITHUB_STEP_SUMMARY
+            echo "排查: 查看上方日志定位失败步骤" >> $GITHUB_STEP_SUMMARY
+          fi

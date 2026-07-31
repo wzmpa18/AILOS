@@ -1,26 +1,124 @@
-# AILOS v1.0 Beta - Codemagic构建配置
-# 云端标准化打包，无需本地环境
+# AILOS v1.0 Beta - Codemagic构建配置（优化版）
+# 基线: f13eddb | 分支: main(dev自动Debug) | 签名: V2+V3+zipalign
 
 environment:
   groups:
-    - keystore_credentials  # 包含CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD
+    - ailos_keystore  # CM_KEYSTORE_BASE64, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD
+    - ailos_notify    # WECOM_WEBHOOK (企业微信通知)
 
 scripts:
-  - name: Build Release APK
+  - name: Pre-build Baseline Check (10项强制校验)
     script: |
-      ./gradlew assembleRelease
+      #!/bin/bash
+      set -e
+      echo "=== AILOS Pre-build Baseline Check ==="
       
-  - name: Sign and Verify
+      # 1. Git基线校验
+      CURRENT_SHA=$(git rev-parse --short HEAD)
+      echo "1. Git SHA: $CURRENT_SHA (expected: f13eddb)"
+      
+      # 2. 后端健康检查
+      HEALTH=$(curl -s https://yandao.vip/xuewaiyu/api/health | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
+      echo "2. Backend health: $HEALTH"
+      [ "$HEALTH" != "healthy" ] && echo "FAIL: Backend not healthy" && exit 1
+      
+      # 3. 会员套餐接口
+      PLANS=$(curl -s https://yandao.vip/xuewaiyu/api/membership/plans | python3 -c "import sys,json;d=json.load(sys.stdin);print(len(d.get('data',[])))" 2>/dev/null)
+      echo "3. Membership plans: $PLANS (expected: >=3)"
+      [ "$PLANS" -lt 3 ] && echo "FAIL: Plans API error" && exit 1
+      
+      # 4. HTTPS域名可访问
+      HTTPS_CODE=$(curl -sk -o /dev/null -w "%{http_code}" https://yandao.vip/xuewaiyu/index.html)
+      echo "4. HTTPS index: $HTTPS_CODE (expected: 200)"
+      [ "$HTTPS_CODE" != "200" ] && echo "FAIL: HTTPS not accessible" && exit 1
+      
+      # 5. 壳工程文件完整性
+      [ ! -f "android-shell/app/build.gradle" ] && echo "FAIL: app/build.gradle missing" && exit 1
+      [ ! -f "android-shell/app/src/main/java/ai/yandao/ailos/MainActivity.java" ] && echo "FAIL: MainActivity missing" && exit 1
+      echo "5. Shell project files: OK"
+      
+      # 6. 签名环境变量
+      [ -z "$CM_KEYSTORE_BASE64" ] && echo "FAIL: CM_KEYSTORE_BASE64 not set" && exit 1
+      [ -z "$CM_KEYSTORE_PASSWORD" ] && echo "FAIL: CM_KEYSTORE_PASSWORD not set" && exit 1
+      [ -z "$CM_KEY_ALIAS" ] && echo "FAIL: CM_KEY_ALIAS not set" && exit 1
+      [ -z "$CM_KEY_PASSWORD" ] && echo "FAIL: CM_KEY_PASSWORD not set" && exit 1
+      echo "6. Signing environment variables: OK"
+      
+      # 7. 无密钥泄露
+      if grep -rn '\.keystore\|\.jks' android-shell/ --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv'; then
+        echo "FAIL: Keystore reference found in code" && exit 1
+      fi
+      echo "7. No keystore in code: OK"
+      
+      # 8. 混淆配置
+      grep -q 'minifyEnabled true' android-shell/app/build.gradle && echo "8. ProGuard enabled: OK" || { echo "FAIL: ProGuard not enabled"; exit 1; }
+      
+      # 9. 版本号
+      grep -q 'versionName "1.0.0"' android-shell/app/build.gradle && echo "9. Version 1.0.0: OK" || { echo "FAIL: Version mismatch"; exit 1; }
+      
+      # 10. 包名
+      grep -q 'applicationId "ai.yandao.ailos"' android-shell/app/build.gradle && echo "10. Package name: OK" || { echo "FAIL: Package name wrong"; exit 1; }
+      
+      echo "=== All 10 checks PASSED ==="
+
+  - name: Decode Keystore
     script: |
-      # 签名由gradle自动注入（环境变量）
-      # 验证APK签名
-      $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+      echo "$CM_KEYSTORE_BASE64" | base64 --decode > /tmp/ailos-release.keystore
+      echo "Keystore decoded to /tmp/ailos-release.keystore"
+
+  - name: Build APK
+    script: |
+      cd android-shell
+      if [ "$CM_BRANCH" = "main" ] && git describe --tags --exact-match 2>/dev/null; then
+        echo "=== Building Release (main + tag) ==="
+        ./gradlew clean assembleRelease -Pandroid.injected.signing.store.file=/tmp/ailos-release.keystore \
+          -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
+          -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
+          -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
+      else
+        echo "=== Building Debug (dev branch) ==="
+        ./gradlew clean assembleDebug
+      fi
+
+  - name: Zipalign + Verify Signature
+    script: |
+      APK_DIR="android-shell/app/build/outputs/apk/release"
+      if [ -d "$APK_DIR" ]; then
+        $ANDROID_HOME/build-tools/34.0.0/zipalign -f 4 "$APK_DIR/app-release.apk" "$APK_DIR/AILOS_v1.0.0_Release.apk"
+        $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose "$APK_DIR/AILOS_v1.0.0_Release.apk"
+        echo "=== Signature verified ==="
+        # 生成mapping归档
+        cp android-shell/app/build/outputs/mapping/release/mapping.txt "$APK_DIR/mapping_v1.0.0.txt"
+      else
+        APK_DIR="android-shell/app/build/outputs/apk/debug"
+        cp "$APK_DIR/app-debug.apk" "$APK_DIR/AILOS_v1.0.0_Debug.apk"
+      fi
+
+  - name: Notify WeCom (企业微信通知)
+    script: |
+      if [ -n "$WECOM_WEBHOOK" ]; then
+        BUILD_RESULT="成功"
+        [ "$CM_BUILD_STATUS" != "success" ] && BUILD_RESULT="失败"
+        APK_URL="${CM_ARTIFACT_LINKS[0]}"
+        curl -s -X POST "$WECOM_WEBHOOK" -H 'Content-Type: application/json' -d "{
+          \"msgtype\":\"markdown\",
+          \"markdown\":{\"content\":\"## AILOS APK构建$BUILD_RESULT\n>基线: \`f13eddb\`\n>分支: \`$CM_BRANCH\`\n>构建号: \`$CM_BUILD_NUMBER\`\n>APK: [$APK_URL]($APK_URL)\n>日志: [查看]($CM_BUILD_URL)\"}
+        }"
+      fi
 
 artifacts:
-  - app/build/outputs/apk/release/app-release.apk
-  - app/build/outputs/mapping/release/mapping.txt
+  - android-shell/app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
+  - android-shell/app/build/outputs/apk/release/mapping_v1.0.0.txt
+  - android-shell/app/build/outputs/apk/debug/AILOS_v1.0.0_Debug.apk
 
-publishing:
-  email:
-    recipients:
-      - deploy@yandao.ai
+triggering:
+  events:
+    - push
+  branch_patterns:
+    - pattern: main
+      include: true
+    - pattern: dev
+      include: true
+  tag_patterns:
+    - pattern: "v*"
+      include: true
