@@ -1,12 +1,12 @@
 // AILOS v1.0 Beta - Jenkins Pipeline (自建云端打包)
 // 对接GitHub仓库，代码推送自动触发打包
-// 基线: f13eddb | APK同步至网站静态目录
+// 基线: 879cfc9 | APK同步至网站静态目录
 
 pipeline {
     agent { label 'android-builder' }
     
     environment {
-        BASELINE_SHA = 'f13eddb'
+        BASELINE_SHA = '879cfc9'
         PROJECT_DIR = '/workspace/ailos/android-shell'
         OUTPUT_DIR = '/output'
         ANDROID_HOME = '/android-sdk'

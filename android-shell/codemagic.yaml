@@ -1,5 +1,5 @@
 # AILOS v1.0 Beta - Codemagic构建配置（优化版）
-# 基线: f13eddb | 分支: main(dev自动Debug) | 签名: V2+V3+zipalign
+# 基线: 879cfc9 | 分支: main(dev自动Debug) | 签名: V2+V3+zipalign
 
 environment:
   groups:
@@ -15,7 +15,7 @@ scripts:
       
       # 1. Git基线校验
       CURRENT_SHA=$(git rev-parse --short HEAD)
-      echo "1. Git SHA: $CURRENT_SHA (expected: f13eddb)"
+      echo "1. Git SHA: $CURRENT_SHA (expected: 879cfc9)"
       
       # 2. 后端健康检查
       HEALTH=$(curl -s https://yandao.vip/xuewaiyu/api/health | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
@@ -102,7 +102,7 @@ scripts:
         APK_URL="${CM_ARTIFACT_LINKS[0]}"
         curl -s -X POST "$WECOM_WEBHOOK" -H 'Content-Type: application/json' -d "{
           \"msgtype\":\"markdown\",
-          \"markdown\":{\"content\":\"## AILOS APK构建$BUILD_RESULT\n>基线: \`f13eddb\`\n>分支: \`$CM_BRANCH\`\n>构建号: \`$CM_BUILD_NUMBER\`\n>APK: [$APK_URL]($APK_URL)\n>日志: [查看]($CM_BUILD_URL)\"}
+          \"markdown\":{\"content\":\"## AILOS APK构建$BUILD_RESULT\n>基线: \`879cfc9\`\n>分支: \`$CM_BRANCH\`\n>构建号: \`$CM_BUILD_NUMBER\`\n>APK: [$APK_URL]($APK_URL)\n>日志: [查看]($CM_BUILD_URL)\"}
         }"
       fi
 

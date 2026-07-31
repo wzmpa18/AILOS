@@ -1,6 +1,6 @@
 # AILOS v1.0 Beta - GitHub Actions 自动打包工作流
 # 完全免费，仓库原生集成，签名信息存GitHub Secrets
-# 基线: f13eddb | 分支: main(Release) / dev(Debug)
+# 基线: 879cfc9 | 分支: main(Release) / dev(Debug)
 
 name: Build AILOS APK
 
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:  # 支持手动触发
 
 env:
-  BASELINE_SHA: f13eddb
+  BASELINE_SHA: 879cfc9
   VERSION_NAME: '1.0.0'
   JAVA_VERSION: '17'
   JAVA_DISTRO: 'temurin'
@@ -180,7 +180,7 @@ jobs:
         if: always()
         run: |
           echo "## AILOS APK构建结果" >> $GITHUB_STEP_SUMMARY
-          echo "- 基线: \`f13eddb\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 基线: \`879cfc9\`" >> $GITHUB_STEP_SUMMARY
           echo "- 分支: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- 构建号: \`#${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ job.status }}" == "success" ]]; then

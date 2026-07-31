@@ -1,13 +1,13 @@
 // AILOS v1.0 Beta - 腾讯CODING DevOps Jenkinsfile
 // 国内首选替代方案，免费可用，规避境外访问限制
-// 基线: f13eddb | 内置国内镜像源 | 自动签名 | 制品库存档
+// 基线: 879cfc9 | 内置国内镜像源 | 自动签名 | 制品库存档
 
 pipeline {
     agent any
     
     environment {
         // 基线校验
-        BASELINE_SHA = 'f13eddb'
+        BASELINE_SHA = '879cfc9'
         // 域名配置
         BASE_URL = 'https://yandao.vip/xuewaiyu/'
         // 版本号
@@ -173,7 +173,7 @@ pipeline {
                     sh """
                         curl -s -X POST "${env.WECOM_WEBHOOK}" -H 'Content-Type: application/json' -d '{
                             "msgtype":"markdown",
-                            "markdown":{"content":"## AILOS APK构建成功 ✅\n>基线: \`f13eddb\`\n>分支: \`${env.GIT_BRANCH}\`\n>构建号: \`${env.BUILD_NUMBER}\`\n>制品: CODING制品库"}
+                            "markdown":{"content":"## AILOS APK构建成功 ✅\n>基线: \`879cfc9\`\n>分支: \`${env.GIT_BRANCH}\`\n>构建号: \`${env.BUILD_NUMBER}\`\n>制品: CODING制品库"}
                         }'
                     """
                 }
@@ -186,7 +186,7 @@ pipeline {
                     sh """
                         curl -s -X POST "${env.WECOM_WEBHOOK}" -H 'Content-Type: application/json' -d '{
                             "msgtype":"markdown",
-                            "markdown":{"content":"## AILOS APK构建失败 ❌\n>基线: \`f13eddb\`\n>分支: \`${env.GIT_BRANCH}\`\n>构建号: \`${env.BUILD_NUMBER}\`\n>日志: ${env.BUILD_URL}console"}
+                            "markdown":{"content":"## AILOS APK构建失败 ❌\n>基线: \`879cfc9\`\n>分支: \`${env.GIT_BRANCH}\`\n>构建号: \`${env.BUILD_NUMBER}\`\n>日志: ${env.BUILD_URL}console"}
                         }'
                     """
                 }

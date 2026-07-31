@@ -1,7 +1,7 @@
 # AILOS v1.0 Beta - Docker+Jenkins自建云端打包环境
 # 部署至腾讯云服务器 82.156.228.87
 # 内置JDK17+Node22+Android SDK34+Gradle
-# 基线: f13eddb
+# 基线: 879cfc9
 
 version: '3.8'
 
@@ -35,7 +35,7 @@ services:
     environment:
       - ANDROID_HOME=/android-sdk
       - GRADLE_USER_HOME=/root/.gradle
-      - BASELINE_SHA=f13eddb
+      - BASELINE_SHA=879cfc9
       - BASE_URL=https://yandao.vip/xuewaiyu/
     networks:
       - ailos-net
