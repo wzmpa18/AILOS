@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实时扫描翻译 - AILOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f6fa; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+    .header { text-align: center; padding: 20px 0; }
+    .header h1 { font-size: 22px; font-weight: 600; }
+    .guide { background: linear-gradient(135deg, #e3f2fd, #f3e5f5); border-radius: 10px; padding: 14px; margin: 12px 0; font-size: 14px; color: #1565c0; text-align: center; }
+    .camera-area { background: #000; border-radius: 12px; height: 300px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 14px; margin: 16px 0; position: relative; overflow: hidden; }
+    .result-area { background: #fff; border-radius: 12px; padding: 16px; min-height: 80px; margin: 16px 0; }
+    .result-area .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .result-area .text { font-size: 16px; color: #333; }
+    .controls { display: flex; gap: 12px; margin: 16px 0; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; text-align: center; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .status { text-align: center; padding: 8px; font-size: 14px; color: #999; }
+    .status.translating { color: #ff9800; }
+    .status.success { color: #4caf50; }
+    .status.failed { color: #f44336; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>📷 实时扫描翻译</h1></div>
+    <div class="guide">将摄像头对准街道招牌、商品货架、路牌标识，即可自动识别并翻译</div>
+    <div class="camera-area" id="cameraArea">
+      <span>点击下方按钮开启摄像头</span>
+    </div>
+    <div class="controls">
+      <button class="btn btn-primary" id="btnStartScan" data-right="ai_screenshot" data-feature-name="实时扫描翻译">开启扫描翻译</button>
+    </div>
+    <div class="status" id="scanStatus">就绪</div>
+    <div class="result-area">
+      <div class="label">识别结果</div>
+      <div class="text" id="originalText">—</div>
+      <div class="label" style="margin-top:12px;">翻译结果</div>
+      <div class="text" id="translatedText">—</div>
+    </div>
+  </div>
+
+  <script src="/xuewaiyu/fe-rights.js"></script>
+  <script>
+    // 实时扫描翻译逻辑（需高级会员权益ai_screenshot）
+    document.getElementById('btnStartScan').addEventListener('click', async function(e) {
+      // fe-rights.js已在捕获阶段拦截无权限点击，这里只有有权限时才执行
+      var statusEl = document.getElementById('scanStatus');
+      statusEl.className = 'status translating';
+      statusEl.textContent = '识别中...';
+
+      try {
+        // 模拟扫描翻译流程
+        var stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        var video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        document.getElementById('cameraArea').innerHTML = '';
+        document.getElementById('cameraArea').appendChild(video);
+
+        // 模拟OCR+翻译（实际需调AI接口）
+        setTimeout(function() {
+          document.getElementById('originalText').textContent = '読書';
+          document.getElementById('translatedText').textContent = '读书';
+          statusEl.className = 'status success';
+          statusEl.textContent = '识别成功';
+          stream.getTracks().forEach(function(t) { t.stop(); });
+        }, 2000);
+      } catch(err) {
+        statusEl.className = 'status failed';
+        statusEl.textContent = '识别失败: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

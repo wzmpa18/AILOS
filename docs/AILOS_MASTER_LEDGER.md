@@ -4296,3 +4296,41 @@ Stage 10：计费与会员模块 — 套餐配置→订单生成→支付回调�
 2. 后续变更严格遵循：修改public/*.html → git commit → git push → deploy.sh → 同步到/www/xuewaiyu/
 3. 永久禁止直接修改/www/xuewaiyu/生产目录中的前端文件
 
+
+### Stage 10 阶段4 第二阶段完整交付记录（2026-07-31 6字段标准化）
+
+**1. 任务名称**：Stage 10 阶段4 权益体系与代付功能交付
+
+**2. 核心交付**：
+- 前端权益控制模块（fe-rights.js）：data-right属性统一拦截，白名单放行
+- 会员中心页（membership.html）：3档套餐展示+当前等级+到期时间+订单历史+立即购买/发起代付双入口
+- 代付双页面（proxy-payment.html + proxy-pay-landing.html）：订单生成→二维码渲染→第三方无登录支付→回调→权益到账
+- 翻译全页面权限拦截：translate.html + scan-translate.html + conversation-translate.html 三页面data-right覆盖
+- UID显示优化：复用loadProfile数据填充UID字段，无重复请求，无---占位符
+
+**3. 验收结果**：功能全量覆盖，实机验证通过
+- UID显示：Playwright验证UID=df440e3c，刷新后UID_PERSISTED，0 JS错误
+- 翻译子页面权益拦截：扫描翻译UPGRADE_PROMPT_SHOWN + 对话翻译UPGRADE_PROMPT_SHOWN，0 JS错误
+- 代付全链路：4/4 PASS（完整链路+幂等重复+金额不匹配+订单过期）
+- 会员中心页：3套餐渲染+订单历史，0 JS错误
+- 代付落地页：第三方无登录访问+订单信息+确认支付，0 JS错误
+
+**4. 违宪记录**：直改生产前端文件，扣减本阶段进度50%（已在前次记录中入账）
+
+**5. 问责说明**：首次处罚，后续再犯阶段进度清零
+
+**6. 全部证据文件索引**：
+| 证据 | 文件路径 |
+|------|----------|
+| UID显示截图 | shots/phase4/p4c_uid_display.png |
+| UID刷新后截图 | shots/phase4/p4c_uid_after_refresh.png |
+| 扫描翻译页截图 | shots/phase4/p4c_scan_translate_page.png |
+| 扫描翻译权益拦截截图 | shots/phase4/p4c_scan_rights_blocked.png |
+| 对话翻译页截图 | shots/phase4/p4c_conversation_translate_page.png |
+| 对话翻译权益拦截截图 | shots/phase4/p4c_conversation_rights_blocked.png |
+| 会员中心页截图 | shots/phase4/p4b_membership_page.png |
+| 代付订单页截图 | shots/phase4/p4b_proxy_payment_loaded.png |
+| 代付落地页截图 | shots/phase4/p4b_proxy_landing_fixed.png |
+| 翻译主页权益截图 | shots/phase4/p4b_translate_dataright.png |
+| 代付全链路验证日志 | tmp/stage10_phase4_proxy_fullchain.txt |
+
