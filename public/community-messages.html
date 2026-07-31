@@ -240,8 +240,27 @@
 
 <!-- Bottom Nav injected by common.js (Stage9 M5: Community 4-Tab) -->
 
-<script src="/xuewaiyu/assets/common.js"></script>
+<script src="/xuewaiyu/assets/common.js">
+function viewMsgSenderProfile(uniqueId) {
+  if (!uniqueId) return;
+  window.location.href = '/xuewaiyu/profile.html?share=' + encodeURIComponent(uniqueId);
+}
+
+</script>
 <script>
+
+function getAilosToken() {
+  var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+  if (!t) {
+    try { var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}'); t = s.accessToken || s.access_token; } catch(e) {}
+  }
+  return t;
+}
+function getAilosHeaders() {
+  var t = getAilosToken();
+  return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+
 // ===== i18n =====
 var I18N = {
   zh: {
@@ -288,7 +307,7 @@ function getToken() {
   return null;
 }
 
-var API = '/api/v1/social';
+var API = '/xuewaiyu/api/v1/social';
 async function api(method, path, body) {
   var token = getToken(); if (!token) throw new Error('NOT_AUTH');
   var opts = { method: method, headers: { 'Authorization': 'Bearer ' + token } };

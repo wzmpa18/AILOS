@@ -333,6 +333,19 @@
 
 <script src="/xuewaiyu/assets/common.js"></script>
 <script>
+
+function getAilosToken() {
+  var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+  if (!t) {
+    try { var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}'); t = s.accessToken || s.access_token; } catch(e) {}
+  }
+  return t;
+}
+function getAilosHeaders() {
+  var t = getAilosToken();
+  return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+
 // ===== i18n =====
 var I18N = {
   zh: {
@@ -403,7 +416,7 @@ function getToken() {
   return null;
 }
 
-function apiUrl(path) { return '/api/v1/social' + path; }
+function apiUrl(path) { return '/xuewaiyu/api/v1/social' + path; }
 
 async function apiGet(path) {
   var token = getToken(); if (!token) throw new Error('NOT_AUTH');
@@ -468,7 +481,7 @@ async function searchUser() {
   btn.disabled = true; btn.textContent = '...';
 
   try {
-    var user = await apiGet('/friend/search-by-uid?uid=' + encodeURIComponent(uid));
+    var user = await apiGet('/friends/search-by-nickname-by-uid?uid=' + encodeURIComponent(uid));
     var resultDiv = document.getElementById('searchResult');
     document.getElementById('resultAvatar').textContent = avatarText(user.nickname || user.uniqueId);
     document.getElementById('resultAvatar').style.background = avatarColor(user.nickname || user.uniqueId);
@@ -494,7 +507,7 @@ async function searchUser() {
 // ===== Add Friend =====
 async function addFriend(friendId) {
   try {
-    await apiPost('/friend/add', { friendId: friendId });
+    await apiPost('/friends/add', { friendId: friendId });
     showToast(t('friend_added'), 'success');
     document.getElementById('searchResult').classList.remove('show');
     document.getElementById('searchUid').value = '';
@@ -505,7 +518,7 @@ async function addFriend(friendId) {
 // ===== Load Friends =====
 async function loadFriends() {
   try {
-    var friends = await apiGet('/friend/list');
+    var friends = await apiGet('/friends');
     if (!Array.isArray(friends)) friends = friends ? (friends.friends || []) : [];
     renderFriendList(friends);
   } catch (e) {

@@ -192,6 +192,19 @@
 </div>
 
 <script>
+
+function getAilosToken() {
+  var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+  if (!t) {
+    try { var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}'); t = s.accessToken || s.access_token; } catch(e) {}
+  }
+  return t;
+}
+function getAilosHeaders() {
+  var t = getAilosToken();
+  return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+
 (function() {
   var page = 1, hasMore = true, isLoading = false;
   var deleteTargetId = null;
@@ -277,16 +290,15 @@
 
   // Token
   function getToken() {
-    var t = localStorage.getItem('ailos_token');
+    var t = getAilosToken();
     if (!t) {
-      try { var s = JSON.parse(localStorage.getItem('ailos_session') || '{}'); t = s.accessToken; }
-      catch(e) {}
+      /* token handled by getAilosToken() */
     }
     return t;
   }
   function authHeaders() {
     var t = getToken();
-    return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+    return getAilosHeaders();
   }
 
   // Toast
@@ -304,7 +316,7 @@
     if (reset) { page = 1; hasMore = true; document.getElementById('postList').innerHTML = ''; }
     document.getElementById('loadingMore').style.display = 'block';
 
-    var url = '/api/v1/social/timeline/feed?page=' + page + '&limit=20';
+    var url = '/xuewaiyu/api/v1/social/timeline/feed?page=' + page + '&limit=20';
     fetch(url, { headers: authHeaders() })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function(d) {
@@ -420,7 +432,7 @@
     var btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = '...';
 
-    fetch('/api/v1/social/timeline/post', {
+    fetch('/xuewaiyu/api/v1/social/timeline/post', {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ content: content, type: 'text', images: [] })
@@ -441,7 +453,7 @@
 
   // Like
   window.toggleLike = function(postId, btn) {
-    fetch('/api/v1/social/timeline/like/' + postId, {
+    fetch('/xuewaiyu/api/v1/social/timeline/like/' + postId, {
       method: 'POST', headers: authHeaders()
     })
     .then(function(r) { return r.json(); })
@@ -464,7 +476,7 @@
   };
   window.confirmDelete = function() {
     if (!deleteTargetId) return;
-    fetch('/api/v1/social/timeline/post/' + deleteTargetId, {
+    fetch('/xuewaiyu/api/v1/social/timeline/post/' + deleteTargetId, {
       method: 'DELETE', headers: authHeaders()
     })
     .then(function(r) { return r.json(); })
@@ -510,6 +522,9 @@
   init();
 })();
 </script>
+
+  <!-- Bottom Navigation (auto-injected by common.js ensureNav with community nav) -->
+  <nav class="bottom-nav"></nav>
 
 </body>
 </html>
