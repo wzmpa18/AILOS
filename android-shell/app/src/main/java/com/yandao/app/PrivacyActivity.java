@@ -1,4 +1,4 @@
-package ai.yandao.ailos;
+package com.yandao.app;
 
 import android.os.Bundle;
 import android.webkit.WebView;

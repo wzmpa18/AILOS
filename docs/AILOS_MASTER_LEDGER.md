@@ -4513,3 +4513,27 @@ AILOS v1.0 Beta APK构建与面向用户测试准备
 - 账簿SHA256: (见下方核验)
 - 宪法SHA256: (见下方核验)
 
+
+### 正式签名生成与Codemagic构建配置（2026-08-01）
+
+**签名生成时间**：2026-08-01 00:15 CST
+**对应版本**：v1.0.0-beta
+**密钥库文件**：yandao-release.keystore（RSA 2048, SHA256withRSA, 27年有效期9855天）
+**存储位置**：服务器/root/yandao-release.keystore（私密目录，不入Git仓库）
+
+**签名指纹**：
+- SHA1: BB:C5:51:3A:D0:2A:92:09:7B:61:5A:A6:D2:CA:3A:55:E3:DC:32:60
+- SHA256: A4:3C:11:22:9E:53:55:B2:02:1F:AD:05:E5:48:C3:96:C1:3C:15:9C:04:7B:F9:57:76:27:B3:8F:D3:4A:61:DB
+
+**包名变更**：ai.yandao.ailos → com.yandao.app（与备案包名对齐）
+
+**密钥备份提示**：请将/root/yandao-release.keystore下载到本地安全位置永久留存，服务器密钥仅用于构建注入。
+
+**Codemagic配置**：
+- Working directory: android-shell
+- 构建分支: main (基线7823d39)
+- 签名: V1+V2+V3全方案
+- 构建模式: Release (混淆+资源压缩+调试日志剥离)
+
+**构建验收结果**：（待构建完成后填写）
+

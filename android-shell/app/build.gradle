@@ -3,11 +3,11 @@
 // 极致轻量：仅容器+适配+原生桥接+基础配置
 
 android {
-    namespace 'ai.yandao.ailos'
+    namespace 'com.yandao.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "ai.yandao.ailos"
+        applicationId "com.yandao.app"
         minSdk 26          // Android 8.0, 覆盖98%+活跃机型
         targetSdk 34
         versionCode 1      // 构建号，Codemagic自动递增
