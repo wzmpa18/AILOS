@@ -89,7 +89,7 @@ router.get('/friends/search-by-nickname', auth, async (req, res, next) => {
   try {
     const svc = getSocialService();
     const result = await svc.searchByNickname(getUid(req), req.query.q || '');
-    res.json({ success: true, data: { results: result } });
+    res.json({ success: true, data: result });
   } catch (e) {
     next(e);
   }
