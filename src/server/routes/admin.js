@@ -9,6 +9,7 @@ const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/adminAuth');
 const adminLanguageController = require('../controllers/adminLanguageController');
 const adminController = require('../controllers/adminController');
+const adminMembershipController = require('../controllers/adminMembershipController');
 
 // 双语言一致性校验（全量 / 单用户）
 router.get('/language-consistency', authenticate, requireAdmin, adminLanguageController.getConsistency);
@@ -53,5 +54,13 @@ router.post('/users/reset-password', authenticate, requireAdmin, adminController
 
 // P1-4 操作密码管理
 router.post('/security/op-password', authenticate, requireAdmin, adminController.changeOpPassword);
+
+
+// Stage 10 阶段5 增量：会员管理 + 套餐管理 + 代付记录
+router.get('/memberships/user/:userId', authenticate, requireAdmin, adminMembershipController.getUserMembership);
+router.post('/memberships/adjust-time', authenticate, requireAdmin, adminMembershipController.adjustMembershipTime);
+router.get('/plans', authenticate, requireAdmin, adminMembershipController.listPlans);
+router.put('/plans/:id', authenticate, requireAdmin, adminMembershipController.updatePlan);
+router.get('/proxy-orders', authenticate, requireAdmin, adminMembershipController.listProxyOrders);
 
 module.exports = router;

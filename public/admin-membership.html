@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会员管理后台 - AILOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #333; }
+    .nav { background: #001529; color: #fff; padding: 16px 24px; display: flex; align-items: center; }
+    .nav h1 { font-size: 18px; font-weight: 500; }
+    .nav .tabs { margin-left: 40px; display: flex; gap: 24px; }
+    .nav .tabs a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; cursor: pointer; }
+    .nav .tabs a.active { color: #fff; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 16px; margin-bottom: 16px; color: #333; }
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .toolbar input, .toolbar select { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; }
+    .toolbar button { padding: 8px 20px; background: #1890ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    th { background: #fafafa; font-weight: 500; color: #666; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    .badge-paid { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .badge-pending { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+    .badge-proxy { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+    .btn-sm { padding: 4px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #1890ff; color: #fff; }
+    .btn-warning { background: #fa8c16; color: #fff; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; align-items: center; justify-content: center; }
+    .modal { background: #fff; border-radius: 8px; padding: 24px; min-width: 400px; max-width: 600px; }
+    .modal h3 { margin-bottom: 16px; }
+    .modal .form-group { margin-bottom: 12px; }
+    .modal label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+    .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 6px; }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <h1>AILOS 管理后台</h1>
+    <div class="tabs">
+      <a onclick="switchTab('orders')" id="tab-orders" class="active">订单管理</a>
+      <a onclick="switchTab('memberships')" id="tab-memberships">会员管理</a>
+      <a onclick="switchTab('plans')" id="tab-plans">套餐配置</a>
+      <a onclick="switchTab('proxy')" id="tab-proxy">代付记录</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="content">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <script>
+    var API_BASE = '/xuewaiyu/api';
+    var token = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token') || '';
+    if (!token) { try { token = JSON.parse(localStorage.getItem('auth_tokens') || '{}').accessToken || ''; } catch(e) {} }
+
+    async function apiCall(method, path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      var resp = await fetch(API_BASE + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+      return resp.json();
+    }
+
+    var currentTab = 'orders';
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tabs a').forEach(function(a) { a.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      loadTab(tab);
+    }
+
+    async function loadTab(tab) {
+      var content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">加载中...</div>';
+
+      if (tab === 'orders') await loadOrders();
+      else if (tab === 'memberships') await loadMemberships();
+      else if (tab === 'plans') await loadPlans();
+      else if (tab === 'proxy') await loadProxyOrders();
+    }
+
+    // ============================================================
+    // 订单管理
+    // ============================================================
+    async function loadOrders() {
+      var data = await apiCall('GET', '/admin/orders?page=1&pageSize=20');
+      if (!data.success) { document.getElementById('content').innerHTML = '<div class="loading">' + (data.error || '加载失败') + '</div>'; return; }
+
+      var orders = data.data.orders || data.data || [];
+      var html = '<div class="card"><h2>订单管理</h2>';
+      html += '<div class="toolbar"><input id="orderSearch" placeholder="搜索订单号/用户ID"><select id="orderStatus"><option value="">全部状态</option><option value="paid">已支付</option><option value="pending">待支付</option></select><button onclick="searchOrders()">查询</button></div>';
+      html += '<table><thead><tr><th>订单号</th><th>用户</th><th>套餐</th><th>金额</th><th>状态</th><th>支付渠道</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
+      orders.forEach(function(o) {
+        var statusBadge = o.status === 'paid' ? '<span class="badge badge-paid">已支付</span>' : '<span class="badge badge-pending">待支付</span>';
+        var proxyBadge = o.proxyStatus && o.proxyStatus !== 'none' ? ' <span class="badge badge-proxy">代付</span>' : '';
+        html += '<tr><td>' + (o.orderNo || '') + '</td><td>' + (o.userId || '').substring(0,8) + '</td><td>' + (o.membershipLevel || '') + '</td><td>¥' + ((o.amount || 0) / 100).toFixed(2) + '</td><td>' + statusBadge + proxyBadge + '</td><td>' + (o.payChannel || o.paymentMethod || '') + '</td><td>' + new Date(o.createdAt).toLocaleString('zh-CN') + '</td><td><button class="btn-sm btn-primary" onclick="viewOrderDetail(\'' + o.id + '\')">详情</button></td></tr>';
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function searchOrders() {
+      var search = document.getElementById('orderSearch').value;
+      var status = document.getElementById('orderStatus').value;
+      var query = 'page=1&pageSize=20';
+      if (search) query += '&keyword=' + encodeURIComponent(search);
+      if (status) query += '&status=' + status;
+      var data = await apiCall('GET', '/admin/orders?' + query);
+      if (data.success) {
+        var orders = data.data.orders || data.data || [];
+        var tbody = document.querySelector('tbody');
+        tbody.innerHTML = orders.map(function(o) {
+          var statusBadge = o.status === 'paid' ? '<span class="badge badge-paid">已支付</span>' : '<span class="badge badge-pending">待支付</span>';
+          return '<tr><td>' + (o.orderNo || '') + '</td><td>' + (o.userId || '').substring(0,8) + '</td><td>' + (o.membershipLevel || '') + '</td><td>¥' + ((o.amount || 0) / 100).toFixed(2) + '</td><td>' + statusBadge + '</td><td>' + (o.payChannel || '') + '</td><td>' + new Date(o.createdAt).toLocaleString('zh-CN') + '</td><td><button class="btn-sm btn-primary" onclick="viewOrderDetail(\'' + o.id + '\')">详情</button></td></tr>';
+        }).join('');
+      }
+    }
+
+    function viewOrderDetail(id) {
+      showModal('<h3>订单详情</h3><p>订单ID: ' + id + '</p><div class="actions"><button class="btn-sm btn-primary" onclick="closeModal()">关闭</button></div>');
+    }
+
+    // ============================================================
+    // 会员管理
+    // ============================================================
+    async function loadMemberships() {
+      var html = '<div class="card"><h2>会员管理</h2>';
+      html += '<div class="toolbar"><input id="memberSearch" placeholder="输入用户ID查询"><button onclick="searchMember()">查询会员状态</button></div>';
+      html += '<div id="memberResult"></div></div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function searchMember() {
+      var userId = document.getElementById('memberSearch').value.trim();
+      if (!userId) { alert('请输入用户ID'); return; }
+
+      var data = await apiCall('GET', '/admin/memberships/user/' + userId);
+      var result = document.getElementById('memberResult');
+
+      if (!data.success) { result.innerHTML = '<p style="color:#f44336;">' + (data.error || '查询失败') + '</p>'; return; }
+
+      var u = data.data.user;
+      var memberships = data.data.memberships || [];
+      var orders = data.data.orders || [];
+      var rights = data.data.rights || {};
+
+      var html = '<h3>用户信息</h3><p>昵称: ' + u.nickname + ' | 手机: ' + (u.phone || '—') + ' | 等级: ' + (u.membershipLevel || 'free') + ' | 到期: ' + (u.membershipExpiry ? new Date(u.membershipExpiry).toLocaleString('zh-CN') : '—') + '</p>';
+      html += '<h3 style="margin-top:16px;">权益清单</h3><p>' + JSON.stringify(rights.features || []) + '</p>';
+      html += '<div style="margin-top:16px;"><button class="btn-sm btn-warning" onclick="showAdjustModal(\'' + u.id + '\',\'' + u.nickname + '\')">调整会员时长</button></div>';
+      html += '<h3 style="margin-top:16px;">会员历史 (' + memberships.length + ')</h3><table><thead><tr><th>套餐</th><th>等级</th><th>开始</th><th>到期</th><th>状态</th><th>来源</th></tr></thead><tbody>';
+      memberships.forEach(function(m) {
+        html += '<tr><td>' + m.planCode + '</td><td>' + m.level + '</td><td>' + new Date(m.startTime).toLocaleDateString('zh-CN') + '</td><td>' + new Date(m.endTime).toLocaleDateString('zh-CN') + '</td><td>' + m.status + '</td><td>' + m.source + '</td></tr>';
+      });
+      html += '</tbody></table>';
+
+      result.innerHTML = html;
+    }
+
+    function showAdjustModal(userId, nickname) {
+      showModal('<h3>调整会员时长 - ' + nickname + '</h3><div class="form-group"><label>调整天数（正数增加，负数减少）</label><input id="adjustDays" type="number" value="30"></div><div class="form-group"><label>操作原因（必填）</label><input id="adjustReason" placeholder="如：补偿用户、活动赠送"></div><div class="actions"><button class="btn-sm btn-primary" onclick="confirmAdjust(\'' + userId + '\')">确认调整</button><button class="btn-sm" onclick="closeModal()">取消</button></div>');
+    }
+
+    async function confirmAdjust(userId) {
+      var days = parseInt(document.getElementById('adjustDays').value);
+      var reason = document.getElementById('adjustReason').value.trim();
+      if (!reason) { alert('请填写操作原因'); return; }
+      if (!confirm('确认调整' + days + '天？此操作不可撤销。')) return;
+
+      var data = await apiCall('POST', '/admin/memberships/adjust-time', { userId: userId, deltaDays: days, reason: reason });
+      if (data.success) {
+        alert('调整成功！新到期时间: ' + new Date(data.data.afterExpiry).toLocaleString('zh-CN'));
+        closeModal();
+        searchMember();
+      } else {
+        alert('调整失败: ' + (data.error || '未知错误'));
+      }
+    }
+
+    // ============================================================
+    // 套餐配置
+    // ============================================================
+    async function loadPlans() {
+      var data = await apiCall('GET', '/admin/plans');
+      if (!data.success) { document.getElementById('content').innerHTML = '<div class="loading">' + (data.error || '加载失败') + '</div>'; return; }
+
+      var plans = data.data || [];
+      var html = '<div class="card"><h2>套餐配置</h2><table><thead><tr><th>编码</th><th>名称</th><th>等级</th><th>价格</th><th>时长(天)</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+      plans.forEach(function(p) {
+        var statusBadge = p.status === 'active' ? '<span class="badge badge-paid">上线</span>' : '<span class="badge badge-pending">下线</span>';
+        html += '<tr><td>' + p.planCode + '</td><td>' + p.name + '</td><td>' + p.level + '</td><td>¥' + (p.price / 100).toFixed(2) + '</td><td>' + p.durationDays + '</td><td>' + statusBadge + '</td><td><button class="btn-sm btn-primary" onclick="editPlan(\'' + p.id + '\')">编辑</button></td></tr>';
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function editPlan(planId) {
+      var data = await apiCall('GET', '/admin/plans');
+      var plan = data.data.find(function(p) { return p.id === planId; });
+      if (!plan) return;
+
+      showModal('<h3>编辑套餐 - ' + plan.name + '</h3><div class="form-group"><label>价格（元）</label><input id="planPrice" type="number" step="0.01" value="' + (plan.price / 100) + '"></div><div class="form-group"><label>时长（天）</label><input id="planDuration" type="number" value="' + plan.durationDays + '"></div><div class="form-group"><label>状态</label><select id="planStatus"><option value="active"' + (plan.status === 'active' ? ' selected' : '') + '>上线</option><option value="offline"' + (plan.status === 'offline' ? ' selected' : '') + '>下线</option></select></div><div class="form-group"><label>描述</label><input id="planDesc" value="' + plan.description + '"></div><div class="actions"><button class="btn-sm btn-primary" onclick="savePlan(\'' + planId + '\')">保存</button><button class="btn-sm" onclick="closeModal()">取消</button></div>');
+    }
+
+    async function savePlan(planId) {
+      var price = Math.round(parseFloat(document.getElementById('planPrice').value) * 100);
+      var duration = parseInt(document.getElementById('planDuration').value);
+      var status = document.getElementById('planStatus').value;
+      var desc = document.getElementById('planDesc').value;
+
+      if (!confirm('确认修改？修改后即时生效。')) return;
+
+      var data = await apiCall('PUT', '/admin/plans/' + planId, { price: price, durationDays: duration, status: status, description: desc });
+      if (data.success) { alert('修改成功'); closeModal(); loadPlans(); }
+      else { alert('修改失败: ' + (data.error || '')); }
+    }
+
+    // ============================================================
+    // 代付记录
+    // ============================================================
+    async function loadProxyOrders() {
+      var data = await apiCall('GET', '/admin/proxy-orders?page=1&pageSize=20');
+      if (!data.success) { document.getElementById('content').innerHTML = '<div class="loading">' + (data.error || '加载失败') + '</div>'; return; }
+
+      var orders = data.data.orders || [];
+      var html = '<div class="card"><h2>代付记录</h2>';
+      html += '<div class="toolbar"><select id="proxyStatus"><option value="">全部状态</option><option value="pending">待支付</option><option value="paid">已支付</option><option value="expired">已过期</option></select><button onclick="filterProxy()">筛选</button></div>';
+      html += '<table><thead><tr><th>订单号</th><th>发起人</th><th>套餐</th><th>金额</th><th>代付状态</th><th>代付人</th><th>创建时间</th></tr></thead><tbody>';
+      orders.forEach(function(o) {
+        var proxyBadge = '<span class="badge badge-proxy">' + o.proxyStatus + '</span>';
+        html += '<tr><td>' + o.orderNo + '</td><td>' + (o.userNickname || o.userId.substring(0,8)) + '</td><td>' + o.membershipLevel + '</td><td>¥' + (o.amount / 100).toFixed(2) + '</td><td>' + proxyBadge + '</td><td>' + (o.proxyPayerId || '—').substring(0,8) + '</td><td>' + new Date(o.createdAt).toLocaleString('zh-CN') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function filterProxy() {
+      var status = document.getElementById('proxyStatus').value;
+      var query = 'page=1&pageSize=20';
+      if (status) query += '&status=' + status;
+      var data = await apiCall('GET', '/admin/proxy-orders?' + query);
+      if (data.success) {
+        var orders = data.data.orders || [];
+        var tbody = document.querySelector('tbody');
+        tbody.innerHTML = orders.map(function(o) {
+          return '<tr><td>' + o.orderNo + '</td><td>' + (o.userNickname || '') + '</td><td>' + o.membershipLevel + '</td><td>¥' + (o.amount / 100).toFixed(2) + '</td><td><span class="badge badge-proxy">' + o.proxyStatus + '</span></td><td>' + (o.proxyPayerId || '—') + '</td><td>' + new Date(o.createdAt).toLocaleString('zh-CN') + '</td></tr>';
+        }).join('');
+      }
+    }
+
+    // ============================================================
+    // Modal
+    // ============================================================
+    function showModal(html) {
+      document.getElementById('modalContent').innerHTML = html;
+      document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    // Init
+    loadOrders();
+  </script>
+</body>
+</html>
