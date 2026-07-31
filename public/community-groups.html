@@ -285,12 +285,12 @@
 
 <!-- Bottom Nav injected by common.js (Stage9 M5: Community 4-Tab) -->
 
-<script src="/xuewaiyu/assets/common.js">
+<script src="/xuewaiyu/assets/common.js"></script>
+<script>
 function viewMemberProfile(uniqueId, nickname) {
   if (!uniqueId) return;
   window.location.href = '/xuewaiyu/profile.html?share=' + encodeURIComponent(uniqueId);
 }
-
 </script>
 <script>
 
@@ -397,7 +397,7 @@ async function createGroup() {
   if (!name) { showToast('请输入群名称', 'error'); return; }
 
   try {
-    var g = await api('POST', '/group/create', { name: name, description: document.getElementById('groupDesc').value.trim() });
+    var g = await api('POST', '/groups', { name: name, description: document.getElementById('groupDesc').value.trim() });
     showToast(t('created') + ': ' + name, 'success');
     closeCreateGroup();
     loadGroups();
@@ -409,22 +409,22 @@ var allGroups = [];
 
 async function loadGroups() {
   try {
-    // Groups are loaded via conversation list or we could have a dedicated endpoint
-    // For now, we need to figure out the right endpoint. Let's use a workaround
-    // The group API exposes /group/:id so we need a list endpoint
-    // In the backend, groups might not have a direct list. Let's check if we can load from conversations with type=group
-    var convs = await api('GET', '/conversations');
-    var convArr = Array.isArray(convs) ? convs : (convs.conversations || []);
+    var resp = await api('GET', '/groups');
+    var groups = Array.isArray(resp) ? resp : (resp.data || resp || []);
 
-    // Load group details for group-type conversations
     allGroups = [];
-    for (var i = 0; i < convArr.length; i++) {
-      if (convArr[i].type === 'group') {
-        try {
-          var detail = await api('GET', '/group/' + convArr[i].targetId);
-          allGroups.push({ id: convArr[i].targetId, convId: convArr[i].id, name: detail.name || '未命名群', description: detail.description, memberCount: detail.memberCount, muteAll: detail.muteAll, isOwner: detail.isOwner, myRole: detail.myRole });
-        } catch(e) {}
-      }
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      allGroups.push({
+        id: g.id,
+        convId: g.convId || g.id,
+        name: g.name || '未命名群',
+        description: g.description || '',
+        memberCount: g.memberCount || g.maxMembers || 0,
+        muteAll: g.muteAll || false,
+        isOwner: g.myRole === 'owner',
+        myRole: g.myRole || 'member'
+      });
     }
 
     renderGroups();
@@ -463,7 +463,7 @@ var detailGroupId = null;
 async function openGroupDetail(gid) {
   detailGroupId = gid;
   try {
-    var g = await api('GET', '/group/' + gid);
+    var g = await api('GET', '/groups/' + gid);
     document.getElementById('detailAvatar').textContent = avatarText(g.name || 'G');
     document.getElementById('detailAvatar').style.background = avatarColor(g.name || gid);
     document.getElementById('detailName').textContent = g.name || '未命名群';
@@ -476,15 +476,20 @@ async function openGroupDetail(gid) {
       document.getElementById('detailDescField').style.display = 'none';
     }
 
-    // Members
+    // Members - fetch from separate API
     var memHtml = '';
-    if (g.members && g.members.length > 0) {
-      for (var i = 0; i < g.members.length; i++) {
-        var m = g.members[i];
+    var members = [];
+    try {
+      var memResp = await api('GET', '/groups/' + gid + '/members');
+      members = Array.isArray(memResp) ? memResp : (memResp.data || memResp || []);
+    } catch(e) { console.warn('Load members:', e); }
+    if (members && members.length > 0) {
+      for (var i = 0; i < members.length; i++) {
+        var m = members[i];
         var role = m.role === 'owner' ? t('owner') : (m.role === 'admin' ? t('admin') : t('member'));
         var name = m.nickname || m.uniqueId || m.userId || '未知';
         var isOwner = g.isOwner;
-        memHtml += '<div class="member-item" onclick="viewMemberProfile(\'{{uniqueId}}\',\'{{nickname}}\')" style="cursor:pointer">';
+        memHtml += '<div class="member-item" onclick="viewMemberProfile(\'' + (m.uniqueId || m.userId || '') + '\',\'' + (m.nickname || m.userName || '') + '\')" style="cursor:pointer">';
         memHtml += '<div class="member-avatar" style="background:' + avatarColor(name) + '">' + avatarText(name) + '</div>';
         memHtml += '<div class="member-info"><div class="member-name">' + name + '</div><div class="member-role">' + role + '</div></div>';
         if (isOwner && m.role !== 'owner') {
@@ -530,7 +535,7 @@ async function addMember() {
     // First search by UID to get userId
     var user = await api('GET', '/friend/search-by-uid?uid=' + encodeURIComponent(uid));
     if (!user || !user.id) { showToast('用户未找到', 'error'); return; }
-    await api('POST', '/group/' + detailGroupId + '/members', { userId: user.id });
+    await api('POST', '/groups/' + detailGroupId + '/members', { userId: user.id });
     showToast(t('added'), 'success');
     document.getElementById('addMemberInput').value = '';
     document.getElementById('addMemberRow').style.display = 'none';
@@ -540,7 +545,7 @@ async function addMember() {
 
 async function removeMember(userId) {
   try {
-    await api('DELETE', '/group/' + detailGroupId + '/members/' + userId);
+    await api('DELETE', '/groups/' + detailGroupId + '/members/' + userId);
     showToast(t('removed'), 'success');
     openGroupDetail(detailGroupId);
   } catch (e) { showToast(e.message, 'error'); }
@@ -548,8 +553,8 @@ async function removeMember(userId) {
 
 async function toggleMuteAll() {
   try {
-    var g = await api('GET', '/group/' + detailGroupId);
-    await api('PUT', '/group/' + detailGroupId + '/mute-all', { muteAll: !g.muteAll });
+    var g = await api('GET', '/groups/' + detailGroupId);
+    await api('PUT', '/groups/' + detailGroupId + '/mute-all', { muteAll: !g.muteAll });
     showToast(g.muteAll ? t('unmuted_all') : t('muted_all'), 'success');
     openGroupDetail(detailGroupId);
   } catch (e) { showToast(e.message, 'error'); }
@@ -559,7 +564,7 @@ async function leaveGroup() {
   if (!confirm('确定要退出该群？')) return;
   try {
     // No dedicated leave endpoint, use member remove on self
-    await api('DELETE', '/group/' + detailGroupId + '/members/' + 'self');
+    await api('DELETE', '/groups/' + detailGroupId + '/members/' + 'self');
     showToast(t('left_group'), 'success');
     closeGroupDetail();
     loadGroups();
