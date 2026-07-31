@@ -4334,3 +4334,45 @@ Stage 10：计费与会员模块 — 套餐配置→订单生成→支付回调�
 | 翻译主页权益截图 | shots/phase4/p4b_translate_dataright.png |
 | 代付全链路验证日志 | tmp/stage10_phase4_proxy_fullchain.txt |
 
+
+### Stage 10 阶段5 全阶段终验交付记录（2026-07-31 6字段标准化）
+
+**1. 任务名称**：Stage 10 会员计费与权益体系搭建（全阶段终验）
+
+**2. 核心交付**：
+- 数据模型搭建：4新模型（MembershipPlan/UserMembership/PaymentLog/MembershipRights）+ MembershipOrder增量6代付字段 + ReferralLink邀请表
+- 支付链路：下单→支付回调→权益开通→流水记录，事务原子性+幂等性+金额强校验
+- 代付体系：非绑定式代付（发起→二维码→第三方无登录支付→权益到账），4类异常场景拦截
+- 权益中间件：requireRight白名单放行 + requireQuota配额校验 + fe-rights.js前端统一拦截
+- 前端页面：会员中心页+代付双页面+管理后台+翻译子页面权益拦截+UID优化
+- 管理后台：订单管理+会员管理+套餐配置+代付记录4模块，操作全留痕
+- 缺陷修复：昵称保存+二维码纯前端+翻译语言切换+邀请绑定 4项P0全修复
+
+**3. 验收结果**：全量回归通过，功能闭环可用
+- 全量回归测试：36/36 PASS（100%）
+  - 会员核心场景11项：套餐查询/下单/标准支付/代付/权益校验/到期降级/续费叠加/幂等/金额拦截/过期拦截
+  - 关联模块权限10项：翻译/社交/AI配额 三级权益精准管控
+  - 历史缺陷复测8项：昵称/二维码/UID/语言切换/邀请/子页面权益 全无复现
+  - 核心API健康7项：Health/Dashboard/Checkin/AI/Social/Membership 全200
+
+**4. 违宪记录**：阶段4直改生产前端文件，扣减50%阶段进度（首次处罚，已入账）
+
+**5. 问责说明**：后续再犯同类违宪（直改生产/事后补Git），阶段进度清零重做
+
+**6. 全部证据文件索引**：
+| 证据 | 文件路径 |
+|------|----------|
+| 全量回归测试报告 | tmp/stage10_phase5_regression.txt |
+| 阶段1事务原子性验证 | tmp/stage10_phase1_verify.txt |
+| 阶段3权限7场景验证 | tmp/stage10_phase3_verify.txt |
+| 阶段3权益配置验证 | tmp/stage10_phase3_task1.txt |
+| 阶段4 P0缺陷验证 | tmp/stage10_phase4_p0_verify.txt |
+| 阶段4代付全链路验证 | tmp/stage10_phase4_proxy_fullchain.txt |
+| 合规承诺清单 | docs/STAGE10_COMPLIANCE.md, docs/STAGE10_PHASE5_COMPLIANCE.md |
+| 管理后台页面 | public/admin-membership.html |
+| 会员中心页 | public/membership.html |
+| 代付页面 | public/proxy-payment.html, public/proxy-pay-landing.html |
+| 权益控制模块 | public/fe-rights.js |
+| 翻译子页面 | public/scan-translate.html, public/conversation-translate.html |
+| Playwright截图 | shots/phase4/*.png |
+
