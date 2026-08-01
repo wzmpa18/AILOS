@@ -4537,3 +4537,29 @@ AILOS v1.0 Beta APK构建与面向用户测试准备
 
 **构建验收结果**：（待构建完成后填写）
 
+
+### 首次自动构建触发（2026-08-01 01:20 CST）
+
+**触发方式**：空提交推送 main 分支，利用 codemagic.yaml push 触发规则自动启动
+**触发commit**：49bba93
+**代码基线**：35ab7eb（codemagic永久配置）→ 49bba93（触发构建）
+**构建类型**：Release 正式签名（V1+V2+V3）
+**工作目录**：android-shell
+
+**Codemagic环境变量配置状态**：
+- KEYSTORE_BASE64: 需用户在Codemagic控制台配置（base64值已生成）
+- KEYSTORE_PASSWORD: 需用户配置（YanDao2024!）
+- KEY_ALIAS: 需用户配置（yandao）
+- KEY_PASSWORD: 需用户配置（YanDao2024!）
+
+**构建验收结果**：（待环境变量配置完成后构建自动执行，填写验收结果）
+
+**签名指纹**（供验收对比）：
+- SHA1: BB:C5:51:3A:D0:2A:92:09:7B:61:5A:A6:D2:CA:3A:55:E3:DC:32:60
+- SHA256: A4:3C:11:22:9E:53:55:B2:02:1F:AD:05:E5:48:C3:96:C1:3C:15:9C:04:7B:F9:57:76:27:B3:8F:D3:4A:61:DB
+
+**密钥永久备份提醒**：
+- 密钥文件：/root/yandao-release.keystore
+- base64编码：/root/yandao-release-base64.txt
+- 请将密钥文件下载到本地安全位置永久留存，丢失后无法更新应用
+
