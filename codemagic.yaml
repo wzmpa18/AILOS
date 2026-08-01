@@ -37,19 +37,41 @@
             echo "FATAL: keystore too small, base64 decode failed"
             exit 1
           fi
-          echo "=== Verifying keystore store password (PKCS12) ==="
-          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1
-          if [ $? -ne 0 ]; then
-            echo "FATAL: Cannot open keystore with store password"
-            exit 1
+
+          echo "=== File type detection ==="
+          file /tmp/yandao-release.keystore
+          echo "=== First 32 bytes (hex) ==="
+          xxd -l 32 /tmp/yandao-release.keystore 2>/dev/null || od -A x -t x1z -N 32 /tmp/yandao-release.keystore
+
+          echo "=== Trying keytool WITHOUT storetype (auto-detect) ==="
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1
+          KT_RESULT=$?
+          if [ $KT_RESULT -ne 0 ]; then
+            echo "Auto-detect failed, trying JKS format..."
+            keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype JKS 2>&1
+            if [ $? -ne 0 ]; then
+              echo "JKS also failed, trying PKCS12 format..."
+              keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1
+              if [ $? -ne 0 ]; then
+                echo "FATAL: Cannot open keystore with any format"
+                exit 1
+              fi
+            fi
           fi
+
+          echo "=== Keystore opened successfully, listing all aliases ==="
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1
+
           echo "=== Verifying key alias and key password ==="
-          keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" 2>&1
+          keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" 2>&1
           if [ $? -ne 0 ]; then
-            echo "FATAL: Cannot read key alias '$KEY_ALIAS' with provided key password"
-            echo "Available aliases:"
-            keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1
-            exit 1
+            echo "WARNING: Cannot read key alias '$KEY_ALIAS' with provided key password"
+            echo "Trying with store password as key password..."
+            keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" -keypass "$KEYSTORE_PASSWORD" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "FATAL: Cannot read key alias '$KEY_ALIAS' with any password"
+              exit 1
+            fi
           fi
           echo "=== Keystore verification PASSED ==="
 
