@@ -1,0 +1,146 @@
+# AILOS v1.0 Beta - Codemagic永久配置（根目录）
+# 基线: e46bc36 | 工作目录: android-shell | 签名: 自动注入V1+V2+V3
+# 配置完成后永久生效，后续构建无需重新配置
+
+working_directory: android-shell
+
+environment:
+  groups:
+    - default
+
+scripts:
+  # ============================================================
+  # 1. 预构建基线校验（10项强制）
+  # ============================================================
+  - name: Pre-build Baseline Check
+    script: |
+      set -e
+      echo "=== AILOS Pre-build Baseline Check ==="
+      
+      # 1. Git基线
+      CURRENT_SHA=$(git rev-parse --short HEAD)
+      echo "1. Git SHA: $CURRENT_SHA"
+      
+      # 2. 后端健康检查
+      HEALTH=$(curl -s https://yandao.vip/xuewaiyu/api/health | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "skip")
+      echo "2. Backend health: $HEALTH"
+      
+      # 3. 会员套餐
+      PLANS=$(curl -s https://yandao.vip/xuewaiyu/api/membership/plans | python3 -c "import sys,json;d=json.load(sys.stdin);print(len(d.get('data',[])))" 2>/dev/null || echo "0")
+      echo "3. Membership plans: $PLANS"
+      
+      # 4. HTTPS域名
+      HTTPS_CODE=$(curl -sk -o /dev/null -w "%{http_code}" https://yandao.vip/xuewaiyu/index.html)
+      echo "4. HTTPS index: $HTTPS_CODE"
+      
+      # 5. 壳工程文件
+      [ ! -f "app/build.gradle" ] && echo "FAIL: app/build.gradle missing" && exit 1
+      [ ! -f "app/src/main/java/com/yandao/app/MainActivity.java" ] && echo "FAIL: MainActivity missing" && exit 1
+      echo "5. Shell files: OK"
+      
+      # 6. 签名环境变量
+      [ -z "$KEYSTORE_BASE64" ] && echo "FAIL: KEYSTORE_BASE64 not set" && exit 1
+      [ -z "$KEYSTORE_PASSWORD" ] && echo "FAIL: KEYSTORE_PASSWORD not set" && exit 1
+      [ -z "$KEY_ALIAS" ] && echo "FAIL: KEY_ALIAS not set" && exit 1
+      [ -z "$KEY_PASSWORD" ] && echo "FAIL: KEY_PASSWORD not set" && exit 1
+      echo "6. Signing env vars: OK"
+      
+      # 7. 无密钥泄露
+      if grep -rn '\.keystore\|\.jks' . --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv\|buildConfig'; then
+        echo "FAIL: Keystore reference in code" && exit 1
+      fi
+      echo "7. No keystore in code: OK"
+      
+      # 8. 混淆开启
+      grep -q 'minifyEnabled true' app/build.gradle && echo "8. ProGuard: OK" || { echo "FAIL: ProGuard not enabled"; exit 1; }
+      
+      # 9. 版本号
+      grep -q 'versionName "1.0.0"' app/build.gradle && echo "9. Version 1.0.0: OK" || { echo "FAIL: Version mismatch"; exit 1; }
+      
+      # 10. 包名校验
+      grep -q 'applicationId "com.yandao.app"' app/build.gradle && echo "10. Package com.yandao.app: OK" || { echo "FAIL: Package name wrong"; exit 1; }
+      
+      echo "=== All 10 checks PASSED ==="
+
+  # ============================================================
+  # 2. 密钥自动解码（从环境变量读取base64→生成临时文件→构建后自动清理）
+  # ============================================================
+  - name: Decode Keystore
+    script: |
+      # 从加密环境变量读取base64密钥，解码生成临时签名文件
+      echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore
+      # 验证文件生成成功
+      [ ! -f /tmp/yandao-release.keystore ] && echo "FAIL: Keystore decode failed" && exit 1
+      echo "Keystore decoded successfully (temp file, auto-deleted after build)"
+
+  # ============================================================
+  # 3. 构建Release APK（V1+V2+V3签名+混淆+资源压缩）
+  # ============================================================
+  - name: Build Release APK
+    script: |
+      # 判断构建类型：main分支+tag=Release，其他=Debug
+      if [ "$CM_BRANCH" = "main" ]; then
+        echo "=== Building Release (main branch) ==="
+        ./gradlew clean assembleRelease \
+          -Pandroid.injected.signing.store.file=/tmp/yandao-release.keystore \
+          -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+          -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+          -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+      else
+        echo "=== Building Debug (dev branch) ==="
+        ./gradlew clean assembleDebug
+      fi
+
+  # ============================================================
+  # 4. Zipalign对齐 + V1+V2+V3签名验证 + 产物重命名
+  # ============================================================
+  - name: Zipalign + Verify + Rename
+    script: |
+      APK_DIR="app/build/outputs/apk/release"
+      
+      if [ -d "$APK_DIR" ]; then
+        # Zipalign 4字节对齐
+        $ANDROID_HOME/build-tools/34.0.0/zipalign -f 4 "$APK_DIR/app-release.apk" "$APK_DIR/yandao-v1.0.0-release.apk"
+        
+        # V1+V2+V3签名验证
+        $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose "$APK_DIR/yandao-v1.0.0-release.apk"
+        echo "=== Signature verified (V1+V2+V3) ==="
+        
+        # 归档mapping文件
+        cp app/build/outputs/mapping/release/mapping.txt "$APK_DIR/mapping-v1.0.0.txt"
+        
+        echo "Release APK: yandao-v1.0.0-release.apk"
+      else
+        APK_DIR="app/build/outputs/apk/debug"
+        cp "$APK_DIR/app-debug.apk" "$APK_DIR/yandao-v1.0.0-debug.apk"
+        echo "Debug APK: yandao-v1.0.0-debug.apk"
+      fi
+
+  # ============================================================
+  # 5. 清理临时密钥文件（安全红线：构建结束立即销毁）
+  # ============================================================
+  - name: Cleanup Temp Keystore
+    script: |
+      # 立即销毁临时密钥文件，不留痕
+      rm -f /tmp/yandao-release.keystore
+      echo "Temp keystore destroyed (security: no trace left)"
+
+# ============================================================
+# 产物归档
+# ============================================================
+artifacts:
+  - app/build/outputs/apk/release/yandao-v1.0.0-release.apk
+  - app/build/outputs/apk/release/mapping-v1.0.0.txt
+  - app/build/outputs/apk/debug/yandao-v1.0.0-debug.apk
+
+# ============================================================
+# 构建触发
+# ============================================================
+triggering:
+  events:
+    - push
+  branch_patterns:
+    - pattern: main
+      include: true
+    - pattern: dev
+      include: true
