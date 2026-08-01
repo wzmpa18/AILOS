@@ -73,7 +73,12 @@ workflows:
         script: |
           echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore
           [ ! -f /tmp/yandao-release.keystore ] && echo "FAIL: Keystore decode failed" && exit 1
-          echo "Keystore decoded successfully (temp file, auto-deleted after build)"
+          echo "Keystore decoded successfully"
+          echo "Keystore size: $(wc -c < /tmp/yandao-release.keystore) bytes"
+          echo "=== Keystore Aliases ==="
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1 || echo "WARN: keytool list failed"
+          echo "=== Verifying key password ==="
+          keytool -keypasswd -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" -new "$KEY_PASSWORD" 2>&1 && echo "Key password verified OK" || echo "WARN: Key password verification failed"
     
       # ============================================================
       # 3. 构建Release APK
