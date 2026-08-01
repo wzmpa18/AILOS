@@ -56,7 +56,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="重试"
-                android:padding="12dp 32dp" />
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="12dp" />
 
         </LinearLayout>
 
