@@ -30,9 +30,9 @@ android {
             keyAlias System.getenv("CM_KEY_ALIAS") ?: ""
             keyPassword System.getenv("CM_KEY_PASSWORD") ?: ""
             // v1+v2+v3签名方案全启用
-            v1SigningEnabled true
-            v2SigningEnabled true
-            v3SigningEnabled true
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
         }
     }
 
