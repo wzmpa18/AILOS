@@ -10,13 +10,13 @@
     public *;
 }
 
-# 保留JS接口
--keepclassmembers class ai.yandao.ailos.AilosJsBridge {
+# 保留JS接口 (package: com.yandao.app)
+-keepclassmembers class com.yandao.app.AilosJsBridge {
     @android.webkit.JavascriptInterface <methods>;
 }
 
 # 保留BuildConfig
--keep class ai.yandao.ailos.BuildConfig { *; }
+-keep class com.yandao.app.BuildConfig { *; }
 
 # 移除调试日志
 -assumenosideeffects class android.util.Log {

@@ -17,40 +17,106 @@ workflows:
           include: true
 
     scripts:
-      - name: Env Check
+      - name: Decode and Verify Keystore
         script: |
-          echo "=== Build Env Check ==="
-          java -version 2>&1
-          echo "Java home: $JAVA_HOME"
-          which keytool
-          keytool -help 2>&1 | head -1
-          echo "Working dir: $(pwd)"
-          echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64}"
-          echo "KEYSTORE_PASSWORD length: ${#KEYSTORE_PASSWORD}"
-          echo "KEY_ALIAS: $KEY_ALIAS"
-          echo "KEY_PASSWORD length: ${#KEY_PASSWORD}"
+          #!/bin/bash
+          set -e
 
-      - name: Decode Keystore
-        script: |
-          echo "=== Decoding keystore ==="
-          echo "$KEYSTORE_BASE64" | tr -d '\n\r' | base64 -d > /tmp/yandao-release.keystore
-          FILE_SIZE=$(stat -f%z /tmp/yandao-release.keystore 2>/dev/null || stat -c%s /tmp/yandao-release.keystore 2>/dev/null || echo 0)
-          echo "Keystore size: $FILE_SIZE bytes"
-          if [ "$FILE_SIZE" -lt 1000 ]; then
-            echo "FATAL: keystore too small, base64 decode failed"
-            exit 1
-          fi
-          echo "=== File type ==="
-          file /tmp/yandao-release.keystore
-          echo "=== First 4 bytes (hex) ==="
-          xxd -l 4 /tmp/yandao-release.keystore 2>/dev/null || od -A x -t x1z -N 4 /tmp/yandao-release.keystore
-          echo "=== OpenSSL verification (alternative to keytool) ==="
-          openssl pkcs12 -in /tmp/yandao-release.keystore -nokeys -passin pass:"$KEYSTORE_PASSWORD" 2>&1 | head -20
-          if [ $? -eq 0 ]; then
-            echo "OpenSSL: keystore verified OK"
+          echo "=== Step 1: Decode base64 with Python3 (cross-platform reliable) ==="
+          python3 << 'PYEOF'
+          import base64, os, sys
+
+          b64 = os.environ.get('KEYSTORE_BASE64', '')
+          if not b64:
+              print('FATAL: KEYSTORE_BASE64 is empty')
+              sys.exit(1)
+
+          # Strip ALL whitespace (spaces, tabs, newlines, carriage returns)
+          b64_clean = ''.join(b64.split())
+          print(f'Base64 raw length: {len(b64)}')
+          print(f'Base64 cleaned length: {len(b64_clean)}')
+
+          # Decode
+          try:
+              data = base64.b64decode(b64_clean, validate=True)
+              print(f'Decoded size: {len(data)} bytes')
+          except Exception as e:
+              print(f'base64 strict decode failed: {e}, trying lenient...')
+              data = base64.b64decode(b64_clean)
+              print(f'Decoded size (lenient): {len(data)} bytes')
+
+          # Write binary file
+          with open('/tmp/yandao-release.keystore', 'wb') as f:
+              f.write(data)
+          print('Keystore written to /tmp/yandao-release.keystore')
+
+          # Verify file
+          actual_size = os.path.getsize('/tmp/yandao-release.keystore')
+          print(f'File size on disk: {actual_size} bytes')
+          if actual_size < 1000:
+              print('FATAL: keystore file too small!')
+              sys.exit(1)
+
+          # Read first 4 bytes for magic number
+          with open('/tmp/yandao-release.keystore', 'rb') as f:
+              header = f.read(4)
+              hex_str = ' '.join(f'{b:02x}' for b in header)
+              print(f'File header (hex): {hex_str}')
+              if header[:4] == b'\xfe\xed\xfe\xed':
+                  print('Format detected: JKS (Java KeyStore)')
+              elif header[0] == 0x30:
+                  print('Format detected: PKCS12 (ASN.1)')
+              else:
+                  print('Format detected: Unknown')
+          PYEOF
+
+          echo ""
+          echo "=== Step 2: Verify with keytool ==="
+          STORE_PASS="$KEYSTORE_PASSWORD"
+          KEY_ALIAS_VAL="$KEY_ALIAS"
+          KEY_PASS="$KEY_PASSWORD"
+
+          echo "Store password length: ${#STORE_PASS}"
+          echo "Key alias: $KEY_ALIAS_VAL"
+          echo "Key password length: ${#KEY_PASS}"
+
+          # Try PKCS12 first (modern default)
+          echo "--- Trying PKCS12 ---"
+          if keytool -list -keystore /tmp/yandao-release.keystore \
+            -storepass "$STORE_PASS" -storetype pkcs12 2>&1; then
+            KEYSTORE_TYPE="pkcs12"
+            echo "PKCS12 verification: PASS"
           else
-            echo "OpenSSL: verification failed (may still work with Gradle)"
+            echo "--- PKCS12 failed, trying JKS ---"
+            if keytool -list -keystore /tmp/yandao-release.keystore \
+              -storepass "$STORE_PASS" -storetype jks 2>&1; then
+              KEYSTORE_TYPE="jks"
+              echo "JKS verification: PASS"
+            else
+              echo "FATAL: keystore cannot be read with either PKCS12 or JKS"
+              echo "Last 20 bytes of file:"
+              xxd -l 20 -s -20 /tmp/yandao-release.keystore 2>/dev/null || od -A x -t x1z /tmp/yandao-release.keystore | tail -3
+              exit 1
+            fi
           fi
+
+          echo ""
+          echo "=== Step 3: Verify key alias exists ==="
+          keytool -list -v -keystore /tmp/yandao-release.keystore \
+            -storepass "$STORE_PASS" -storetype "$KEYSTORE_TYPE" 2>&1 | grep -i "Alias name" || true
+
+          echo ""
+          echo "=== Step 4: Generate keystore.properties ==="
+          cat > /tmp/keystore.properties << EOF
+          storeFile=/tmp/yandao-release.keystore
+          storePassword=$STORE_PASS
+          keyAlias=$KEY_ALIAS_VAL
+          keyPassword=$KEY_PASS
+          storeType=$KEYSTORE_TYPE
+          EOF
+
+          echo "keystore.properties created (passwords masked):"
+          sed 's/Password=.*/Password=***/' /tmp/keystore.properties
 
       - name: Config SDK Path
         script: |
@@ -58,16 +124,21 @@ workflows:
 
       - name: Build Release APK
         script: |
-          ./gradlew clean assembleRelease \
-            -PYD_STORE_FILE=/tmp/yandao-release.keystore \
-            -PYD_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
-            -PYD_KEY_ALIAS="$KEY_ALIAS" \
-            -PYD_KEY_PASSWORD="$KEY_PASSWORD" \
-            --stacktrace
+          echo "=== Building Release APK ==="
+          echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
+          ./gradlew clean assembleRelease --stacktrace
 
       - name: Verify Signature
         script: |
-          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+          echo "=== Verifying APK Signature ==="
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK_PATH" ]; then
+            echo "FATAL: APK not found at $APK_PATH"
+            ls -la app/build/outputs/apk/release/ 2>/dev/null || true
+            exit 1
+          fi
+          echo "APK size: $(ls -la $APK_PATH | awk '{print $5}') bytes"
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose "$APK_PATH"
 
     artifacts:
       - app/build/outputs/apk/release/*.apk

@@ -4,7 +4,14 @@ plugins {
 
 // build.gradle (Module: app)
 // AILOS v1.0 Beta - Android WebView Shell
-// 极致轻量：仅容器+适配+原生桥接+基础配置
+
+// Read signing config from keystore.properties (CI) or -P properties (local)
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = file('/tmp/keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    logger.lifecycle("Loaded keystore.properties from /tmp/keystore.properties")
+}
 
 android {
     namespace 'com.yandao.app'
@@ -12,37 +19,46 @@ android {
 
     defaultConfig {
         applicationId "com.yandao.app"
-        minSdk 26          // Android 8.0, 覆盖98%+活跃机型
+        minSdk 26
         targetSdk 34
-        versionCode 1      // 构建号，Codemagic自动递增
-        versionName "1.0.0" // 对应Stage 10基线
+        versionCode 1
+        versionName "1.0.0"
 
-        // 默认站点域名（buildConfig注入）
         buildConfigField "String", "BASE_URL", '"https://yandao.vip/xuewaiyu/"'
         buildConfigField "String", "API_BASE", '"https://yandao.vip/xuewaiyu/api/"'
     }
 
     signingConfigs {
         release {
-            // CI: -P properties (primary) -> env vars (fallback) -> empty
-            storeFile file(project.findProperty('YD_STORE_FILE') ?: System.getenv('KEYSTORE_FILE') ?: '/tmp/yandao-release.keystore')
-            storePassword project.findProperty('YD_STORE_PASSWORD') ?: System.getenv('KEYSTORE_PASSWORD') ?: ''
-            keyAlias project.findProperty('YD_KEY_ALIAS') ?: System.getenv('KEY_ALIAS') ?: ''
-            keyPassword project.findProperty('YD_KEY_PASSWORD') ?: System.getenv('KEY_PASSWORD') ?: ''
+            // Priority: keystore.properties (CI) > -P properties (local) > env vars > empty
+            storeFile file(keystoreProperties.getProperty('storeFile') ?: project.findProperty('YD_STORE_FILE') ?: System.getenv('KEYSTORE_FILE') ?: '/tmp/yandao-release.keystore')
+            storePassword keystoreProperties.getProperty('storePassword') ?: project.findProperty('YD_STORE_PASSWORD') ?: System.getenv('KEYSTORE_PASSWORD') ?: ''
+            keyAlias keystoreProperties.getProperty('keyAlias') ?: project.findProperty('YD_KEY_ALIAS') ?: System.getenv('KEY_ALIAS') ?: ''
+            keyPassword keystoreProperties.getProperty('keyPassword') ?: project.findProperty('YD_KEY_PASSWORD') ?: System.getenv('KEY_PASSWORD') ?: ''
+            storeType keystoreProperties.getProperty('storeType', 'pkcs12')
             enableV1Signing true
             enableV2Signing true
             enableV3Signing true
+
+            // Debug logging
+            logger.lifecycle("Signing config:")
+            logger.lifecycle("  storeFile: ${storeFile}")
+            logger.lifecycle("  storeType: ${storeType}")
+            logger.lifecycle("  keyAlias: ${keyAlias}")
+            logger.lifecycle("  storeFile exists: ${storeFile.exists()}")
+            if (storeFile.exists()) {
+                logger.lifecycle("  storeFile size: ${storeFile.length()} bytes")
+            }
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled true       // 代码混淆
-            shrinkResources true     // 资源压缩
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             buildConfigField "boolean", "DEBUG_MODE", "false"
-            // 移除调试日志
             buildConfigField "boolean", "ENABLE_LOG", "false"
         }
         debug {
@@ -52,7 +68,6 @@ android {
         }
     }
 
-    // 硬件加速
     buildFeatures {
         buildConfig true
         viewBinding true
