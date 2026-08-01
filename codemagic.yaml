@@ -18,7 +18,7 @@ workflows:
 
     scripts:
       - name: Decode and Verify Keystore
-        script: |
+        script: |-
           #!/bin/bash
           set -e
 
@@ -26,39 +26,51 @@ workflows:
           java -version 2>&1
           echo ""
 
-          echo "=== Step 1: Decode base64 with Python3 ==="
-          python3 << 'PYEOF'
-          import base64, os, sys, hashlib
+          echo "=== Step 1: Create Java security override for legacy PKCS12 ==="
+          printf '%s\n' \
+            'jdk.certpath.disabledAlgorithms=' \
+            'jdk.tls.disabledAlgorithms=' \
+            'jdk.jar.disabledAlgorithms=' \
+            'jdk.pkcs12.keyProtectionAlgorithm=' \
+            'jdk.pkcs12.certProtectionAlgorithm=' \
+            'jdk.pkcs12.macAlgorithm=' \
+            > /tmp/java.security.override
+          echo "Java security override created"
+          export JAVA_TOOL_OPTIONS="-Djava.security.properties=/tmp/java.security.override"
+          echo "JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS"
 
+          echo ""
+          echo "=== Step 2: Decode base64 with Python3 ==="
+          python3 -c "
+          import base64, os, sys, hashlib
           b64 = os.environ.get('KEYSTORE_BASE64', '')
           if not b64:
               print('FATAL: KEYSTORE_BASE64 is empty')
               sys.exit(1)
-
           b64_clean = ''.join(b64.split())
           print(f'Base64 raw length: {len(b64)}')
           print(f'Base64 cleaned length: {len(b64_clean)}')
-
+          print(f'Base64 length mod 4: {len(b64_clean) % 4}')
+          if len(b64_clean) % 4 != 0:
+              pad = 4 - (len(b64_clean) % 4)
+              b64_clean += '=' * pad
+              print(f'WARNING: Added {pad} padding chars')
           try:
               data = base64.b64decode(b64_clean, validate=True)
               print(f'Decoded size (strict): {len(data)} bytes')
           except Exception as e:
-              print(f'Strict decode failed: {e}, trying lenient...')
+              print(f'Strict decode failed: {e}')
               data = base64.b64decode(b64_clean)
               print(f'Decoded size (lenient): {len(data)} bytes')
-
           with open('/tmp/yandao-release.keystore', 'wb') as f:
               f.write(data)
-
           sha256 = hashlib.sha256(data).hexdigest()
           print(f'SHA256: {sha256}')
-
           actual_size = os.path.getsize('/tmp/yandao-release.keystore')
           print(f'File size on disk: {actual_size} bytes')
           if actual_size < 1000:
               print('FATAL: keystore file too small!')
               sys.exit(1)
-
           with open('/tmp/yandao-release.keystore', 'rb') as f:
               header = f.read(4)
               hex_str = ' '.join(f'{b:02x}' for b in header)
@@ -69,36 +81,29 @@ workflows:
                   print('Format detected: PKCS12 (ASN.1)')
               else:
                   print('Format detected: Unknown')
-          PYEOF
+          "
 
           echo ""
-          echo "=== Step 2: Password diagnostics ==="
+          echo "=== Step 3: Password diagnostics ==="
           STORE_PASS="$KEYSTORE_PASSWORD"
           KEY_ALIAS_VAL="$KEY_ALIAS"
           KEY_PASS="$KEY_PASSWORD"
-
-          echo "Store password length: ${#STORE_PASS} (expected: 12 for YanDao2024!)"
-          echo "Store password first char: ${STORE_PASS:0:1}"
-          echo "Store password last char: ${STORE_PASS: -1}"
+          echo "Store password length: ${#STORE_PASS}"
           echo "Key alias: $KEY_ALIAS_VAL"
-          echo "Key password length: ${#KEY_PASS} (expected: 12)"
-          echo "Key password first char: ${KEY_PASS:0:1}"
-          echo "Key password last char: ${KEY_PASS: -1}"
+          echo "Key password length: ${#KEY_PASS}"
 
           echo ""
-          echo "=== Step 3: Try keytool verification ==="
+          echo "=== Step 4: Try keytool verification (with legacy algorithm support) ==="
           KEYSTORE_FILE="/tmp/yandao-release.keystore"
           KEYSTORE_TYPE=""
 
           echo "--- Trying PKCS12 ---"
-          if keytool -list -keystore "$KEYSTORE_FILE" \
-            -storepass "$STORE_PASS" -storetype pkcs12 2>&1; then
+          if keytool -list -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASS" -storetype pkcs12 2>&1; then
             KEYSTORE_TYPE="pkcs12"
             echo "PKCS12 verification: PASS"
           else
             echo "--- PKCS12 failed, trying JKS ---"
-            if keytool -list -keystore "$KEYSTORE_FILE" \
-              -storepass "$STORE_PASS" -storetype jks 2>&1; then
+            if keytool -list -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASS" -storetype jks 2>&1; then
               KEYSTORE_TYPE="jks"
               echo "JKS verification: PASS"
             else
@@ -108,21 +113,13 @@ workflows:
           fi
 
           echo ""
-          echo "=== Step 4: OpenSSL verification and conversion fallback ==="
+          echo "=== Step 5: OpenSSL conversion fallback ==="
           if [ -z "$KEYSTORE_TYPE" ]; then
             echo "keytool failed, trying OpenSSL to verify and convert..."
-
-            # Try OpenSSL to read the keystore
-            echo "--- OpenSSL: reading original keystore ---"
             if openssl pkcs12 -in "$KEYSTORE_FILE" -nodes -passin pass:"$STORE_PASS" -out /tmp/yandao-key-cert.pem 2>&1; then
               echo "OpenSSL: successfully read keystore"
-
-              # Show what we got
-              echo "--- PEM contents summary ---"
               grep -c "BEGIN PRIVATE KEY" /tmp/yandao-key-cert.pem || true
               grep -c "BEGIN CERTIFICATE" /tmp/yandao-key-cert.pem || true
-
-              # Convert back to PKCS12 with modern algorithms
               echo "--- Creating modern PKCS12 keystore ---"
               openssl pkcs12 -export \
                 -in /tmp/yandao-key-cert.pem \
@@ -132,13 +129,9 @@ workflows:
                 -keypbe AES-256-CBC \
                 -certpbe AES-256-CBC \
                 -macalg SHA256 2>&1
-
               echo "Modern keystore created"
-
-              # Verify the new keystore with keytool
               echo "--- Verifying fixed keystore with keytool ---"
-              if keytool -list -keystore /tmp/yandao-release-fixed.keystore \
-                -storepass "$STORE_PASS" -storetype pkcs12 2>&1; then
+              if keytool -list -keystore /tmp/yandao-release-fixed.keystore -storepass "$STORE_PASS" -storetype pkcs12 2>&1; then
                 echo "Fixed keystore verification: PASS"
                 KEYSTORE_FILE="/tmp/yandao-release-fixed.keystore"
                 KEYSTORE_TYPE="pkcs12"
@@ -148,13 +141,8 @@ workflows:
               fi
             else
               echo "FATAL: OpenSSL also cannot read the keystore"
-              echo "The base64 content may be corrupted or wrong"
-              echo "SHA256 of decoded file:"
-              shasum -a 256 "$KEYSTORE_FILE" 2>/dev/null || sha256sum "$KEYSTORE_FILE" 2>/dev/null || true
-              echo ""
               echo "File hex dump (first 64 bytes):"
               xxd -l 64 "$KEYSTORE_FILE" 2>/dev/null || od -A x -t x1z -N 64 "$KEYSTORE_FILE"
-              echo ""
               echo "File hex dump (last 32 bytes):"
               xxd -l 32 -s -32 "$KEYSTORE_FILE" 2>/dev/null || od -A x -t x1z "$KEYSTORE_FILE" | tail -4
               exit 1
@@ -162,35 +150,30 @@ workflows:
           fi
 
           echo ""
-          echo "=== Step 5: Verify key alias ==="
-          keytool -list -v -keystore "$KEYSTORE_FILE" \
-            -storepass "$STORE_PASS" -storetype "$KEYSTORE_TYPE" 2>&1 | grep -i "Alias name" || true
+          echo "=== Step 6: Verify key alias ==="
+          keytool -list -v -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASS" -storetype "$KEYSTORE_TYPE" 2>&1 | grep -i "Alias name" || true
 
           echo ""
-          echo "=== Step 6: Generate keystore.properties ==="
-          cat > /tmp/keystore.properties << EOF
-storeFile=$KEYSTORE_FILE
-storePassword=$STORE_PASS
-keyAlias=$KEY_ALIAS_VAL
-keyPassword=$KEY_PASS
-storeType=$KEYSTORE_TYPE
-EOF
-
+          echo "=== Step 7: Generate keystore.properties ==="
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\nstoreType=%s\n' \
+            "$KEYSTORE_FILE" "$STORE_PASS" "$KEY_ALIAS_VAL" "$KEY_PASS" "$KEYSTORE_TYPE" \
+            > /tmp/keystore.properties
           echo "keystore.properties created (passwords masked):"
           sed 's/Password=.*/Password=***/' /tmp/keystore.properties
 
       - name: Config SDK Path
-        script: |
+        script: |-
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Build Release APK
-        script: |
+        script: |-
           echo "=== Building Release APK ==="
           echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
+          echo "JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS"
           ./gradlew clean assembleRelease --stacktrace
 
       - name: Verify Signature
-        script: |
+        script: |-
           echo "=== Verifying APK Signature ==="
           APK_PATH="app/build/outputs/apk/release/app-release.apk"
           if [ ! -f "$APK_PATH" ]; then
