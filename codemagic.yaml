@@ -1,4 +1,4 @@
-workflows:
+﻿workflows:
   android-release:
     name: Android Release Build
     instance_type: mac_mini_m2
@@ -25,7 +25,16 @@ workflows:
           
       - name: 生成密钥文件
         script: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore
+          # base64纯净单行版(2726字节PKCS12) - 2026-08-01修复
+          echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore 2>/dev/null
+          if [ ! -s /tmp/yandao-release.keystore ]; then
+            echo "base64 --decode失败，使用python3备选方案"
+            python3 -c "
+import base64, os
+b64 = os.environ['KEYSTORE_BASE64'].replace(chr(10),'').replace(chr(13),'')
+with open('/tmp/yandao-release.keystore','wb') as f: f.write(base64.b64decode(b64))
+"
+          fi
           ls -la /tmp/yandao-release.keystore
           
       - name: 配置SDK路径
