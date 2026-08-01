@@ -1,4 +1,4 @@
-﻿workflows:
+workflows:
   default:
     name: Android Release Build
     instance_type: mac_mini_m2
