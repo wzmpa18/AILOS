@@ -24,13 +24,13 @@ android {
 
     signingConfigs {
         release {
-            // 签名通过Gradle项目属性注入（-P参数），严禁硬编码
-            storeFile file(project.findProperty('android.injected.signing.store.file') ?: "debug.keystore")
-            storePassword project.findProperty('android.injected.signing.store.password') ?: ""
-            keyAlias project.findProperty('android.injected.signing.key.alias') ?: ""
-            keyPassword project.findProperty('android.injected.signing.key.password') ?: ""
-            storeType "PKCS12"
-            // v1+v2+v3签名方案全启用
+            // CI: read from env vars directly; Local: use debug.keystore
+            def ksPath = System.getenv('KEYSTORE_FILE') ?: '/tmp/yandao-release.keystore'
+            storeFile file(ksPath)
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: ''
+            keyAlias System.getenv('KEY_ALIAS') ?: ''
+            keyPassword System.getenv('KEY_PASSWORD') ?: ''
+            // v1+v2+v3 signing
             enableV1Signing true
             enableV2Signing true
             enableV3Signing true

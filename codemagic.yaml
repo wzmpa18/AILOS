@@ -1,57 +1,52 @@
-﻿workflows:
+workflows:
   android-release:
     name: Android Release Build
     instance_type: mac_mini_m2
     max_build_duration: 60
     working_directory: android-shell
-    
+
     environment:
       groups:
         - default
-    
+
     triggering:
       events:
         - push
       branch_patterns:
         - pattern: main
           include: true
-    
+
     scripts:
-      - name: 环境预校验
+      - name: Env Check
         script: |
-          echo "=== 构建环境预校验 ==="
-          java -version
-          echo "工作目录: $(pwd)"
-          
-      - name: 生成密钥文件
+          echo "=== Build Env Check ==="
+          java -version 2>&1
+          echo "Working dir: $(pwd)"
+
+      - name: Decode and Verify Keystore
         script: |
-          # base64纯净单行版(2726字节PKCS12) - 2026-08-01修复
-          echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore 2>/dev/null
-          if [ ! -s /tmp/yandao-release.keystore ]; then
-            echo "base64 --decode失败，使用python3备选方案"
-            python3 -c "
-import base64, os
-b64 = os.environ['KEYSTORE_BASE64'].replace(chr(10),'').replace(chr(13),'')
-with open('/tmp/yandao-release.keystore','wb') as f: f.write(base64.b64decode(b64))
-"
+          echo "$KEYSTORE_BASE64" | tr -d '\n\r' | base64 -d > /tmp/yandao-release.keystore
+          FILE_SIZE=$(stat -f%z /tmp/yandao-release.keystore 2>/dev/null || stat -c%s /tmp/yandao-release.keystore 2>/dev/null || echo 0)
+          echo "Keystore size: $FILE_SIZE bytes"
+          if [ "$FILE_SIZE" -lt 1000 ]; then
+            echo "ERROR: keystore too small, base64 decode may have failed"
+            exit 1
           fi
-          ls -la /tmp/yandao-release.keystore
-          
-      - name: 配置SDK路径
+          echo "=== Keystore Info ==="
+          keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1 || echo "keytool check failed"
+
+      - name: Config SDK Path
         script: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          
-      - name: 执行正式签名构建
+
+      - name: Build Release APK
         script: |
-          ./gradlew clean assembleRelease \
-            -Pandroid.injected.signing.store.file=/tmp/yandao-release.keystore \
-            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
-          
-      - name: 签名方案校验
+          export KEYSTORE_FILE=/tmp/yandao-release.keystore
+          ./gradlew clean assembleRelease --stacktrace
+
+      - name: Verify Signature
         script: |
           $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
-    
+
     artifacts:
       - app/build/outputs/apk/release/*.apk
