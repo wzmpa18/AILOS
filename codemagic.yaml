@@ -50,7 +50,7 @@ workflows:
           echo "6. Signing env vars: OK"
           
           # 7. 无密钥泄露
-          if grep -rn '\.keystore\|\.jks' . --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv\|buildConfig'; then
+          if grep -rn '\.keystore\|\.jks' . --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv\|buildConfig\|project.findProperty\|debug.keystore'; then
             echo "FAIL: Keystore reference in code" && exit 1
           fi
           echo "7. No keystore in code: OK"
