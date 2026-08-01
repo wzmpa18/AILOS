@@ -5,6 +5,7 @@
 workflows:
   default:
     name: Default Workflow
+    instance_type: mac_mini_m2
     working_directory: android-shell
     
     environment:
