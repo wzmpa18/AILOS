@@ -29,6 +29,7 @@ android {
             storePassword project.findProperty('android.injected.signing.store.password') ?: ""
             keyAlias project.findProperty('android.injected.signing.key.alias') ?: ""
             keyPassword project.findProperty('android.injected.signing.key.password') ?: ""
+            storeType "PKCS12"""
             // v1+v2+v3签名方案全启用
             enableV1Signing true
             enableV2Signing true

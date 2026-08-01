@@ -95,9 +95,9 @@ workflows:
           xxd -l 32 /tmp/yandao-release.keystore 2>/dev/null || od -A x -t x1z -N 32 /tmp/yandao-release.keystore
           
           echo "=== Keystore Aliases ==="
-          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1 || echo "WARN: keytool list failed"
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1 || echo "WARN: keytool list failed"
           echo "=== Verifying key password ==="
-          keytool -keypasswd -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" -new "$KEY_PASSWORD" 2>&1 && echo "Key password verified OK" || echo "WARN: Key password verification failed"
+          keytool -keypasswd -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" -new "$KEY_PASSWORD" 2>&1 && echo "Key password verified OK" || echo "WARN: Key password verification failed"
     
       # ============================================================
       # 3. 构建Release APK
