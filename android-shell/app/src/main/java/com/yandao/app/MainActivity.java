@@ -18,6 +18,7 @@ import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -145,8 +146,6 @@ public class MainActivity extends AppCompatActivity {
         settings.setDomStorageEnabled(true);          // LocalStorage持久化
         settings.setDatabaseEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT); // 合理缓存
-        settings.setAppCacheEnabled(true);
-        settings.setAppCachePath(getCacheDir().getAbsolutePath());
 
         // 视口适配
         settings.setUseWideViewPort(true);
