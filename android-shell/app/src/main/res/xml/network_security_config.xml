@@ -2,8 +2,5 @@
 <network-security-config>
     <domain-config>
         <domain includeSubdomains="true">yandao.vip</domain>
-        <pin-set expiration="2027-12-31">
-            <!-- 生产环境SSL证书锁定（后续配置实际pin） -->
-        </pin-set>
     </domain-config>
 </network-security-config>
