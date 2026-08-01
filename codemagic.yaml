@@ -1,4 +1,4 @@
-workflows:
+﻿workflows:
   android-release:
     name: Android Release Build
     instance_type: mac_mini_m2
@@ -22,18 +22,36 @@ workflows:
           echo "=== Build Env Check ==="
           java -version 2>&1
           echo "Working dir: $(pwd)"
+          echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64}"
+          echo "KEYSTORE_PASSWORD set: $([ -n "$KEYSTORE_PASSWORD" ] && echo YES || echo NO)"
+          echo "KEY_ALIAS set: $([ -n "$KEY_ALIAS" ] && echo YES || echo NO)"
+          echo "KEY_PASSWORD set: $([ -n "$KEY_PASSWORD" ] && echo YES || echo NO)"
 
       - name: Decode and Verify Keystore
         script: |
+          echo "=== Decoding keystore ==="
           echo "$KEYSTORE_BASE64" | tr -d '\n\r' | base64 -d > /tmp/yandao-release.keystore
           FILE_SIZE=$(stat -f%z /tmp/yandao-release.keystore 2>/dev/null || stat -c%s /tmp/yandao-release.keystore 2>/dev/null || echo 0)
           echo "Keystore size: $FILE_SIZE bytes"
           if [ "$FILE_SIZE" -lt 1000 ]; then
-            echo "ERROR: keystore too small, base64 decode may have failed"
+            echo "FATAL: keystore too small, base64 decode failed"
             exit 1
           fi
-          echo "=== Keystore Info ==="
-          keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1 || echo "keytool check failed"
+          echo "=== Verifying keystore store password (PKCS12) ==="
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1
+          if [ $? -ne 0 ]; then
+            echo "FATAL: Cannot open keystore with store password"
+            exit 1
+          fi
+          echo "=== Verifying key alias and key password ==="
+          keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 -alias "$KEY_ALIAS" -keypass "$KEY_PASSWORD" 2>&1
+          if [ $? -ne 0 ]; then
+            echo "FATAL: Cannot read key alias '$KEY_ALIAS' with provided key password"
+            echo "Available aliases:"
+            keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" -storetype PKCS12 2>&1
+            exit 1
+          fi
+          echo "=== Keystore verification PASSED ==="
 
       - name: Config SDK Path
         script: |
@@ -41,8 +59,12 @@ workflows:
 
       - name: Build Release APK
         script: |
-          export KEYSTORE_FILE=/tmp/yandao-release.keystore
-          ./gradlew clean assembleRelease --stacktrace
+          ./gradlew clean assembleRelease \
+            -PYD_STORE_FILE=/tmp/yandao-release.keystore \
+            -PYD_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PYD_KEY_ALIAS="$KEY_ALIAS" \
+            -PYD_KEY_PASSWORD="$KEY_PASSWORD" \
+            --stacktrace
 
       - name: Verify Signature
         script: |
