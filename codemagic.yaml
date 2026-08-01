@@ -71,10 +71,12 @@ workflows:
       # ============================================================
       - name: Decode Keystore
         script: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > /tmp/yandao-release.keystore
-          [ ! -f /tmp/yandao-release.keystore ] && echo "FAIL: Keystore decode failed" && exit 1
+          # macOS base64 decode (handles line breaks in base64 string)
+          echo "$KEYSTORE_BASE64" | base64 -d > /tmp/yandao-release.keystore 2>/dev/null || { echo "FAIL: base64 decode failed"; exit 1; }
+          [ ! -f /tmp/yandao-release.keystore ] && echo "FAIL: Keystore file not created" && exit 1
           echo "Keystore decoded successfully"
-          echo "Keystore size: $(wc -c < /tmp/yandao-release.keystore) bytes"
+          KSIZE=$(wc -c < /tmp/yandao-release.keystore)
+          echo "Keystore size: $KSIZE bytes"
           echo "=== Keystore Aliases ==="
           keytool -list -keystore /tmp/yandao-release.keystore -storepass "$KEYSTORE_PASSWORD" 2>&1 || echo "WARN: keytool list failed"
           echo "=== Verifying key password ==="
