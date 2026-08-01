@@ -26,50 +26,28 @@ workflows:
           java -version 2>&1
           echo ""
 
-          echo "=== Step 1: Decode base64 keystore via Python3 ==="
-          python3 -c "
-          import base64, os, sys, hashlib
-          b64 = os.environ.get('KEYSTORE_BASE64', '')
-          if not b64:
-              print('FATAL: KEYSTORE_BASE64 is empty')
-              sys.exit(1)
-          b64_clean = ''.join(b64.split())
-          print(f'Base64 raw length: {len(b64)}')
-          print(f'Base64 cleaned length: {len(b64_clean)}')
-          if len(b64_clean) % 4 != 0:
-              pad = 4 - (len(b64_clean) % 4)
-              b64_clean += '=' * pad
-              print(f'WARNING: Added {pad} padding chars')
-          try:
-              data = base64.b64decode(b64_clean, validate=True)
-              print(f'Decoded size (strict): {len(data)} bytes')
-          except Exception as e:
-              print(f'Strict decode failed: {e}')
-              data = base64.b64decode(b64_clean)
-              print(f'Decoded size (lenient): {len(data)} bytes')
-          with open('/tmp/yandao-original.keystore', 'wb') as f:
-              f.write(data)
-          sha256 = hashlib.sha256(data).hexdigest()
-          print(f'SHA256: {sha256}')
-          actual_size = os.path.getsize('/tmp/yandao-original.keystore')
-          print(f'File size on disk: {actual_size} bytes')
-          if actual_size < 1000:
-              print('FATAL: keystore file too small!')
-              sys.exit(1)
-          with open('/tmp/yandao-original.keystore', 'rb') as f:
-              header = f.read(4)
-              hex_str = ' '.join(f'{b:02x}' for b in header)
-              print(f'File header (hex): {hex_str}')
-              if header[:4] == b'\xfe\xed\xfe\xed':
-                  print('Format detected: JKS')
-              elif header[0] == 0x30:
-                  print('Format detected: PKCS12 (ASN.1)')
-              else:
-                  print('Format detected: Unknown')
-          "
+          echo "=== Step 1: Decode HARDCODED base64 keystore ==="
+          # Base64 hardcoded directly in script to bypass Codemagic env var UI corruption
+          # Correct length: 3640 chars (multiple of 4), file size: 2728 bytes
+          KEYSTORE_B64='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'
+
+          echo "Base64 length: ${#KEYSTORE_B64}"
+          echo "Base64 mod 4: $((${#KEYSTORE_B64} % 4))"
+
+          echo "$KEYSTORE_B64" | base64 -d > /tmp/yandao-original.keystore
+          FILE_SIZE=$(stat -f%z /tmp/yandao-original.keystore 2>/dev/null || stat -c%s /tmp/yandao-original.keystore 2>/dev/null)
+          echo "Decoded file size: $FILE_SIZE bytes"
+
+          if [ "$FILE_SIZE" -lt 2000 ]; then
+            echo "FATAL: keystore file too small! Expected ~2728 bytes"
+            exit 1
+          fi
+
+          echo "File header (hex):"
+          xxd -l 4 /tmp/yandao-original.keystore 2>/dev/null || od -A x -t x1z -N 4 /tmp/yandao-original.keystore
 
           echo ""
-          echo "=== Step 2: Extract key+cert via OpenSSL (bypasses Java algorithm restrictions) ==="
+          echo "=== Step 2: Extract key+cert via OpenSSL ==="
           STORE_PASS="$KEYSTORE_PASSWORD"
           KEY_ALIAS_VAL="$KEY_ALIAS"
           KEY_PASS="$KEY_PASSWORD"
@@ -77,50 +55,14 @@ workflows:
           echo "Key alias: $KEY_ALIAS_VAL"
           echo "Key password length: ${#KEY_PASS}"
 
-          OPENSSL_OK=0
-          if openssl pkcs12 -in /tmp/yandao-original.keystore -nodes -passin pass:"$STORE_PASS" -out /tmp/yandao-key-cert.pem 2>&1; then
-            if [ -s /tmp/yandao-key-cert.pem ]; then
-              echo "OpenSSL extraction: PASS"
-              echo "Private keys found: $(grep -c 'BEGIN PRIVATE KEY' /tmp/yandao-key-cert.pem || true)"
-              echo "Certificates found: $(grep -c 'BEGIN CERTIFICATE' /tmp/yandao-key-cert.pem || true)"
-              OPENSSL_OK=1
-            fi
-          fi
-
-          if [ "$OPENSSL_OK" -eq 0 ]; then
-            echo ""
-            echo "=== OpenSSL failed, trying keytool with security override (JKS fallback) ==="
-            printf '%s\n' \
-              'jdk.certpath.disabledAlgorithms=' \
-              'jdk.tls.disabledAlgorithms=' \
-              'jdk.jar.disabledAlgorithms=' \
-              'jdk.pkcs12.keyProtectionAlgorithm=' \
-              'jdk.pkcs12.certProtectionAlgorithm=' \
-              'jdk.pkcs12.macAlgorithm=' \
-              > /tmp/java.security.override
-            export JAVA_TOOL_OPTIONS="-Djava.security.properties=/tmp/java.security.override"
-
-            keytool -importkeystore \
-              -srckeystore /tmp/yandao-original.keystore \
-              -srcstorepass "$STORE_PASS" \
-              -srcstoretype jks \
-              -destkeystore /tmp/yandao-converted.p12 \
-              -deststorepass "$STORE_PASS" \
-              -deststoretype pkcs12 \
-              -srcalias "$KEY_ALIAS_VAL" \
-              -destalias "$KEY_ALIAS_VAL" 2>&1
-
-            openssl pkcs12 -in /tmp/yandao-converted.p12 -nodes -passin pass:"$STORE_PASS" -out /tmp/yandao-key-cert.pem 2>&1
-            echo "JKS to PKCS12 conversion + OpenSSL extraction: PASS"
-            OPENSSL_OK=1
-          fi
-
-          if [ "$OPENSSL_OK" -eq 0 ]; then
-            echo "FATAL: Cannot extract key/cert from keystore"
-            echo "Hex dump (first 64 bytes):"
-            xxd -l 64 /tmp/yandao-original.keystore 2>/dev/null || od -A x -t x1z -N 64 /tmp/yandao-original.keystore
+          openssl pkcs12 -in /tmp/yandao-original.keystore -nodes -passin pass:"$STORE_PASS" -out /tmp/yandao-key-cert.pem 2>&1
+          if [ ! -s /tmp/yandao-key-cert.pem ]; then
+            echo "FATAL: OpenSSL extraction failed, PEM file is empty"
             exit 1
           fi
+          echo "OpenSSL extraction: PASS"
+          echo "Private keys found: $(grep -c 'BEGIN PRIVATE KEY' /tmp/yandao-key-cert.pem || true)"
+          echo "Certificates found: $(grep -c 'BEGIN CERTIFICATE' /tmp/yandao-key-cert.pem || true)"
 
           echo ""
           echo "=== Step 3: Create MODERN PKCS12 keystore (AES-256-CBC + SHA256) ==="
@@ -137,11 +79,11 @@ workflows:
           echo "Modern keystore created: $MODERN_SIZE bytes"
 
           echo ""
-          echo "=== Step 4: Verify modern keystore with keytool (NO security override needed) ==="
+          echo "=== Step 4: Verify with keytool (NO security override needed) ==="
           keytool -list -keystore /tmp/yandao-release.keystore -storepass "$STORE_PASS" -storetype pkcs12 2>&1
 
           echo ""
-          echo "=== Step 5: Verify key alias exists ==="
+          echo "=== Step 5: Verify key alias ==="
           keytool -list -v -keystore /tmp/yandao-release.keystore -storepass "$STORE_PASS" -storetype pkcs12 2>&1 | grep -i "Alias name"
 
           echo ""
@@ -149,7 +91,7 @@ workflows:
           printf 'storeFile=/tmp/yandao-release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\nstoreType=pkcs12\n' \
             "$STORE_PASS" "$KEY_ALIAS_VAL" "$KEY_PASS" \
             > /tmp/keystore.properties
-          echo "keystore.properties created (passwords masked):"
+          echo "keystore.properties created"
           sed 's/Password=.*/Password=***/' /tmp/keystore.properties
 
       - name: Config SDK Path
@@ -161,8 +103,6 @@ workflows:
           echo "=== Building Release APK ==="
           echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
           echo "keystore file size: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
-          echo "Java version:"
-          java -version 2>&1
           ./gradlew clean assembleRelease --stacktrace
 
       - name: Verify Signature
