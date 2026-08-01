@@ -4563,3 +4563,28 @@ AILOS v1.0 Beta APK构建与面向用户测试准备
 - base64编码：/root/yandao-release-base64.txt
 - 请将密钥文件下载到本地安全位置永久留存，丢失后无法更新应用
 
+
+
+
+### 正式构建执行记录 — TRAE全闭环排错修复（2026-08-01）
+
+**构建基线**：SHA 73d310f（本地=GitHub）
+
+**卡点问题修复历程**（5次迭代提交）：
+| 提交SHA | 修复内容 | 错误现象 |
+|---------|----------|----------|
+| 06fc40c | AGP插件声明 | Could not find method android() |
+| 73427b7 | 签名属性兼容AGP 8.1.4 | v3SigningEnabled not found |
+| ae5c8ff | 添加launcher图标 | mipmap/ic_launcher not found |
+| a3289f4 | padding属性语法 | 12dp 32dp incompatible |
+| 972ae11→73d310f | 移除废弃AppCache+补全PermissionRequest+移除空pin-set | Java编译错误+Lint错误 |
+
+**服务器同步状态**：代码已推送GitHub（73d310f），服务器git pull同步成功（SHA 972ae11验证通过），Java编译阶段通过（仅deprecation警告），Lint修复后待重新构建。
+
+**构建环境**：
+- JDK: OpenJDK 17.0.19 (TencentKona)
+- Android SDK: /opt/android-sdk (build-tools 34.0.0, platforms android-34)
+- Gradle: /opt/gradle-8.5, AGP 8.1.4
+- 签名密钥: /root/yandao-release.keystore (SHA256: 9d9ee410...)
+
+**构建结果**：（待服务器SSH恢复后完成构建并填写）
