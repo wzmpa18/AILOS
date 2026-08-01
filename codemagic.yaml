@@ -5,8 +5,6 @@
 workflows:
   default:
     name: Default Workflow
-    instance_type: linux
-    max_build_duration: 60
     working_directory: android-shell
     
     environment:
