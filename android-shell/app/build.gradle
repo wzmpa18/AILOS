@@ -1,3 +1,7 @@
+plugins {
+    id 'com.android.application'
+}
+
 // build.gradle (Module: app)
 // AILOS v1.0 Beta - Android WebView Shell
 // 极致轻量：仅容器+适配+原生桥接+基础配置
