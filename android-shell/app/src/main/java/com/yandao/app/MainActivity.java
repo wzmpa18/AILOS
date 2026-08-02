@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private WebView webView;
-    private SwipeRefreshLayout swipeRefresh;
+    private CustomSwipeRefreshLayout swipeRefresh;
     private LinearLayout errorPage;
     private ProgressBar progressBar;
     private Handler timeoutHandler = new Handler(Looper.getMainLooper());
@@ -147,6 +147,9 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetJavaScriptEnabled")
     private void initWebView() {
         webView = findViewById(R.id.webView);
+
+        // P0 FIX: Set WebView reference for custom SwipeRefreshLayout scroll detection
+        swipeRefresh.setWebView(webView);
 
         WebSettings settings = webView.getSettings();
         // 基础设置

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+com.yandao.app.CustomSwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
@@ -62,4 +62,4 @@
         </LinearLayout>
 
     </FrameLayout>
-</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+</com.yandao.app.CustomSwipeRefreshLayout>
