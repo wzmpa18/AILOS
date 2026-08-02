@@ -1,4 +1,4 @@
-package com.yandao.app;
+﻿package com.yandao.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -169,6 +169,12 @@ public class MainActivity extends AppCompatActivity {
         // 文件上传
         settings.setAllowFileAccess(false);            // 禁止file协议（安全）
         settings.setAllowContentAccess(true);
+        settings.setAllowUniversalAccessFromFileURLs(false); // 禁止文件域通用访问（安全）
+
+        // Release包关闭WebView调试能力，防止Chrome远程调试
+        if (!BuildConfig.DEBUG_MODE) {
+            WebView.setWebContentsDebuggingEnabled(false);
+        }
 
         // 硬件加速（低版本兼容降级）
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {

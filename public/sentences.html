@@ -978,13 +978,19 @@ body {
 
   /* ============ Speech ============ */
   function speakText(text, lang) {
+    // 优先使用原生TTS（解决WebView内speechSynthesis不可用问题）
+    if (window.AilosNative && typeof window.AilosNative.speakText === 'function') {
+      var langMap = { zh: 'zh-CN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR' };
+      window.AilosNative.speakText(text, langMap[lang] || 'en-US');
+      return;
+    }
+    // 回退到Web Speech API
     if (!('speechSynthesis' in window)) {
-      showToast('Speech synthesis not supported');
+      showToast('当前环境暂不支持语音播放');
       return;
     }
     window.speechSynthesis.cancel();
     var utterance = new SpeechSynthesisUtterance(text);
-    var langMap = { zh: 'zh-CN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR' };
     utterance.lang = langMap[lang] || 'en-US';
     utterance.rate = 0.85;
     utterance.pitch = 1;
