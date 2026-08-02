@@ -53,7 +53,7 @@ class SocialService {
     const groupCount = await prisma.groupMember.count({ where: { userId } });
     return {
       id: user.id, uniqueId: user.uniqueId, nickname: user.nickname,
-      avatar: user.avatar, friendCount, groupCount, createdAt: user.createdAt,
+      avatar: user.avatar || DEFAULT_AVATAR, friendCount, groupCount, createdAt: user.createdAt,
     };
   }
 
@@ -118,7 +118,7 @@ class SocialService {
     let friends = settings.map((fs) => ({
       id: fs.id, friendId: fs.friendId, friendUniqueId: fs.friend.uniqueId,
       friendNickname: fs.remarkName || fs.friend.nickname || '未知用户',
-      friendAvatar: fs.friend.avatar, remarkName: fs.remarkName,
+      friendAvatar: fs.friend.avatar || DEFAULT_AVATAR, remarkName: fs.remarkName,
       tags: typeof fs.tags === 'string' ? JSON.parse(fs.tags) : (fs.tags || []),
       isMuted: fs.isMuted, isBlocked: fs.isBlocked,
       createdAt: fs.createdAt, updatedAt: fs.updatedAt,
@@ -216,7 +216,7 @@ class SocialService {
       const friendCount = await prisma.friendSetting.count({ where: { userId: viewerId, isBlocked: false } });
       const groupCount = await prisma.groupMember.count({ where: { userId: viewerId } });
       return { id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
-        avatar: target.avatar, friendCount, groupCount, isSelf: true };
+        avatar: target.avatar || DEFAULT_AVATAR, friendCount, groupCount, isSelf: true };
     }
     // Others: check privacy
     const privacy = getPrivacy(target);
@@ -227,7 +227,7 @@ class SocialService {
       // Privacy ON: show basic info only, no dynamic list
       return {
         id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
-        avatar: target.avatar, isFriend: false, isPrivate: true,
+        avatar: target.avatar || DEFAULT_AVATAR, isFriend: false, isPrivate: true,
         message: 'User has disabled public display',
         posts: [],
       };
@@ -241,7 +241,7 @@ class SocialService {
     });
     return {
       id: target.id, uniqueId: target.uniqueId, nickname: target.nickname,
-      avatar: target.avatar, isFriend, isPrivate: false,
+      avatar: target.avatar || DEFAULT_AVATAR, isFriend, isPrivate: false,
       posts: recentPosts,
     };
   }
@@ -263,7 +263,7 @@ class SocialService {
     for (const u of results) {
       const privacy = getPrivacy(u);
       if (privacy.allowDiscover !== false) {
-        filtered.push({ id: u.id, uniqueId: u.uniqueId, nickname: u.nickname, avatar: u.avatar });
+        filtered.push({ id: u.id, uniqueId: u.uniqueId, nickname: u.nickname, avatar: u.avatar || DEFAULT_AVATAR });
       }
     }
     return { results: filtered, total: filtered.length };
@@ -324,7 +324,7 @@ class SocialService {
     return members.map((m) => ({
       id: m.id, userId: m.userId, userUniqueId: m.user.uniqueId,
       userNickname: m.groupNickname || m.user.nickname || '未知用户',
-      userAvatar: m.user.avatar, role: m.role, mute: m.mute, joinTime: m.joinTime,
+      userAvatar: m.user.avatar || DEFAULT_AVATAR, role: m.role, mute: m.mute, joinTime: m.joinTime,
     }));
   }
 
@@ -423,7 +423,7 @@ class SocialService {
     }
     const result = messages.reverse().map((m) => ({
       id: m.id, conversationId: m.conversationId, senderId: m.senderId,
-      senderNickname: m.sender.nickname || '未知用户', senderAvatar: m.sender.avatar,
+      senderNickname: m.sender.nickname || '未知用户', senderAvatar: m.sender.avatar || DEFAULT_AVATAR,
       content: m.isRevoked ? '[消息已撤回]' : m.content,
       msgType: m.msgType, isRead: m.isRead, isRevoked: m.isRevoked,
       isMe: m.senderId === userId, createdAt: m.createdAt,

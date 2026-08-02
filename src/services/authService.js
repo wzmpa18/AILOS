@@ -8,6 +8,9 @@ const logger = require('../utils/logger');
 const config = require('../config');
 const { getSystemConfigService } = require('./systemConfigService');
 
+// Default avatar URL — cute parrot image for the language learning app
+const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
+
 // 判断是否为管理员（用于登录审计等场景）
 async function isAdminUser(userId) {
   if (!userId) return false;
@@ -352,7 +355,7 @@ class AuthService {
         wechatOpenId: wechatOpenId || null,
         wechatUnionId: wechatUnionId || null,
         nickname: nickname || null,
-        avatar: avatar || null,
+        avatar: avatar || DEFAULT_AVATAR,
         membershipLevel: 'free',
         isActive: true,
         isVerified: true,

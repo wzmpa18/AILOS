@@ -329,7 +329,7 @@ router.get('/share-link', auth, async (req, res, next) => {
       data: {
         uniqueId: user.uniqueId,
         nickname: user.nickname,
-        avatar: user.avatar,
+        avatar: user.avatar || '/assets/images/default_avatar.png',
         shareUrl,
         qrCodeUrl: qrUrl,
       },

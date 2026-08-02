@@ -54,7 +54,7 @@ async function getMyReferrals(userId, page = 1, limit = 20) {
       id: r.id,
       refereeId: r.refereeId,
       refereeNickname: r.referee?.nickname || '未知用户',
-      refereeAvatar: r.referee?.avatar || null,
+      refereeAvatar: r.referee?.avatar || DEFAULT_AVATAR,
       boundAt: r.boundAt,
       source: r.source,
     })),

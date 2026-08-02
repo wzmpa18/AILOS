@@ -1482,10 +1482,17 @@ body {
       }
 
       if (data.targetLanguages && Array.isArray(data.targetLanguages)) {
-        state.targetLanguages = data.targetLanguages.map(t => ({
-          code: t.code,
-          level: t.level || 'beginner',
-        }));
+        state.targetLanguages = data.targetLanguages.map(t => {
+          // 兼容新版后端(code 字段)和旧版后端(languageCode 字段)
+          const code = t.code || t.languageCode;
+          // 判断是否为预定义语言，非预定义语言标记为 custom
+          const isPredefined = LANGUAGES.some(l => l.code === code);
+          return {
+            code: code,
+            level: t.level || 'beginner',
+            source: isPredefined ? undefined : 'custom',
+          };
+        });
       }
 
       hideLoading();
@@ -1509,6 +1516,7 @@ body {
         code: t.code,
         level: t.level,
       })),
+      interfaceLanguage: state.interfaceLanguage,
     };
 
     showLoading('saving');
@@ -1535,11 +1543,26 @@ body {
       hideLoading();
       showToast(t('toast_configured'), 'info');
 
-      // 将首选目标语言写入全局统一学习语言源（learn/chat/profile 共享，杜绝串语）
+      // 将首选目标语言和界面语言写入全局统一 localStorage（learn/chat/profile 共享，杜绝串语）
       try {
         const firstLang = (state.targetLanguages && state.targetLanguages[0] && state.targetLanguages[0].code) || 'en';
-        if (window.AILOS) window.AILOS.setStudyLang(firstLang);
-        else localStorage.setItem('yandao_study_lang', firstLang);
+        if (window.AILOS) {
+          window.AILOS.setStudyLang(firstLang);
+          // 兜底：setStudyLang 可能因自定义语言校验失败，直接写入确保持久化
+          if (localStorage.getItem('yandao_study_lang') !== firstLang) {
+            localStorage.setItem('yandao_study_lang', firstLang);
+            localStorage.setItem('yandao_target_lang_v1', firstLang);
+          }
+          // 确保界面语言也写入 localStorage
+          window.AILOS.setUILang(state.interfaceLanguage);
+          if (localStorage.getItem('yandao_ui_lang_v1') !== state.interfaceLanguage) {
+            localStorage.setItem('yandao_ui_lang_v1', state.interfaceLanguage);
+          }
+        } else {
+          localStorage.setItem('yandao_study_lang', firstLang);
+          localStorage.setItem('yandao_target_lang_v1', firstLang);
+          localStorage.setItem('yandao_ui_lang_v1', state.interfaceLanguage);
+        }
       } catch (e) {}
 
       // Redirect after short delay
@@ -1706,6 +1729,39 @@ body {
     }
   });
 
+  /* ========== SYNC FROM SERVER ========== */
+  /** 从服务端同步语言设置到 localStorage（页面加载时调用） */
+  async function syncFromServer() {
+    if (!state.token) return;
+    try {
+      const resp = await fetch('/api/user/languages', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + state.token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      // 同步学习语言（首选目标语言）
+      if (data.targetLanguages && data.targetLanguages.length) {
+        const rawCode = data.targetLanguages[0].code || data.targetLanguages[0].languageCode;
+        if (rawCode) {
+          const code = String(rawCode) === 'zh-CN' ? 'zh' : String(rawCode);
+          localStorage.setItem('yandao_study_lang', code);
+          localStorage.setItem('yandao_target_lang_v1', code);
+        }
+      }
+      // 同步界面语言
+      if (data.interfaceLanguage) {
+        const uiCode = data.interfaceLanguage === 'zh-CN' ? 'zh' : data.interfaceLanguage;
+        localStorage.setItem('yandao_ui_lang_v1', uiCode);
+      }
+    } catch (e) {
+      console.error('syncFromServer failed:', e);
+    }
+  }
+
   /* ========== INITIALIZATION ========== */
   function init() {
     // M1: 暴露全局函数供 inline onclick 调用
@@ -1731,6 +1787,11 @@ body {
 
     // Update step buttons
     updateStepButtons();
+
+    // 从服务端同步语言设置到 localStorage
+    if (state.token) {
+      syncFromServer();
+    }
 
     // Check existing config if token exists
     if (state.token) {

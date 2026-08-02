@@ -6,6 +6,9 @@
 const prisma = require('../../config/database');
 const contentFilter = require('../../utils/contentFilter');
 
+// Default avatar URL — parrot image for the language learning app
+const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
+
 const userController = {
   /**
    * GET /api/user/progress/:lang
@@ -156,6 +159,7 @@ const userController = {
         success: true,
         data: {
           ...user,
+          avatar: user.avatar || DEFAULT_AVATAR,
           nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
           targetLanguage: langPref?.defaultExplanationLanguage || 'en',
           interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
@@ -286,6 +290,7 @@ const userController = {
         success: true,
         data: {
           ...updatedUser,
+          avatar: updatedUser.avatar || DEFAULT_AVATAR,
           nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
           targetLanguage: langPref?.defaultExplanationLanguage || 'en',
           interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',

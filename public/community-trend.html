@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AILOS 社群动态</title>
+  <title>言道学学外语 社群动态</title>
   <script src="/xuewaiyu/assets/common.js"></script>
   <style>
     :root {
@@ -146,7 +146,7 @@
 
 <!-- Create post prompt -->
 <div class="create-card" onclick="openPostModal()">
-  <div class="avatar" id="userAvatarInit">👤</div>
+  <div class="avatar" id="userAvatarInit"><img src="/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>
   <span class="placeholder" data-i18n="trend_placeholder">分享你的学习动态...</span>
 </div>
 
@@ -364,7 +364,9 @@ function getAilosHeaders() {
 
       div.innerHTML = '' +
         '<div class="post-header">' +
-          '<div class="p-avatar">' + escapeHtml(initials) + '</div>' +
+          (p.actor && p.actor.avatar
+            ? '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="' + p.actor.avatar + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>'
+            : '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>') +
           '<div class="p-info">' +
             '<div class="p-name">' + escapeHtml(p.actor ? p.actor.nickname : '用户') + '</div>' +
             '<div class="p-time">' + timeStr + '</div>' +

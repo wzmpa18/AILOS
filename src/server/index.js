@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const path = require('path');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -35,6 +36,10 @@ app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
 });
+
+// Serve static files from public directory (assets, images, etc.)
+// In production, nginx serves these directly; this is for local development
+app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
 // Compression
 app.use(compression());

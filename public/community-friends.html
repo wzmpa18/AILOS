@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#4F46E5">
-<title>AILOS - 好友中心</title>
+<title>言道学学外语 - 好友中心</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -471,6 +471,10 @@ function avatarColor(name) {
 }
 
 function avatarText(name) { return (name || '?').charAt(0).toUpperCase(); }
+function avatarImg(avatarUrl, name) {
+  if (avatarUrl) return '<img src="' + avatarUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  return '<img src="/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+}
 
 // ===== Search User =====
 async function searchUser() {
@@ -483,8 +487,8 @@ async function searchUser() {
   try {
     var user = await apiGet('/friends/search-by-nickname-by-uid?uid=' + encodeURIComponent(uid));
     var resultDiv = document.getElementById('searchResult');
-    document.getElementById('resultAvatar').textContent = avatarText(user.nickname || user.uniqueId);
-    document.getElementById('resultAvatar').style.background = avatarColor(user.nickname || user.uniqueId);
+    document.getElementById('resultAvatar').innerHTML = avatarImg(user.avatar, user.nickname || user.uniqueId);
+    if (!user.avatar) document.getElementById('resultAvatar').style.background = avatarColor(user.nickname || user.uniqueId);
     document.getElementById('resultName').textContent = user.nickname || user.uniqueId || '未知';
     document.getElementById('resultUid').textContent = t('search_uid_label') + ' ' + (user.uniqueId || 'N/A');
     document.getElementById('resultMeta').textContent = t('lang_label') + ' ' + (user.targetLang || user.nativeLang || '-');
@@ -552,7 +556,8 @@ function renderFriendList(friends) {
     } catch(e) {}
 
     html += '<div class="friend-item' + muted + blocked + '" onclick="openProfile(\'' + f.id + '\',\'' + f.friendId + '\',\'' + name.replace(/'/g,"\\'") + '\')">';
-    html += '<div class="friend-avatar" style="background:' + avatarColor(name) + '">' + avatarText(name) + '</div>';
+    var av = f.friendAvatar || null;
+    html += '<div class="friend-avatar" style="background:' + avatarColor(name) + '">' + avatarImg(av, name) + '</div>';
     html += '<div class="friend-info">';
     html += '<div class="friend-name">' + name + (f.isBlocked ? ' [已拉黑]' : '') + (f.isMuted ? ' [免打扰]' : '') + '</div>';
     if (remark) html += '<div class="friend-remark">' + remark + '</div>';
@@ -575,8 +580,8 @@ async function openProfile(settingId, friendId, name) {
 
     // Get fresh data via API (re-use setting endpoint to fetch friend info)
     // We use the friend list data we already have
-    document.getElementById('profileAvatar').textContent = avatarText(name);
-    document.getElementById('profileAvatar').style.background = avatarColor(name);
+    document.getElementById('profileAvatar').innerHTML = avatarImg(currentFriendData ? currentFriendData.friendAvatar : null, name);
+    if (!(currentFriendData && currentFriendData.friendAvatar)) document.getElementById('profileAvatar').style.background = avatarColor(name);
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileUid').textContent = 'UID: ' + (friendId.substring(0, 8) + '...');
     document.getElementById('profileRemark').value = currentFriendData.remarkName || '';

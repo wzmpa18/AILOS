@@ -1,5 +1,5 @@
-<resources>
-    <string name="app_name">AILOS</string>
+﻿<resources>
+    <string name="app_name">言道学学外语</string>
     <string name="loading">加载中...</string>
     <string name="retry">重试</string>
     <string name="exit_confirm">再按一次退出应用</string>

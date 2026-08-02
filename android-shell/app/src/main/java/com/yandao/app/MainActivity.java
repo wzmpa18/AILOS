@@ -10,6 +10,7 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
@@ -40,22 +41,26 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
+import org.json.JSONObject;
+
 /**
  * AILOS MainActivity - WebView壳层核心
- * 
+ *
  * 资深程序员10项兜底清单：
  * 1. WebViewClient + WebChromeClient 全回调处理
  * 2. 摄像头权限使用时申请（非启动时）
  * 3. 硬件加速 + 低版本兼容降级
  * 4. JS接口仅暴露必要方法
  * 5. 支付/分享回调Intent正确处理
- * 6. Cookie + LocalStorage持久化
+ * 6. Cookie + LocalStorage持久化 + 原生登录态持久化
  * 7. 崩溃自动恢复（不闪退）
  * 8. 加载超时兜底（10秒）
  * 9. 自定义错误页（非系统白屏）
- * 10. 内存优化（退出时释放WebView）
+ * 10. 内存优化（退出时释放WebView + 音频/TTS资源）
  */
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
@@ -66,8 +71,11 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> fileUploadCallback;
     private long lastBackPressTime = 0;
 
+    // JS桥接实例（持有引用以便onPageFinished注入登录态、onDestroy释放资源）
+    private AilosJsBridge jsBridge;
+
     // 文件上传ActivityResult
-    private final ActivityResultLauncher<Intent> fileUploadLauncher = 
+    private final ActivityResultLauncher<Intent> fileUploadLauncher =
         registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (fileUploadCallback == null) return;
             Uri[] results = null;
@@ -85,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         // 沉浸式全屏
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
@@ -179,7 +187,10 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new AilosWebChromeClient());
 
         // JS接口（仅暴露必要方法，严禁敏感能力）
-        webView.addJavascriptInterface(new AilosJsBridge(this), "AilosNative");
+        // TextToSpeech 在 AilosJsBridge 构造函数中初始化
+        jsBridge = new AilosJsBridge(this);
+        jsBridge.setWebView(webView);
+        webView.addJavascriptInterface(jsBridge, "AilosNative");
     }
 
     private void loadUrl() {
@@ -203,6 +214,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 从原生SharedPreferences读取登录态，注入WebView（进程被杀重启后恢复登录）
+     * 在 onPageFinished 中调用，确保 JS 上下文已就绪
+     */
+    private void injectNativeLoginState() {
+        if (jsBridge == null || webView == null) return;
+        try {
+            String loginState = jsBridge.getLoginState();
+            if (loginState == null || loginState.isEmpty()) return;
+            // 使用 JSONObject.quote 安全转义 JSON 字符串为 JS 字符串字面量
+            String escaped = JSONObject.quote(loginState);
+            String js = "if(window.AilosNativeLogin&&window.AilosNativeLogin.inject){" +
+                    "window.AilosNativeLogin.inject(" + escaped + ");}";
+            webView.evaluateJavascript(js, null);
+        } catch (Exception e) {
+            Log.e(TAG, "injectNativeLoginState异常", e);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -220,6 +250,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // 释放音频/TTS资源
+        if (jsBridge != null) {
+            jsBridge.destroy();
+            jsBridge = null;
+        }
         // 内存优化：释放WebView资源
         if (webView != null) {
             ((FrameLayout) webView.getParent()).removeView(webView);
@@ -233,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // WebViewClient - 加载回调+错误处理+超时兜底
+    // WebViewClient - 加载回调+错误处理+超时兜底+登录态注入
     // ============================================================
     private class AilosWebViewClient extends WebViewClient {
         @Override
@@ -251,12 +286,14 @@ public class MainActivity extends AppCompatActivity {
             timeoutHandler.removeCallbacks(timeoutRunnable);
             // 同步Cookie
             android.webkit.CookieManager.getInstance().flush();
+            // 注入原生登录态（进程被杀重启后恢复登录）
+            injectNativeLoginState();
         }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
-            
+
             // 支付跳转：微信/支付宝
             if (url.startsWith("weixin://") || url.startsWith("alipays://") || url.startsWith("alipay://")) {
                 try {
@@ -313,7 +350,7 @@ public class MainActivity extends AppCompatActivity {
                 fileUploadCallback.onReceiveValue(null);
             }
             fileUploadCallback = filePathCallback;
-            
+
             Intent intent = fileChooserParams.createIntent();
             try {
                 fileUploadLauncher.launch(intent);

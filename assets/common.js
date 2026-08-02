@@ -1,5 +1,5 @@
 /* ============================================================
- * AILOS 统一前端引擎 (common.js) v3.0
+ * AILOS 统一前端引擎 (common.js) v3.1
  * 职责：
  *  1. 全局"当前学习语言"单一真值源 (localStorage: yandao_study_lang)
  *     —— 解决 learn / chat / profile / language 四处目标语言不一致(串语)问题
@@ -7,9 +7,15 @@
  *     —— 底部导航、返回按钮、硬阻断提示的文案本地化
  *  3. 统一底部导航(7 项)，含社交中心/定制伴读，自动高亮当前页
  *  4. 语言变更事件广播 (languageChanged CustomEvent)
+ *  5. 原生音频播放适配 (v3.1新增)
+ *     —— 原生App环境通过 window.AilosNative 桥接播放音频/TTS
+ *     —— 自动 shim window.speechSynthesis，现有页面无需改动
+ *  6. 登录态原生持久化 (v3.1新增)
+ *     —— 进程被杀后从原生存储恢复登录态到 localStorage
+ *     —— 登录成功后同步登录态到原生存储
  * 约束：纯前端、无框架；不在本文件改任何认证/会员逻辑。
  * 路径：/xuewaiyu/assets/common.js
- * 版本：v3.0 — Phase4 语言收口：底部导航全7语种本地化 + UI语言读写入口
+ * 版本：v3.1 — 原生音频适配 + 登录态原生持久化
  * ============================================================ */
 (function () {
   'use strict';
@@ -65,20 +71,27 @@
 
   function isValidLang(c) { return !!(c && LANG_NAMES[c]); }
 
+  // 后端存储编码 -> 前端编码（zh-CN -> zh），用于解析 API 响应
+  function normalizeApiCode(code) {
+    if (!code) return '';
+    if (typeof code !== 'string') code = String(code);
+    return code === 'zh-CN' ? 'zh' : code;
+  }
+
   function getStudyLang() {
     try {
       var s = localStorage.getItem(STUDY_KEY);
-      if (isValidLang(s)) return s;
+      if (s) return s; // 接受自定义语言编码，不限于预定义列表
     } catch (e) {}
     try {
       var t = localStorage.getItem(LEGACY_KEY);
-      if (isValidLang(t)) { setStudyLang(t); return t; }
+      if (t) { setStudyLang(t); return t; }
     } catch (e) {}
     return 'en';
   }
 
   function setStudyLang(code) {
-    if (!isValidLang(code)) return;
+    if (!code) return;
     var changed = false;
     try {
       var old = getStudyLang();
@@ -104,12 +117,12 @@
     var navLang = (navigator.language || '').split('-')[0];
     if (navLang && isValidLang(navLang)) return navLang;
     var sl = getStudyLang();
-    if (sl === 'zh') return 'zh';
+    if (isValidLang(sl)) return sl;
     return 'en';
   }
 
   function setUILang(code) {
-    if (!isValidLang(code)) return;
+    if (!code) return;
     var changed = false;
     try {
       var old = getUILang();
@@ -142,7 +155,8 @@
     return null;
   }
 
-  // 已登录时，从后端用户信息同步学习语言(若本地未设置)
+  // 已登录时，从后端同步学习语言和界面语言到 localStorage
+  // 修复 Issue C：读取 languageCode 字段，始终更新（移除仅首次设置的限制）
   function syncStudyLangFromApi() {
     var token = getToken();
     if (!token) return;
@@ -153,12 +167,34 @@
           if (!d) return;
           var list = d.targetLanguages || (d.data && d.data.targetLanguages) || null;
           if (list && list.length) {
-            var code = (list[0].code || list[0]).toString();
-            if (isValidLang(code) && !localStorage.getItem(STUDY_KEY)) setStudyLang(code);
+            // 优先读取 code 字段（新版后端），回退到 languageCode（旧版后端）
+            var rawCode = list[0].code || list[0].languageCode;
+            if (rawCode && typeof rawCode === 'object' && rawCode.code) rawCode = rawCode.code;
+            if (rawCode) rawCode = String(rawCode);
+            var code = normalizeApiCode(rawCode);
+            if (code) {
+              setStudyLang(code);
+            }
+          }
+          // 同步界面语言（始终更新）
+          var uiLang = d.interfaceLanguage || (d.data && d.data.interfaceLanguage) || null;
+          if (uiLang) {
+            var normalizedUi = normalizeApiCode(uiLang);
+            if (normalizedUi) {
+              try {
+                localStorage.setItem(UI_LANG_KEY, normalizedUi);
+                window.dispatchEvent(new CustomEvent('uiLanguageChanged', { detail: { lang: normalizedUi } }));
+              } catch (e) {}
+            }
           }
         })
         .catch(function () {});
     } catch (e) {}
+  }
+
+  // 每次页面加载时从服务端同步语言设置（封装入口，供外部调用）
+  function syncLangFromServer() {
+    syncStudyLangFromApi();
   }
 
   var NAV_ITEMS = [
@@ -320,12 +356,297 @@
       .catch(function () {});
   }
 
+  // ============================================================
+  // v3.1: 原生音频播放适配
+  // ============================================================
+
+  /** 检测是否运行在原生App环境中 */
+  function isNativeApp() {
+    try {
+      return !!(window.AilosNative && typeof window.AilosNative.isApp === 'function' && window.AilosNative.isApp());
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** 检测原生音频播放是否可用 */
+  function isNativeAudioAvailable() {
+    try {
+      return isNativeApp() && typeof window.AilosNative.isNativeAudioAvailable === 'function'
+        && window.AilosNative.isNativeAudioAvailable();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * 全局音频播放函数（URL音频文件）
+   * 原生环境走 AilosNative.playAudio，浏览器环境走 Web Audio API
+   * @param {string} url 音频文件URL
+   */
+  function playPronunciation(url) {
+    if (!url) return;
+    if (isNativeAudioAvailable() && window.AilosNative.playAudio) {
+      try {
+        window.AilosNative.playAudio(url);
+        return;
+      } catch (e) {
+        // 原生调用失败，降级到Web Audio
+      }
+    }
+    // 降级：Web Audio API
+    try {
+      var audio = new Audio(url);
+      audio.play().catch(function () {});
+    } catch (e) {}
+  }
+
+  /** 停止所有音频播放（原生+TTS） */
+  function stopAllAudio() {
+    if (isNativeApp()) {
+      try { window.AilosNative.stopAudio(); } catch (e) {}
+      try { window.AilosNative.stopTts(); } catch (e) {}
+    }
+  }
+
+  // ===== 原生回调接收器（native → JS）=====
+  // 原生侧通过 window.AilosNativeCallback.onXxx() 回调
+  var _currentUtterance = null;
+
+  window.AilosNativeCallback = {
+    onAudioError: function (msg) {},
+    onAudioComplete: function () {},
+    onTtsStart: function () {
+      if (window._ailosSpeechShim) {
+        window._ailosSpeechShim.speaking = true;
+        window._ailosSpeechShim.pending = false;
+      }
+      if (_currentUtterance && _currentUtterance.onstart) {
+        try { _currentUtterance.onstart({ type: 'start' }); } catch (e) {}
+      }
+    },
+    onTtsComplete: function () {
+      if (window._ailosSpeechShim) {
+        window._ailosSpeechShim.speaking = false;
+        window._ailosSpeechShim.pending = false;
+      }
+      if (_currentUtterance && _currentUtterance.onend) {
+        try { _currentUtterance.onend({ type: 'end' }); } catch (e) {}
+      }
+      _currentUtterance = null;
+    },
+    onTtsError: function (msg) {
+      if (window._ailosSpeechShim) {
+        window._ailosSpeechShim.speaking = false;
+        window._ailosSpeechShim.pending = false;
+      }
+      if (_currentUtterance && _currentUtterance.onerror) {
+        try { _currentUtterance.onerror({ type: 'error', error: msg || 'native_tts_error' }); } catch (e) {}
+      }
+      _currentUtterance = null;
+    }
+  };
+
+  /**
+   * 安装 speechSynthesis 垫片（仅原生环境）
+   * 使现有使用 window.speechSynthesis / SpeechSynthesisUtterance 的页面
+   * 自动走原生 TTS，无需逐页修改。
+   */
+  function installNativeSpeechShim() {
+    if (!isNativeAudioAvailable()) return;
+    if (window._ailosSpeechShimInstalled) return;
+    window._ailosSpeechShimInstalled = true;
+
+    // SpeechSynthesisUtterance 垫片构造函数
+    function NativeUtterance(text) {
+      this.text = text || '';
+      this.lang = '';
+      this.voice = null;
+      this.volume = 1;
+      this.rate = 1;
+      this.pitch = 1;
+      this.onstart = null;
+      this.onend = null;
+      this.onerror = null;
+      this.onpause = null;
+      this.onresume = null;
+      this.onmark = null;
+      this.onboundary = null;
+    }
+
+    // 如果原生不支持 speechSynthesis 或不存在，用垫片替换
+    var hasNativeSynthesis = typeof window.speechSynthesis === 'object' && window.speechSynthesis !== null;
+    if (!hasNativeSynthesis) {
+      window.SpeechSynthesisUtterance = NativeUtterance;
+    } else {
+      // 保留原生构造函数（部分WebView有speechSynthesis对象但不工作）
+      if (!window.SpeechSynthesisUtterance) {
+        window.SpeechSynthesisUtterance = NativeUtterance;
+      }
+    }
+
+    var shim = {
+      speaking: false,
+      pending: false,
+      paused: false,
+      onvoiceschanged: null,
+      speak: function (utterance) {
+        if (!utterance) return;
+        _currentUtterance = utterance;
+        shim.pending = true;
+        try {
+          window.AilosNative.speakText(utterance.text || '', utterance.lang || '');
+        } catch (e) {
+          shim.speaking = false;
+          shim.pending = false;
+          if (utterance.onerror) {
+            try { utterance.onerror({ type: 'error', error: e.message }); } catch (ee) {}
+          }
+          _currentUtterance = null;
+        }
+      },
+      cancel: function () {
+        try { window.AilosNative.stopTts(); } catch (e) {}
+        shim.speaking = false;
+        shim.pending = false;
+        if (_currentUtterance && _currentUtterance.onend) {
+          try { _currentUtterance.onend({ type: 'end' }); } catch (e) {}
+        }
+        _currentUtterance = null;
+      },
+      pause: function () {
+        // 原生TTS不支持暂停，静默处理
+        shim.paused = true;
+      },
+      resume: function () {
+        shim.paused = false;
+      },
+      getVoices: function () { return []; },
+      addEventListener: function () {},
+      removeEventListener: function () {},
+      dispatchEvent: function () { return true; }
+    };
+
+    window._ailosSpeechShim = shim;
+    // 覆盖 speechSynthesis（无论原生是否有，在App环境中都用垫片确保可用）
+    window.speechSynthesis = shim;
+  }
+
+  // 立即安装垫片（不等 DOMContentLoaded，确保在页面脚本调用前就绪）
+  installNativeSpeechShim();
+
+  // ============================================================
+  // v3.1: 登录态原生持久化
+  // ============================================================
+
+  /**
+   * 将 localStorage 中的登录态同步到原生存储
+   * 登录成功后调用，确保进程被杀后仍可恢复
+   */
+  function saveLoginStateToNative() {
+    if (!isNativeApp()) return;
+    try {
+      var token = localStorage.getItem('yandao_token_v1');
+      if (!token) return;
+      var refreshToken = localStorage.getItem('yandao_refresh_token_v1') || '';
+      var userInfo = {
+        refreshToken: refreshToken,
+        savedAt: Date.now()
+      };
+      // 尝试读取已有的用户信息
+      try {
+        var authTokens = localStorage.getItem('auth_tokens');
+        if (authTokens) userInfo.authTokens = JSON.parse(authTokens);
+      } catch (e) {}
+      window.AilosNative.saveLoginState(token, JSON.stringify(userInfo));
+    } catch (e) {}
+  }
+
+  /**
+   * 从原生存储恢复登录态到 localStorage
+   * 页面加载时调用，进程被杀重启后自动恢复
+   */
+  function restoreLoginStateFromNative() {
+    if (!isNativeApp()) return;
+    try {
+      var raw = window.AilosNative.getLoginState();
+      if (!raw) return;
+      var state = JSON.parse(raw);
+      if (!state.token) return;
+      // 仅在 localStorage 无 token 时恢复（避免覆盖更新的 token）
+      var existingToken = localStorage.getItem('yandao_token_v1');
+      if (!existingToken) {
+        localStorage.setItem('yandao_token_v1', state.token);
+        localStorage.setItem('auth_tokens', JSON.stringify({ accessToken: state.token }));
+        if (state.refreshToken) {
+          localStorage.setItem('yandao_refresh_token_v1', state.refreshToken);
+        }
+      }
+    } catch (e) {}
+  }
+
+  /**
+   * 原生→JS 登录态注入接口
+   * MainActivity.onPageFinished 通过 evaluateJavascript 调用此方法
+   * @param {string} loginStateJson 登录态JSON字符串
+   */
+  window.AilosNativeLogin = {
+    inject: function (loginStateJson) {
+      try {
+        var state = typeof loginStateJson === 'string' ? JSON.parse(loginStateJson) : loginStateJson;
+        if (!state || !state.token) return;
+        // 仅在 localStorage 无 token 时恢复（避免覆盖更新的 token）
+        var existingToken = null;
+        try { existingToken = localStorage.getItem('yandao_token_v1'); } catch (e) {}
+        if (!existingToken) {
+          try {
+            localStorage.setItem('yandao_token_v1', state.token);
+            localStorage.setItem('auth_tokens', JSON.stringify({ accessToken: state.token }));
+            if (state.refreshToken) {
+              localStorage.setItem('yandao_refresh_token_v1', state.refreshToken);
+            }
+          } catch (e) {}
+          // 触发页面刷新事件，让页面知道登录态已恢复
+          try {
+            window.dispatchEvent(new CustomEvent('ailosLoginRestored', { detail: { token: state.token } }));
+          } catch (e) {}
+        }
+      } catch (e) {}
+    }
+  };
+
+  // 清除原生登录态（退出登录时调用）
+  function clearNativeLoginState() {
+    if (!isNativeApp()) return;
+    try { window.AilosNative.clearLoginState(); } catch (e) {}
+  }
+
+  // 监听 localStorage 变化，自动同步到原生存储（跨标签页登录/退出时生效）
+  if (typeof window.addEventListener === 'function') {
+    window.addEventListener('storage', function (e) {
+      if (!isNativeApp()) return;
+      // token 被设置 → 同步到原生
+      if (e.key === 'yandao_token_v1' && e.newValue) {
+        saveLoginStateToNative();
+      }
+      // token 被清除 → 清除原生登录态
+      if (e.key === 'yandao_token_v1' && !e.newValue) {
+        clearNativeLoginState();
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    // 恢复原生登录态（页面加载时）
+    restoreLoginStateFromNative();
+    // 原生音频垫片已在脚本加载时安装，此处确保 DOM 就绪后状态正确
     enforceOnboarding();
     injectStyle();
     ensureNav();
     ensureBackBtn();
-    syncStudyLangFromApi();
+    syncLangFromServer();
+    // 若已有 token，同步到原生存储（覆盖更新）
+    if (getToken()) saveLoginStateToNative();
   });
 
   // Stage9 M5: 语言切换时重新渲染导航标签
@@ -356,9 +677,22 @@
     getCommunityNavLabel: getCommunityNavLabel,
     getToken: getToken,
     syncStudyLangFromApi: syncStudyLangFromApi,
+    syncLangFromServer: syncLangFromServer,
     renderNav: renderNav,
     reloadNav: reloadNav,
     isCommunityPage: isCommunityPage,
-    NAV_ITEMS: NAV_ITEMS
+    NAV_ITEMS: NAV_ITEMS,
+    // v3.1 新增：原生音频 + 登录态
+    isNativeApp: isNativeApp,
+    isNativeAudioAvailable: isNativeAudioAvailable,
+    playPronunciation: playPronunciation,
+    stopAllAudio: stopAllAudio,
+    saveLoginStateToNative: saveLoginStateToNative,
+    restoreLoginStateFromNative: restoreLoginStateFromNative,
+    clearNativeLoginState: clearNativeLoginState
   };
+
+  // 全局函数暴露（供未引用 window.AILOS 的页面直接调用）
+  window.playPronunciation = playPronunciation;
+  window.stopAllAudio = stopAllAudio;
 })();

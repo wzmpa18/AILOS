@@ -65,7 +65,7 @@ router.get('/me', authenticate, async (req, res) => {
           phone: req.user.phone,
           email: req.user.email,
           nickname: req.user.nickname,
-          avatar: req.user.avatar,
+          avatar: req.user.avatar || '/assets/images/default_avatar.png',
         } : null,
         orgContext,
       },

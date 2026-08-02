@@ -33,13 +33,16 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
     --nav-height: 64px;
   }
+  html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 0 16px calc(var(--nav-height) + 20px);
+    padding: 0 16px 80px;
     line-height: 1.6;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* ===== Navbar ===== */
@@ -312,6 +315,22 @@
   /* ===== Hidden ===== */
   .hidden { display: none !important; }
 
+  /* ===== Logout Section (P0 Bug 1) ===== */
+  .logout-section {
+    margin-top: 8px; margin-bottom: 24px; padding: 0 4px;
+  }
+  .btn-logout {
+    width: 100%; padding: 15px; border: none; border-radius: var(--radius-sm);
+    background: var(--error); color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s; box-shadow: 0 2px 8px rgba(239,68,68,.25);
+    font-family: inherit;
+  }
+  .btn-logout:hover { background: #DC2626; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.3); }
+  .btn-logout:active { transform: translateY(0); }
+  .btn-logout:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .logout-icon { font-size: 18px; line-height: 1; }
+
   /* ===== Responsive: 375px ===== */
   @media (max-width: 420px) {
     .card { padding: 18px 14px; }
@@ -477,6 +496,19 @@ loadSharedProfile();
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="copyInviteCode()" data-i18n="invite_copy_code">复制邀请码</button>
       <button class="btn btn-secondary" onclick="closeInviteModal()" data-i18n="qrcode_close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirmation Modal (P0 Bug 1) -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title" data-i18n="logout_modal_title">退出登录</div>
+    <div class="modal-desc" data-i18n="logout_modal_desc">确定要退出登录吗？</div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeLogoutModal()" data-i18n="btn_cancel">取消</button>
+      <button class="btn btn-danger" id="btnConfirmLogout" onclick="performLogout()" data-i18n="btn_confirm_logout">确定退出</button>
     </div>
   </div>
 </div>
@@ -701,7 +733,24 @@ loadSharedProfile();
           </div>
           <span class="si-arrow">›</span>
         </div>
+
+        <div class="settings-item" onclick="window.location.href='/xuewaiyu/about.html'">
+          <span class="si-icon">ℹ️</span>
+          <div class="si-text">
+            <div class="si-title" data-i18n="settings_about">关于我们</div>
+            <div class="si-desc" data-i18n="settings_about_desc">版本信息、协议与合规</div>
+          </div>
+          <span class="si-arrow">›</span>
+        </div>
       </div>
+    </div>
+
+    <!-- Logout Section (P0 Bug 1) -->
+    <div class="logout-section">
+      <button class="btn-logout" onclick="openLogoutModal()">
+        <span class="logout-icon">⏻</span>
+        <span data-i18n="btn_logout">退出登录</span>
+      </button>
     </div>
 
   </div>
@@ -779,6 +828,13 @@ const I18N = {
     toast_loading: '加载中...',
     settings_invite_code: '邀请码',
     settings_invite_code_desc: '邀请好友一起学习，赢取奖励',
+    settings_about: '关于我们',
+    settings_about_desc: '版本信息、协议与合规',
+    logout_modal_title: '退出登录',
+    logout_modal_desc: '确定要退出登录吗？',
+    btn_confirm_logout: '确定退出',
+    btn_logout: '退出登录',
+    logout_loading: '退出中...',
     invite_modal_title: '邀请好友',
     invite_modal_desc: '分享你的专属邀请码，每邀请一位好友加入学习，双方均可获得7天VIP会员奖励！',
     invite_copy_code: '复制邀请码',
@@ -876,6 +932,13 @@ const I18N = {
     toast_loading: 'Loading...',
     settings_invite_code: 'Invite Code',
     settings_invite_code_desc: 'Invite friends to learn together and earn rewards',
+    settings_about: 'About Us',
+    settings_about_desc: 'Version, agreements & compliance',
+    logout_modal_title: 'Log Out',
+    logout_modal_desc: 'Are you sure you want to log out?',
+    btn_confirm_logout: 'Confirm',
+    btn_logout: 'Log Out',
+    logout_loading: 'Logging out...',
     invite_modal_title: 'Invite Friends',
     invite_modal_desc: 'Share your exclusive invite code. Both you and your friend will receive a 7-day VIP membership reward when they join!',
     invite_copy_code: 'Copy Invite Code',
@@ -973,6 +1036,13 @@ const I18N = {
     toast_loading: '読み込み中...',
     settings_invite_code: '招待コード',
     settings_invite_code_desc: '友達を招待して一緒に学び、報酬を獲得',
+    settings_about: '私たちについて',
+    settings_about_desc: 'バージョン情報、規約とコンプライアンス',
+    logout_modal_title: 'ログアウト',
+    logout_modal_desc: 'ログアウトしますか？',
+    btn_confirm_logout: '確認',
+    btn_logout: 'ログアウト',
+    logout_loading: 'ログアウト中...',
     invite_modal_title: '友達を招待',
     invite_modal_desc: 'あなたの専用招待コードを共有しましょう。友達が参加すると、双方に7日間のVIP会員報酬がプレゼントされます！',
     invite_copy_code: '招待コードをコピー',
@@ -1070,6 +1140,13 @@ const I18N = {
     toast_loading: '로딩 중...',
     settings_invite_code: '초대 코드',
     settings_invite_code_desc: '친구를 초대하여 함께 배우고 보상 받기',
+    settings_about: '회사 소개',
+    settings_about_desc: '버전 정보, 약관 및 규정',
+    logout_modal_title: '로그아웃',
+    logout_modal_desc: '로그아웃하시겠습니까?',
+    btn_confirm_logout: '확인',
+    btn_logout: '로그아웃',
+    logout_loading: '로그아웃 중...',
     invite_modal_title: '친구 초대',
     invite_modal_desc: '전용 초대 코드를 공유하세요. 친구가 가입하면 양쪽 모두 7일 VIP 멤버십 보상을 받습니다!',
     invite_copy_code: '초대 코드 복사',
@@ -1167,6 +1244,13 @@ const I18N = {
     toast_loading: 'Chargement...',
     settings_invite_code: 'Code d\'invitation',
     settings_invite_code_desc: 'Invitez des amis à apprendre et gagnez des récompenses',
+    settings_about: 'À propos de nous',
+    settings_about_desc: 'Version, accords et conformité',
+    logout_modal_title: 'Déconnexion',
+    logout_modal_desc: 'Voulez-vous vraiment vous déconnecter ?',
+    btn_confirm_logout: 'Confirmer',
+    btn_logout: 'Déconnexion',
+    logout_loading: 'Déconnexion...',
     invite_modal_title: 'Inviter des amis',
     invite_modal_desc: 'Partagez votre code d\'invitation exclusif. Vous et votre ami recevrez 7 jours de VIP en récompense !',
     invite_copy_code: 'Copier le code',
@@ -1264,6 +1348,13 @@ const I18N = {
     toast_loading: 'Cargando...',
     settings_invite_code: 'Código de invitación',
     settings_invite_code_desc: 'Invita a amigos a aprender y gana recompensas',
+    settings_about: 'Sobre nosotros',
+    settings_about_desc: 'Versión, acuerdos y cumplimiento',
+    logout_modal_title: 'Cerrar sesión',
+    logout_modal_desc: '¿Estás seguro de que quieres cerrar sesión?',
+    btn_confirm_logout: 'Confirmar',
+    btn_logout: 'Cerrar sesión',
+    logout_loading: 'Cerrando sesión...',
     invite_modal_title: 'Invitar amigos',
     invite_modal_desc: 'Comparte tu código exclusivo. Cuando tu amigo se una, ambos recibirán 7 días de membresía VIP.',
     invite_copy_code: 'Copiar código',
@@ -1361,6 +1452,13 @@ const I18N = {
     toast_loading: 'Laden...',
     settings_invite_code: 'Einladungscode',
     settings_invite_code_desc: 'Freunde zum gemeinsamen Lernen einladen und Belohnungen verdienen',
+    settings_about: 'Über uns',
+    settings_about_desc: 'Version, Vereinbarungen und Compliance',
+    logout_modal_title: 'Abmelden',
+    logout_modal_desc: 'Möchten Sie sich wirklich abmelden?',
+    btn_confirm_logout: 'Bestätigen',
+    btn_logout: 'Abmelden',
+    logout_loading: 'Abmeldung...',
     invite_modal_title: 'Freunde einladen',
     invite_modal_desc: 'Teilen Sie Ihren exklusiven Einladungscode. Wenn ein Freund beitritt, erhalten beide 7 Tage VIP-Mitgliedschaft!',
     invite_copy_code: 'Code kopieren',
@@ -1552,13 +1650,13 @@ function populateProfile(data) {
   document.getElementById('nicknameDisplay').textContent = data.nickname || 'User';
   document.getElementById('uidDisplay').textContent = 'UID: ' + (data.id || data._id || '---');
 
-  // Avatar
+  // Avatar (fallback to default parrot avatar)
   const avatarEl = document.getElementById('avatarDisplay');
   const avatarInitial = document.getElementById('avatarInitial');
   if (data.avatar) {
     avatarEl.innerHTML = '<img src="' + data.avatar + '" alt="avatar">';
   } else {
-    avatarEl.innerHTML = '<span id="avatarInitial">' + (data.nickname || 'U').charAt(0).toUpperCase() + '</span>';
+    avatarEl.innerHTML = '<img src="/assets/images/default_avatar.png" alt="avatar">';
   }
 
   // Level card (P0 Bug 2 fix)
@@ -2069,12 +2167,50 @@ function copyInviteCode() {
   }
 }
 
+// ==================== Logout (P0 Bug 1) ====================
+function openLogoutModal() {
+  document.getElementById('logoutModal').classList.add('show');
+}
+
+function closeLogoutModal() {
+  document.getElementById('logoutModal').classList.remove('show');
+}
+
+function performLogout() {
+  var btn = document.getElementById('btnConfirmLogout');
+  if (btn) { btn.disabled = true; btn.textContent = t('logout_loading'); }
+  // 清除登录态相关 localStorage（保留页面缓存/资源缓存以便快速重登）
+  var logoutKeys = ['yandao_token_v1', 'ailos_token', 'yandao_token', 'auth_tokens',
+                    'yandao_study_lang', 'yandao_ui_lang_v1', 'yandao_onboarding_ok_v1'];
+  for (var i = 0; i < logoutKeys.length; i++) {
+    try { localStorage.removeItem(logoutKeys[i]); } catch(e) {}
+  }
+  // 清除 sessionStorage
+  try { sessionStorage.clear(); } catch(e) {}
+  // 原生登录态清理
+  try {
+    if (window.AilosNative && typeof window.AilosNative.clearLoginState === 'function') {
+      window.AilosNative.clearLoginState();
+    }
+  } catch(e) {}
+  // 跳转到登录页
+  setTimeout(function() {
+    window.location.href = '/xuewaiyu/landing.html';
+  }, 300);
+}
+
+// Close logout modal on overlay click
+document.getElementById('logoutModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLogoutModal();
+});
+
 // Keyboard modal dismiss
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeQRModal();
     closeShareModal();
     closeInviteModal();
+    closeLogoutModal();
   }
 });
 

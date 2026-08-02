@@ -32,7 +32,7 @@ class OrgClassService {
       description: c.description,
       status: c.status,
       studentCount: c._count.students,
-      teacher: c.teacher || null,
+      teacher: c.teacher ? { ...c.teacher, avatar: c.teacher.avatar || '/assets/images/default_avatar.png' } : null,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     }));

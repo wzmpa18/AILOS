@@ -11,6 +11,9 @@ const contentFilter = require('../../utils/contentFilter');
 
 const prisma = new PrismaClient();
 
+// Default avatar URL
+const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
+
 // All routes require auth
 router.use(authenticate);
 
@@ -75,7 +78,7 @@ router.get('/feed', async (req, res) => {
         actor: item.actor ? {
           id: item.actor.id,
           nickname: item.actor.nickname,
-          avatar: item.actor.avatar
+          avatar: item.actor.avatar || DEFAULT_AVATAR
         } : null,
         type: item.type,
         content: item.content,
@@ -132,7 +135,11 @@ router.post('/post', async (req, res) => {
 
     return ok(res, {
       id: post.id,
-      actor: post.actor,
+      actor: post.actor ? {
+        id: post.actor.id,
+        nickname: post.actor.nickname,
+        avatar: post.actor.avatar || DEFAULT_AVATAR
+      } : null,
       type: post.type,
       content: post.content,
       metadata: JSON.parse(post.metadata),

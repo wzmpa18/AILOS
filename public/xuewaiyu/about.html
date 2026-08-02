@@ -1,0 +1,253 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#4F46E5">
+<title>关于我们 - 言道学学外语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --nav-height: 64px;
+  }
+  html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 16px 80px;
+    line-height: 1.6;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ===== Navbar ===== */
+  .navbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0; position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+  }
+  .nav-back {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    transition: color .2s;
+  }
+  .nav-back:hover { color: var(--primary); }
+  .nav-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+  /* ===== Container ===== */
+  .container { width: 100%; max-width: 680px; margin: 0 auto; }
+
+  /* ===== Card ===== */
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 24px; margin-bottom: 16px;
+  }
+  .card-header {
+    font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-header .icon { font-size: 18px; }
+
+  /* ===== About Hero ===== */
+  .about-hero { text-align: center; padding: 16px 0 8px; }
+  .about-logo {
+    width: 80px; height: 80px; border-radius: 20px; margin: 0 auto 14px;
+    background: linear-gradient(135deg, var(--primary), #6366F1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; color: #fff; font-weight: 800;
+    box-shadow: 0 6px 20px rgba(79,70,229,.3);
+  }
+  .about-appname { font-size: 22px; font-weight: 800; color: var(--text); }
+  .about-version { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .about-slogan { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+  /* ===== Info Rows ===== */
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-size: 14px; color: var(--text-secondary); flex-shrink: 0; }
+  .info-value { font-size: 14px; color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+
+  /* ===== Link Items ===== */
+  .link-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+    transition: all .2s; gap: 12px; text-decoration: none; color: var(--text);
+  }
+  .link-item:last-child { border-bottom: none; }
+  .link-item:hover { color: var(--primary); }
+  .link-item .li-icon { font-size: 20px; flex-shrink: 0; }
+  .link-item .li-text { flex: 1; font-size: 14px; font-weight: 600; }
+  .link-item .li-arrow { color: var(--text-muted); font-size: 14px; }
+
+  /* ===== Feedback note ===== */
+  .feedback-note {
+    font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.7;
+  }
+
+  /* ===== ICP Footer ===== */
+  .icp-footer {
+    text-align: center; padding: 16px 0 8px; font-size: 12px; color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .icp-footer a { color: var(--text-secondary); text-decoration: none; }
+  .icp-footer a:hover { color: var(--primary); text-decoration: underline; }
+
+  /* ===== Bottom Nav (common.js injects canonical styles; this ensures layout) ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-height); background: var(--card-bg);
+    border-top: 1px solid var(--border); display: flex;
+    justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; cursor: pointer; text-decoration: none;
+    color: var(--text-muted); transition: all 0.2s; font-size: 11px;
+    font-weight: 500; border: none; background: none; min-width: 56px;
+  }
+  .bottom-nav .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .bottom-nav .nav-item.active { color: var(--primary); font-weight: 700; }
+
+  @media (max-width: 420px) {
+    .card { padding: 18px 14px; }
+  }
+</style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js?v=20260726b"></script>
+
+  <div class="container">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <a class="nav-back" href="/xuewaiyu/profile.html">&larr; 返回</a>
+      <span class="nav-title">关于我们</span>
+    </nav>
+
+    <!-- App Info Hero -->
+    <div class="card">
+      <div class="about-hero">
+        <div class="about-logo">言</div>
+        <div class="about-appname">言道学学外语</div>
+        <div class="about-version">版本 <span id="appVersion">1.0.0</span></div>
+        <div class="about-slogan">AI 原生全层级语言学习平台</div>
+      </div>
+    </div>
+
+    <!-- 主体信息 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">&#127970;</span>
+        <span>主体信息</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">APP全称</span>
+        <span class="info-value">言道学学外语</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">开发主体</span>
+        <span class="info-value">东莞言道科技有限公司</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">ICP备案号</span>
+        <span class="info-value">粤ICP备2026071165号-1A</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">版本号</span>
+        <span class="info-value" id="appVersionRow">1.0.0</span>
+      </div>
+    </div>
+
+    <!-- 协议与合规 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">&#128196;</span>
+        <span>协议与合规</span>
+      </div>
+      <a class="link-item" href="/terms.html">
+        <span class="li-icon">&#128203;</span>
+        <span class="li-text">《用户服务协议》</span>
+        <span class="li-arrow">&rsaquo;</span>
+      </a>
+      <a class="link-item" href="/xuewaiyu/privacy.html">
+        <span class="li-icon">&#128274;</span>
+        <span class="li-text">《隐私政策》</span>
+        <span class="li-arrow">&rsaquo;</span>
+      </a>
+      <a class="link-item" href="/membership.html">
+        <span class="li-icon">&#128179;</span>
+        <span class="li-text">《会员服务与收费规则》</span>
+        <span class="li-arrow">&rsaquo;</span>
+      </a>
+    </div>
+
+    <!-- 客服与反馈 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">&#128172;</span>
+        <span>客服与反馈</span>
+      </div>
+      <a class="link-item" href="mailto:support@yandao.vip">
+        <span class="li-icon">&#9993;&#65039;</span>
+        <span class="li-text">联系客服 / 意见反馈</span>
+        <span class="li-arrow">&rsaquo;</span>
+      </a>
+      <div class="feedback-note">
+        如您在使用过程中遇到任何问题或有建议，欢迎通过邮件与我们联系（support@yandao.vip），我们将在1个工作日内回复。
+      </div>
+    </div>
+
+    <!-- ICP Footer -->
+    <div class="icp-footer">
+      <div>&copy; 2026 东莞言道科技有限公司</div>
+      <div><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026071165号-1A</a></div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    // 自动读取原生 App 版本号，回退到 1.0.0
+    var ver = '1.0.0';
+    try {
+      if (window.AilosNative && typeof window.AilosNative.getAppVersion === 'function') {
+        var v = window.AilosNative.getAppVersion();
+        if (v) ver = String(v);
+      }
+    } catch (e) {}
+    var el1 = document.getElementById('appVersion');
+    var el2 = document.getElementById('appVersionRow');
+    if (el1) el1.textContent = ver;
+    if (el2) el2.textContent = ver;
+  })();
+  </script>
+
+  <!-- Bottom Navigation Bar (populated by common.js) -->
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+</body>
+</html>

@@ -4,6 +4,9 @@
 // GET /api/dashboard
 // 返回：用户信息、学习统计、AI额度、签到状态、连续天数
 // ============================================================
+// Default avatar URL
+const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
+
 const prisma = require('../../config/database');
 
 const dashboardController = {
@@ -136,7 +139,7 @@ const dashboardController = {
           user: {
             id: user.id,
             nickname: user.nickname,
-            avatar: user.avatar,
+            avatar: user.avatar || DEFAULT_AVATAR,
             phone: user.phone,
             xp: user.xp || 0,
             level: userLevel,

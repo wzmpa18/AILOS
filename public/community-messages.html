@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="theme-color" content="#4F46E5">
-<title>AILOS - 消息中心</title>
+<title>言道学学外语 - 消息中心</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -329,6 +329,10 @@ function avatarColor(name) {
   return c[Math.abs(h) % c.length];
 }
 function avatarText(name) { return (name || '?').charAt(0).toUpperCase(); }
+function avatarImgMsg(avatarUrl, name) {
+  if (avatarUrl) return '<img src="' + avatarUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  return '<img src="/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+}
 
 // ===== Time format =====
 function formatTime(dt) {
@@ -372,7 +376,8 @@ function renderConvs(convs) {
     var preview = c.lastMsgPreview || '';
     var type = c.type === 'group' ? ' [群]' : '';
     html += '<div class="conv-item" onclick="openChat(\'' + c.id + '\',\'' + c.type + '\',\'' + c.targetId + '\')">';
-    html += '<div class="conv-avatar" style="background:' + avatarColor(name) + '">' + avatarText(name) + '</div>';
+    var av = c.avatar || c.targetAvatar || null;
+    html += '<div class="conv-avatar" style="background:' + avatarColor(name) + '">' + avatarImgMsg(av, name) + '</div>';
     html += '<div class="conv-info">';
     html += '<div class="conv-name">' + name + type + '</div>';
     html += '<div class="conv-preview">' + (preview || '') + '</div>';
@@ -441,7 +446,11 @@ function renderMessages(msgs, prepend) {
     var senderUid = m.senderUniqueId || m.senderUid || m.senderId || '';
     html += '<div class="chat-msg' + me + revoked + '" data-msg-id="' + m.id + '" oncontextmenu="onMsgContext(event,\'' + m.id + '\',' + m.isMe + ',' + m.isRevoked + ',\'' + m.createdAt + '\'); return false">';
     if (!m.isMe) {
-      html += '<div class="chat-msg-avatar" onclick="viewMsgSenderProfile(\'' + senderUid + '\')" style="width:32px;height:32px;border-radius:50%;background:' + avatarColor(senderName) + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;margin-right:8px;flex-shrink:0;">' + avatarText(senderName) + '</div>';
+      var senderAv = m.senderAvatar || null;
+      var avHtml = senderAv
+        ? '<img src="' + senderAv + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+        : '<img src="/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      html += '<div class="chat-msg-avatar" onclick="viewMsgSenderProfile(\'' + senderUid + '\')" style="width:32px;height:32px;border-radius:50%;background:' + avatarColor(senderName) + ';overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;margin-right:8px;flex-shrink:0;">' + avHtml + '</div>';
     }
     html += '<div class="chat-msg-bubble" onclick="onMsgClick(event,\'' + m.id + '\',' + m.isMe + ',' + m.isRevoked + ',\'' + m.createdAt + '\')">' + (revoked ? '' : displayContent) + '</div>';
     if (m.isRevoked) html += '<div class="chat-msg-status">' + (!m.isMe ? '' : '') + '</div>';

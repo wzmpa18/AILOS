@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // src/services/orgAuthService.js
 // Phase 4 P2: 机构端认证服务（零侵入 C 端 authService，纯增量）
 // ============================================================
@@ -191,7 +191,7 @@ class OrgAuthService {
       phone: user.phone,
       email: user.email,
       nickname: user.nickname,
-      avatar: user.avatar,
+      avatar: user.avatar || '/assets/images/default_avatar.png',
       membershipLevel: user.membershipLevel,
       isVerified: user.isVerified,
       createdAt: user.createdAt,
