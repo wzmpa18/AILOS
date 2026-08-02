@@ -45,15 +45,27 @@ router.get('/feed', async (req, res) => {
     }
 
     const total = await prisma.socialTimeline.count({ where });
-    const items = await prisma.socialTimeline.findMany({
+    // P0 FIX: Query more items than needed, then filter out violating content
+    const rawItems = await prisma.socialTimeline.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: limit,
+      take: limit * 2,  // Fetch 2x to compensate for filtered items
       include: {
         actor: { select: { id: true, nickname: true, avatar: true } }
       }
     });
+
+    // P0 FIX: Filter out content that fails contentFilter audit
+    const items = rawItems.filter(item => {
+      if (!item.content) return true;
+      const audit = contentFilter.auditAndFilter(item.content, {
+        userId: req.userId,
+        scene: 'feed_display',
+        endpoint: '/api/v1/social/timeline/feed',
+      });
+      return audit.passed;
+    }).slice(0, limit);  // Return exactly 'limit' items after filtering
 
     // Stage 9 S3 VETO: privacy filter - exclude allowDiscover=false users
     const actorIds = [...new Set(items.map(i => i.actor?.id).filter(Boolean))];

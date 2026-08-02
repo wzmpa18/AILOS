@@ -155,14 +155,46 @@ const userController = {
         where: { userId },
       });
 
+      // P0 FIX: Query UserLearningLanguage table for real target language
+      const learningLanguages = await prisma.userLearningLanguage.findMany({
+        where: { userId, status: 'active' },
+        orderBy: { priority: 'asc' },
+      });
+
+      function toFrontendCode(code) {
+        if (!code) return null;
+        const base = code.split('-')[0].toLowerCase();
+        const map = { 'zh-cn': 'zh', 'zh-tw': 'zh', 'zh-hk': 'zh', 'ja-jp': 'ja', 'ko-kr': 'ko', 'en-us': 'en', 'en-gb': 'en', 'fr-fr': 'fr', 'es-es': 'es', 'de-de': 'de' };
+        return map[code.toLowerCase()] || base;
+      }
+
+      let targetLanguage = 'en';
+      let assessedLevel = null;
+      if (learningLanguages && learningLanguages.length > 0) {
+        targetLanguage = toFrontendCode(learningLanguages[0].languageCode) || 'en';
+        assessedLevel = learningLanguages[0].level || null;
+      }
+
+      const LANG_NAMES = { ja: '日语', en: '英语', ko: '韩语', fr: '法语', es: '西班牙语', de: '德语', zh: '中文' };
+
       return res.json({
         success: true,
         data: {
           ...user,
           avatar: user.avatar || DEFAULT_AVATAR,
-          nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
-          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
-          interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
+          nativeLanguage: toFrontendCode(langPref?.nativeLanguage) || 'zh',
+          targetLanguage: targetLanguage,
+          targetLanguageName: LANG_NAMES[targetLanguage] || targetLanguage,
+          assessedLevel: assessedLevel,
+          interfaceLanguage: toFrontendCode(langPref?.interfaceLanguage) || 'zh',
+          explanationLanguage: toFrontendCode(langPref?.defaultExplanationLanguage) || 'zh',
+          userLearningLanguages: learningLanguages.map(l => ({
+            languageCode: l.languageCode,
+            language: toFrontendCode(l.languageCode) || l.languageCode,
+            level: l.level,
+            status: l.status,
+            priority: l.priority,
+          })),
         },
       });
     } catch (error) {
@@ -230,16 +262,43 @@ const userController = {
 
       for (const field of langFields) {
         if (req.body[field] !== undefined) {
-          if (field === 'defaultExplanationLanguage' && req.body['targetLanguage'] !== undefined) {
-          langUpdateData['defaultExplanationLanguage'] = req.body['targetLanguage'];
-        } else if (req.body[field] !== undefined) {
           langUpdateData[field] = req.body[field];
         }
-        }
+      }
+
+      // P0 FIX: targetLanguage writes to UserLearningLanguage table, not defaultExplanationLanguage
+      if (req.body['targetLanguage'] !== undefined) {
+        const targetLangCode = req.body['targetLanguage'];
+        const dbLangCode = { ja: 'ja-JP', en: 'en-US', ko: 'ko-KR', fr: 'fr-FR', es: 'es-ES', de: 'de-DE', zh: 'zh-CN' }[targetLangCode] || targetLangCode;
+
+        // Will be added to promises array below
+        // Stored for later execution
+        if (!global._targetLangUpsert) global._targetLangUpsert = {};
+        global._targetLangUpsert.userId = userId;
+        global._targetLangUpsert.dbLangCode = dbLangCode;
       }
 
       // 执行更新
       const promises = [];
+
+      // P0 FIX: Add targetLanguage upsert to promises
+      if (global._targetLangUpsert && global._targetLangUpsert.userId === userId) {
+        const upsertUserId = global._targetLangUpsert.userId;
+        const upsertLangCode = global._targetLangUpsert.dbLangCode;
+        promises.push(
+          prisma.userLearningLanguage.upsert({
+            where: { userId_languageCode: { userId: upsertUserId, languageCode: upsertLangCode } },
+            update: { status: 'active' },
+            create: { userId: upsertUserId, languageCode: upsertLangCode, status: 'active', priority: 1 },
+          }).then(async () => {
+            await prisma.userLearningLanguage.updateMany({
+              where: { userId: upsertUserId, NOT: { languageCode: upsertLangCode } },
+              data: { status: 'inactive' },
+            });
+          })
+        );
+        delete global._targetLangUpsert;
+      }
 
       if (Object.keys(userUpdateData).length > 0) {
         promises.push(
@@ -286,14 +345,33 @@ const userController = {
         where: { userId },
       });
 
+      // P0 FIX: Query UserLearningLanguage for real target language
+      const updatedLearningLangs = await prisma.userLearningLanguage.findMany({
+        where: { userId, status: 'active' },
+        orderBy: { priority: 'asc' },
+      });
+
+      function toFc(code) {
+        if (!code) return null;
+        const base = code.split('-')[0].toLowerCase();
+        const map = { 'zh-cn': 'zh', 'zh-tw': 'zh', 'zh-hk': 'zh', 'ja-jp': 'ja', 'ko-kr': 'ko', 'en-us': 'en', 'en-gb': 'en', 'fr-fr': 'fr', 'es-es': 'es', 'de-de': 'de' };
+        return map[code.toLowerCase()] || base;
+      }
+
+      let updatedTargetLang = 'en';
+      if (updatedLearningLangs && updatedLearningLangs.length > 0) {
+        updatedTargetLang = toFc(updatedLearningLangs[0].languageCode) || 'en';
+      }
+
       return res.json({
         success: true,
         data: {
           ...updatedUser,
           avatar: updatedUser.avatar || DEFAULT_AVATAR,
-          nativeLanguage: langPref?.nativeLanguage || 'zh-CN',
-          targetLanguage: langPref?.defaultExplanationLanguage || 'en',
-          interfaceLanguage: langPref?.interfaceLanguage || 'zh-CN',
+          nativeLanguage: toFc(langPref?.nativeLanguage) || 'zh',
+          targetLanguage: updatedTargetLang,
+          interfaceLanguage: toFc(langPref?.interfaceLanguage) || 'zh',
+          explanationLanguage: toFc(langPref?.defaultExplanationLanguage) || 'zh',
         },
       });
     } catch (error) {
