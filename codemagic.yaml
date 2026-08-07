@@ -98,9 +98,13 @@ workflows:
           echo "keystore.properties created"
           sed 's/Password=.*/Password=***/' /tmp/keystore.properties
 
-      - name: Config SDK Path
+      - name: Config SDK Path and Install Build Tools
         script: |-
           echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "=== Installing required SDK packages ==="
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools\|platforms" || true
+          yes | sdkmanager "build-tools;35.0.0" "platforms;android-34" 2>/dev/null || echo "SDK packages may already be installed"
 
       - name: Build Release APK
         script: |-
@@ -125,9 +129,9 @@ workflows:
           # Find apksigner - path varies across Codemagic build machines
           APKSIGNER=""
           for candidate in \
-            "$ANDROID_HOME/build-tools/34.0.0/apksigner" \
-            "$ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner" \
             "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" \
+            "$ANDROID_HOME/build-tools/34.0.0/apksigner" \
             "$ANDROID_HOME/build-tools/34.0.0-rc4/apksigner" \
             "$(find $ANDROID_HOME -name apksigner -type f 2>/dev/null | head -1)" \
             "$(find /usr/local -name apksigner -type f 2>/dev/null | head -1)"; do

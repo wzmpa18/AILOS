@@ -5,7 +5,7 @@ plugins {
 android {
     namespace 'ai.yandao.ailos'
     compileSdk 34
-    buildToolsVersion "34.0.0"
+    buildToolsVersion "35.0.0"
 
     // 修复AAPT2编译AndroidX库中.9.png资源失败的问题
     aaptOptions {
