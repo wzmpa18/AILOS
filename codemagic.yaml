@@ -107,6 +107,8 @@ workflows:
           echo "=== Building Release APK ==="
           echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
           echo "keystore file size: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
+          echo "gradlew exists: $(test -f ./gradlew && echo YES || echo NO)"
+          chmod +x gradlew
           ./gradlew clean assembleRelease --stacktrace
 
       - name: Verify Signature
