@@ -33,6 +33,9 @@ android {
                 keyPassword keystoreProperties['keyPassword']
                 storeType keystoreProperties['storeType'] ?: "pkcs12"
             }
+            // V2签名方案（AGP 8.x使用enableV1Signing/enableV2Signing）
+            enableV1Signing false
+            enableV2Signing true
         }
     }
 
@@ -42,10 +45,6 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
-
-            // V2 签名
-            v1SigningEnabled false
-            v2SigningEnabled true
 
             buildConfigField "boolean", "DEBUG_MODE", "false"
         }
