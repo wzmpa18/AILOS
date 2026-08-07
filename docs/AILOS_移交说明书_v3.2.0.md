@@ -261,7 +261,7 @@ NEWS_CRAWL_JOB_DISABLED=0
 | 项 | 值 |
 |----|-----|
 | Git 标签 | v3.2.0-production |
-| Git 哈希 | edb1537 |
+| Git 哈希 | 63f16a4 |
 | 构建平台 | Codemagic (mac_mini_m2) |
 | 构建配置文件 | `codemagic.yaml` |
 | 壳工程路径 | `android-shell/` |
@@ -302,7 +302,7 @@ NEWS_CRAWL_JOB_DISABLED=0
 | 维度 | 值 | 说明 |
 |------|-----|------|
 | Git 标签 | v3.2.0-production | 代码基线（唯一构建源） |
-| Git 哈希 | edb1537 | 提交指纹 |
+| Git 哈希 | 63f16a4 | 提交指纹 |
 | 线上 H5 版本 | v3.2.0 | https://yandao.vip/xuewaiyu/ |
 | APK versionName | 3.2.0 | 应用显示版本 |
 | APK versionCode | 320 | 构建版本号 |

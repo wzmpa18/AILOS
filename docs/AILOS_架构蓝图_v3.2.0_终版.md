@@ -943,7 +943,7 @@ AILOS 移动端采用 **WebView 容器架构**，APP 仅作为 H5 的原生外�
 ## 5.5 云端构建流水线
 
 ```
-Git Tag v3.2.0-production (edb1537)
+Git Tag v3.2.0-production (63f16a4)
    │
    ▼
 Codemagic 拉取代码 → 哈希校验
@@ -974,7 +974,7 @@ Hash Calculation (MD5 + SHA256) + APK Rename
 | 维度 | 值 | 对应关系 |
 |------|-----|---------|
 | Git 标签 | v3.2.0-production | 代码基线 |
-| Git 哈希 | edb1537 | 提交指纹 |
+| Git 哈希 | 63f16a4 | 提交指纹 |
 | H5 版本 | v3.2.0 | 线上版本 |
 | APK versionName | 3.2.0 | 应用版本 |
 | APK versionCode | 320 | 构建版本号 |
