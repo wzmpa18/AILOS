@@ -214,7 +214,18 @@ jobs:
         run: |
           chmod +x gradlew
           echo "No signing secrets available, building debug APK as fallback"
-          ./gradlew clean assembleDebug --stacktrace --info
+          set -o pipefail
+          ./gradlew clean assembleDebug --stacktrace 2>&1 | tee /tmp/gradle.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo ""
+            echo "========================================"
+            echo "=== BUILD FAILED (exit code: $EXIT_CODE) ==="
+            echo "=== Error summary (last 150 lines) ==="
+            echo "========================================"
+            tail -150 /tmp/gradle.log
+          fi
+          exit $EXIT_CODE
 
       - name: Build Debug APK
         if: github.ref == 'refs/heads/dev'
