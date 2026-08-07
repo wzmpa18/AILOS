@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>反馈管理 · 言道</title>
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<style>
+  :root { --primary:#4F46E5; --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --bg:#f7f8fa; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); padding:16px 14px 90px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:20px; margin:8px 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .gate { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .gate input { width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:8px; font-size:15px; margin:10px 0; }
+  .gate button { width:100%; padding:11px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; }
+  .list { display:flex; flex-direction:column; gap:12px; }
+  .item { background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .item .meta { font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .item .type { background:#eef2ff; color:var(--primary); padding:2px 8px; border-radius:6px; font-weight:600; }
+  .item .desc { font-size:14px; line-height:1.5; white-space:pre-wrap; word-break:break-all; }
+  .item .contact { font-size:12px; color:var(--muted); margin-top:6px; }
+  .empty { text-align:center; color:var(--muted); padding:30px 0; }
+  .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+  .toolbar button { padding:8px 14px; border:1px solid var(--border); background:#fff; border-radius:8px; font-size:13px; }
+  .err { color:#dc2626; font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>用户反馈管理</h1>
+  <div class="sub">查看所有用户提交的反馈（按时间倒序）</div>
+
+  <div class="gate" id="gate">
+    <div>请输入管理员密码以查看反馈列表</div>
+    <input type="password" id="adminPwd" placeholder="管理员密码" autocomplete="off" />
+    <button onclick="unlock()">查看反馈</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <div class="toolbar">
+      <button onclick="loadList()">刷新</button>
+      <span class="sub" id="count" style="margin:0;"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+
+<script>
+  // 管理员密码前端校验（后端接口仍需 JWT 鉴权，此处仅做基础查看门槛）
+  // 说明：后端 GET /api/feedback/list 要求登录态 JWT。管理页在有登录 token 时直接拉取；
+  // 若未登录，则提示先用管理员账号登录。密码仅作为本地查看门槛，避免误开放。
+  var ADMIN_PWD = 'yd-admin-2026';
+
+  function unlock() {
+    var pwd = document.getElementById('adminPwd').value;
+    var err = document.getElementById('gateErr');
+    if (pwd !== ADMIN_PWD) {
+      err.textContent = '密码错误';
+      return;
+    }
+    err.textContent = '';
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('panel').style.display = 'block';
+    loadList();
+  }
+
+  function loadList() {
+    var listEl = document.getElementById('list');
+    var countEl = document.getElementById('count');
+    listEl.innerHTML = '<div class="empty">加载中…</div>';
+
+    if (!window.AILOS || !AILOS.authFetch) {
+      listEl.innerHTML = '<div class="empty">页面加载异常，请刷新重试</div>';
+      return;
+    }
+    if (!AILOS.getToken || !AILOS.getToken()) {
+      listEl.innerHTML = '<div class="empty">请先以管理员账号登录后再查看</div>';
+      return;
+    }
+
+    AILOS.authFetch('/api/feedback/list?limit=200')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.success || !Array.isArray(data.items)) {
+          listEl.innerHTML = '<div class="empty">暂无反馈数据</div>';
+          return;
+        }
+        var items = data.items;
+        countEl.textContent = '共 ' + items.length + ' 条';
+        if (items.length === 0) {
+          listEl.innerHTML = '<div class="empty">暂无反馈数据</div>';
+          return;
+        }
+        listEl.innerHTML = items.map(function (it) {
+          var d = it.createdAt ? new Date(it.createdAt).toLocaleString('zh-CN') : '—';
+          return '<div class="item">' +
+            '<div class="meta"><span class="type">' + escapeHtml(it.typeLabel || it.type || '其他') + '</span>' +
+            '<span>工单 ' + escapeHtml(it.ticketId || '—') + '</span>' +
+            '<span>' + d + '</span>' +
+            (it.contact ? '<span>联系方式 ' + escapeHtml(it.contact) + '</span>' : '') +
+            '</div>' +
+            '<div class="desc">' + escapeHtml(it.description || '') + '</div>' +
+            (it.page ? '<div class="contact">来源页：' + escapeHtml(it.page) + '</div>' : '') +
+            '</div>';
+        }).join('');
+      })
+      .catch(function (e) {
+        listEl.innerHTML = '<div class="empty">加载失败：' + escapeHtml(String(e.message || e)) + '</div>';
+      });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+</script>
+</body>
+</html>

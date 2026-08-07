@@ -2,8 +2,14 @@
 // src/services/reportsService.js
 // 学习报表 + XP 查询服务 — Module 02 Step 5
 // ============================================================
-const prisma = require('../config/database');
 class ReportsService {
+  // 惰性获取 Prisma：避免模块顶层加载时数据库未就绪导致 require 链崩溃
+  _prisma() {
+    if (!this._prismaInstance) {
+      this._prismaInstance = require('../config/database');
+    }
+    return this._prismaInstance;
+  }
   /**
    * 学习摘要 — 今日/本周学习数据
    */
@@ -14,32 +20,32 @@ class ReportsService {
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
     // 今日复习数
-    const reviewsToday = await prisma.reviewQueue.count({
+    const reviewsToday = await this._prisma().reviewQueue.count({
       where: { userId, lastReview: { gte: todayStart } },
     });
 
     // 本周复习数
-    const reviewsThisWeek = await prisma.reviewQueue.count({
+    const reviewsThisWeek = await this._prisma().reviewQueue.count({
       where: { userId, lastReview: { gte: weekStart } },
     });
 
     // 今日 XP
-    const xpToday = await prisma.rewardLedger.aggregate({
+    const xpToday = await this._prisma().rewardLedger.aggregate({
       where: { userId, createdAt: { gte: todayStart } },
       _sum: { amount: true },
     });
 
     // 本周 XP
-    const xpThisWeek = await prisma.rewardLedger.aggregate({
+    const xpThisWeek = await this._prisma().rewardLedger.aggregate({
       where: { userId, createdAt: { gte: weekStart } },
       _sum: { amount: true },
     });
 
     // 总复习项
-    const totalItems = await prisma.reviewQueue.count({ where: { userId } });
+    const totalItems = await this._prisma().reviewQueue.count({ where: { userId } });
 
     // 待复习项
-    const dueItems = await prisma.reviewQueue.count({
+    const dueItems = await this._prisma().reviewQueue.count({
       where: { userId, dueDate: { lte: now } },
     });
 
@@ -48,7 +54,7 @@ class ReportsService {
     const streak = 0;
 
     // 最近学习事件数
-    const recentEvents = await prisma.learningEvent.count({
+    const recentEvents = await this._prisma().learningEvent.count({
       where: { userId, createdAt: { gte: weekStart } },
     });
 
@@ -78,13 +84,13 @@ class ReportsService {
    */
   async getXpHistory(userId, page = 1, pageSize = 20) {
     const [items, total] = await Promise.all([
-      prisma.rewardLedger.findMany({
+      this._prisma().rewardLedger.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.rewardLedger.count({ where: { userId } }),
+      this._prisma().rewardLedger.count({ where: { userId } }),
     ]);
 
     return {
@@ -97,4 +103,4 @@ class ReportsService {
   }
 }
 
-module.exports = new ReportsService();
+module.exports = ReportsService;

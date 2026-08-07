@@ -110,6 +110,17 @@ class DailyPlanService {
         progress: Math.round((completedCount / all.length) * 100),
         content: {
           day: next.dayNumber,
+          title: next.contentSnapshot?.title || ('第' + next.dayNumber + '天'),
+          desc: next.contentSnapshot?.phase || '',
+          phase: next.contentSnapshot?.phase || '',
+          focusArea: next.focusArea,
+          scene: next.scene,
+          duration: next.duration || 30,
+          dailyMinutes: next.duration || 30,
+          dayNumber: next.dayNumber,
+          tasks: next.tasks,
+          wordCount: next.tasks ? next.tasks.filter(function(t){return t.type==='vocabulary'}).reduce(function(s,t){return s+(t.count||0)},0) : 0,
+          day: next.dayNumber,
           title: next.contentSnapshot?.title || `第${next.dayNumber}天`,
           phase: next.contentSnapshot?.phase || '',
           focusArea: next.focusArea,
@@ -145,7 +156,19 @@ class DailyPlanService {
         };
       }
 
-      const updated = await prisma.dailyLearningPlan.update({
+      const updated = // P3 任务4.3: 同步打卡记录和进度
+      try {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        await prisma.checkin.upsert({
+          where: { userId_checkinDate: { userId, checkinDate: today } },
+          update: { xpAwarded: score },
+          create: { userId, checkinDate: today, streak: 1, xpAwarded: score },
+        });
+        // 更新用户XP
+        await prisma.user.update({ where: { id: userId }, data: { xp: { increment: score } } });
+      } catch(e) { logger.warn('Checkin sync failed:', e.message); }
+      await prisma.dailyLearningPlan.update({
         where: { userId_dayNumber: { userId, dayNumber: Number(dayNumber) } },
         data: { status: 'completed', score: Math.round(score), completedAt: new Date() },
       });

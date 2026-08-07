@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<title>翻译 - 言道学学外语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF;
+    --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #1E293B; --text-secondary: #64748B;
+    --text-muted: #94A3B8; --border: #E2E8F0; --radius: 16px; --radius-sm: 10px;
+    --success: #10B981; --error: #EF4444; --warn: #F59E0B;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+  .header { background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; padding: 22px 20px 28px; border-radius: 0 0 24px 24px; }
+  .header h1 { font-size: 23px; font-weight: 700; }
+  .header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .container { padding: 16px; }
+
+  /* 三大入口 Tab（宪法 三-2：入口永久可见） */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 11px 4px; text-align: center; background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; transition: .18s; position: relative; }
+  .tab .ti { display: block; font-size: 19px; margin-bottom: 3px; }
+  .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .panel { display: none; }
+  .panel.show { display: block; }
+
+  .upload-area { background: var(--card-bg); border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
+  .upload-area:hover { border-color: var(--primary); background: var(--primary-light); }
+  .upload-area .icon { font-size: 44px; margin-bottom: 10px; }
+  .upload-area .text { font-size: 15px; color: var(--text-secondary); }
+  .upload-area .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .cap-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .cap-btn { flex: 1; padding: 13px; border: 1px solid var(--border); background: var(--card-bg);
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; color: var(--text); }
+  .cap-btn.main { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .preview-container { display: none; margin-bottom: 16px; }
+  .preview-container.show { display: block; }
+  .preview-image { width: 100%; border-radius: var(--radius); max-height: 280px; object-fit: contain; background: #f0f0f0; }
+  .translate-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+  .translate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .lang-note { font-size: 12px; color: var(--text-secondary); background: var(--primary-light);
+    padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; }
+  .lang-note a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  .result-card { display: none; background: var(--card-bg); border-radius: var(--radius); padding: 18px; margin-top: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .result-card.show { display: block; }
+  .rc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+  .result-card .original { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; padding: 10px; background: #f8f8f8; border-radius: 8px; white-space: pre-wrap; }
+  .result-card .translated { font-size: 16px; font-weight: 600; padding: 10px; background: var(--primary-light); border-radius: 8px; white-space: pre-wrap; }
+  .word-list { margin-top: 16px; }
+  .word-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f3f5; }
+  .word-item:last-child { border-bottom: none; }
+  .wi-main { flex: 1; min-width: 0; }
+  .wi-w { font-size: 15px; font-weight: 600; }
+  .wi-m { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .wi-btn { padding: 6px 12px; border: 1px solid var(--primary); color: var(--primary); background: #fff;
+    border-radius: 15px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .wi-btn.done { background: var(--success); color: #fff; border-color: var(--success); }
+  .wi-btn:disabled { opacity: .7; cursor: default; }
+
+  .quota-bar { font-size: 12px; color: var(--text-secondary); margin-top: 12px; text-align: center; }
+
+  /* 试用/付费引导（宪法 三-2） */
+  .trial-box { background: var(--card-bg); border-radius: var(--radius); padding: 22px 18px; text-align: center; }
+  .trial-box .ti2 { font-size: 40px; margin-bottom: 10px; }
+  .trial-box h3 { font-size: 17px; margin-bottom: 8px; }
+  .trial-box p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 14px; }
+  .trial-badge { display: inline-block; background: #FEF3C7; color: #92400E; font-size: 12px;
+    padding: 5px 12px; border-radius: 14px; margin-bottom: 12px; font-weight: 600; }
+  .trial-actions { display: flex; gap: 10px; }
+  .trial-actions button { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 600; cursor: pointer; border: none; }
+  .bp2 { background: var(--primary); color: #fff; }
+  .bs2 { background: #F1F5F9; color: var(--text-secondary); }
+
+  .empty-state { text-align: center; padding: 30px 16px; color: var(--text-secondary); font-size: 14px; }
+  .empty-state button { margin-top: 12px; padding: 9px 22px; border: none; border-radius: 9px;
+    background: var(--primary); color: #fff; font-size: 14px; cursor: pointer; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; padding: 8px 0 env(safe-area-inset-bottom); z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 0; cursor: pointer; color: var(--text-muted); font-size: 11px; text-decoration: none; }
+  .nav-item.active { color: var(--primary); }
+  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .toast { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); background: rgba(0,0,0,.82);
+    color: #fff; padding: 11px 20px; border-radius: 22px; font-size: 14px; z-index: 200; opacity: 0;
+    transition: opacity .25s; pointer-events: none; max-width: 86%; text-align: center; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>翻译</h1>
+  <p id="headerSub">拍照翻译 · 实时扫描 · 对话翻译</p>
+</div>
+
+<div class="container">
+  <!-- 三大入口永久可见 -->
+  <div class="tabs">
+    <div class="tab active" data-tab="photo" onclick="switchTab('photo')"><span class="ti">📷</span>拍照翻译</div>
+    <div class="tab" data-tab="scan" onclick="switchTab('scan')"><span class="ti">📡</span>实时扫描</div>
+    <div class="tab" data-tab="talk" onclick="switchTab('talk')"><span class="ti">💬</span>对话翻译</div>
+  </div>
+
+  <div class="lang-note">
+    当前翻译目标语言：<b id="langLabel">--</b>
+    ｜ 如需修改请前往 <a href="/xuewaiyu/profile.html">个人中心 › 语言设置</a>
+  </div>
+
+  <!-- ============ 拍照翻译 ============ -->
+  <div class="panel show" id="panel-photo">
+    <div class="cap-row">
+      <button class="cap-btn main" onclick="pick('camera')">📸 直接拍照</button>
+      <button class="cap-btn" onclick="pick('album')">🖼️ 从相册选择</button>
+    </div>
+
+    <div class="upload-area" id="uploadArea" onclick="pick('album')">
+      <div class="icon">📷</div>
+      <div class="text">点击拍照或选择图片</div>
+      <div class="hint">支持 JPG、PNG，单张不超过 5MB</div>
+    </div>
+
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
+    <input type="file" id="albumInput" accept="image/*" style="display:none" onchange="handleFile(this)">
+
+    <div class="preview-container" id="previewContainer">
+      <img class="preview-image" id="previewImage" src="" alt="预览">
+      <button class="translate-btn" id="translateBtn" onclick="doTranslate()">开始翻译</button>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="rc-label">识别原文</div>
+      <div class="original" id="originalText"></div>
+      <div class="rc-label">译文</div>
+      <div class="translated" id="translatedText"></div>
+      <div class="word-list" id="wordList"></div>
+      <div class="quota-bar" id="quotaBar"></div>
+    </div>
+  </div>
+
+  <!-- ============ 实时扫描 ============ -->
+  <div class="panel" id="panel-scan">
+    <div class="trial-box">
+      <div class="ti2">📡</div>
+      <div class="trial-badge" id="scanBadge">终身 5 分钟免费体验</div>
+      <h3>实时扫描翻译</h3>
+      <p>
+        打开摄像头对准文字，实时叠加显示译文，适合看菜单、路牌、说明书。<br>
+        按实际使用时长计费，未开通用户可享<b>终身 5 分钟</b>免费体验。
+      </p>
+      <div class="trial-actions">
+        <button class="bp2" onclick="startScan()">开始体验</button>
+        <button class="bs2" onclick="location.href='/xuewaiyu/membership.html'">查看套餐</button>
+      </div>
+      <div class="quota-bar" id="scanQuota">正在获取剩余体验时长…</div>
+    </div>
+  </div>
+
+  <!-- ============ 对话翻译 ============ -->
+  <div class="panel" id="panel-talk">
+    <div class="trial-box">
+      <div class="ti2">💬</div>
+      <div class="trial-badge" id="talkBadge">终身 5 分钟免费体验</div>
+      <h3>双向对话翻译</h3>
+      <p>
+        你说中文自动翻成目标语言，对方说目标语言自动翻成中文，适合面对面交流。<br>
+        按实际使用时长计费，未开通用户可享<b>终身 5 分钟</b>免费体验。
+      </p>
+      <div class="trial-actions">
+        <button class="bp2" onclick="startTalk()">开始体验</button>
+        <button class="bs2" onclick="location.href='/xuewaiyu/membership.html'">查看套餐</button>
+      </div>
+      <div class="quota-bar" id="talkQuota">正在获取剩余体验时长…</div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav"></nav>
+<div class="toast" id="toast"></div>
+
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<script>
+var selectedFile = null;
+var lastResult = null;
+
+var LANG_NAME = { ja:'日语', en:'英语', ko:'韩语', fr:'法语', de:'德语', es:'西班牙语', ru:'俄语', zh:'中文' };
+
+function showToast(m){
+  var e=document.getElementById('toast');
+  e.textContent=m; e.classList.add('show');
+  clearTimeout(window.__t); window.__t=setTimeout(function(){e.classList.remove('show');},2600);
+}
+function token(){ return (window.AILOS&&AILOS.getToken)?AILOS.getToken():null; }
+
+// 目标语言取自个人中心（宪法 三-3：禁止硬编码默认语种）
+function studyLang(){
+  try { if(window.AILOS&&AILOS.getStudyLang) return AILOS.getStudyLang()||'ja'; } catch(e){}
+  return 'ja';
+}
+function renderLang(){
+  var l=studyLang();
+  document.getElementById('langLabel').textContent=LANG_NAME[l]||l;
+}
+renderLang();
+
+// 宪法 1.1：界面标签多语言（仅界面文案，翻译结果来自用户输入不覆盖）
+var TRANS_I18N = {
+  zh: { title:'翻译', sub:'拍照翻译 · 实时扫描 · 对话翻译', photo:'拍照翻译', scan:'实时扫描', talk:'对话翻译', camera:'📸 直接拍照', album:'🖼️ 从相册选择', upload:'点击拍照或选择图片', uphint:'支持 JPG、PNG，单张不超过 5MB', start:'开始翻译', ori:'识别原文', trans:'译文', words:'生词（点击收藏到错题本）', scanTitle:'实时扫描翻译', scanDesc:'打开摄像头对准文字，实时叠加显示译文，适合看菜单、路牌、说明书。', scanTrial:'按实际使用时长计费，未开通用户可享', talkTitle:'双向对话翻译', talkDesc:'你说中文自动翻成目标语言，对方说目标语言自动翻成中文，适合面对面交流。', badge:'终身 5 分钟免费体验', tryScan:'开始体验', plans:'查看套餐', loginTip:'请先登录后使用翻译功能', loginTrial:'登录后可查看剩余免费体验时长' },
+  ja: { title:'翻訳', sub:'写真翻訳 · リアルタイムスキャン · 対話翻訳', photo:'写真翻訳', scan:'スキャン', talk:'対話翻訳', camera:'📸 写真を撮る', album:'🖼️ アルバムから', upload:'タップして写真を選択', uphint:'JPG・PNG対応、1枚5MBまで', start:'翻訳開始', ori:'原文', trans:'訳文', words:'単語（タップで間違いノートへ）', scanTitle:'リアルタイムスキャン翻訳', scanDesc:'カメラを文字に向けると訳が重ねて表示されます。メニューや看板に最適。', scanTrial:'利用時間で課金。未加入でも', talkTitle:'双方向対話翻訳', talkDesc:'中国語を目標言語に、目標言語を中国語に自動翻訳。対面会話に最適。', badge:'生涯5分無料体験', tryScan:'体験開始', plans:'プランを見る', loginTip:'翻訳にはログインが必要です', loginTrial:'ログインで無料体験残り時間を確認' },
+  en: { title:'Translate', sub:'Photo · Live Scan · Conversation', photo:'Photo', scan:'Scan', talk:'Talk', camera:'📸 Camera', album:'🖼️ Album', upload:'Tap to take or pick a photo', uphint:'JPG, PNG, up to 5MB', start:'Start Translate', ori:'Original', trans:'Translation', words:'Words (tap to save to notebook)', scanTitle:'Live Scan Translate', scanDesc:'Point camera at text, translation overlays in real time. Great for menus, signs, manuals.', scanTrial:'Billed by usage time. Free users get', talkTitle:'Two-way Conversation', talkDesc:'Your Chinese auto-translates to target; theirs to Chinese. Great face-to-face.', badge:'Lifetime 5-min free trial', tryScan:'Start Trial', plans:'View Plans', loginTip:'Please log in to use translation', loginTrial:'Log in to view free trial time' },
+  ko: { title:'번역', sub:'사진 · 실시간 스캔 · 대화 번역', photo:'사진', scan:'스캔', talk:'대화', camera:'📸 카메라', album:'🖼️ 앨범', upload:'탭하여 사진 촬영/선택', uphint:'JPG, PNG, 5MB 이하', start:'번역 시작', ori:'원문', trans:'번역', words:'단어(탭하여 오답노트에 저장)', scanTitle:'실시간 스캔 번역', scanDesc:'카메라를 텍스트에 향하면 번역이 실시간으로 표시됩니다. 메뉴·간판에 적합.', scanTrial:'사용 시간 과금. 미가입도', talkTitle:'양방향 대화 번역', talkDesc:'중국어는 목표어로, 상대방 것은 중국어로 자동 번역. 대면 대화에 적합.', badge:'평생 5분 무료 체험', tryScan:'체험 시작', plans:'요금제 보기', loginTip:'번역을 사용하려면 로그인하세요', loginTrial:'로그인하여 무료 체험 시간 확인' },
+};
+function transUILang(){ try{ if(window.AILOS&&AILOS.getUILang){var l=AILOS.getUILang(); if(l&&TRANS_I18N[l])return l;} }catch(e){} return 'zh'; }
+function applyTranslateI18n(){
+  var T = TRANS_I18N[transUILang()] || TRANS_I18N.zh;
+  var h1=document.querySelector('.header h1'); if(h1) h1.textContent=T.title;
+  var sub=document.getElementById('headerSub'); if(sub) sub.textContent=T.sub;
+  var tabs=document.querySelectorAll('.tab');
+  if(tabs[0]) tabs[0].innerHTML='<span class="ti">📷</span>'+T.photo;
+  if(tabs[1]) tabs[1].innerHTML='<span class="ti">📡</span>'+T.scan;
+  if(tabs[2]) tabs[2].innerHTML='<span class="ti">💬</span>'+T.talk;
+  var capBtns=document.querySelectorAll('.cap-row .cap-btn');
+  if(capBtns[0]) capBtns[0].textContent=T.camera;
+  if(capBtns[1]) capBtns[1].textContent=T.album;
+  var ua=document.querySelector('#uploadArea .text'); if(ua) ua.textContent=T.upload;
+  var uh=document.querySelector('#uploadArea .hint'); if(uh) uh.textContent=T.uphint;
+  var tb=document.getElementById('translateBtn'); if(tb) tb.textContent=T.start;
+  var rcLabels=document.querySelectorAll('.rc-label');
+  if(rcLabels[0]) rcLabels[0].textContent=T.ori;
+  if(rcLabels[1]) rcLabels[1].textContent=T.trans;
+  var sb=document.getElementById('scanBadge'); if(sb) sb.textContent=T.badge;
+  var tb2=document.querySelector('#panel-scan .trial-box h3'); if(tb2) tb2.textContent=T.scanTitle;
+  var tp=document.querySelector('#panel-scan .trial-box p'); if(tp) tp.innerHTML=T.scanDesc+'<br>'+T.scanTrial+'<b>'+T.badge+'</b>';
+  var ta1=document.querySelector('#panel-scan .bp2'); if(ta1) ta1.textContent=T.tryScan;
+  var ta2=document.querySelector('#panel-scan .bs2'); if(ta2) ta2.textContent=T.plans;
+  var kb=document.getElementById('talkBadge'); if(kb) kb.textContent=T.badge;
+  var tk2=document.querySelector('#panel-talk .trial-box h3'); if(tk2) tk2.textContent=T.talkTitle;
+  var tkp=document.querySelector('#panel-talk .trial-box p'); if(tkp) tkp.innerHTML=T.talkDesc+'<br>'+T.scanTrial+'<b>'+T.badge+'</b>';
+  var tk3=document.querySelector('#panel-talk .bp2'); if(tk3) tk3.textContent=T.tryScan;
+  var tk4=document.querySelector('#panel-talk .bs2'); if(tk4) tk4.textContent=T.plans;
+}
+applyTranslateI18n();
+window.addEventListener('languageChanged', function(){ renderLang(); applyTranslateI18n(); });
+
+function switchTab(name){
+  ['photo','scan','talk'].forEach(function(n){
+    document.getElementById('panel-'+n).classList.toggle('show', n===name);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+    t.classList.toggle('active', t.dataset.tab===name);
+  });
+  if(name==='scan'||name==='talk') loadTrial();
+}
+
+function pick(src){
+  document.getElementById(src==='camera'?'cameraInput':'albumInput').click();
+}
+
+function handleFile(input){
+  if(!(input.files&&input.files[0])) return;
+  var f=input.files[0];
+  if(f.size>5*1024*1024){ showToast('图片超过 5MB，请换一张'); input.value=''; return; }
+  selectedFile=f;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('previewImage').src=e.target.result;
+    document.getElementById('previewContainer').classList.add('show');
+    document.getElementById('uploadArea').style.display='none';
+    document.getElementById('resultCard').classList.remove('show');
+  };
+  reader.readAsDataURL(f);
+  input.value='';
+}
+
+function fileToBase64(file){
+  return new Promise(function(res,rej){
+    var r=new FileReader();
+    r.onload=function(){ res(r.result); };
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// 拍照翻译：对齐后端 POST /api/translate/photo { imageBase64, mimeType }
+async function doTranslate(){
+  if(!selectedFile) return;
+  // P3 修复：拍照翻译需要登录（消耗免费时长），但文本翻译对游客开放
+  if(!token()){ showToast('拍照翻译需要登录后使用'); return; }
+  var btn=document.getElementById('translateBtn');
+  btn.disabled=true; btn.textContent='识别翻译中…';
+  // 显示加载态提示
+  var origEl = document.getElementById('originalText');
+  var transEl = document.getElementById('translatedText');
+  origEl.textContent='⏳ 正在识别图片文字…';
+  transEl.textContent='';
+  document.getElementById('wordList').innerHTML='';
+  document.getElementById('quotaBar').textContent='';
+  document.getElementById('resultCard').classList.add('show');
+  try{
+    var dataUrl=await fileToBase64(selectedFile);
+    // 更新状态：开始翻译
+    origEl.textContent='✓ 文字已识别，正在翻译…';
+    var res=await fetch('/api/translate/photo',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+      body:JSON.stringify({ imageBase64:dataUrl, mimeType:selectedFile.type||'image/jpeg' })
+    });
+    var data={};
+    try{ data=await res.json(); }catch(e){}
+
+    if(res.status===401){ showToast('登录已过期，请重新登录'); return; }
+    if(!res.ok||!data.success){
+      throw new Error((data&&(data.message||data.error))||'识别失败，请换一张更清晰的图片');
+    }
+    lastResult=data.data||{};
+    renderResult(lastResult);
+  }catch(e){
+    origEl.textContent='❌ 识别失败';
+    transEl.textContent=e.message||'请稍后重试（建议：换更清晰的图片、确保文字清晰可见）';
+    document.getElementById('wordList').innerHTML='';
+    document.getElementById('quotaBar').textContent='';
+    document.getElementById('resultCard').classList.add('show');
+  }finally{
+    btn.disabled=false; btn.textContent='开始翻译';
+  }
+}
+
+function renderResult(d){
+  var origEl = document.getElementById('originalText');
+  var transEl = document.getElementById('translatedText');
+  origEl.textContent=d.originalText||'（未识别到文字）';
+  transEl.textContent=d.translation||'';
+
+  // 自动识别语言提示
+  if (d.detectedLanguage) {
+    var langLabel = d.detectedLanguage === 'ja' ? '日语' :
+                     d.detectedLanguage === 'en' ? '英语' :
+                     d.detectedLanguage === 'ko' ? '韩语' :
+                     d.detectedLanguage === 'fr' ? '法语' :
+                     d.detectedLanguage === 'de' ? '德语' :
+                     d.detectedLanguage === 'es' ? '西班牙语' : d.detectedLanguage;
+    origEl.title = '自动识别为: ' + langLabel;
+    // 在原文旁加轻量提示（仅首次）
+    if (!origEl.dataset.hinted) {
+      var hint = document.createElement('span');
+      hint.style.cssText = 'font-size:11px;color:#888;margin-left:8px;vertical-align:middle;';
+      hint.textContent = '(自动识别为 '+langLabel+')';
+      origEl.parentNode.insertBefore(hint, origEl.nextSibling);
+      origEl.dataset.hinted = '1';
+    }
+  }
+
+  // 翻译结果操作栏（朗读 + 复制）——只创建一次
+  var actionBar = document.getElementById('transActionBar');
+  if (!actionBar) {
+    actionBar = document.createElement('div');
+    actionBar.id = 'transActionBar';
+    actionBar.style.cssText = 'display:flex;gap:10px;margin-top:10px;align-items:center;';
+    transEl.parentNode.insertBefore(actionBar, transEl.nextSibling);
+  } else {
+    actionBar.innerHTML = '';
+  }
+
+  if (d.translation) {
+    // TTS 朗读按钮
+    var ttsBtn = document.createElement('button');
+    ttsBtn.className = 'tts-btn';
+    ttsBtn.innerHTML = '&#128266; 朗读译文';
+    ttsBtn.style.cssText = 'padding:6px 14px;border-radius:18px;border:1px solid #7c3aed;background:#f5f0ff;cursor:pointer;font-size:13px;';
+    ttsBtn.onclick = function() {
+      this.disabled = true;
+      this.innerHTML = '&#128266; 播放中…';
+      var self = this;
+      var studyLang = (typeof getStudyLang === 'function') ? getStudyLang() : 'ja';
+      window.playTTS(d.translation, studyLang, {
+        onStart: function() {},
+        onEnd: function() { self.disabled = false; self.innerHTML = '&#128266; 朗读译文'; },
+        onError: function() { self.disabled = false; self.innerHTML = '&#128266; 朗读译文'; }
+      });
+    };
+    actionBar.appendChild(ttsBtn);
+
+    // 复制按钮
+    var copyBtn = document.createElement('button');
+    copyBtn.innerHTML = '&#128203; 复制';
+    copyBtn.style.cssText = 'padding:6px 14px;border-radius:18px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:13px;';
+    copyBtn.onclick = function() {
+      navigator.clipboard.writeText(d.translation).then(function() {
+        copyBtn.innerHTML = '&#10004; 已复制';
+        setTimeout(function() { copyBtn.innerHTML = '&#128203; 复制'; }, 2000);
+      }).catch(function() {
+        // 降级方案
+        var ta = document.createElement('textarea'); ta.value = d.translation;
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        copyBtn.innerHTML = '&#10004; 已复制';
+        setTimeout(function() { copyBtn.innerHTML = '&#128203; 复制'; }, 2000);
+      });
+    };
+    actionBar.appendChild(copyBtn);
+  }
+
+  // 生词一键收藏（宪法 三-1）
+  var box=document.getElementById('wordList');
+  box.innerHTML='';
+  var words=d.words||[];
+  if(words.length){
+    var t=document.createElement('div');
+    t.className='rc-label'; t.textContent='生词（点击收藏到错题本）';
+    box.appendChild(t);
+    words.forEach(function(w,i){
+      var row=document.createElement('div'); row.className='word-item';
+      var main=document.createElement('div'); main.className='wi-main';
+      var a=document.createElement('div'); a.className='wi-w';
+      a.textContent=w.word+(w.reading?('（'+w.reading+'）'):'');
+      var b=document.createElement('div'); b.className='wi-m'; b.textContent=w.meaning||'';
+      main.appendChild(a); main.appendChild(b);
+      var btn=document.createElement('button'); btn.className='wi-btn'; btn.textContent='收藏';
+      btn.onclick=function(){ collectWord(w,btn); };
+      row.appendChild(main); row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+  var q=d.quota;
+  document.getElementById('quotaBar').textContent =
+    q ? ('今日免费额度 '+(q.used||0)+'/'+(q.dailyFreeLimit||0)+'，剩余 '+(q.remaining||0)+' 次') : '';
+  document.getElementById('resultCard').classList.add('show');
+}
+
+async function collectWord(w, btn){
+  if(!token()){ showToast('请先登录'); return; }
+  btn.disabled=true; btn.textContent='收藏中…';
+  try{
+    var res=await fetch('/api/translate/notebook',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+      body:JSON.stringify({ type:'word', word:w.word, reading:w.reading||'', meaning:w.meaning||'' })
+    });
+    var d={};
+    try{ d=await res.json(); }catch(e){}
+    if(!res.ok||!d.success) throw new Error((d&&(d.message||d.error))||'收藏失败');
+    btn.classList.add('done'); btn.textContent='已收藏';
+    showToast('已加入错题本');
+  }catch(e){
+    btn.disabled=false; btn.textContent='收藏';
+    showToast(e.message||'收藏失败，请稍后重试');
+  }
+}
+
+// 试用状态：GET /api/translate/trial/status
+async function loadTrial(){
+  var sq=document.getElementById('scanQuota');
+  var tq=document.getElementById('talkQuota');
+  if(!token()){
+    sq.textContent=tq.textContent='登录后可查看剩余免费体验时长';
+    return;
+  }
+  try{
+    var res=await fetch('/api/translate/trial/status',{headers:{'Authorization':'Bearer '+token()}});
+    if(!res.ok) throw new Error('接口异常');
+    var d=await res.json();
+    var s=d.data||d;
+    var remainSec = s.trialRemainingSec!=null ? s.trialRemainingSec
+                  : (s.remainingSec!=null ? s.remainingSec : null);
+    var balSec = s.balanceSec!=null ? s.balanceSec : 0;
+    var txt = remainSec!=null
+      ? ('免费体验剩余 '+Math.max(0,Math.round(remainSec/60*10)/10)+' 分钟'+(balSec>0?('，套餐余额 '+Math.round(balSec/60)+' 分钟'):''))
+      : '体验额度加载完成';
+    sq.textContent=tq.textContent=txt;
+  }catch(e){
+    sq.innerHTML=tq.innerHTML='体验时长加载失败 <button onclick="loadTrial()" style="margin-left:8px;padding:4px 12px;border:none;border-radius:8px;background:#4F46E5;color:#fff;font-size:12px;cursor:pointer">重试</button>';
+  }
+}
+
+function startScan(){
+  if(!token()){ showToast('请先登录后开始体验'); return; }
+  location.href='/xuewaiyu/scan-translate.html';
+}
+function startTalk(){
+  if(!token()){ showToast('请先登录后开始体验'); return; }
+  location.href='/xuewaiyu/conversation-translate.html';
+}
+
+loadTrial();
+</script>
+</body>
+</html>

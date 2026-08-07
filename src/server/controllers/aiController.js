@@ -16,7 +16,7 @@ const AI_REQUEST_LOG = [];
 // ============================================================
 async function chat(req, res) {
   try {
-    const { userInput, languageContext, conversationId } = req.body;
+    const { userInput, languageContext, conversationId, mode } = req.body;
 
     if (!req.user || !req.userId) {
       return res.status(401).json({ success: false, error: 'GUEST_BLOCKED', message: '请先登录' });
@@ -32,18 +32,34 @@ async function chat(req, res) {
     const targetLang = lang.targetLanguage;
     const userLevel = (languageContext && languageContext.userLevel) || 'beginner';
 
-    const systemPrompt = `你是一位专业的语言教师，名叫AILOS。你的母语是${nativeLang}，你要教用户学习${targetLang}。
-请严格遵守以下规则：
-1. 所有解释、说明、语法讲解必须使用${nativeLang}
-2. 例句使用${targetLang}
-3. 例句后面必须附上${nativeLang}翻译
-4. 根据用户水平(${userLevel})调整内容难度
-5. 回复格式为JSON：
+    // 模块五：AI 对话重构 —— 专业外教 + 固定 4 段结构 + 三模式区分 + 难度适配 + 纠错机制
+    const MODE_DESC = {
+      daily: '日常交流：围绕衣食住行、社交出行、职场沟通等生活实用场景展开对话，轻松幽默、实用有趣',
+      business: '商务职场：覆盖邮件、会议、谈判、汇报等专业场景，表达正式、专业严谨',
+      exam: '应试备考：围绕对应等级考点、语法专项、真题例句展开，目标提分通过考试，严谨专业',
+    };
+    const modeKey = (mode === 'business' || mode === 'exam') ? mode : 'daily';
+    const modeDesc = MODE_DESC[modeKey];
+    
+    // 趣味化规则（宪法模块十：全量学习内容趣味化改造）
+    const funRules = modeKey === 'exam'
+      ? '请在专业严谨的基础上，例句场景尽量贴近生活实际，不要完全脱离日常语境。'
+      : '请优先使用贴近生活、轻松幽默的例句和场景，可融入网络热梗、日常搞笑段子，让用户在学习中感到愉悦。禁止生硬机械的教材式表达。所有内容语法、用词必须100%准确。';
+    
+    const systemPrompt = `你是一位专业的${targetLang}外教，名叫AILOS，全程围绕语言学习展开，不输出与语言学习无关的闲聊内容。
+用户母语为${nativeLang}，正在学习${targetLang}，当前水平为${userLevel}（beginner入门 / elementary初级 / intermediate中级 / advanced高级）。
+学习模式：${modeDesc}。请严格按该模式调整场景与用词，难度匹配${userLevel}（入门不超纲、高级不简单，循序渐进不跳级）。
+${funRules}
+
+回复必须遵守固定结构，且严格以 JSON 格式返回（不要输出 JSON 以外的任何文字）：
 {
-  "response": "母语解释（${nativeLang}）",
-  "example": "目标语言例句（${targetLang}）",
-  "translation": "例句母语翻译（${nativeLang}）"
-}`;
+  "response": "用${nativeLang}对本次对话/知识点做母语讲解，并在末尾给出一个互动引导提问（用${targetLang}提问，引导用户开口/输入，形成学习闭环）",
+  "example": "一条地道的${targetLang}例句（与该模式/知识点相关，避免生硬机械）",
+  "translation": "上述例句的${nativeLang}翻译",
+  "knowledge": "1-2个核心词汇或语法点讲解（用${nativeLang}说明用法与注意事项；若为应试模式则对应考点）"
+}
+纠错机制：若用户输入存在语法或用词错误，在 response 中自然纠正并说明错误原因，给出标准正确表达，不要单独列纠错字段。
+每条回复都必须包含上述4个字段，不得缺失。`;
 
     const startTime = Date.now();
     const aiGateway = getAIGateway();
@@ -271,8 +287,9 @@ async function generateExercise(req, res) {
     const exType = type || 'vocabulary';
     const cnt = Math.min(count || 5, 10);
 
-    const systemPrompt = `你是一个语言学习出题引擎。生成${cnt}道${lang}的${exType}练习题，难度为${lvl}。返回JSON数组格式：
-[{"question": "题目", "options": ["A", "B", "C", "D"], "answer": "正确答案", "explanation": "解释"}]`;
+    const systemPrompt = `你是一个语言学习出题引擎。生成${cnt}道${lang}的${exType}练习题，难度为${lvl}。
+题目内容请优先使用贴近生活、轻松有趣的场景和例句，融入日常对话中的自然表达，避免生硬机械的教材式句子。所有语法、用词必须100%准确。
+返回JSON数组格式：[{"question": "题目", "options": ["A", "B", "C", "D"], "answer": "正确答案", "explanation": "解释"}]`;
 
     const aiGateway = getAIGateway();
     const result = await aiGateway.chatWithMessages(

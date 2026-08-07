@@ -1,0 +1,529 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>言道学学外语 社群动态</title>
+  <script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+  <style>
+    :root {
+      --primary: #4A90D9;
+      --primary-light: #EBF3FC;
+      --bg: #F5F7FA;
+      --card-bg: #FFFFFF;
+      --text: #2C3E50;
+      --text-secondary: #7F8C8D;
+      --text-muted: #95A5A6;
+      --border: #E8ECF1;
+      --danger: #E74C3C;
+      --success: #27AE60;
+      --nav-height: 64px;
+      --header-height: 56px;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: calc(var(--nav-height) + 20px);
+      padding-top: calc(var(--header-height) + 10px);
+      min-height: 100vh;
+    }
+    /* Header */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 999; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .header h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+    .header .post-btn {
+      padding: 8px 18px; background: var(--primary); color: #fff;
+      border: none; border-radius: 20px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .header .post-btn:active { opacity: 0.8; }
+    /* Create Post Card */
+    .create-card {
+      margin: 8px 16px; padding: 14px 16px; background: var(--card-bg);
+      border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
+    }
+    .create-card .avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .create-card .placeholder {
+      flex: 1; color: var(--text-muted); font-size: 14px;
+    }
+    /* Post Item */
+    .post-list { padding: 0 16px; }
+    .post-item {
+      margin-bottom: 10px; background: var(--card-bg); border-radius: var(--radius);
+      padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .post-header .p-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+      flex-shrink: 0;
+    }
+    .post-header .p-info { flex: 1; }
+    .post-header .p-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .post-header .p-time { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .post-body { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 12px; word-break: break-word; }
+    .post-images { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .post-images img {
+      width: calc(33.33% - 4px); height: 0; padding-bottom: calc(33.33% - 4px);
+      object-fit: cover; border-radius: 8px; background: var(--bg);
+      position: relative;
+    }
+    .post-actions { display: flex; gap: 24px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .post-actions .action-btn {
+      display: flex; align-items: center; gap: 5px; background: none; border: none;
+      font-size: 13px; color: var(--text-secondary); cursor: pointer; padding: 4px 0;
+      transition: color 0.15s;
+    }
+    .post-actions .action-btn.liked { color: var(--primary); }
+    .post-actions .action-btn:active { opacity: 0.7; }
+    /* Post Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 2000; align-items: flex-end;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-sheet {
+      background: var(--card-bg); border-radius: 20px 20px 0 0;
+      width: 100%; max-height: 70vh; padding: 20px 16px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-sheet textarea {
+      width: 100%; min-height: 120px; border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px; font-size: 15px; font-family: inherit; resize: none; outline: none;
+      color: var(--text); background: var(--bg);
+    }
+    .modal-sheet textarea:focus { border-color: var(--primary); }
+    .modal-sheet .modal-footer {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+    }
+    .modal-sheet .char-count { font-size: 12px; color: var(--text-muted); }
+    .modal-sheet .char-count.over { color: var(--danger); }
+    .modal-sheet .submit-btn {
+      padding: 10px 28px; background: var(--primary); color: #fff;
+      border: none; border-radius: 20px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    .modal-sheet .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-sheet .close-btn {
+      position: absolute; top: 12px; right: 16px; width: 32px; height: 32px;
+      border-radius: 50%; border: none; background: var(--bg); font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .empty-text { font-size: 14px; }
+    /* Loading */
+    .loading { text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; }
+    /* Toast */
+    .toast {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: #fff; padding: 10px 24px; border-radius: 20px;
+      font-size: 13px; z-index: 3000; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1 data-i18n="trend_title">动态</h1>
+  <button class="post-btn" onclick="openPostModal()" data-i18n="trend_post">发布</button>
+</div>
+
+<!-- Create post prompt -->
+<div class="create-card" onclick="openPostModal()">
+  <div class="avatar" id="userAvatarInit"><img src="/xuewaiyu/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>
+  <span class="placeholder" data-i18n="trend_placeholder">分享你的学习动态...</span>
+</div>
+
+<!-- Post list -->
+<div class="post-list" id="postList">
+  <div class="loading">加载中…</div>
+</div>
+
+<div class="loading" id="loadingMore" style="display:none">加载中...</div>
+
+<!-- Post Modal -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal-sheet" style="position:relative">
+    <button class="close-btn" onclick="closePostModal()">✕</button>
+    <textarea 
+      id="postContent" 
+      maxlength="2000" 
+      placeholder="记录此刻..."
+      data-i18n-attrib="placeholder|trend_input_placeholder"
+    ></textarea>
+    <div class="modal-footer">
+      <span class="char-count" id="charCount">0/2000</span>
+      <button class="submit-btn" id="submitBtn" onclick="submitPost()" data-i18n="trend_submit">发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Delete confirm -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-sheet" style="max-height:none; text-align:center">
+    <p style="font-size:15px; margin-bottom:16px; padding:16px 0" data-i18n="trend_delete_confirm">确定删除这条动态？</p>
+    <div style="display:flex; gap:12px">
+      <button onclick="closeDeleteModal()" style="flex:1; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; cursor:pointer;" data-i18n="cancel">取消</button>
+      <button onclick="confirmDelete()" style="flex:1; padding:12px; border:none; border-radius:10px; background:var(--danger); color:#fff; font-size:14px; cursor:pointer;" data-i18n="delete">删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function getAilosToken() {
+  var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+  if (!t) {
+    try { var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}'); t = s.accessToken || s.access_token; } catch(e) {}
+  }
+  return t;
+}
+function getAilosHeaders() {
+  var t = getAilosToken();
+  return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+
+(function() {
+  var page = 1, hasMore = true, isLoading = false;
+  var deleteTargetId = null;
+
+  // i18n
+  var I18N = {
+    zh: {
+      trend_title: '动态', trend_post: '发布', trend_placeholder: '分享你的学习动态...',
+      trend_submit: '发布', trend_input_placeholder: '记录此刻...',
+      trend_delete_confirm: '确定删除这条动态？', cancel: '取消', delete: '删除',
+      empty_feed: '还没有动态，发布第一条吧', load_more: '加载中...',
+      post_success: '发布成功！', delete_success: '已删除', content_too_short: '内容不能为空',
+      content_too_long: '内容不能超过2000字', network_error: '网络错误，请重试'
+    },
+    en: {
+      trend_title: 'Trends', trend_post: 'Post', trend_placeholder: 'Share your learning moments...',
+      trend_submit: 'Post', trend_input_placeholder: 'What\'s on your mind...',
+      trend_delete_confirm: 'Delete this post?', cancel: 'Cancel', delete: 'Delete',
+      empty_feed: 'No posts yet. Share your first moment!', load_more: 'Loading...',
+      post_success: 'Posted!', delete_success: 'Deleted', content_too_short: 'Content cannot be empty',
+      content_too_long: 'Content must be under 2000 characters', network_error: 'Network error, please retry'
+    },
+    ja: {
+      trend_title: '動向', trend_post: '投稿', trend_placeholder: '学習の瞬間を共有...',
+      trend_submit: '投稿', trend_input_placeholder: '今の気持ち...',
+      trend_delete_confirm: 'この投稿を削除しますか？', cancel: 'キャンセル', delete: '削除',
+      empty_feed: 'まだ投稿がありません', load_more: '読み込み中...',
+      post_success: '投稿しました！', delete_success: '削除しました', content_too_short: '内容を入力してください',
+      content_too_long: '2000文字以内で入力してください', network_error: 'ネットワークエラー'
+    },
+    ko: {
+      trend_title: '트렌드', trend_post: '글쓰기', trend_placeholder: '학습 순간을 공유하세요...',
+      trend_submit: '게시', trend_input_placeholder: '지금의 생각...',
+      trend_delete_confirm: '이 게시물을 삭제할까요?', cancel: '취소', delete: '삭제',
+      empty_feed: '아직 게시물이 없습니다', load_more: '로딩 중...',
+      post_success: '게시 완료!', delete_success: '삭제됨', content_too_short: '내용을 입력하세요',
+      content_too_long: '2000자 이내로 입력하세요', network_error: '네트워크 오류'
+    },
+    fr: {
+      trend_title: 'Tendances', trend_post: 'Publier', trend_placeholder: 'Partagez vos moments...',
+      trend_submit: 'Publier', trend_input_placeholder: 'Quoi de neuf...',
+      trend_delete_confirm: 'Supprimer cette publication ?', cancel: 'Annuler', delete: 'Supprimer',
+      empty_feed: 'Aucune publication', load_more: 'Chargement...',
+      post_success: 'Publié !', delete_success: 'Supprimé', content_too_short: 'Contenu vide',
+      content_too_long: '2000 caractères max', network_error: 'Erreur réseau'
+    },
+    es: {
+      trend_title: 'Tendencias', trend_post: 'Publicar', trend_placeholder: 'Comparte momentos...',
+      trend_submit: 'Publicar', trend_input_placeholder: '¿Qué hay de nuevo?...',
+      trend_delete_confirm: '¿Eliminar publicación?', cancel: 'Cancelar', delete: 'Eliminar',
+      empty_feed: 'Sin publicaciones', load_more: 'Cargando...',
+      post_success: '¡Publicado!', delete_success: 'Eliminado', content_too_short: 'Contenido vacío',
+      content_too_long: '2000 caracteres máx', network_error: 'Error de red'
+    },
+    de: {
+      trend_title: 'Trends', trend_post: 'Posten', trend_placeholder: 'Teile Lernmomente...',
+      trend_submit: 'Posten', trend_input_placeholder: 'Was gibt\'s Neues?...',
+      trend_delete_confirm: 'Beitrag löschen?', cancel: 'Abbrechen', delete: 'Löschen',
+      empty_feed: 'Noch keine Beiträge', load_more: 'Laden...',
+      post_success: 'Gepostet!', delete_success: 'Gelöscht', content_too_short: 'Inhalt leer',
+      content_too_long: 'Max 2000 Zeichen', network_error: 'Netzwerkfehler'
+    }
+  };
+
+  function _(key) {
+    var lang = (window.AILOS && window.AILOS.getUILang()) ? window.AILOS.getUILang() : 'zh';
+    var map = I18N[lang] || I18N['zh'];
+    return map[key] || I18N['zh'][key] || key;
+  }
+
+  function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+      el.textContent = _(key);
+    });
+    document.querySelectorAll('[data-i18n-attrib]').forEach(function(el) {
+      var parts = el.getAttribute('data-i18n-attrib').split('|');
+      if (parts.length === 2) el.setAttribute(parts[0], _(parts[1]));
+    });
+    document.getElementById('emptyText').textContent = _('empty_feed');
+  }
+
+  // Token
+  function getToken() {
+    var t = getAilosToken();
+    if (!t) {
+      /* token handled by getAilosToken() */
+    }
+    return t;
+  }
+  function authHeaders() {
+    var t = getToken();
+    return getAilosHeaders();
+  }
+
+  // Toast
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2000);
+  }
+
+  // Load feed
+  function loadFeed(reset) {
+    if (isLoading) return;
+    if (!hasMore && !reset) return;
+    isLoading = true;
+    if (reset) { page = 1; hasMore = true; document.getElementById('postList').innerHTML = ''; }
+    document.getElementById('loadingMore').style.display = 'block';
+
+    var url = '/xuewaiyu/api/v1/social/timeline/feed?page=' + page + '&limit=20';
+    fetch(url, { headers: authHeaders() })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d) {
+        document.getElementById('loadingMore').style.display = 'none';
+        if (!d.success) { showToast(d.message || _('network_error')); return; }
+        var items = d.data.items || [];
+        if (items.length === 0 && reset) {
+          document.getElementById('postList').innerHTML = '<div class="empty-state"><div class="empty-icon">📰</div><div class="empty-text">' + _('empty_feed') + '</div></div>';
+          hasMore = false;
+          return;
+        }
+        renderPosts(items, reset);
+        if (items.length < 20) hasMore = false;
+        else page++;
+        isLoading = false;
+      })
+      .catch(function(e) {
+        document.getElementById('loadingMore').style.display = 'none';
+        showToast(_('network_error'));
+        isLoading = false;
+      });
+  }
+
+  function renderPosts(items, reset) {
+    var container = document.getElementById('postList');
+    if (reset) container.innerHTML = '';
+
+    for (var i = 0; i < items.length; i++) {
+      var p = items[i];
+      var div = document.createElement('div');
+      div.className = 'post-item';
+      div.setAttribute('data-post-id', p.id);
+
+      var initials = (p.actor && p.actor.nickname) ? p.actor.nickname.charAt(0).toUpperCase() : '?';
+      var timeStr = formatTime(p.createdAt);
+
+      var imagesHtml = '';
+      if (p.metadata && p.metadata.images && p.metadata.images.length > 0) {
+        imagesHtml = '<div class="post-images">' +
+          p.metadata.images.map(function(img) {
+            return '<img src="' + escapeHtml(img) + '" alt="post image" onerror="this.style.display=\'none\'">';
+          }).join('') +
+          '</div>';
+      }
+
+      div.innerHTML = '' +
+        '<div class="post-header">' +
+          (p.actor && p.actor.avatar
+            ? '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="' + p.actor.avatar + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>'
+            : '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="/xuewaiyu/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>') +
+          '<div class="p-info">' +
+            '<div class="p-name">' + escapeHtml(p.actor ? p.actor.nickname : '用户') + '</div>' +
+            '<div class="p-time">' + timeStr + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="post-body">' + escapeHtml(p.content) + '</div>' +
+        imagesHtml +
+        '<div class="post-actions">' +
+          '<button class="action-btn like-btn" onclick="toggleLike(\'' + p.id + '\', this)">' +
+            '<span>👍</span> <span class="like-count">' + (p.likeCount || 0) + '</span>' +
+          '</button>' +
+          '<button class="action-btn" onclick="deletePost(\'' + p.id + '\')">' +
+            '<span>🗑️</span>' +
+          '</button>' +
+        '</div>';
+
+      container.appendChild(div);
+    }
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    var now = new Date();
+    var diff = now - d;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  // Post Modal
+  window.openPostModal = function() {
+    document.getElementById('postModal').classList.add('active');
+    document.getElementById('postContent').value = '';
+    document.getElementById('charCount').textContent = '0/2000';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('postContent').focus();
+  };
+  window.closePostModal = function() {
+    document.getElementById('postModal').classList.remove('active');
+  };
+
+  document.getElementById('postContent').addEventListener('input', function() {
+    var len = this.value.length;
+    var el = document.getElementById('charCount');
+    el.textContent = len + '/2000';
+    el.className = 'char-count' + (len > 2000 ? ' over' : '');
+  });
+
+  document.getElementById('postModal').addEventListener('click', function(e) {
+    if (e.target === this) closePostModal();
+  });
+
+  // Submit post
+  window.submitPost = function() {
+    var content = document.getElementById('postContent').value.trim();
+    if (!content) { showToast(_('content_too_short')); return; }
+    if (content.length > 2000) { showToast(_('content_too_long')); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = '...';
+
+    fetch('/xuewaiyu/api/v1/social/timeline/post', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ content: content, type: 'text', images: [] })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      btn.disabled = false; btn.textContent = _('trend_submit');
+      if (!d.success) { showToast(d.message || _('network_error')); return; }
+      closePostModal();
+      showToast(_('post_success'));
+      loadFeed(true);
+    })
+    .catch(function(e) {
+      btn.disabled = false; btn.textContent = _('trend_submit');
+      showToast(_('network_error'));
+    });
+  };
+
+  // Like
+  window.toggleLike = function(postId, btn) {
+    fetch('/xuewaiyu/api/v1/social/timeline/like/' + postId, {
+      method: 'POST', headers: authHeaders()
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success && d.data) {
+        btn.classList.toggle('liked', d.data.liked);
+        btn.querySelector('.like-count').textContent = d.data.likeCount;
+      }
+    });
+  };
+
+  // Delete
+  window.deletePost = function(postId) {
+    deleteTargetId = postId;
+    document.getElementById('deleteModal').classList.add('active');
+  };
+  window.closeDeleteModal = function() {
+    document.getElementById('deleteModal').classList.remove('active');
+    deleteTargetId = null;
+  };
+  window.confirmDelete = function() {
+    if (!deleteTargetId) return;
+    fetch('/xuewaiyu/api/v1/social/timeline/post/' + deleteTargetId, {
+      method: 'DELETE', headers: authHeaders()
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      closeDeleteModal();
+      if (d.success) { showToast(_('delete_success')); loadFeed(true); }
+      else showToast(d.message || _('network_error'));
+    });
+  };
+
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+
+  // Infinite scroll
+  window.addEventListener('scroll', function() {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+      loadFeed(false);
+    }
+  });
+
+  // Listen for language change
+  window.addEventListener('languageChanged', applyI18n);
+
+  // Init
+  function init() {
+    applyI18n();
+    loadFeed(true);
+
+    // Try to show user avatar initial
+    try {
+      var sess = JSON.parse(localStorage.getItem('ailos_session') || '{}');
+      if (sess.user && sess.user.nickname) {
+        document.getElementById('userAvatarInit').textContent = sess.user.nickname.charAt(0).toUpperCase();
+      }
+    } catch(e) {}
+  }
+
+  // Wait for AILOS then init
+  if (window.AILOS && window.AILOS.init) {
+    AILOS.init();
+  }
+  init();
+})();
+</script>
+
+  <!-- Bottom Navigation (auto-injected by common.js ensureNav with community nav) -->
+  <nav class="bottom-nav"></nav>
+
+</body>
+</html>

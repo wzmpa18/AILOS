@@ -2,7 +2,8 @@
 // src/server/controllers/reportsController.js
 // 学习报表控制器 — Module 02 Step 5
 // ============================================================
-const reportsService = require('../../services/reportsService');
+const ReportsService = require('../../services/reportsService');
+const reportsService = new ReportsService();
 
 const reportsController = {
   // GET /api/reports/summary

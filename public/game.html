@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>游戏中心 · 言道学学外语</title>
+  <style>
+    :root { --primary: #6366f1; --primary-light: #eef2ff; --bg: #f5f6fa; --text: #1f2937; --text-secondary: #6b7280; --border: #e5e7eb; --radius: 16px; --card-bg: #fff; --shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    body { margin: 0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(64px + env(safe-area-inset-bottom,0) + 20px); overflow-y: auto; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px; }
+
+    .page-header { text-align: center; padding: 12px 0 4px; }
+    .page-header h1 { font-size: 22px; margin: 0; }
+    .page-header p { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0; }
+
+    /* Game card */
+    .game-card {
+      background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 24px; margin-bottom: 16px; cursor: pointer; transition: all .2s;
+      border: 2px solid transparent;
+    }
+    .game-card:active { transform: scale(.98); }
+    .game-card.selected { border-color: var(--primary); }
+    .game-card .game-icon { font-size: 48px; margin-bottom: 8px; }
+    .game-card .game-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .game-card .game-desc { font-size: 13px; color: var(--text-secondary); }
+    .game-card .game-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Quiz game */
+    .quiz-area { display: none; }
+    .quiz-area.active { display: block; }
+    .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+    .quiz-score { font-size: 16px; font-weight: 700; color: var(--primary); }
+    .quiz-progress { font-size: 13px; color: var(--text-secondary); }
+    .quiz-timer { font-size: 14px; color: #f59e0b; font-weight: 600; }
+    .back-btn { background: none; border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--text-secondary); }
+    .back-btn:active { background: #f3f4f6; }
+
+    .quiz-question-card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 32px 24px;
+      margin-bottom: 20px; box-shadow: var(--shadow); text-align: center;
+    }
+    .quiz-word { font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .quiz-hint { font-size: 14px; color: var(--text-secondary); }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quiz-option {
+      padding: 16px; background: var(--card-bg); border: 2px solid var(--border);
+      border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer;
+      text-align: center; transition: all .2s; box-shadow: var(--shadow);
+    }
+    .quiz-option:active { transform: scale(.96); }
+    .quiz-option.correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+    .quiz-option.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+    .quiz-option.highlight-correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+    .quiz-next-btn {
+      display: none; width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+      background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff;
+      font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px;
+    }
+    .quiz-next-btn.show { display: block; }
+    .quiz-next-btn:active { transform: scale(.98); }
+
+    .quiz-result { display: none; text-align: center; padding: 24px; }
+    .quiz-result.active { display: block; }
+    .quiz-result .final-score { font-size: 48px; font-weight: 900; color: var(--primary); }
+    .quiz-result .final-label { font-size: 14px; color: var(--text-secondary); margin: 8px 0; }
+    .quiz-result .stars { font-size: 36px; margin: 12px 0; }
+    .retry-btn {
+      padding: 12px 28px; border: none; border-radius: var(--radius); background: var(--primary);
+      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+
+    @media (max-width: 380px) { .quiz-options { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-header">
+    <h1>🎮 <span class="t-pageTitle">游戏中心</span></h1>
+    <p class="t-sub">边玩边学，轻松掌握单词</p>
+  </div>
+
+  <!-- Game list -->
+  <div id="gameList" class="active">
+    <div class="game-card" onclick="startQuiz()">
+      <div class="game-icon">📝</div>
+      <div class="game-name t-vocabGame">单词闯关</div>
+      <div class="game-desc t-vocabDesc">看英文选中文意思，10 题一轮，限时作答</div>
+      <div class="game-badge">🔥 <span class="t-hotTag">热门</span></div>
+    </div>
+    <div class="game-card" style="opacity:0.5;">
+      <div class="game-icon">✏️</div>
+      <div class="game-name t-spellGame">拼写测试</div>
+      <div class="game-desc t-spellDesc">听发音拼写单词，锻炼拼写能力</div>
+      <div class="game-badge" style="background:#fef3c7;color:#d97706;">⏳ <span class="t-comingSoon">即将上线</span></div>
+    </div>
+    <div class="game-card" style="opacity:0.5;">
+      <div class="game-icon">🎧</div>
+      <div class="game-name t-listenGame">听力挑战</div>
+      <div class="game-desc t-listenDesc">听发音识别单词，提升听力反应</div>
+      <div class="game-badge" style="background:#fef3c7;color:#d97706;">⏳ <span class="t-comingSoon">即将上线</span></div>
+    </div>
+  </div>
+
+  <!-- Quiz game area -->
+  <div id="quizArea" class="quiz-area">
+    <div class="quiz-header">
+      <button class="back-btn" onclick="stopQuiz()">← <span class="t-back">返回</span></button>
+      <span class="quiz-score" id="quizScore">⭐ 0</span>
+      <span class="quiz-progress" id="quizProgress">1/10</span>
+      <span class="quiz-timer" id="quizTimer">⏱ 10s</span>
+    </div>
+    <div id="quizQuestion">
+      <div class="quiz-question-card">
+        <div class="quiz-word" id="qWord">---</div>
+        <div class="quiz-hint t-selectMeaning">请选择正确的中文意思</div>
+      </div>
+      <div class="quiz-options" id="qOptions"></div>
+      <button class="quiz-next-btn" id="qNextBtn" onclick="nextQuiz()">→ <span class="t-next">下一题</span></button>
+    </div>
+    <div class="quiz-result" id="quizResult">
+      <div class="final-score" id="finalScore">0</div>
+      <div class="final-label t-scoreLabel">分</div>
+      <div class="stars" id="finalStars">⭐⭐⭐</div>
+      <button class="retry-btn" onclick="stopQuiz()">🔄 <span class="t-backToList">返回列表</span></button>
+      <div style="margin-top:8px;"><button class="retry-btn" onclick="startQuiz()" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);">🔁 <span class="t-retry">再玩一次</span></button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var uiLang = 'zh';
+  var studyLang = 'en';
+
+  // i18n
+  var T = {
+    zh: {
+      pageTitle:'游戏中心', sub:'边玩边学，轻松掌握单词',
+      vocabGame:'单词闯关', vocabDesc:'看英文选中文意思，10题一轮，限时作答', hotTag:'热门',
+      spellGame:'拼写测试', spellDesc:'听发音拼写单词，锻炼拼写能力', comingSoon:'即将上线',
+      listenGame:'听力挑战', listenDesc:'听发音识别单词，提升听力反应',
+      back:'返回', selectMeaning:'请选择正确的中文意思', next:'下一题',
+      scoreLabel:'分', backToList:'返回列表', retry:'再玩一次',
+      correct:'✓ 正确!', wrong:'✗ 错误!', timeout:'⏰ 时间到!'
+    },
+    en: {
+      pageTitle:'Game Center', sub:'Learn words through fun games',
+      vocabGame:'Word Quiz', vocabDesc:'Match English words to Chinese meanings, 10 per round, timed', hotTag:'Hot',
+      spellGame:'Spelling Test', spellDesc:'Listen and spell words to improve spelling', comingSoon:'Coming Soon',
+      listenGame:'Listening Challenge', listenDesc:'Recognize words by sound, improve response', 
+      back:'Back', selectMeaning:'Choose the correct meaning', next:'Next',
+      scoreLabel:'pts', backToList:'Back to List', retry:'Play Again',
+      correct:'✓ Correct!', wrong:'✗ Wrong!', timeout:'⏰ Time up!'
+    },
+    ja: {
+      pageTitle:'ゲームセンター', sub:'ゲームで楽しく単語を覚えよう',
+      vocabGame:'単語クイズ', vocabDesc:'英語を見て日本語の意味を選ぶ、10問制限時間付き', hotTag:'人気',
+      spellGame:'スペルテスト', spellDesc:'発音を聞いてスペルを入力', comingSoon:'近日公開',
+      listenGame:'リスニング挑戦', listenDesc:'発音を聞いて単語を当てる',
+      back:'戻る', selectMeaning:'正しい意味を選んでください', next:'次へ',
+      scoreLabel:'点', backToList:'一覧に戻る', retry:'もう一度',
+      correct:'✓ 正解!', wrong:'✗ 不正解!', timeout:'⏰ 時間切れ!'
+    },
+    ko: {
+      pageTitle:'게임 센터', sub:'게임으로 즐겁게 단어 학습',
+      vocabGame:'단어 퀴즈', vocabDesc:'영어 단어의 한국어 뜻 맞추기, 10문제, 시간 제한', hotTag:'인기',
+      spellGame:'맞춤법 테스트', spellDesc:'발음을 듣고 단어 철자 입력하기', comingSoon:'출시 예정',
+      listenGame:'듣기 도전', listenDesc:'발음을 듣고 단어 맞추기',
+      back:'뒤로', selectMeaning:'올바른 뜻을 선택하세요', next:'다음',
+      scoreLabel:'점', backToList:'목록으로', retry:'다시 하기',
+      correct:'✓ 정답!', wrong:'✗ 오답!', timeout:'⏰ 시간 초과!'
+    },
+    fr: {
+      pageTitle:'Centre de Jeux', sub:'Apprenez les mots en jouant',
+      vocabGame:'Quiz de Mots', vocabDesc:'Associez les mots anglais au sens français, 10 par tour, chronométré', hotTag:'Populaire',
+      spellGame:'Test d\'orthographe', spellDesc:'Écoutez et épelez les mots', comingSoon:'Bientôt',
+      listenGame:'Défi d\'écoute', listenDesc:'Reconnaissez les mots par le son',
+      back:'Retour', selectMeaning:'Choisissez le bon sens', next:'Suivant',
+      scoreLabel:'pts', backToList:'Retour à la liste', retry:'Rejouer',
+      correct:'✓ Correct!', wrong:'✗ Faux!', timeout:'⏰ Temps écoulé!'
+    },
+    es: {
+      pageTitle:'Centro de Juegos', sub:'Aprende palabras jugando',
+      vocabGame:'Quiz de Palabras', vocabDesc:'Empareja palabras inglesas con su significado español, 10 rondas, cronometrado', hotTag:'Popular',
+      spellGame:'Prueba de Ortografía', spellDesc:'Escucha y escribe la palabra', comingSoon:'Próximamente',
+      listenGame:'Desafío Auditivo', listenDesc:'Reconoce palabras por sonido',
+      back:'Volver', selectMeaning:'Elige el significado correcto', next:'Siguiente',
+      scoreLabel:'pts', backToList:'Volver a la lista', retry:'Jugar de nuevo',
+      correct:'✓ ¡Correcto!', wrong:'✗ ¡Incorrecto!', timeout:'⏰ ¡Tiempo!'
+    },
+    de: {
+      pageTitle:'Spielezentrum', sub:'Wörter spielerisch lernen',
+      vocabGame:'Wort-Quiz', vocabDesc:'Englische Wörter der deutschen Bedeutung zuordnen, 10 pro Runde, mit Zeitlimit', hotTag:'Beliebt',
+      spellGame:'Rechtschreibtest', spellDesc:'Hören und buchstabieren', comingSoon:'Demnächst',
+      listenGame:'Hör-Herausforderung', listenDesc:'Wörter am Klang erkennen',
+      back:'Zurück', selectMeaning:'Wähle die richtige Bedeutung', next:'Weiter',
+      scoreLabel:'Pkt', backToList:'Zurück zur Liste', retry:'Erneut spielen',
+      correct:'✓ Richtig!', wrong:'✗ Falsch!', timeout:'⏰ Zeit abgelaufen!'
+    }
+  };
+
+  function t(key) { return (T[uiLang] && T[uiLang][key]) || (T.zh && T.zh[key]) || key; }
+
+  function applyI18n() {
+    document.querySelectorAll('[class^="t-"]').forEach(function(el) {
+      var cls = el.className.split(' ').find(function(c) { return c.startsWith('t-'); });
+      if (!cls) return;
+      var key = cls.substring(2);
+      var val = t(key);
+      if (el.tagName === 'INPUT') el.placeholder = val;
+      else el.textContent = val;
+    });
+    document.title = '🎮 ' + t('pageTitle') + ' · AILOS';
+  }
+
+  function initI18n() {
+    if (window.AILOS && typeof window.AILOS.getUILang === 'function') uiLang = window.AILOS.getUILang();
+    if (window.AILOS && typeof window.AILOS.getStudyLang === 'function') studyLang = window.AILOS.getStudyLang();
+    if (!T[uiLang]) uiLang = 'en';
+    applyI18n();
+  }
+
+  // === Quiz Game Logic ===
+  var quizWords = [
+    { en:'apple', zh:'苹果' }, { en:'book', zh:'书' }, { en:'cat', zh:'猫' }, { en:'dog', zh:'狗' },
+    { en:'egg', zh:'鸡蛋' }, { en:'fish', zh:'鱼' }, { en:'goat', zh:'山羊' }, { en:'house', zh:'房子' },
+    { en:'ice', zh:'冰' }, { en:'juice', zh:'果汁' }, { en:'king', zh:'国王' }, { en:'lion', zh:'狮子' },
+    { en:'moon', zh:'月亮' }, { en:'night', zh:'夜晚' }, { en:'ocean', zh:'海洋' }, { en:'pencil', zh:'铅笔' },
+    { en:'queen', zh:'女王' }, { en:'river', zh:'河流' }, { en:'star', zh:'星星' }, { en:'tree', zh:'树' },
+    { en:'umbrella', zh:'雨伞' }, { en:'voice', zh:'声音' }, { en:'water', zh:'水' }, { en:'window', zh:'窗户' },
+    { en:'yellow', zh:'黄色' }, { en:'zero', zh:'零' }, { en:'bread', zh:'面包' }, { en:'cloud', zh:'云' },
+    { en:'door', zh:'门' }, { en:'fire', zh:'火' }
+  ];
+
+  var quizState = { current: 0, score: 0, timer: null, timeLeft: 10, answered: false, words: [] };
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function startQuiz() {
+    document.getElementById('gameList').classList.remove('active');
+    document.getElementById('gameList').style.display = 'none';
+    document.getElementById('quizArea').classList.add('active');
+    document.getElementById('quizResult').classList.remove('active');
+    document.getElementById('quizQuestion').style.display = 'block';
+
+    quizState.words = shuffle(quizWords).slice(0, 10);
+    quizState.current = 0;
+    quizState.score = 0;
+    quizState.answered = false;
+
+    renderQuiz();
+  }
+
+  function stopQuiz() {
+    clearInterval(quizState.timer);
+    document.getElementById('quizArea').classList.remove('active');
+    document.getElementById('gameList').style.display = 'block';
+    document.getElementById('gameList').classList.add('active');
+  }
+
+  function renderQuiz() {
+    var i = quizState.current;
+    if (i >= quizState.words.length) return showResult();
+    var word = quizState.words[i];
+    quizState.timeLeft = 10;
+    quizState.answered = false;
+
+    document.getElementById('quizScore').textContent = '⭐ ' + quizState.score;
+    document.getElementById('quizProgress').textContent = (i + 1) + '/10';
+    document.getElementById('quizTimer').textContent = '⏱ ' + quizState.timeLeft + 's';
+    document.getElementById('qWord').textContent = word.en;
+    document.getElementById('qNextBtn').classList.remove('show');
+
+    // Generate options: 1 correct + 3 random wrong
+    var options = [word.zh];
+    var wrongs = quizWords.filter(function(w) { return w.zh !== word.zh; });
+    wrongs = shuffle(wrongs).slice(0, 3);
+    wrongs.forEach(function(w) { options.push(w.zh); });
+    options = shuffle(options);
+
+    var html = '';
+    options.forEach(function(opt) {
+      html += '<div class="quiz-option" onclick="selectAnswer(\'' + escapeAttr(word.zh) + '\',\'' + escapeAttr(opt) + '\',this)">' + opt + '</div>';
+    });
+    document.getElementById('qOptions').innerHTML = html;
+
+    // Timer
+    clearInterval(quizState.timer);
+    quizState.timer = setInterval(function() {
+      quizState.timeLeft--;
+      document.getElementById('quizTimer').textContent = '⏱ ' + quizState.timeLeft + 's';
+      if (quizState.timeLeft <= 0) {
+        clearInterval(quizState.timer);
+        if (!quizState.answered) timeUp();
+      }
+    }, 1000);
+  }
+
+  function selectAnswer(correctAnswer, chosen, el) {
+    if (quizState.answered) return;
+    quizState.answered = true;
+    clearInterval(quizState.timer);
+
+    var opts = document.querySelectorAll('.quiz-option');
+    var isCorrect = chosen === correctAnswer;
+
+    if (isCorrect) {
+      el.classList.add('correct');
+      quizState.score += 10;
+    } else {
+      el.classList.add('wrong');
+      opts.forEach(function(o) {
+        if (o.textContent === correctAnswer) o.classList.add('highlight-correct');
+      });
+    }
+
+    opts.forEach(function(o) { o.style.pointerEvents = 'none'; });
+    document.getElementById('quizScore').textContent = '⭐ ' + quizState.score;
+    document.getElementById('qNextBtn').classList.add('show');
+    document.getElementById('quizTimer').textContent = isCorrect ? '✓ ' + t('correct') : '✗ ' + t('wrong');
+  }
+
+  function timeUp() {
+    quizState.answered = true;
+    var opts = document.querySelectorAll('.quiz-option');
+    var word = quizState.words[quizState.current];
+    opts.forEach(function(o) {
+      o.style.pointerEvents = 'none';
+      if (o.textContent === word.zh) o.classList.add('highlight-correct');
+    });
+    document.getElementById('qNextBtn').classList.add('show');
+    document.getElementById('quizTimer').textContent = t('timeout');
+  }
+
+  function nextQuiz() {
+    quizState.current++;
+    if (quizState.current >= quizState.words.length) {
+      showResult();
+    } else {
+      renderQuiz();
+    }
+  }
+
+  function showResult() {
+    clearInterval(quizState.timer);
+    document.getElementById('quizQuestion').style.display = 'none';
+    document.getElementById('quizResult').classList.add('active');
+    var score = quizState.score;
+    document.getElementById('finalScore').textContent = score;
+    var stars = score >= 90 ? '⭐⭐⭐' : score >= 60 ? '⭐⭐' : score >= 30 ? '⭐' : '💪';
+    document.getElementById('finalStars').textContent = stars;
+  }
+
+  function escapeAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
+
+  // Init
+  initI18n();
+  window.addEventListener('languageChanged', initI18n);
+})();
+</script>
+
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="/xuewaiyu/home"><span class="nav-icon">🏠</span><span>首页</span></a>
+  <a class="nav-item" href="/xuewaiyu/learn.html"><span class="nav-icon">📚</span><span>学习</span></a>
+  <a class="nav-item active" href="/xuewaiyu/game.html"><span class="nav-icon">🎮</span><span>游戏</span></a>
+  <a class="nav-item" href="/xuewaiyu/translate.html"><span class="nav-icon">🌐</span><span>翻译</span></a>
+  <a class="nav-item" href="/xuewaiyu/profile.html"><span class="nav-icon">👤</span><span>我的</span></a>
+</nav>
+<script>
+(function() {
+  var style = document.createElement('style');
+  style.textContent = '.bottom-nav { position:fixed; bottom:0; left:0; right:0; height:64px; background:#fff; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -2px 10px rgba(0,0,0,0.05); z-index:100; padding-bottom:env(safe-area-inset-bottom,0); }' +
+    '.bottom-nav .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 12px; text-decoration:none; color:#6b7280; font-size:11px; }' +
+    '.bottom-nav .nav-item .nav-icon { font-size:22px; line-height:1; }' +
+    '.bottom-nav .nav-item.active { color:#6366f1; font-weight:700; }';
+  document.head.appendChild(style);
+})();
+</script>
+</body>
+</html>

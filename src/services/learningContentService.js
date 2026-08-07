@@ -56,7 +56,7 @@ class LearningContentService {
    */
   async getContentSummary(targetLanguage) {
     try {
-      const types = ['vocabulary', 'grammar', 'listening', 'dialogue', 'pronunciation'];
+      const types = ['vocabulary', 'grammar', 'reading', 'listening', 'dialogue', 'pronunciation'];
       const counts = await Promise.all(
         types.map(async (type) => {
           const count = await prisma.learningContent.count({

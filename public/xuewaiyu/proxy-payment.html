@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>代付订单 - 言道学学外语</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f6fa; color: #333; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
+    .order-info { text-align: center; }
+    .order-info .plan-name { font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 8px; }
+    .order-info .amount { font-size: 32px; font-weight: 700; color: #333; }
+    .order-info .amount .unit { font-size: 16px; color: #999; }
+    .order-info .duration { font-size: 14px; color: #999; margin-top: 4px; }
+    .qr-section { text-align: center; padding: 20px 0; }
+    .qr-section #qrcode { display: inline-block; padding: 12px; background: #fff; border: 1px solid #eee; border-radius: 8px; }
+    .qr-section #qrcode img, .qr-section #qrcode canvas { display: block; }
+    .qr-tip { font-size: 13px; color: #999; margin-top: 12px; }
+    .status-section { text-align: center; padding: 16px 0; }
+    .status-pending { color: #ff9800; }
+    .status-paid { color: #4caf50; }
+    .status-failed { color: #f44336; }
+    .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .btn-secondary { background: #f0f0f0; color: #666; margin-top: 8px; }
+    .share-link { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; margin-top: 12px; word-break: break-all; font-size: 13px; color: #666; }
+    .copy-btn { display: inline-block; margin-top: 8px; padding: 6px 16px; background: #667eea; color: #fff; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+    .error { text-align: center; padding: 40px; color: #f44336; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="content">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script>
+    var API_BASE = '/xuewaiyu/api';
+    var token = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token') || '';
+    if (!token) { try { token = JSON.parse(localStorage.getItem('auth_tokens') || '{}').accessToken || ''; } catch(e) {} }
+
+    async function apiCall(method, path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      var resp = await fetch(API_BASE + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+      return resp.json();
+    }
+
+    // 获取URL参数
+    var params = new URLSearchParams(window.location.search);
+    var orderNo = params.get('orderNo');
+    var planId = params.get('planId');
+
+    var pollTimer = null;
+
+    async function init() {
+      if (!orderNo && !planId) {
+        document.getElementById('content').innerHTML = '<div class="error">缺少订单参数</div>';
+        return;
+      }
+
+      // 如果有planId但没有orderNo，先创建订单
+      if (!orderNo && planId) {
+        var orderResult = await apiCall('POST', '/membership/order', { planId: planId, paymentMethod: 'wechat' });
+        if (orderResult.success && orderResult.data) {
+          orderNo = orderResult.data.orderNo;
+        } else {
+          document.getElementById('content').innerHTML = '<div class="error">创建订单失败：' + (orderResult.error || '未知错误') + '</div>';
+          return;
+        }
+      }
+
+      // 发起代付
+      var proxyResult = await apiCall('POST', '/membership/proxy/create', { orderNo: orderNo });
+      if (!proxyResult.success || !proxyResult.data) {
+        document.getElementById('content').innerHTML = '<div class="error">创建代付失败：' + (proxyResult.error || '未知错误') + '</div>';
+        return;
+      }
+
+      renderOrder(proxyResult.data);
+      startPolling(orderNo);
+    }
+
+    function renderOrder(data) {
+      var amount = (data.amount / 100).toFixed(2);
+      var proxyUrl = window.location.origin + data.proxyUrl;
+
+      document.getElementById('content').innerHTML =
+        '<div class="card">' +
+          '<div class="title">代付订单</div>' +
+          '<div class="order-info">' +
+            '<div class="plan-name">' + data.planName + '</div>' +
+            '<div class="amount"><span class="unit">¥</span>' + amount + '</div>' +
+            '<div class="duration">订单号: ' + data.orderNo + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="qr-section">' +
+            '<div id="qrcode"></div>' +
+            '<div class="qr-tip">扫码即可代付，无需登录</div>' +
+          '</div>' +
+          '<div class="share-link">' + proxyUrl + '</div>' +
+          '<button class="copy-btn" onclick="copyLink(\'' + proxyUrl + '\')">复制链接</button>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="status-section">' +
+            '<div id="status" class="status-pending">⏳ 等待支付...</div>' +
+          '</div>' +
+        '</div>';
+
+      // 生成二维码
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(document.getElementById('qrcode'), { text: proxyUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+      } else {
+        document.getElementById('qrcode').innerHTML = '<p>QR库加载失败</p>';
+      }
+    }
+
+    function showCopyToast() {
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:999;';
+      toast.textContent = '链接已复制';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 2000);
+    }
+
+    function copyLink(url) {
+      navigator.clipboard.writeText(url).then(function() {
+        showCopyToast();
+      }).catch(function() {
+        var input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showCopyToast();
+      });
+    }
+
+    function startPolling(orderNo) {
+      pollTimer = setInterval(async function() {
+        try {
+          var result = await apiCall('GET', '/membership/orders');
+          if (result.success && result.data && result.data.orders) {
+            var order = result.data.orders.find(function(o) { return o.orderNo === orderNo; });
+            if (order) {
+              updateStatus(order.status);
+              if (order.status === 'paid') {
+                clearInterval(pollTimer);
+              }
+            }
+          }
+        } catch(e) {}
+      }, 3000);
+    }
+
+    function updateStatus(status) {
+      var el = document.getElementById('status');
+      if (!el) return;
+      if (status === 'paid') {
+        el.className = 'status-paid';
+        el.innerHTML = '✅ 支付成功！会员权益已到账';
+      } else if (status === 'pending') {
+        el.className = 'status-pending';
+        el.innerHTML = '⏳ 等待支付...';
+      } else {
+        el.className = 'status-failed';
+        el.innerHTML = '❌ 支付失败';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

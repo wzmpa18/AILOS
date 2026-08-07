@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>游戏中心 · 言道学学外语</title>
+  <style>
+    :root { --primary: #6366f1; --primary-light: #eef2ff; --bg: #f5f6fa; --text: #1f2937; --text-secondary: #6b7280; --border: #e5e7eb; --radius: 16px; --card-bg: #fff; --shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; overflow-y: auto; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px; }
+    .page-header { text-align: center; padding: 12px 0; }
+    .page-header h1 { font-size: 22px; margin: 0; }
+    .page-header p { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0; }
+
+    .game-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+    .game-card:active { transform: scale(.98); }
+    .game-card .game-icon { font-size: 48px; margin-bottom: 8px; }
+    .game-card .game-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .game-card .game-desc { font-size: 13px; color: var(--text-secondary); }
+    .game-card .game-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 600; margin-top: 6px; }
+
+    .game-area { display: none; }
+    .game-area.active { display: block; }
+    .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+    .game-score { font-size: 16px; font-weight: 700; color: var(--primary); }
+    .game-progress { font-size: 13px; color: var(--text-secondary); }
+    .game-timer { font-size: 14px; color: #f59e0b; font-weight: 600; }
+    .back-btn { background: none; border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--text-secondary); }
+
+    .question-card { background: var(--card-bg); border-radius: var(--radius); padding: 32px 24px; margin-bottom: 20px; box-shadow: var(--shadow); text-align: center; }
+    .question-word { font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .question-hint { font-size: 14px; color: var(--text-secondary); }
+    .question-phonetic { font-size: 16px; color: #a78bfa; margin-bottom: 8px; }
+    .play-sound-btn { display: inline-block; padding: 8px 16px; background: var(--primary-light); color: var(--primary); border-radius: 20px; cursor: pointer; font-size: 14px; border: none; margin: 8px 0; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quiz-option { padding: 16px; background: var(--card-bg); border: 2px solid var(--border); border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; transition: all .2s; box-shadow: var(--shadow); }
+    .quiz-option:active { transform: scale(.96); }
+    .quiz-option.correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+    .quiz-option.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+    .quiz-option.highlight-correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+
+    .spell-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 18px; text-align: center; outline: none; }
+    .spell-input:focus { border-color: var(--primary); }
+    .spell-submit { width: 100%; padding: 14px; border: none; border-radius: var(--radius); background: var(--primary); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+    .next-btn { display: none; width: 100%; padding: 14px; border: none; border-radius: var(--radius); background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    .next-btn.show { display: block; }
+
+    .result-panel { display: none; text-align: center; padding: 24px; }
+    .result-panel.active { display: block; }
+    .result-panel .final-score { font-size: 48px; font-weight: 900; color: var(--primary); }
+    .result-panel .final-label { font-size: 14px; color: var(--text-secondary); margin: 8px 0; }
+    .result-panel .stars { font-size: 36px; margin: 12px 0; }
+    .retry-btn { padding: 12px 28px; border: none; border-radius: var(--radius); background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+    /* 错题回顾（宪法 五-1） */
+    .wrong-list { text-align: left; margin: 16px 0 4px; }
+    .wrong-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+    .wrong-item { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px;
+      background: #FEF2F2; border-radius: 10px; margin-bottom: 6px; font-size: 14px; }
+    .wrong-item .wi-q { font-weight: 600; color: #B91C1C; word-break: break-all; }
+    .wrong-item .wi-a { color: var(--text-secondary); flex-shrink: 0; }
+    .wrong-empty { text-align: center; font-size: 14px; color: var(--success, #10b981); padding: 10px 0; }
+
+    @media (max-width: 380px) { .options-grid { grid-template-columns: 1fr; } }
+
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; height:64px; background:#fff; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -2px 10px rgba(0,0,0,0.05); z-index:100; padding-bottom:env(safe-area-inset-bottom,0); }
+    .bottom-nav .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 12px; text-decoration:none; color:#6b7280; font-size:11px; }
+    .bottom-nav .nav-item .nav-icon { font-size:22px; line-height:1; }
+    .bottom-nav .nav-item.active { color:#6366f1; font-weight:700; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-header">
+    <h1>🎮 游戏中心</h1>
+    <p>边玩边学，轻松掌握单词</p>
+  </div>
+
+  <!-- Game list（宪法 1.1：首屏先渲染加载中，语言就绪后由 JS 按界面语言填充）-->
+  <div id="gameList"><div class="loading-tip">加载中…</div></div>
+
+  <!-- Quiz Area -->
+  <div id="quizArea" class="game-area">
+    <div class="game-header">
+      <button class="back-btn" onclick="stopGame()">← 返回</button>
+      <span class="game-score" id="quizScore">⭐ 0</span>
+      <span class="game-progress" id="quizProgress">1/10</span>
+      <span class="game-timer" id="quizTimer">⏱ 10s</span>
+    </div>
+    <div id="quizQuestion">
+      <div class="question-card">
+        <div class="question-word" id="qWord">---</div>
+        <div class="question-hint">请选择正确的中文意思</div>
+      </div>
+      <div class="options-grid" id="qOptions"></div>
+      <button class="next-btn" id="qNextBtn" onclick="nextQuiz()">→ 下一题</button>
+    </div>
+    <div class="result-panel" id="quizResult">
+      <div class="final-score" id="finalScore">0</div>
+      <div class="final-label">分</div>
+      <div class="stars" id="finalStars">⭐⭐⭐</div>
+      <div class="wrong-list" id="quizWrongList"></div>
+      <div class="wrong-section-title">查看历史错题</div>
+      <div class="wrong-list" id="quizHistoryWrong"></div>
+      <button class="retry-btn" onclick="stopGame()">🔄 返回列表</button>
+      <button class="retry-btn" onclick="startGame('quiz')" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-left:8px;">🔁 再玩一次</button>
+    </div>
+  </div>
+
+  <!-- Spell Area -->
+  <div id="spellArea" class="game-area">
+    <div class="game-header">
+      <button class="back-btn" onclick="stopGame()">← 返回</button>
+      <span class="game-score" id="spellScore">⭐ 0</span>
+      <span class="game-progress" id="spellProgress">1/10</span>
+    </div>
+    <div id="spellQuestion">
+      <div class="question-card">
+        <div class="question-word" id="sChinese">---</div>
+        <div class="question-phonetic" id="sPhonetic"></div>
+        <div class="question-hint">请输入对应的英文单词</div>
+        <button class="play-sound-btn" id="sPlayBtn" onclick="playCurrentWord()">🔊 听发音</button>
+      </div>
+      <input class="spell-input" id="sInput" type="text" placeholder="输入英文拼写..." autocomplete="off" autocorrect="off" autocapitalize="off">
+      <button class="spell-submit" id="sSubmitBtn" onclick="checkSpell()">✓ 提交</button>
+      <div id="sFeedback" style="text-align:center;margin-top:10px;font-size:16px;font-weight:600;"></div>
+      <button class="next-btn" id="sNextBtn" onclick="nextSpell()">→ 下一题</button>
+    </div>
+    <div class="result-panel" id="spellResult">
+      <div class="final-score" id="spellFinalScore">0</div>
+      <div class="final-label">分</div>
+      <div class="stars" id="spellFinalStars">⭐⭐⭐</div>
+      <div class="wrong-list" id="spellWrongList"></div>
+      <div class="wrong-section-title">查看历史错题</div>
+      <div class="wrong-list" id="spellHistoryWrong"></div>
+      <button class="retry-btn" onclick="stopGame()">🔄 返回列表</button>
+      <button class="retry-btn" onclick="startGame('spell')" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-left:8px;">🔁 再玩一次</button>
+    </div>
+  </div>
+
+  <!-- Listen Area -->
+  <div id="listenArea" class="game-area">
+    <div class="game-header">
+      <button class="back-btn" onclick="stopGame()">← 返回</button>
+      <span class="game-score" id="listenScore">⭐ 0</span>
+      <span class="game-progress" id="listenProgress">1/10</span>
+    </div>
+    <div id="listenQuestion">
+      <div class="question-card">
+        <div class="question-word">🔊</div>
+        <div class="question-hint">请听发音，选择正确的单词</div>
+        <button class="play-sound-btn" id="lPlayBtn" onclick="playListenWord()">🔊 播放发音</button>
+      </div>
+      <div class="options-grid" id="lOptions"></div>
+      <div id="lFeedback" style="text-align:center;margin-top:10px;font-size:16px;font-weight:600;"></div>
+      <button class="next-btn" id="lNextBtn" onclick="nextListen()">→ 下一题</button>
+    </div>
+    <div class="result-panel" id="listenResult">
+      <div class="final-score" id="listenFinalScore">0</div>
+      <div class="final-label">分</div>
+      <div class="stars" id="listenFinalStars">⭐⭐⭐</div>
+      <div class="wrong-list" id="listenWrongList"></div>
+      <div class="wrong-section-title">查看历史错题</div>
+      <div class="wrong-list" id="listenHistoryWrong"></div>
+      <button class="retry-btn" onclick="stopGame()">🔄 返回列表</button>
+      <button class="retry-btn" onclick="startGame('listen')" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-left:8px;">🔁 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） --><nav class="bottom-nav">
+</nav>
+
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<script>
+// ============================================================
+// 多语言词库（宪法 五-1「题目匹配用户当前学习语言」、一-3 双语言规范）
+// 目标语言取自个人中心配置（AILOS.getStudyLang），禁止硬编码语种。
+// ============================================================
+var WORD_BANKS = {
+  ja: [
+    { en:'りんご', zh:'苹果', ph:'ringo' }, { en:'本', zh:'书', ph:'hon' },
+    { en:'猫', zh:'猫', ph:'neko' }, { en:'犬', zh:'狗', ph:'inu' },
+    { en:'卵', zh:'鸡蛋', ph:'tamago' }, { en:'魚', zh:'鱼', ph:'sakana' },
+    { en:'家', zh:'房子', ph:'ie' }, { en:'氷', zh:'冰', ph:'kōri' },
+    { en:'水', zh:'水', ph:'mizu' }, { en:'月', zh:'月亮', ph:'tsuki' },
+    { en:'夜', zh:'夜晚', ph:'yoru' }, { en:'海', zh:'海洋', ph:'umi' },
+    { en:'鉛筆', zh:'铅笔', ph:'enpitsu' }, { en:'川', zh:'河流', ph:'kawa' },
+    { en:'星', zh:'星星', ph:'hoshi' }, { en:'木', zh:'树', ph:'ki' },
+    { en:'窓', zh:'窗户', ph:'mado' }, { en:'黄色', zh:'黄色', ph:'kiiro' },
+    { en:'パン', zh:'面包', ph:'pan' }, { en:'雲', zh:'云', ph:'kumo' },
+    { en:'ドア', zh:'门', ph:'doa' }, { en:'火', zh:'火', ph:'hi' },
+    { en:'庭', zh:'花园', ph:'niwa' }, { en:'音楽', zh:'音乐', ph:'ongaku' },
+    { en:'花', zh:'花', ph:'hana' }, { en:'山', zh:'山', ph:'yama' },
+    { en:'空', zh:'天空', ph:'sora' }, { en:'friend/友達', zh:'朋友', ph:'tomodachi' },
+    { en:'学校', zh:'学校', ph:'gakkō' }, { en:'先生', zh:'老师', ph:'sensei' }
+  ],
+  ko: [
+    { en:'사과', zh:'苹果', ph:'sagwa' }, { en:'책', zh:'书', ph:'chaek' },
+    { en:'고양이', zh:'猫', ph:'goyangi' }, { en:'개', zh:'狗', ph:'gae' },
+    { en:'계란', zh:'鸡蛋', ph:'gyeran' }, { en:'물고기', zh:'鱼', ph:'mulgogi' },
+    { en:'집', zh:'房子', ph:'jip' }, { en:'얼음', zh:'冰', ph:'eoreum' },
+    { en:'물', zh:'水', ph:'mul' }, { en:'달', zh:'月亮', ph:'dal' },
+    { en:'밤', zh:'夜晚', ph:'bam' }, { en:'바다', zh:'海洋', ph:'bada' },
+    { en:'연필', zh:'铅笔', ph:'yeonpil' }, { en:'강', zh:'河流', ph:'gang' },
+    { en:'별', zh:'星星', ph:'byeol' }, { en:'나무', zh:'树', ph:'namu' },
+    { en:'창문', zh:'窗户', ph:'changmun' }, { en:'노란색', zh:'黄色', ph:'noransaek' },
+    { en:'빵', zh:'面包', ph:'ppang' }, { en:'구름', zh:'云', ph:'gureum' },
+    { en:'문', zh:'门', ph:'mun' }, { en:'불', zh:'火', ph:'bul' },
+    { en:'정원', zh:'花园', ph:'jeongwon' }, { en:'음악', zh:'音乐', ph:'eumak' },
+    { en:'꽃', zh:'花', ph:'kkot' }, { en:'산', zh:'山', ph:'san' },
+    { en:'하늘', zh:'天空', ph:'haneul' }, { en:'친구', zh:'朋友', ph:'chingu' },
+    { en:'학교', zh:'学校', ph:'hakgyo' }, { en:'선생님', zh:'老师', ph:'seonsaengnim' }
+  ],
+  en: [
+  { en:'apple', zh:'苹果', ph:'/ˈæp.əl/' }, { en:'book', zh:'书', ph:'/bʊk/' },
+  { en:'cat', zh:'猫', ph:'/kæt/' }, { en:'dog', zh:'狗', ph:'/dɒɡ/' },
+  { en:'egg', zh:'鸡蛋', ph:'/eɡ/' }, { en:'fish', zh:'鱼', ph:'/fɪʃ/' },
+  { en:'goat', zh:'山羊', ph:'/ɡoʊt/' }, { en:'house', zh:'房子', ph:'/haʊs/' },
+  { en:'ice', zh:'冰', ph:'/aɪs/' }, { en:'juice', zh:'果汁', ph:'/dʒuːs/' },
+  { en:'king', zh:'国王', ph:'/kɪŋ/' }, { en:'lion', zh:'狮子', ph:'/ˈlaɪ.ən/' },
+  { en:'moon', zh:'月亮', ph:'/muːn/' }, { en:'night', zh:'夜晚', ph:'/naɪt/' },
+  { en:'ocean', zh:'海洋', ph:'/ˈoʊ.ʃən/' }, { en:'pencil', zh:'铅笔', ph:'/ˈpen.səl/' },
+  { en:'queen', zh:'女王', ph:'/kwiːn/' }, { en:'river', zh:'河流', ph:'/ˈrɪv.ər/' },
+  { en:'star', zh:'星星', ph:'/stɑːr/' }, { en:'tree', zh:'树', ph:'/triː/' },
+  { en:'water', zh:'水', ph:'/ˈwɔː.tər/' }, { en:'window', zh:'窗户', ph:'/ˈwɪn.doʊ/' },
+  { en:'yellow', zh:'黄色', ph:'/ˈjel.oʊ/' }, { en:'bread', zh:'面包', ph:'/bred/' },
+  { en:'cloud', zh:'云', ph:'/klaʊd/' }, { en:'door', zh:'门', ph:'/dɔːr/' },
+  { en:'fire', zh:'火', ph:'/faɪər/' }, { en:'garden', zh:'花园', ph:'/ˈɡɑːr.dən/' },
+  { en:'happy', zh:'快乐的', ph:'/ˈhæp.i/' }, { en:'music', zh:'音乐', ph:'/ˈmjuː.zɪk/' }
+  ]
+};
+
+// 游戏列表 UI 文案（按界面语言渲染，宪法 1.1 首屏不闪默认中文）
+var GAME_UI = {
+  zh: {
+    title: '🎮 游戏中心', sub: '边玩边学，轻松掌握单词',
+    quiz: ['单词闯关', '看英文选中文意思，10题一轮，限时作答', '🔥 热门'],
+    spell: ['拼写测试', '看中文意思拼写英文单词，锻炼拼写能力', '✏️ 拼写'],
+    listen: ['听力挑战', '听发音选择正确单词，提升听力反应', '🎧 听力'],
+  },
+  ja: {
+    title: '🎮 ゲームセンター', sub: '遊びながら学んで、単語をマスター',
+    quiz: ['単語クイズ', '英単語の意味を選ぼう。10問1セット、制限時間付き', '🔥 人気'],
+    spell: ['スペルテスト', '中国語の意味から英単語を綴ろう', '✏️ スペル'],
+    listen: ['リスニング', '発音を聞いて正しい単語を選ぼう', '🎧 リスニング'],
+  },
+  en: {
+    title: '🎮 Game Center', sub: 'Learn while playing, master words easily',
+    quiz: ['Word Quiz', 'Pick the right meaning. 10 rounds, timed', '🔥 Hot'],
+    spell: ['Spell Test', 'Spell the English word from its meaning', '✏️ Spell'],
+    listen: ['Listening', 'Pick the word you hear', '🎧 Listen'],
+  },
+  ko: {
+    title: '🎮 게임 센터', sub: '놀면서 배우고 단어를 익혀요',
+    quiz: ['단어 퀴즈', '뜻을 고르세요. 10문제 1세트, 제한시간', '🔥 인기'],
+    spell: ['스펠링', '뜻에서 영단어를 철자로', '✏️ 스펠링'],
+    listen: ['리스닝', '들은 단어를 고르세요', '🎧 듣기'],
+  },
+};
+function uiLang() {
+  try { if (window.AILOS && AILOS.getUILang) { var l = AILOS.getUILang(); if (l && GAME_UI[l]) return l; } } catch (e) {}
+  return 'zh';
+}
+function renderGameList() {
+  var ui = GAME_UI[uiLang()] || GAME_UI.zh;
+  var header = document.querySelector('.page-header');
+  if (header) {
+    header.querySelector('h1').textContent = ui.title;
+    header.querySelector('p').textContent = ui.sub;
+  }
+  var defs = ['quiz', 'spell', 'listen'];
+  var badges = ['#fef3c7;color:#d97706;', '#dbeafe;color:#2563eb;', ''];
+  var html = defs.map(function (k, i) {
+    var d = ui[k];
+    return '<div class="game-card" onclick="startGame(\'' + k + '\')">' +
+      '<div class="game-icon">' + ['📝','✏️','🎧'][i] + '</div>' +
+      '<div class="game-name">' + d[0] + '</div>' +
+      '<div class="game-desc">' + d[1] + '</div>' +
+      '<div class="game-badge"' + (badges[i] ? ' style="background:' + badges[i] + '"' : '') + '>' + d[2] + '</div>' +
+      '</div>';
+  }).join('');
+  var box = document.getElementById('gameList');
+  if (box) box.innerHTML = html;
+}
+
+// 当前目标语言（来自个人中心设置，单一真值源）
+function currentLang() {
+  try {
+    if (window.AILOS && AILOS.getStudyLang) {
+      var l = AILOS.getStudyLang();
+      if (l && WORD_BANKS[l]) return l;
+      if (l) return 'en'; // 该语种暂无本地词库时，用英语词库兜底，不空屏
+    }
+  } catch (e) {}
+  return 'ja';
+}
+
+// TTS 语言标签映射（宪法 五-3 发音正常）
+var TTS_LANG = { ja: 'ja-JP', ko: 'ko-KR', en: 'en-US', zh: 'zh-CN' };
+
+// 按当前语言取词库
+var WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
+
+// 语言变更时热更新词库 + 重渲染当前题目与列表（宪法 1.1：切换语言后立即重渲染）
+window.addEventListener('languageChanged', function () {
+  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
+  renderGameList(); // 列表标题/名称随界面语言更新
+  // 重渲染当前进行中的题型，确保题干/选项跟随界面语言
+  if (typeof renderQuiz === 'function' && document.getElementById('quizArea') && !document.getElementById('quizArea').classList.contains('hidden')) renderQuiz();
+  else if (typeof renderSpell === 'function' && document.getElementById('spellArea') && !document.getElementById('spellArea').classList.contains('hidden')) renderSpell();
+  else if (typeof renderListen === 'function' && document.getElementById('listenArea') && !document.getElementById('listenArea').classList.contains('hidden')) renderListen();
+});
+
+// 首屏渲染（语言就绪后立即填充列表，消除默认中文闪烁）
+function gameInit() {
+  renderGameList();
+  // 宪法 1.3：登录后若有游客错题，弹窗提示合并
+  if (currentUserKey() !== 'guest') showGuestMergeDialog();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', gameInit);
+} else {
+  gameInit();
+}
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function speak(text) {
+  // 优先走原生桥接（App 内更稳定），Web 端回退 speechSynthesis
+  var langTag = TTS_LANG[currentLang()] || 'en-US';
+  try {
+    if (window.AILOS && AILOS.isNativeAudioAvailable && AILOS.isNativeAudioAvailable()
+        && window.AilosNative && window.AilosNative.speakText) {
+      window.AilosNative.speakText(text, langTag);
+      return;
+    }
+  } catch (e) {}
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = langTag; u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// === Game State ===
+var gameType = '';
+var gameWords = [];
+var gameIdx = 0, gameScore = 0, gameTimer = null, gameAnswered = false;
+var gameWrong = []; // 本轮错题（宪法 五-1 错题提示）
+var WRONG_LIMIT = 50; // 历史错题存储上限（v1.1.0 刚性执行令 P0-6）
+
+/**
+ * 当前用户标识（用于错题本地隔离）
+ * v1.1.0 深度穿透审计 · P1-1 修复：
+ *   原 key 只含「语言+类型」，同一浏览器多账号登录时错题会串号，
+ *   A 用户的错题 B 用户能看到。此处从 JWT payload 解析 userId 做分区。
+ *   解析失败（游客/无 token）统一归入 'guest' 分区。
+ */
+function currentUserKey() {
+  try {
+    var token = localStorage.getItem('yandao_token_v1') || '';
+    if (!token) return 'guest';
+    var parts = token.split('.');
+    if (parts.length < 2) return 'guest';
+    var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var payload = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    return payload.userId || payload.guestId || 'guest';
+  } catch (e) {
+    return 'guest';
+  }
+}
+
+/** 历史错题 key：按「用户 + 语言 + 游戏类型」分区，杜绝多账号串号 */
+function wrongKey(type) {
+  var lang = (window.AILOS && AILOS.getStudyLang && AILOS.getStudyLang()) || 'unknown';
+  return 'yandao_game_wrong_' + currentUserKey() + '_' + lang + '_' + type;
+}
+
+/**
+ * 退出登录时清空当前用户的错题分区（P1-1 要求）
+ * 由 common.js 的 logout 流程或 storage 事件触发。
+ */
+function clearCurrentUserWrong() {
+  try {
+    var uid = currentUserKey();
+    var prefix = 'yandao_game_wrong_' + uid + '_';
+    var doomed = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0) doomed.push(k);
+    }
+    doomed.forEach(function (k) { localStorage.removeItem(k); });
+  } catch (e) { /* 忽略：清理失败不影响主流程 */ }
+}
+
+// token 被清除（退出登录）时，清空该用户错题分区，避免残留给下一个登录者
+window.addEventListener('storage', function (e) {
+  if (e.key === 'yandao_token_v1' && !e.newValue) clearCurrentUserWrong();
+});
+
+/**
+ * 宪法 1.3 游客错题合并：
+ *   游客（无 token）错题存 guest 分区；登录后若 guest 分区有数据，
+ *   弹窗提示「是否合并到当前账号」，确认则合并，取消则保留 guest 分区不丢失。
+ */
+function collectGuestWrong() {
+  var out = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k && k.indexOf('yandao_game_wrong_guest_') === 0) {
+      try { out.push({ key: k, data: JSON.parse(localStorage.getItem(k) || '[]') }); } catch (e) {}
+    }
+  }
+  return out;
+}
+function mergeGuestWrong() {
+  var guest = collectGuestWrong();
+  var merged = 0;
+  guest.forEach(function (g) {
+    // 把 guest 分区数据并入当前用户对应「类型」分区（语言未知时归入当前语言分区）
+    var type = g.key.replace('yandao_game_wrong_guest_', '');
+    var target = wrongKey(type);
+    try {
+      var prev = JSON.parse(localStorage.getItem(target) || '[]');
+      var all = prev.concat(g.data);
+      var seen = {}; var dedup = [];
+      for (var i = all.length - 1; i >= 0; i--) {
+        var it = all[i]; var sig = (it.q || '') + '|' + (it.zh || '');
+        if (!seen[sig]) { seen[sig] = 1; dedup.unshift(it); }
+      }
+      if (dedup.length > WRONG_LIMIT) dedup = dedup.slice(dedup.length - WRONG_LIMIT);
+      localStorage.setItem(target, JSON.stringify(dedup));
+      localStorage.removeItem(g.key); // 合并后清除游客分区
+      merged++;
+    } catch (e) {}
+  });
+  return merged;
+}
+function showGuestMergeDialog() {
+  var guest = collectGuestWrong();
+  var total = guest.reduce(function (s, g) { return s + (g.data ? g.data.length : 0); }, 0);
+  if (total === 0) return;
+  if (!window.confirm('检测到游客模式下有 ' + total + ' 条错题，是否合并到当前账号？\n（取消则保留游客错题，不丢失）')) {
+    return; // 取消：保留 guest 分区
+  }
+  var n = mergeGuestWrong();
+  if (n > 0 && typeof renderHistoryWrong === 'function') renderHistoryWrong('quizHistoryWrong');
+}
+
+/** 持久化本轮错题到 localStorage（按语言+类型分类，超 50 条覆盖最早） */
+function saveWrongHistory(type) {
+  try {
+    var key = wrongKey(type);
+    var prev = [];
+    try { prev = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { prev = []; }
+    var merged = prev.concat(gameWrong);
+    // 去重（按 q+zh），保留最新；超出限额保留最近 WRONG_LIMIT 条
+    var seen = {};
+    var dedup = [];
+    for (var i = merged.length - 1; i >= 0; i--) {
+      var it = merged[i];
+      var uid = (it.q || '') + '|' + (it.zh || '');
+      if (!seen[uid]) { seen[uid] = 1; dedup.push(it); }
+    }
+    dedup.reverse();
+    if (dedup.length > WRONG_LIMIT) dedup = dedup.slice(dedup.length - WRONG_LIMIT);
+    localStorage.setItem(key, JSON.stringify(dedup));
+  } catch (e) { /* localStorage 不可用时静默 */ }
+}
+
+/** 读取历史错题 */
+function getWrongHistory(type) {
+  try {
+    return JSON.parse(localStorage.getItem(wrongKey(type)) || '[]');
+  } catch (e) { return []; }
+}
+
+/** 记录错题（同时累计本轮 + 暂不即时落盘，结算时统一 saveWrongHistory） */
+function recordWrong(word, yourAnswer) {
+  gameWrong.push({
+    q: word.en,
+    zh: word.zh,
+    ph: word.ph || '',
+    your: yourAnswer || '（未作答）'
+  });
+}
+
+/** 渲染错题提示 */
+function renderWrongList(containerId) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  if (gameWrong.length === 0) {
+    box.innerHTML = '<div class="wrong-empty">🎉 全部答对，太棒了！</div>';
+    return;
+  }
+  var html = '<div class="wrong-title">错题回顾（' + gameWrong.length + '）</div>';
+  gameWrong.forEach(function (w) {
+    html += '<div class="wrong-item">'
+      + '<span class="wi-q"></span>'
+      + '<span class="wi-a"></span>'
+      + '</div>';
+  });
+  box.innerHTML = html;
+  // 用 textContent 填充，避免词条内容破坏 HTML
+  var items = box.querySelectorAll('.wrong-item');
+  gameWrong.forEach(function (w, i) {
+    if (!items[i]) return;
+    items[i].querySelector('.wi-q').textContent = w.q + (w.ph ? '（' + w.ph + '）' : '');
+    items[i].querySelector('.wi-a').textContent = w.zh;
+  });
+}
+
+/** 渲染历史错题（从 localStorage 读取，按语言+类型，刷新后不丢失，v1.1.0 刚性执行令 P0-6） */
+function renderHistoryWrong(containerId) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  var hist = getWrongHistory(gameType);
+  if (hist.length === 0) {
+    box.innerHTML = '<div class="wrong-empty">暂无历史错题记录</div>';
+    return;
+  }
+  var html = '<div class="wrong-title">历史错题（' + hist.length + ' · 本语言本类型）</div>';
+  hist.slice().reverse().forEach(function (w) {
+    html += '<div class="wrong-item">'
+      + '<span class="wi-q"></span>'
+      + '<span class="wi-a"></span>'
+      + '</div>';
+  });
+  box.innerHTML = html;
+  var items = box.querySelectorAll('.wrong-item');
+  hist.slice().reverse().forEach(function (w, i) {
+    if (!items[i]) return;
+    items[i].querySelector('.wi-q').textContent = w.q + (w.ph ? '（' + w.ph + '）' : '');
+    items[i].querySelector('.wi-a').textContent = w.zh;
+  });
+}
+
+function hideAll() {
+  ['gameList','quizArea','spellArea','listenArea'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('active'); el.style.display = 'none'; }
+  });
+  ['quizResult','spellResult','listenResult'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.classList.remove('active');
+  });
+}
+
+function startGame(type) {
+  hideAll();
+  gameType = type;
+  gameWords = shuffle(WORDS).slice(0, 10);
+  gameIdx = 0;
+  gameScore = 0;
+  gameAnswered = false;
+  gameWrong = [];
+  clearInterval(gameTimer);
+
+  if (type === 'quiz') {
+    document.getElementById('quizArea').classList.add('active');
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('quizQuestion').style.display = 'block';
+    renderQuiz();
+  } else if (type === 'spell') {
+    document.getElementById('spellArea').classList.add('active');
+    document.getElementById('spellArea').style.display = 'block';
+    document.getElementById('spellQuestion').style.display = 'block';
+    renderSpell();
+  } else if (type === 'listen') {
+    document.getElementById('listenArea').classList.add('active');
+    document.getElementById('listenArea').style.display = 'block';
+    document.getElementById('listenQuestion').style.display = 'block';
+    renderListen();
+  }
+}
+
+function stopGame() {
+  clearInterval(gameTimer);
+  hideAll();
+  document.getElementById('gameList').style.display = 'block';
+  document.getElementById('gameList').classList.add('active');
+}
+
+// === QUIZ GAME ===
+function renderQuiz() {
+  if (gameIdx >= gameWords.length) { showResult('quiz'); return; }
+  var word = gameWords[gameIdx];
+  var timeLeft = 10;
+  gameAnswered = false;
+
+  document.getElementById('quizScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('quizProgress').textContent = (gameIdx + 1) + '/10';
+  document.getElementById('quizTimer').textContent = '⏱ ' + timeLeft + 's';
+  document.getElementById('qWord').textContent = word.en;
+  document.getElementById('qNextBtn').classList.remove('show');
+
+  var options = [word.zh];
+  var wrongs = WORDS.filter(function(w) { return w.zh !== word.zh; });
+  shuffle(wrongs).slice(0, 3).forEach(function(w) { options.push(w.zh); });
+  options = shuffle(options);
+
+  // v1.1.0 修复：原实现把词条内容直接拼进 onclick 字符串，
+  // 词条含引号/撇号（如英文 don't、部分外语词）时 HTML 属性被截断，点击即报错无法作答。
+  // 改为 DOM 绑定，彻底规避引号转义问题。
+  var qBox = document.getElementById('qOptions');
+  qBox.innerHTML = '';
+  options.forEach(function(opt) {
+    var d = document.createElement('div');
+    d.className = 'quiz-option';
+    d.textContent = opt;
+    d.onclick = function() { answerQuiz(word.zh, opt, d); };
+    qBox.appendChild(d);
+  });
+
+  clearInterval(gameTimer);
+  gameTimer = setInterval(function() {
+    timeLeft--;
+    document.getElementById('quizTimer').textContent = '⏱ ' + timeLeft + 's';
+    if (timeLeft <= 0) { clearInterval(gameTimer); if (!gameAnswered) quizTimeUp(); }
+  }, 1000);
+}
+
+function answerQuiz(correct, chosen, el) {
+  if (gameAnswered) return;
+  gameAnswered = true;
+  clearInterval(gameTimer);
+  var opts = document.querySelectorAll('#qOptions .quiz-option');
+  if (chosen === correct) { el.classList.add('correct'); gameScore += 10; }
+  else {
+    el.classList.add('wrong');
+    opts.forEach(function(o) { if (o.textContent === correct) o.classList.add('highlight-correct'); });
+    recordWrong(gameWords[gameIdx], chosen);
+  }
+  opts.forEach(function(o) { o.style.pointerEvents = 'none'; });
+  document.getElementById('quizScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('qNextBtn').classList.add('show');
+  document.getElementById('quizTimer').textContent = chosen === correct ? '✓ 正确!' : '✗ 错误!';
+}
+
+function quizTimeUp() {
+  gameAnswered = true;
+  var opts = document.querySelectorAll('#qOptions .quiz-option');
+  var word = gameWords[gameIdx];
+  opts.forEach(function(o) { o.style.pointerEvents = 'none'; if (o.textContent === word.zh) o.classList.add('highlight-correct'); });
+  recordWrong(word, '');
+  document.getElementById('qNextBtn').classList.add('show');
+  document.getElementById('quizTimer').textContent = '⏰ 时间到!';
+}
+
+function nextQuiz() { gameIdx++; renderQuiz(); }
+
+// === SPELL GAME ===
+function renderSpell() {
+  if (gameIdx >= gameWords.length) { showResult('spell'); return; }
+  var word = gameWords[gameIdx];
+  gameAnswered = false;
+  document.getElementById('spellScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('spellProgress').textContent = (gameIdx + 1) + '/10';
+  document.getElementById('sChinese').textContent = word.zh;
+  document.getElementById('sPhonetic').textContent = word.ph || '';
+  document.getElementById('sInput').value = '';
+  document.getElementById('sFeedback').textContent = '';
+  document.getElementById('sNextBtn').classList.remove('show');
+  document.getElementById('sSubmitBtn').style.display = 'block';
+  document.getElementById('sInput').disabled = false;
+  document.getElementById('sInput').focus();
+  window._spellWord = word.en;
+  window._spellReading = word.ph || '';
+
+  // 日/韩等非拉丁语种：键盘直接输入汉字/假名/谚文不现实，
+  // 允许输入罗马音（读音）作为正确答案，并在输入框给出提示。
+  var inp = document.getElementById('sInput');
+  var lang = currentLang();
+  if (lang === 'ja' || lang === 'ko') {
+    inp.placeholder = '输入罗马音，如 ' + (word.ph || 'romaji');
+  } else {
+    inp.placeholder = '输入单词拼写';
+  }
+}
+
+function playCurrentWord() { if (window._spellWord) speak(window._spellWord); }
+
+function checkSpell() {
+  if (gameAnswered) return;
+  gameAnswered = true;
+  var input = document.getElementById('sInput').value.trim().toLowerCase();
+  var correct = (window._spellWord || '').toLowerCase();
+  // 罗马音去掉长音符后比对（kōri -> kori），避免用户打不出特殊字符被判错
+  var reading = (window._spellReading || '').toLowerCase();
+  var norm = function (s) {
+    return s.normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s;
+  };
+  var isCorrect = input !== '' &&
+    (input === correct || (reading !== '' && norm(input) === norm(reading)));
+
+  if (isCorrect) {
+    gameScore += 10;
+    document.getElementById('sFeedback').innerHTML = '<span style="color:#10b981">✓ 正确!</span>';
+  } else {
+    // 错误时显示正确答案（宪法 五-2）
+    var answer = window._spellWord + (reading ? '（' + window._spellReading + '）' : '');
+    document.getElementById('sFeedback').innerHTML =
+      '<span style="color:#ef4444">✗ 正确答案: ' + answer + '</span>';
+    recordWrong(gameWords[gameIdx], document.getElementById('sInput').value.trim());
+  }
+  document.getElementById('spellScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('sSubmitBtn').style.display = 'none';
+  document.getElementById('sInput').disabled = true;
+  document.getElementById('sNextBtn').classList.add('show');
+}
+
+function nextSpell() { gameIdx++; renderSpell(); }
+
+// === LISTEN GAME ===
+function renderListen() {
+  if (gameIdx >= gameWords.length) { showResult('listen'); return; }
+  var word = gameWords[gameIdx];
+  gameAnswered = false;
+  document.getElementById('listenScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('listenProgress').textContent = (gameIdx + 1) + '/10';
+  document.getElementById('lFeedback').textContent = '';
+  document.getElementById('lNextBtn').classList.remove('show');
+  window._listenWord = word;
+
+  var options = [word.en];
+  var wrongs = WORDS.filter(function(w) { return w.en !== word.en; });
+  shuffle(wrongs).slice(0, 3).forEach(function(w) { options.push(w.en); });
+  options = shuffle(options);
+
+  // 同 quiz：改为 DOM 绑定，避免词条含引号导致 onclick 属性截断
+  var lBox = document.getElementById('lOptions');
+  lBox.innerHTML = '';
+  options.forEach(function(opt) {
+    var d = document.createElement('div');
+    d.className = 'quiz-option';
+    d.textContent = opt;
+    d.onclick = function() { answerListen(word.en, opt, d); };
+    lBox.appendChild(d);
+  });
+
+  // Auto play
+  setTimeout(function() { playListenWord(); }, 500);
+}
+
+function playListenWord() { if (window._listenWord) speak(window._listenWord.en); }
+
+function answerListen(correct, chosen, el) {
+  if (gameAnswered) return;
+  gameAnswered = true;
+  var opts = document.querySelectorAll('#lOptions .quiz-option');
+  var isCorrect = chosen === correct;
+  if (isCorrect) { el.classList.add('correct'); gameScore += 10; document.getElementById('lFeedback').innerHTML = '<span style="color:#10b981">✓ 正确!</span>'; }
+  else {
+    el.classList.add('wrong');
+    opts.forEach(function(o) { if (o.textContent === correct) o.classList.add('highlight-correct'); });
+    document.getElementById('lFeedback').innerHTML = '<span style="color:#ef4444">✗ 正确答案: ' + correct + '</span>';
+    recordWrong(gameWords[gameIdx], chosen);
+  }
+  opts.forEach(function(o) { o.style.pointerEvents = 'none'; });
+  document.getElementById('listenScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('lNextBtn').classList.add('show');
+}
+
+function nextListen() { gameIdx++; renderListen(); }
+
+// === RESULT ===
+function showResult(type) {
+  clearInterval(gameTimer);
+  var prefix = type === 'quiz' ? '' : (type === 'spell' ? 'spell' : 'listen');
+  var questionId = type === 'quiz' ? 'quizQuestion' : (type === 'spell' ? 'spellQuestion' : 'listenQuestion');
+  document.getElementById(questionId).style.display = 'none';
+  document.getElementById((prefix||type) + 'Result').classList.add('active');
+  document.getElementById((prefix||'') + 'FinalScore').textContent = gameScore;
+  var stars = gameScore >= 90 ? '⭐⭐⭐' : gameScore >= 60 ? '⭐⭐' : gameScore >= 30 ? '⭐' : '💪';
+  document.getElementById((prefix||'') + 'FinalStars').textContent = stars;
+  // 结算页展示错题提示（宪法 五-1）
+  renderWrongList(type + 'WrongList');
+  // 持久化本轮错题 + 渲染历史错题（v1.1.0 刚性执行令 P0-6）
+  saveWrongHistory(type);
+  renderHistoryWrong(type + 'HistoryWrong');
+}
+</script>
+</body>
+</html>

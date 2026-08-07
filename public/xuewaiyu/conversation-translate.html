@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>对话翻译 - 言道学学外语</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f6fa; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+    .header { text-align: center; padding: 20px 0; }
+    .header h1 { font-size: 22px; font-weight: 600; }
+    .lang-bar { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 12px 0; padding: 10px; background: #fff; border-radius: 8px; }
+    .lang-bar select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .chat-area { background: #fff; border-radius: 12px; padding: 16px; min-height: 300px; margin: 16px 0; overflow-y: auto; }
+    .msg { margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; max-width: 80%; }
+    .msg.user { background: #667eea; color: #fff; margin-left: auto; }
+    .msg.translated { background: #f0f0f0; color: #333; margin-left: auto; font-size: 13px; }
+    .msg.ai { background: #e8f5e9; color: #333; }
+    .msg.ai-translated { background: #f0f0f0; color: #333; font-size: 13px; }
+    .input-area { display: flex; gap: 8px; margin: 12px 0; }
+    .input-area input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+    .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .status { text-align: center; padding: 8px; font-size: 14px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>💬 对话翻译</h1></div>
+    <div class="lang-bar">
+      <select id="myLang"><option value="zh">中文</option><option value="en">英语</option><option value="ja">日语</option></select>
+      <span>⇄</span>
+      <select id="targetLang"><option value="ja">日语</option><option value="zh">中文</option><option value="en">英语</option></select>
+    </div>
+    <div class="chat-area" id="chatArea">
+      <div style="text-align:center;color:#999;padding:40px 0;">开始对话翻译，输入文字即可实时翻译</div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="msgInput" placeholder="输入要翻译的内容..." disabled>
+      <button class="btn btn-primary" id="btnStartChat" data-right="ai_deep_analysis" data-feature-name="对话翻译">开始对话</button>
+    </div>
+    <div class="status" id="chatStatus">需高级会员权限</div>
+  </div>
+
+  <script src="/xuewaiyu/fe-rights.js"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+  <script>
+    // 对话翻译逻辑（需高级会员权益ai_deep_analysis）
+    document.getElementById('btnStartChat').addEventListener('click', async function(e) {
+      // fe-rights.js已在捕获阶段拦截无权限点击，有权限时执行
+      var input = document.getElementById('msgInput');
+      var btn = document.getElementById('btnStartChat');
+      var status = document.getElementById('chatStatus');
+
+      if (btn.textContent === '开始对话') {
+        input.disabled = false;
+        btn.textContent = '发送';
+        status.textContent = '对话已开启';
+        status.style.color = '#4caf50';
+        input.focus();
+      } else if (input.value.trim()) {
+        var msg = input.value.trim();
+        input.value = '';
+        status.textContent = '翻译中...';
+        status.style.color = '#ff9800';
+
+        // 添加用户消息
+        var chatArea = document.getElementById('chatArea');
+        var userMsg = document.createElement('div');
+        userMsg.className = 'msg user';
+        userMsg.textContent = msg;
+        chatArea.appendChild(userMsg);
+
+        // 真实接入 /api/ai/translate
+        try {
+          var token = localStorage.getItem('yandao_token_v1');
+          var resp = await fetch('/xuewaiyu/api/ai/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || '') },
+            body: JSON.stringify({ text: msg, sourceLang: 'ja' })
+          });
+          var result = await resp.json();
+          var translated = document.createElement('div');
+          translated.className = 'msg translated';
+          translated.textContent = (result && result.translation) ? result.translation : (result && result.text) ? result.text : '（翻译失败）';
+          chatArea.appendChild(translated);
+          chatArea.scrollTop = chatArea.scrollHeight;
+          status.textContent = '翻译成功';
+          status.style.color = '#4caf50';
+        } catch(err) {
+          status.textContent = '翻译失败: ' + err.message;
+          status.style.color = '#f44336';
+        }
+      }
+    });
+
+    document.getElementById('msgInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('btnStartChat').click();
+      }
+    });
+  </script>
+</body>
+</html>

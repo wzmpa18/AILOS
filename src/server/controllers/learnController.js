@@ -445,6 +445,20 @@ const learnController = {
   },
 
   /**
+   * GET /api/learn/content/:type/:language/:level
+   * 兼容路径参数格式，转换为查询参数后复用 getContent
+   */
+  getContentByPath(req, res, next) {
+    req.query = {
+      ...req.query,
+      type: req.params.type,
+      language: req.params.language,
+      level: req.params.level || 'beginner',
+    };
+    return this.getContent(req, res, next);
+  },
+
+  /**
    * GET /api/learn/config
    * 返回可用的学习内容配置（供前端参考）
    */

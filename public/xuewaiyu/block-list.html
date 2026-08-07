@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>拉黑管理</title>
+  <link rel="stylesheet" href="/xuewaiyu/assets/common.css">
+  <style>
+    body { background: var(--bg, #f5f6fa); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+    .page-header { padding: 16px 0; }
+    .page-header h1 { font-size: 20px; font-weight: 700; margin: 0; }
+    .block-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 12px; margin-bottom: 10px; }
+    .block-item img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+    .block-item .info { flex: 1; }
+    .block-item .name { font-weight: 600; font-size: 15px; }
+    .block-item .meta { font-size: 12px; color: #999; }
+    .btn-unblock { background: #4F46E5; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+    .empty { text-align: center; color: #999; padding: 40px 0; }
+    .loading { text-align: center; color: #999; padding: 40px 0; }
+  </style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+  <div class="container">
+    <div class="page-header"><h1 id="title">拉黑管理</h1></div>
+    <div id="list"><div class="loading">加载中…</div></div>
+  </div>
+
+  <script>
+    var I18N = {
+      zh: { title:'拉黑管理', unblock:'移出拉黑', empty:'暂无拉黑用户', loading:'加载中…' },
+      ja: { title:'ブロック管理', unblock:'ブロック解除', empty:'ブロック中のユーザーはいません', loading:'読み込み中…' },
+      en: { title:'Blocked Users', unblock:'Unblock', empty:'No blocked users', loading:'Loading…' },
+      ko: { title:'차단 관리', unblock:'차단 해제', empty:'차단된 사용자 없음', loading:'불러오는 중…' },
+    };
+    function uiLang(){ try{ if(window.AILOS&&AILOS.getUILang){var l=AILOS.getUILang(); if(l&&I18N[l])return l;} }catch(e){} return 'zh'; }
+    function T(){ return I18N[uiLang()]||I18N.zh; }
+    function token(){ return localStorage.getItem('yandao_token_v1')||localStorage.getItem('ailos_token')||''; }
+    function headers(){ var t=token(); return t?{'Content-Type':'application/json','Authorization':'Bearer '+t}:{'Content-Type':'application/json'}; }
+
+    async function loadBlocks() {
+      var box = document.getElementById('list');
+      box.innerHTML = '<div class="loading">'+T().loading+'</div>';
+      try {
+        var res = await fetch('/xuewaiyu/api/v1/social/blocks?page=1&limit=50', { headers: headers() });
+        var json = await res.json();
+        var list = (json.data && json.data.list) || [];
+        if (list.length === 0) { box.innerHTML = '<div class="empty">'+T().empty+'</div>'; return; }
+        box.innerHTML = list.map(function (u) {
+          var av = u.avatar && u.avatar.indexOf('/assets/') !== 0 ? u.avatar : '/xuewaiyu/assets/images/default_avatar.png';
+          return '<div class="block-item">' +
+            '<img src="'+av+'" onerror="this.src=\'/xuewaiyu/assets/images/default_avatar.png\'">' +
+            '<div class="info"><div class="name">'+esc(u.nickname||'未知用户')+'</div>' +
+            '<div class="meta">'+(u.uniqueId||'')+'</div></div>' +
+            '<button class="btn-unblock" onclick="unblock(\''+u.targetId+'\')">'+T().unblock+'</button>' +
+            '</div>';
+        }).join('');
+      } catch (e) {
+        box.innerHTML = '<div class="empty">加载失败</div>';
+      }
+    }
+    function esc(s){ return String(s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+    async function unblock(targetId) {
+      if (!confirm('确定移出拉黑？')) return;
+      try {
+        var res = await fetch('/xuewaiyu/api/v1/social/block/' + targetId, { method: 'DELETE', headers: headers() });
+        if (res.ok) { loadBlocks(); }
+        else { alert('操作失败'); }
+      } catch (e) { alert('网络错误'); }
+    }
+
+    function applyUI(){ document.getElementById('title').textContent = T().title; }
+    applyUI();
+    loadBlocks();
+    window.addEventListener('languageChanged', function(){ applyUI(); loadBlocks(); });
+  </script>
+</body>
+</html>

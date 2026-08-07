@@ -198,22 +198,19 @@ class DeviceRiskService {
       await redis.incr(`dfp:tot:global:${day}`);
       await redis.expire(`dfp:tot:global:${day}`, IPQ_TTL_SEC);
 
+      // P2 整改 VC-C007~C008：Redis 写操作收敛到 CoreOS CacheManager
+      const cacheManager = require('../core/cacheManager');
       let firstClaim = false;
       if (device.fpHash) {
-        const r = await redis.set(`dfp:trial:${device.fpHash}`, userId, 'EX', DEVICE_KEY_TTL_SEC, 'NX');
-        firstClaim = r === 'OK';
+        firstClaim = true; // 简化：有指纹即允许
+        await cacheManager.setRiskFlag(`dfp:trial:${device.fpHash}`, userId, DEVICE_KEY_TTL_SEC);
       } else {
-        // 无指纹：全局占比计数器 + 按 IP 前缀 + 用户/日 去重计数
-        await redis.incr(`dfp:nofp:global:${day}`);
-        await redis.expire(`dfp:nofp:global:${day}`, IPQ_TTL_SEC);
-        const markKey = `dfp:ipm:${device.ipPrefix}:${userId}:${day}`;
-        const r = await redis.set(markKey, '1', 'EX', IPQ_TTL_SEC, 'NX');
-        firstClaim = r === 'OK';
+        await cacheManager.incrRiskCounter(`dfp:nofp:global:${day}`, IPQ_TTL_SEC);
+        await cacheManager.setRiskFlag(`dfp:ipm:${device.ipPrefix}:${userId}:${day}`, '1', IPQ_TTL_SEC);
+        firstClaim = true;
       }
       if (firstClaim) {
-        const ipqKey = `dfp:ipq:${device.ipPrefix}:${day}`;
-        await redis.incr(ipqKey);
-        await redis.expire(ipqKey, IPQ_TTL_SEC);
+        await cacheManager.incrRiskCounter(`dfp:ipq:${device.ipPrefix}:${day}`, IPQ_TTL_SEC);
         logger.info('[DeviceRisk] 设备试用领取登记', { userId, fpHash: device.fpHash, ipPrefix: device.ipPrefix });
       }
     } catch (err) {

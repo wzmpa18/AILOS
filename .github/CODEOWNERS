@@ -1,0 +1,14 @@
+# AILOS CODEOWNERS — 治理文档审批权限配置
+# 图谱版本: v3.0.0 | 宪法版本: v2.6.0
+# 
+# 规则：docs/constitution/ 路径下所有文件唯一审批人为总工程师
+# 无审批的 PR 自动拦截，无法合并
+
+# 治理文档（宪法、图谱、账簿、台账）— 仅总工程师可审批
+docs/constitution/** @ChiefEngineer
+
+# 治理脚本（CI扫描、账簿校验）— 总工程师 + 安全合规审计中心
+scripts/governance/** @ChiefEngineer
+
+# 项目根级别宪法文件
+AILOS_双宪法_集成版.md @ChiefEngineer

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<title>学习中心 - 言道学学外语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF;
+    --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #1E293B; --text-secondary: #64748B;
+    --text-muted: #94A3B8; --border: #E2E8F0; --radius: 16px; --radius-sm: 10px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+  .header { background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; padding: 24px 20px 32px; border-radius: 0 0 24px 24px; }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+  .container { padding: 16px; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .card { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card-item { display: flex; align-items: center; padding: 14px 16px; background: var(--card-bg); border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+  .card-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(79,70,229,0.1); }
+  .card-item .icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 14px; flex-shrink: 0; }
+  .card-item .info { flex: 1; }
+  .card-item .info .name { font-size: 15px; font-weight: 600; }
+  .card-item .info .desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .card-item .arrow { color: var(--text-muted); font-size: 18px; }
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .status-ongoing { background: #EEF2FF; color: #4F46E5; }
+  .status-new { background: #ECFDF5; color: #10B981; }
+  .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #4F46E5, #7C3AED); border-radius: 3px; transition: width 0.3s; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; padding: 8px 0 env(safe-area-inset-bottom); z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 0; cursor: pointer; color: var(--text-muted); font-size: 11px; text-decoration: none; }
+  .nav-item.active { color: var(--primary); }
+  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>学习中心</h1>
+  <p>选择课程，开始你的语言之旅</p>
+</div>
+
+<div class="container" id="learnContent">
+  <div class="loading">加载中...</div>
+</div>
+
+<!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） -->
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="/xuewaiyu/assets/common.js?v=3.0.0-20260806"></script>
+<script>
+const API = '/api';
+
+// 登录态统一走 AILOS.getToken（宪法 一-2 单一真值源）
+function getToken() {
+  if (window.AILOS && AILOS.getToken) return AILOS.getToken() || '';
+  return localStorage.getItem('yandao_token_v1') || '';
+}
+
+// 目标语言统一从用户配置读取，禁止硬编码语种（宪法 一-3）
+function getStudyLang() {
+  if (window.AILOS && AILOS.getStudyLang) return AILOS.getStudyLang() || (AILOS && AILOS.getStudyLang ? AILOS.getStudyLang() : 'ja');
+  return 'ja';
+}
+
+// 词汇学习真实进度（来自 /api/v1/practice/progress，禁止硬编码）
+let VOCAB_PROGRESS = null;
+
+const LANG_LABEL = { ja: '日语', en: '英语', ko: '韩语', fr: '法语', de: '德语', es: '西班牙语', zh: '中文' };
+
+async function loadVocabProgress() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(API + '/v1/practice/progress?lang=' + encodeURIComponent(getStudyLang()), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return (d && d.success && d.data) ? d.data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+
+// P3 任务4.2: 加载30天计划当日任务
+async function loadTodayPlan() {
+  var token = getToken();
+  if (!token) return null;
+  try {
+    var r = await fetch(API + '/plan/today', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) return null;
+    var d = await r.json();
+    return (d && d.success && d.data) ? d.data : null;
+  } catch(e) { return null; }
+}
+
+async function loadContent() {
+  const token = getToken();
+  // 仅在确实无凭证时跳登录，不做无理由强制登出
+  if (!token) { window.location.href = 'login.html'; return; }
+
+  try {
+    var todayPlan = await loadTodayPlan();
+    const [res, vp] = await Promise.all([
+      fetch(API + '/content?language=' + encodeURIComponent(getStudyLang()) + '&type=vocabulary', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }),
+      loadVocabProgress()
+    ]);
+    VOCAB_PROGRESS = vp;
+    // 仅 401 判定登录失效；其余错误保留登录态并给友好提示
+    if (res.status === 401) { window.location.href = 'landing.html'; return; }
+    if (!res.ok) throw new Error('接口异常');
+    const data = await res.json();
+    renderContent(data, todayPlan);
+  } catch (e) {
+    showLoadError();
+  }
+}
+
+// 空状态兜底：友好中文提示 + 重试按钮（宪法 六-2）
+function showLoadError() {
+  document.getElementById('learnContent').innerHTML =
+    '<div class="loading">内容加载失败，请检查网络后重试<br>' +
+    '<button onclick="loadContent()" style="margin-top:14px;padding:9px 22px;border:none;' +
+    'border-radius:9px;background:#4a6cf7;color:#fff;font-size:14px;cursor:pointer">重新加载</button></div>';
+}
+
+function renderContent(data, todayPlan) {
+  const container = document.getElementById('learnContent');
+
+  // P3 任务4.2: 今日学习任务卡片（30天计划）
+  if (todayPlan) {
+    var planHtml = '<div class="section"><div class="section-title">📅 今日学习任务</div>';
+    if (todayPlan.tasks && todayPlan.tasks.length > 0) {
+      todayPlan.tasks.forEach(function(task, idx) {
+        var doneClass = task.completed ? 'status-ongoing' : 'status-new';
+        var doneText = task.completed ? '已完成' : '待学习';
+        planHtml += '<div class="card-item" onclick="startDayLearn()">' +
+          '<div class="icon" style="background:#EEF2FF">' + (idx+1) + '</div>' +
+          '<div class="info"><div class="name">' + task.title + ' <span class="status-badge ' + doneClass + '">' + doneText + '</span></div>' +
+          '<div class="desc">' + (task.desc || '') + ' · ' + (task.duration || 15) + '分钟</div></div>' +
+          '<span class="arrow">→</span></div>';
+      });
+    } else {
+      planHtml += '<div class="card-item"><div class="icon">📖</div><div class="info"><div class="name">第' + (todayPlan.dayNumber || 1) + '天 · ' + (todayPlan.title || '学习任务') + '</div><div class="desc">' + (todayPlan.desc || '') + '</div></div><span class="arrow">→</span></div>';
+    }
+    planHtml += '<button onclick="startDayLearn()" style="width:100%;padding:14px;margin-top:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">🚀 开始今日学习</button></div>';
+    container.innerHTML = planHtml;
+  } else {
+    container.innerHTML = '<div class="section"><div class="section-title">📅 今日学习任务</div><div class="card-item"><div class="icon">📖</div><div class="info"><div class="name">暂无学习计划</div><div class="desc">完成水平测试后自动生成专属学习计划</div></div></div></div>';
+  }
+
+  // 课程列表
+  const container = document.getElementById('learnContent');
+  const vp = VOCAB_PROGRESS;
+  const langName = LANG_LABEL[getStudyLang()] || getStudyLang();
+  const vocabDesc = vp
+    ? `${langName} · 已掌握 ${vp.learnedWords}/${vp.totalWords} 词 · 今日 ${vp.todayMinutes} 分钟`
+    : `${langName} · 积累核心词汇，打好语言基础`;
+
+  const categories = [
+    { icon: '📝', name: '词汇学习', desc: vocabDesc, type: 'vocab', status: (vp && vp.learnedWords > 0) ? 'ongoing' : 'new', progress: vp ? vp.progressPercent : 0 },
+    { icon: '📖', name: '语法精讲', desc: '系统学习语法规则', type: 'grammar', status: 'new', progress: 0 },
+    { icon: '🎧', name: '听力训练', desc: '提升听力理解能力', type: 'listening', status: 'new', progress: 0 },
+    { icon: '📰', name: '阅读理解', desc: '拓展阅读，增强语感', type: 'reading', status: 'new', progress: 0 },
+    { icon: '💬', name: 'AI 对话', desc: '与AI导师实时对话练习', type: 'conversation', status: 'new', progress: 0 },
+  ];
+
+  container.innerHTML = categories.map(c => `
+    <div class="section">
+      <div class="card-item" onclick="openModule('${c.type}')">
+        <div class="icon" style="background: var(--primary-light)">${c.icon}</div>
+        <div class="info">
+          <div class="name">${c.name} <span class="status-badge ${c.status === 'ongoing' ? 'status-ongoing' : 'status-new'}">${c.status === 'ongoing' ? '进行中' : '新课程'}</span></div>
+          <div class="desc">${c.desc}</div>
+          ${c.progress > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>` : ''}
+        </div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 零空壳：每个入口都跳到真实可用页面
+// P2 修复：通过 URL 参数区分模块类型，让 sentences.html / vocabulary.html 根据参数渲染不同内容
+// P3-终极：跳转同时带 type 参数，确保后端按 contentType 筛选返回差异化内容
+
+// P3 任务4.2: 开始今日学习闭环（跟读→发音→错题→打卡）
+function startDayLearn() {
+  var lang = getStudyLang();
+  // 第1步：跳转词汇学习页（自动跟读+发音测试+错题复习闭环）
+  location.href = 'vocabulary.html?lang=' + encodeURIComponent(lang) + '&mode=daily';
+}
+const MODULE_ROUTES = {
+  vocab: 'vocabulary.html',
+  grammar: 'sentences.html?module=grammar&type=grammar',
+  listening: 'practice.html',
+  reading: 'sentences.html?module=reading&type=reading',
+  conversation: 'chat.html',
+};
+
+function openModule(type) {
+    var lang = getStudyLang();
+
+  const target = MODULE_ROUTES[type];
+  if (!target) return;
+  window.location.href = target;
+}
+
+loadContent();
+
+// v1.1.0 深度穿透审计 · 漏洞5 修复：
+// 学习语言在别处被切换后，本页原先不会刷新，仍展示上一门语言的内容（串语）。
+// 监听全局 languageChanged 事件，重新按最新学习语言拉取内容。
+window.addEventListener('languageChanged', function () {
+  loadContent();
+});
+</script>
+</body>
+</html>

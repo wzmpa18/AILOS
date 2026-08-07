@@ -98,6 +98,14 @@ _legacy_assets/
 .trae-html-share-packages/
 Trash/
 
+# === 自测运行产物（临时输出，禁止提交） ===
+_*.txt
+_*.out
+_*.out.*
+
+# === 运行数据（反馈落盘等，禁止提交，与 .env 同策略） ===
+data/
+
 # === 临时构建/部署产物 ===
 build_out.txt
 build_out2.txt
@@ -112,3 +120,9 @@ ailos-*.html
 rc-*.html
 event-bus-design/
 permission-manager-verify/
+
+# === TRAE 迁移临时产物 ===
+deploy_final.txt
+deploy_result2.txt
+TRAE迁移完成报告_v3.1.0.html
+TRAE迁移终验报告.html

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>意见反馈 - 言道</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#f5f6f8;color:#1a1a1a;padding-bottom:90px;line-height:1.6}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:#fff;border-bottom:1px solid #ececec}
+  .back{width:32px;height:32px;border:none;background:#f2f3f5;border-radius:50%;font-size:18px;cursor:pointer}
+  .topbar h1{font-size:17px;font-weight:600}
+  .wrap{max-width:640px;margin:0 auto;padding:16px}
+  .card{background:#fff;border-radius:14px;padding:18px 16px;margin-bottom:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .lbl{font-size:14px;font-weight:600;margin-bottom:10px;display:block}
+  .lbl .req{color:#e5484d;margin-left:3px}
+  .types{display:flex;flex-wrap:wrap;gap:8px}
+  .type-chip{padding:8px 14px;border:1px solid #e3e5e8;border-radius:20px;font-size:13px;
+    background:#fafbfc;cursor:pointer;transition:.15s}
+  .type-chip.on{background:#4a6cf7;color:#fff;border-color:#4a6cf7}
+  textarea{width:100%;min-height:130px;padding:12px;border:1px solid #e3e5e8;border-radius:10px;
+    font-size:15px;font-family:inherit;resize:vertical;outline:none;background:#fafbfc;line-height:1.6}
+  textarea:focus{border-color:#4a6cf7;background:#fff}
+  .counter{text-align:right;font-size:12px;color:#9aa0a6;margin-top:6px}
+  input[type=text]{width:100%;padding:12px;border:1px solid #e3e5e8;border-radius:10px;
+    font-size:15px;outline:none;background:#fafbfc}
+  input[type=text]:focus{border-color:#4a6cf7;background:#fff}
+  .hint{font-size:12px;color:#9aa0a6;margin-top:7px}
+  .shots{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+  .shot{position:relative;width:78px;height:78px;border-radius:10px;overflow:hidden;border:1px solid #e3e5e8}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .shot .del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;
+    background:rgba(0,0,0,.6);color:#fff;border:none;font-size:13px;line-height:20px;cursor:pointer}
+  .add-shot{width:78px;height:78px;border:1.5px dashed #cfd3d8;border-radius:10px;background:#fafbfc;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-size:22px;color:#9aa0a6;cursor:pointer}
+  .add-shot span{font-size:11px}
+  .submit{width:100%;padding:14px;background:#4a6cf7;color:#fff;border:none;border-radius:11px;
+    font-size:16px;font-weight:600;cursor:pointer;margin-top:4px}
+  .submit[disabled]{opacity:.6;cursor:not-allowed}
+  .ok-box{display:none;text-align:center;padding:34px 20px}
+  .ok-box.show{display:block}
+  .ok-box .oi{font-size:52px;margin-bottom:12px}
+  .ok-box .ot{font-size:19px;font-weight:700;margin-bottom:8px}
+  .ok-box .od{font-size:14px;color:#6b7075;margin-bottom:6px}
+  .ok-box .tid{font-size:13px;color:#9aa0a6;margin-bottom:20px}
+  .ok-box .btn2{padding:11px 24px;border-radius:10px;border:none;font-size:14px;
+    font-weight:600;cursor:pointer;margin:0 5px}
+  .bp{background:#4a6cf7;color:#fff}
+  .bs{background:#f2f3f5;color:#5f6368}
+  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(0,0,0,.82);
+    color:#fff;padding:11px 20px;border-radius:22px;font-size:14px;z-index:200;opacity:0;
+    transition:opacity .25s;pointer-events:none;max-width:86%;text-align:center}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="fbBoot" class="boot-tip">加载中…</div>
+
+<div class="topbar">
+  <button class="back" onclick="goBack()">‹</button>
+  <h1>意见反馈</h1>
+</div>
+
+<div class="wrap">
+  <div id="formArea">
+    <div class="card">
+      <label class="lbl">问题类型<span class="req">*</span></label>
+      <div class="types" id="typeList"></div>
+    </div>
+
+    <div class="card">
+      <label class="lbl" for="desc">问题描述<span class="req">*</span></label>
+      <textarea id="desc" maxlength="2000"
+        placeholder="请尽量详细描述你遇到的问题或建议，例如：在哪个页面、做了什么操作、期望的结果是什么。这将帮助我们更快定位问题。"
+        oninput="updateCounter()"></textarea>
+      <div class="counter"><span id="cnt">0</span>/2000</div>
+    </div>
+
+    <div class="card">
+      <label class="lbl" for="contact">联系方式</label>
+      <input type="text" id="contact" placeholder="手机号 / 邮箱 / 微信（选填）" maxlength="100">
+      <div class="hint">填写后我们可在处理完成时回复你；不填写也可正常提交。</div>
+    </div>
+
+    <div class="card">
+      <label class="lbl">上传截图<span style="color:#9aa0a6;font-weight:400;font-size:12px">（选填，最多 3 张）</span></label>
+      <div class="shots" id="shotList">
+        <div class="add-shot" id="addShot" onclick="pickFile()">＋<span>添加</span></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="onFilePicked(event)">
+      <div class="hint">支持 JPG/PNG，单张不超过 5MB。</div>
+    </div>
+
+    <button class="submit" id="btnSubmit" onclick="submitFeedback()">提交反馈</button>
+  </div>
+
+  <!-- 提交成功友好提示 -->
+  <div class="ok-box card" id="okBox">
+    <div class="oi">✅</div>
+    <div class="ot">反馈提交成功</div>
+    <div class="od">感谢你的建议！我们会尽快查看并处理。</div>
+    <div class="tid">反馈单号：<span id="ticketId">--</span></div>
+    <div>
+      <button class="btn2 bp" onclick="resetForm()">再提一条</button>
+      <button class="btn2 bs" onclick="goBack()">返回</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav"></div>
+<div class="toast" id="toast"></div>
+
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<script>
+// 宪法 1.1：首屏占位 + 语言切换重渲染
+var FB_I18N = {
+  zh: { title:'意见反馈', type:'问题类型', desc:'问题描述', ph:'请尽量详细描述你遇到的问题或建议，例如：在哪个页面、做了什么操作、期望的结果是什么。', submit:'提交反馈', ok_t:'提交成功', ok_d:'感谢你的反馈，我们会尽快处理', back:'返回', again:'再提交一条' },
+  ja: { title:'フィードバック', type:'種類', desc:'内容', ph:'お困りの状況をできるだけ詳しく教えてください（どの画面で、何をしたか、期待する結果など）。', submit:'送信', ok_t:'送信完了', ok_d:'ご意見ありがとうございます。早急に対応します', back:'戻る', again:'もう一件送信' },
+  en: { title:'Feedback', type:'Type', desc:'Description', ph:'Please describe the issue or suggestion in detail (which page, what you did, expected result).', submit:'Submit', ok_t:'Submitted', ok_d:'Thanks for your feedback, we will handle it soon.', back:'Back', again:'Submit another' },
+  ko: { title:'피드백', type:'유형', desc:'내용', ph:'문제 상황을 자세히 알려주세요(어느 화면, 무엇을 했는지, 기대 결과 등).', submit:'제출', ok_t:'제출 완료', ok_d:'소중한 의견 감사합니다. 빠르게 처리하겠습니다.', back:'뒤로', again:'추가 제출' },
+};
+function fbUILang(){ try{ if(window.AILOS&&AILOS.getUILang){var l=AILOS.getUILang(); if(l&&FB_I18N[l])return l;} }catch(e){} return 'zh'; }
+function applyFeedbackI18n(){
+  var d = FB_I18N[fbUILang()] || FB_I18N.zh;
+  var h1 = document.querySelector('.topbar h1'); if(h1) h1.textContent = d.title;
+  var lbls = document.querySelectorAll('.lbl');
+  if(lbls[0] && lbls[0].childNodes[0]) lbls[0].childNodes[0].nodeValue = d.type;
+  if(lbls[1] && lbls[1].childNodes[0]) lbls[1].childNodes[0].nodeValue = d.desc;
+  var ta = document.getElementById('desc'); if(ta) ta.placeholder = d.ph;
+  var btn = document.getElementById('btnSubmit'); if(btn) btn.textContent = d.submit;
+  var boot = document.getElementById('fbBoot'); if(boot) boot.remove();
+}
+window.addEventListener('languageChanged', applyFeedbackI18n);
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyFeedbackI18n); else applyFeedbackI18n();
+
+var TYPES=[
+  {value:'bug',label:'功能异常/Bug'},
+  {value:'content',label:'内容错误'},
+  {value:'experience',label:'体验建议'},
+  {value:'payment',label:'支付/会员问题'},
+  {value:'account',label:'账号问题'},
+  {value:'other',label:'其他'}
+];
+var selectedType='bug';
+var files=[];
+
+function showToast(m){
+  var e=document.getElementById('toast');
+  e.textContent=m;e.classList.add('show');
+  clearTimeout(window.__t);window.__t=setTimeout(function(){e.classList.remove('show');},2600);
+}
+function goBack(){
+  if(document.referrer&&document.referrer.indexOf(location.host)>-1){history.back();}
+  else{location.href='/xuewaiyu/profile.html';}
+}
+function updateCounter(){
+  document.getElementById('cnt').textContent=document.getElementById('desc').value.length;
+}
+
+// 类型渲染（优先取后端枚举，失败用本地兜底 —— 空状态兜底要求）
+function renderTypes(list){
+  var box=document.getElementById('typeList');
+  box.innerHTML='';
+  list.forEach(function(t){
+    var d=document.createElement('div');
+    d.className='type-chip'+(t.value===selectedType?' on':'');
+    d.textContent=t.label;
+    d.onclick=function(){
+      selectedType=t.value;
+      Array.prototype.forEach.call(box.children,function(c){c.classList.remove('on');});
+      d.classList.add('on');
+    };
+    box.appendChild(d);
+  });
+}
+renderTypes(TYPES);
+
+fetch('/api/feedback/types').then(function(r){return r.ok?r.json():null;})
+  .then(function(d){ if(d&&d.success&&d.types&&d.types.length){TYPES=d.types;renderTypes(TYPES);} })
+  .catch(function(){/* 保持本地兜底，不打断用户 */});
+
+// ===== 截图选择 =====
+function pickFile(){ document.getElementById('fileInput').click(); }
+function onFilePicked(ev){
+  var picked=Array.prototype.slice.call(ev.target.files||[]);
+  for(var i=0;i<picked.length;i++){
+    if(files.length>=3){ showToast('最多上传 3 张截图'); break; }
+    var f=picked[i];
+    if(f.size>5*1024*1024){ showToast('「'+f.name+'」超过 5MB，已跳过'); continue; }
+    files.push(f);
+  }
+  ev.target.value='';
+  renderShots();
+}
+function renderShots(){
+  var box=document.getElementById('shotList');
+  box.innerHTML='';
+  files.forEach(function(f,idx){
+    var d=document.createElement('div');
+    d.className='shot';
+    var img=document.createElement('img');
+    img.src=URL.createObjectURL(f);
+    var b=document.createElement('button');
+    b.className='del';b.textContent='×';
+    b.onclick=function(){files.splice(idx,1);renderShots();};
+    d.appendChild(img);d.appendChild(b);
+    box.appendChild(d);
+  });
+  if(files.length<3){
+    var a=document.createElement('div');
+    a.className='add-shot';a.id='addShot';
+    a.innerHTML='＋<span>添加</span>';
+    a.onclick=pickFile;
+    box.appendChild(a);
+  }
+}
+
+// ===== 提交 =====
+async function submitFeedback(){
+  var desc=document.getElementById('desc').value.trim();
+  if(!desc){ showToast('请填写问题描述'); document.getElementById('desc').focus(); return; }
+  if(desc.length<5){ showToast('问题描述太短，请再补充一些细节'); return; }
+
+  var btn=document.getElementById('btnSubmit');
+  btn.disabled=true;btn.textContent='提交中…';
+
+  try{
+    var fd=new FormData();
+    fd.append('type',selectedType);
+    fd.append('description',desc);
+    fd.append('contact',document.getElementById('contact').value.trim());
+    fd.append('page',document.referrer||location.href);
+    files.forEach(function(f){ fd.append('screenshots',f); });
+
+    var headers={};
+    var token=(window.AILOS&&AILOS.getToken)?AILOS.getToken():null;
+    if(token) headers['Authorization']='Bearer '+token;
+
+    var res=await fetch('/api/feedback',{method:'POST',headers:headers,body:fd});
+    var data={};
+    try{ data=await res.json(); }catch(e){}
+
+    if(!res.ok||!data.success){
+      throw new Error((data&&data.error)||'提交失败，请稍后重试');
+    }
+
+    document.getElementById('ticketId').textContent=data.ticketId||'--';
+    document.getElementById('formArea').style.display='none';
+    document.getElementById('okBox').classList.add('show');
+    window.scrollTo(0,0);
+  }catch(e){
+    showToast(e.message||'网络异常，请检查网络后重试');
+  }finally{
+    btn.disabled=false;btn.textContent='提交反馈';
+  }
+}
+
+function resetForm(){
+  document.getElementById('desc').value='';
+  document.getElementById('contact').value='';
+  files=[];renderShots();updateCounter();
+  selectedType='bug';renderTypes(TYPES);
+  document.getElementById('okBox').classList.remove('show');
+  document.getElementById('formArea').style.display='';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>账号安全 - 言道</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#f5f6f8;color:#1a1a1a;padding-bottom:90px;line-height:1.6}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:#fff;border-bottom:1px solid #ececec}
+  .back{width:32px;height:32px;border:none;background:#f2f3f5;border-radius:50%;font-size:18px;cursor:pointer}
+  .topbar h1{font-size:17px;font-weight:600}
+  .wrap{max-width:640px;margin:0 auto;padding:16px}
+  .card{background:#fff;border-radius:14px;padding:4px 16px;margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card-title{font-size:13px;color:#8a8f99;padding:14px 0 6px;font-weight:600}
+  .row{display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid #f2f3f5}
+  .row:last-child{border-bottom:none}
+  .row .ico{width:34px;height:34px;border-radius:9px;background:#f2f3f5;display:flex;
+    align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .row .txt{flex:1;min-width:0}
+  .row .t{font-size:15px;font-weight:500}
+  .row .d{font-size:12px;color:#9aa0a6;margin-top:2px}
+  .row .val{font-size:13px;color:#9aa0a6}
+  .form{display:none;padding:6px 0 16px}
+  .form.show{display:block}
+  .fg{margin-bottom:12px}
+  .fg label{display:block;font-size:13px;color:#5f6368;margin-bottom:6px}
+  .fg input{width:100%;padding:11px 13px;border:1px solid #e3e5e8;border-radius:9px;
+    font-size:15px;outline:none;background:#fafbfc}
+  .fg input:focus{border-color:#4a6cf7;background:#fff}
+  .btn{padding:11px 18px;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-p{background:#4a6cf7;color:#fff}
+  .btn-c{background:#f2f3f5;color:#5f6368;margin-left:8px}
+  .btn[disabled]{opacity:.6;cursor:not-allowed}
+  /* 注销区：底部、灰色小字 */
+  .danger-zone{margin:26px 0 10px;text-align:center}
+  .danger-link{font-size:12px;color:#b0b4ba;text-decoration:underline;cursor:pointer;
+    background:none;border:none;padding:8px 12px}
+  .danger-link:active{color:#e5484d}
+  .mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;
+    align-items:center;justify-content:center;padding:24px}
+  .mask.show{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:24px 20px;max-width:340px;width:100%;text-align:center}
+  .modal .mi{font-size:38px;margin-bottom:10px}
+  .modal .mt{font-size:17px;font-weight:700;margin-bottom:8px}
+  .modal .md{font-size:13px;color:#6b7075;margin-bottom:16px;text-align:left}
+  .modal input{width:100%;padding:10px 12px;border:1px solid #e3e5e8;border-radius:9px;
+    font-size:14px;text-align:center;margin-bottom:14px;outline:none}
+  .modal .ma{display:flex;gap:10px}
+  .modal .ma .btn{flex:1;margin:0}
+  .btn-d{background:#e5484d;color:#fff}
+  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(0,0,0,.82);
+    color:#fff;padding:11px 20px;border-radius:22px;font-size:14px;z-index:200;opacity:0;
+    transition:opacity .25s;pointer-events:none;max-width:86%;text-align:center}
+  .toast.show{opacity:1}
+  .empty-tip{padding:20px;text-align:center;color:#9aa0a6;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back" onclick="goBack()">‹</button>
+  <h1>账号安全</h1>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="card-title">账号信息</div>
+    <div class="row">
+      <div class="ico">👤</div>
+      <div class="txt"><div class="t">账号</div></div>
+      <div class="val" id="acctPhone">--</div>
+    </div>
+    <div class="row">
+      <div class="ico">🆔</div>
+      <div class="txt"><div class="t">用户 ID</div></div>
+      <div class="val" id="acctId">--</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">安全设置</div>
+    <div class="row" onclick="togglePwd()" style="cursor:pointer">
+      <div class="ico">🔑</div>
+      <div class="txt">
+        <div class="t">修改密码</div>
+        <div class="d">定期更换密码可提升账号安全性</div>
+      </div>
+      <div class="val" id="pwdArrow">›</div>
+    </div>
+    <div class="form" id="pwdForm">
+      <div class="fg">
+        <label>当前密码</label>
+        <input type="password" id="oldPassword" placeholder="请输入当前密码">
+      </div>
+      <div class="fg">
+        <label>新密码</label>
+        <input type="password" id="newPassword" placeholder="至少 6 位">
+      </div>
+      <div class="fg">
+        <label>确认新密码</label>
+        <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+      </div>
+      <div>
+        <button class="btn btn-p" id="btnChangePwd" onclick="changePassword()">确认修改</button>
+        <button class="btn btn-c" onclick="togglePwd()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 注销账号：页面最底部 + 灰色小字 + 二次确认（宪法 一-1） -->
+  <div class="danger-zone">
+    <button class="danger-link" onclick="openDeleteModal()">注销账号</button>
+  </div>
+</div>
+
+<!-- 二次确认弹窗（第一层：输入 DELETE） -->
+<div class="mask" id="deleteModal">
+  <div class="modal">
+    <div class="mi">⚠️</div>
+    <div class="mt">确认注销账号</div>
+    <div class="md">
+      此操作<b>不可撤销</b>。你的所有学习数据、进度记录、成就徽章与会员权益都将被永久删除，且无法恢复。<br><br>
+      如确认继续，请在下方输入 <b>DELETE</b>。
+    </div>
+    <input type="text" id="deleteConfirmInput" placeholder="请输入 DELETE" autocomplete="off">
+    <div class="ma">
+      <button class="btn btn-c" onclick="closeDeleteModal()">取消</button>
+      <button class="btn btn-d" id="btnConfirmDelete" onclick="confirmDeleteAccount()">确认注销</button>
+    </div>
+  </div>
+</div>
+
+<!-- 二次确认弹窗（第二层：最终确认，防误触，v1.1.0 刚性执行令 P0-3） -->
+<div class="mask" id="finalDeleteModal">
+  <div class="modal">
+    <div class="mi">⚠️</div>
+    <div class="mt">最后确认</div>
+    <div class="md">
+      账号删除后所有数据<b>无法恢复</b>。确认继续吗？
+    </div>
+    <div class="ma">
+      <button class="btn btn-c" onclick="closeFinalDeleteModal()">再想想</button>
+      <button class="btn btn-d" id="btnFinalDelete" onclick="doDeleteAccount()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav"></div>
+<div class="toast" id="toast"></div>
+
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<script>
+function showToast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(window.__tt);
+  window.__tt=setTimeout(function(){el.classList.remove('show');},2400);
+}
+function goBack(){
+  if(document.referrer&&document.referrer.indexOf(location.host)>-1){history.back();}
+  else{location.href='/xuewaiyu/profile.html';}
+}
+
+// 统一登录态读取（AILOS.getToken 为全局唯一真值源）
+function tokenOf(){ return (window.AILOS&&AILOS.getToken)?AILOS.getToken():null; }
+
+async function api(method,path,body){
+  var token=tokenOf();
+  var opt={method:method,headers:{'Content-Type':'application/json'}};
+  if(token) opt.headers['Authorization']='Bearer '+token;
+  if(body) opt.body=JSON.stringify(body);
+  var res=await fetch('/api'+path,opt);
+  var data={};
+  try{ data=await res.json(); }catch(e){}
+  if(!res.ok) throw new Error(data.error||data.message||'操作失败，请稍后重试');
+  return data;
+}
+
+async function loadAccount(){
+  if(!tokenOf()){
+    document.getElementById('acctPhone').textContent='未登录';
+    return;
+  }
+  try{
+    var d=await api('GET','/user/me');
+    var u=d.user||d.data||d;
+    document.getElementById('acctPhone').textContent=u.phone||u.email||u.account||'--';
+    document.getElementById('acctId').textContent=(u.id||'--').toString().slice(0,8);
+  }catch(e){
+    document.getElementById('acctPhone').textContent='加载失败';
+    showToast(e.message);
+  }
+}
+
+function togglePwd(){
+  var f=document.getElementById('pwdForm');
+  f.classList.toggle('show');
+  document.getElementById('pwdArrow').textContent=f.classList.contains('show')?'⌄':'›';
+}
+
+async function changePassword(){
+  var o=document.getElementById('oldPassword').value.trim();
+  var n=document.getElementById('newPassword').value.trim();
+  var c=document.getElementById('confirmPassword').value.trim();
+  if(!o){showToast('请输入当前密码');return;}
+  if(n.length<6){showToast('新密码至少 6 位');return;}
+  if(n!==c){showToast('两次输入的新密码不一致');return;}
+  var btn=document.getElementById('btnChangePwd');
+  btn.disabled=true;btn.textContent='提交中…';
+  try{
+    await api('PUT','/user/profile',{oldPassword:o,newPassword:n});
+    showToast('密码修改成功');
+    document.getElementById('oldPassword').value='';
+    document.getElementById('newPassword').value='';
+    document.getElementById('confirmPassword').value='';
+    togglePwd();
+  }catch(e){ showToast(e.message); }
+  finally{ btn.disabled=false;btn.textContent='确认修改'; }
+}
+
+// ============ 注销账号（二次确认） ============
+function openDeleteModal(){
+  if(!tokenOf()){ showToast('请先登录'); return; }
+  document.getElementById('deleteConfirmInput').value='';
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal(){
+  document.getElementById('deleteModal').classList.remove('show');
+}
+function openFinalDeleteModal(){
+  document.getElementById('finalDeleteModal').classList.add('show');
+}
+function closeFinalDeleteModal(){
+  document.getElementById('finalDeleteModal').classList.remove('show');
+}
+async function confirmDeleteAccount(){
+  var v=document.getElementById('deleteConfirmInput').value.trim().toUpperCase();
+  if(v!=='DELETE'){ showToast('请输入 DELETE 以确认注销'); return; }
+  // 第一层通过 → 弹出第二层最终确认（防误触）
+  closeDeleteModal();
+  openFinalDeleteModal();
+}
+async function doDeleteAccount(){
+  var btn=document.getElementById('btnFinalDelete');
+  btn.disabled=true;btn.textContent='处理中…';
+  try{
+    await api('DELETE','/user/me');
+    if(window.AILOS&&AILOS.clearToken) AILOS.clearToken();
+    closeFinalDeleteModal();
+    showToast('账号已注销');
+    setTimeout(function(){location.href='/xuewaiyu/landing.html';},1500);
+  }catch(e){
+    showToast(e.message);
+    btn.disabled=false;btn.textContent='确认删除';
+  }
+}
+document.getElementById('deleteModal').addEventListener('click',function(e){
+  if(e.target===this) closeDeleteModal();
+});
+document.getElementById('finalDeleteModal').addEventListener('click',function(e){
+  if(e.target===this) closeFinalDeleteModal();
+});
+
+loadAccount();
+</script>
+</body>
+</html>

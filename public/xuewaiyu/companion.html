@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<title>AI伴读 - 言道学学外语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF;
+    --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #1E293B; --text-secondary: #64748B;
+    --text-muted: #94A3B8; --border: #E2E8F0; --radius: 16px; --radius-sm: 10px;
+    --success: #10B981; --warning: #F59E0B;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+  .header { background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; padding: 24px 20px 32px; border-radius: 0 0 24px 24px; }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+  .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+  .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .card h3 { font-size: 16px; margin-bottom: 12px; color: var(--text); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .form-group select, .form-group input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); color: var(--text); }
+  .btn { padding: 12px 24px; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: var(--primary); color: #fff; width: 100%; }
+  .btn-primary:active { background: var(--primary-hover); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+  .task-list { list-style: none; }
+  .task-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .task-item:last-child { border-bottom: none; }
+  .task-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .task-info { flex: 1; }
+  .task-info .name { font-size: 14px; font-weight: 600; }
+  .task-info .meta { font-size: 12px; color: var(--text-muted); }
+  .task-link { color: var(--primary); font-size: 13px; text-decoration: none; font-weight: 500; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .tag-vocab { background: #EEF2FF; color: #4F46E5; }
+  .tag-grammar { background: #FEF3C7; color: #D97706; }
+  .tag-listening { background: #ECFDF5; color: #059669; }
+  .tag-speaking { background: #FCE7F3; color: #DB2777; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .stats-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .stat-card { flex: 1; background: var(--card-bg); border-radius: var(--radius-sm); padding: 14px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .stat-card .value { font-size: 22px; font-weight: 700; color: var(--primary); }
+  .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🤖 AI伴读</h1>
+  <p id="headerSub">定制专属学习计划，伴你高效成长</p>
+</div>
+
+<div class="container" id="mainContent">
+  <div class="loading">加载中...</div>
+</div>
+
+<script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+<script>
+(function() {
+  'use strict';
+  var API = '/api';
+  var token = (window.AILOS && AILOS.getToken) ? AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+
+  function getToken() { return token; }
+
+  function apiGet(path) {
+    return fetch(API + path, { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+  }
+
+  function apiPost(path, body) {
+    return fetch(API + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    }).then(function(r) { return r.json(); });
+  }
+
+  function load() {
+    if (!token) {
+      document.getElementById('mainContent').innerHTML = '<div class="empty-state"><div class="emoji">🔒</div><p>请先登录后使用AI伴读</p></div>';
+      return;
+    }
+    apiGet('/companion/plan').then(function(data) {
+      if (data && data.success) {
+        render(data);
+      } else {
+        showSetupForm();
+      }
+    }).catch(function() {
+      showSetupForm();
+    });
+  }
+
+  function showSetupForm(profileData) {
+    var html = '<div class="card"><h3>📋 定制我的学习计划</h3>' +
+      '<div class="form-group"><label>学习目标</label><select id="goal"><option value="日常交流">日常交流</option><option value="应试备考">应试备考</option><option value="商务职场">商务职场</option><option value="旅行">旅行</option></select></div>' +
+      '<div class="form-group"><label>每日可用时长</label><select id="dailyMinutes"><option value="10">10 分钟</option><option value="20" selected>20 分钟</option><option value="30">30 分钟</option><option value="60">60 分钟（自定义）</option></select></div>' +
+      '<div class="form-group"><label>当前水平</label><select id="targetLevel"><option value="beginner" selected>入门</option><option value="elementary">初级</option><option value="intermediate">中级</option><option value="advanced">高级</option></select></div>' +
+      '<div class="form-group"><label>薄弱项（可多选）</label><select id="weaknesses" multiple style="min-height:100px;"><option value="vocabulary">词汇</option><option value="grammar">语法</option><option value="listening">听力</option><option value="speaking">口语</option></select></div>' +
+      '<button class="btn btn-primary" onclick="submitPlan()">🚀 生成我的学习计划</button></div>';
+    document.getElementById('mainContent').innerHTML = html;
+  }
+
+  window.submitPlan = function() {
+    var goal = document.getElementById('goal').value;
+    var dailyMinutes = parseInt(document.getElementById('dailyMinutes').value);
+    var targetLevel = document.getElementById('targetLevel').value;
+    var weaknesses = Array.from(document.getElementById('weaknesses').selectedOptions).map(function(o) { return o.value; });
+
+    var btn = document.querySelector('.btn-primary');
+    btn.textContent = '⏳ 生成中...';
+    btn.disabled = true;
+
+    apiPost('/companion/plan', { goal: goal, dailyMinutes: dailyMinutes, weaknesses: weaknesses, targetLevel: targetLevel })
+      .then(function(data) {
+        if (data && data.success) {
+          load(); // 重新加载显示计划
+        } else {
+          btn.textContent = '⚠️ 失败，请重试';
+          btn.disabled = false;
+        }
+      })
+      .catch(function() {
+        btn.textContent = '⚠️ 网络错误，请重试';
+        btn.disabled = false;
+      });
+  };
+
+  function render(data) {
+    var profile = data.profile;
+    var plan = data.todayPlan;
+    var lang = data.targetLanguage;
+
+    var LANG_NAMES = { ja: '日语', en: '英语', ko: '韩语', fr: '法语', de: '德语', es: '西班牙语' };
+    var langName = LANG_NAMES[lang] || lang;
+
+    var html = '';
+
+    // 统计卡片
+    if (plan) {
+      var tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+      var totalTasks = tasks.length;
+      var totalDuration = tasks.reduce(function(s, t) { return s + (t.duration || 0); }, 0);
+      html += '<div class="stats-row">' +
+        '<div class="stat-card"><div class="value">' + (plan.dayNumber || 1) + '</div><div class="label">第几天</div></div>' +
+        '<div class="stat-card"><div class="value">' + totalTasks + '</div><div class="label">今日任务</div></div>' +
+        '<div class="stat-card"><div class="value">' + totalDuration + 'min</div><div class="label">预计时长</div></div>' +
+        '</div>';
+    }
+
+    // 今日计划
+    if (plan && plan.tasks && plan.tasks.length > 0) {
+      var tasks = Array.isArray(plan.tasks) ? plan.tasks : JSON.parse(plan.tasks);
+      var tagClass = { vocabulary: 'tag-vocab', grammar: 'tag-grammar', listening: 'tag-listening', speaking: 'tag-speaking' };
+      var tagIcon = { learn: '📖', practice: '✏️', review: '🔄', listen: '🎧', speak: '💬' };
+      var statusText = plan.status === 'completed' ? '✅ 已完成' : '📌 进行中';
+      html += '<div class="card"><h3>📅 今日学习计划 <span style="font-size:12px;color:var(--text-muted);">' + statusText + ' · ' + langName + '</span></h3>' +
+        '<p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">重点：<span class="tag ' + (tagClass[plan.focusArea] || 'tag-vocab') + '">' + (plan.focusArea || '综合') + '</span></p>' +
+        '<ul class="task-list">';
+      tasks.forEach(function(t) {
+        html += '<li class="task-item">' +
+          '<div class="task-icon" style="background:var(--primary-light)">' + (tagIcon[t.type] || '📖') + '</div>' +
+          '<div class="task-info"><div class="name">' + t.title + '</div><div class="meta">' + t.duration + '分钟</div></div>' +
+          '<a class="task-link" href="' + (t.link || '#') + '">开始 →</a>' +
+          '</li>';
+      });
+      html += '</ul>';
+
+      if (plan.status !== 'completed') {
+        html += '<button class="btn btn-primary" style="margin-top:12px;" onclick="completeToday(\'' + plan.id + '\')">✅ 完成今日学习</button>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div class="empty-state"><div class="emoji">📋</div><p>还没有学习计划</p><button class="btn btn-primary" onclick="showSetupForm()">立即定制</button></div>';
+    }
+
+    // 定制入口
+    html += '<div class="card" style="text-align:center;">' +
+      '<button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);" onclick="showSetupForm()">🔄 重新定制学习计划</button>' +
+      '</div>';
+
+    document.getElementById('mainContent').innerHTML = html;
+  }
+
+  window.completeToday = function(planId) {
+    apiPost('/companion/daily/complete', { planId: planId, score: 80 }).then(function(data) {
+      if (data && data.success) {
+        load();
+        if (window.showToast) window.showToast('🎉 今日学习完成！明日计划已自动生成');
+      }
+    }).catch(function() {
+      if (window.showToast) window.showToast('⚠️ 操作失败');
+    });
+  };
+
+  load();
+})();
+</script>
+</body>
+</html>

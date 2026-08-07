@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>实时扫描翻译 · 言道学学外语</title>
+<style>
+:root { --primary:#4F46E5; --primary-light:#EEF2FF; --bg:#F8FAFC; --text:#1E293B; --text-secondary:#64748B; --border:#E2E8F0; --radius:16px; }
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background:#000; color:#fff; height:100vh; overflow:hidden; }
+.scan-wrap { position:relative; width:100%; height:100vh; display:flex; flex-direction:column; }
+/* 相机预览 */
+#cameraView { position:absolute; top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1; }
+/* 译文叠加层 */
+.overlay { position:absolute; top:0;left:0;width:100%;height:100%;z-index:2; pointer-events:none; }
+.overlay-item { position:absolute; background:rgba(79,70,229,0.85); color:#fff; padding:4px 10px; border-radius:8px; font-size:13px; font-weight:600; max-width:80%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:auto; cursor:pointer; animation:fadeIn .3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+/* 顶部控制栏 */
+.top-bar { position:absolute; top:0;left:0;right:0;z-index:10; display:flex; align-items:center; justify-content:space-between; padding:16px 16px; background:linear-gradient(180deg,rgba(0,0,0,0.6),transparent); }
+.top-bar .back { color:#fff; font-size:24px; text-decoration:none; cursor:pointer; }
+.top-bar .title { font-size:16px; font-weight:600; }
+.top-bar .switch-btn { background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:20px; padding:8px 16px; font-size:13px; cursor:pointer; }
+/* 底部控制栏 */
+.bottom-bar { position:absolute; bottom:0;left:0;right:0;z-index:10; display:flex; justify-content:center; gap:12px; padding:20px 16px; padding-bottom:max(20px, env(safe-area-inset-bottom)); background:linear-gradient(0deg,rgba(0,0,0,0.6),transparent); }
+.ctrl-btn { width:56px;height:56px;border-radius:50%;border:3px solid #fff;background:rgba(255,255,255,0.15);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s; }
+.ctrl-btn:active { transform:scale(0.95); }
+.ctrl-btn.pause { background:rgba(79,70,229,0.8); border-color:#4F46E5; }
+/* 权限拒绝/错误提示 */
+.placeholder { position:absolute; top:0;left:0;width:100%;height:100%;z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1E293B; color:#fff; text-align:center; padding:20px; }
+.placeholder .icon { font-size:64px; margin-bottom:16px; }
+.placeholder .msg { font-size:15px; line-height:1.6; color:#94A3B8; margin-bottom:20px; max-width:280px; }
+.placeholder .btn { padding:12px 32px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; }
+.placeholder .btn-secondary { background:rgba(255,255,255,0.1); margin-top:8px; }
+/* Toast */
+.toast { position:fixed; top:50%;left:50%;transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); color:#fff; padding:14px 24px; border-radius:12px; font-size:14px; z-index:100; max-width:300px; text-align:center; animation:toastIn .3s; pointer-events:none; }
+@keyframes toastIn { from{opacity:0;transform:translate(-50%,-50%) scale(0.9)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+/* 详情弹窗 */
+.detail-popup { position:fixed; bottom:0;left:0;right:0;z-index:20; background:#fff; color:var(--text); border-radius:20px 20px 0 0; padding:24px; max-height:50vh; overflow-y:auto; transform:translateY(100%); transition:transform .3s; }
+.detail-popup.show { transform:translateY(0); }
+.detail-popup .close { float:right; font-size:20px; cursor:pointer; color:var(--text-secondary); }
+.detail-popup .orig { font-size:18px; font-weight:600; margin-bottom:12px; color:var(--primary); }
+.detail-popup .trans { font-size:15px; line-height:1.6; color:var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="scan-wrap">
+  <!-- 相机画面 -->
+  <video id="cameraView" autoplay playsinline></video>
+
+  <!-- 译文叠加 -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- 权限/错误占位 -->
+  <div class="placeholder hidden" id="placeholder">
+    <div class="icon" id="phIcon">📷</div>
+    <div class="msg" id="phMsg">正在申请相机权限…</div>
+    <button class="btn" id="phBtn" onclick="handlePhAction()">重试</button>
+  </div>
+
+  <!-- 顶部栏 -->
+  <div class="top-bar">
+    <a class="back" href="/xuewaiyu/translate.html" onclick="stopCamera()">‹</a>
+    <span class="title">实时扫描翻译</span>
+    <button class="switch-btn" id="switchBtn" onclick="switchCamera()">🔄 切换</button>
+  </div>
+
+  <!-- 底部控制 -->
+  <div class="bottom-bar">
+    <button class="ctrl-btn" id="pauseBtn" onclick="togglePause()" title="暂停/继续">⏯</button>
+  </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="detail-popup" id="detailPopup">
+  <span class="close" onclick="closeDetail()">✕</span>
+  <div class="orig" id="detailOrig"></div>
+  <div class="trans" id="detailTrans"></div>
+</div>
+
+<script src="/xuewaiyu/assets/common.js?v=3.0.0-20260806"></script>
+<script>
+(function(){
+  'use strict';
+
+  var video = document.getElementById('cameraView');
+  var overlay = document.getElementById('overlay');
+  var placeholder = document.getElementById('placeholder');
+  var detailPopup = document.getElementById('detailPopup');
+  var stream = null;
+  var isPaused = false;
+  var facingMode = 'environment';
+  var scanTimer = null;
+  var lastScanText = '';
+  var SCAN_INTERVAL = 2000; // 2秒采样一次
+
+  // ========== 相机管理 ==========
+  async function startCamera() {
+    hidePlaceholder();
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showPlaceholder('🚫', '当前浏览器不支持相机功能，请使用Chrome、Edge或Safari浏览器', true);
+        return;
+      }
+      showPlaceholder('📷', '正在申请相机权限…', false);
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } });
+      video.srcObject = stream;
+      video.onloadedmetadata = function() { video.play().catch(function(){}); };
+      hidePlaceholder();
+      startScanning();
+    } catch(e) {
+      stopCamera();
+      if (e.name === 'NotAllowedError') {
+        showPlaceholder('🔒', '相机权限被拒绝。请在浏览器设置中允许相机权限后重试。', true);
+      } else if (e.name === 'NotFoundError') {
+        showPlaceholder('📷', '未检测到摄像头设备，请确认设备连接正常', true);
+      } else {
+        showPlaceholder('⚠️', '相机启动失败：' + (e.message || '未知错误') + '，请重试', true);
+      }
+    }
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+      stream = null;
+    }
+    if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+  }
+
+  async function switchCamera() {
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    stopCamera();
+    await startCamera();
+  }
+
+  // ========== 扫描逻辑 ==========
+  function startScanning() {
+    if (scanTimer) clearInterval(scanTimer);
+    scanTimer = setInterval(captureAndScan, SCAN_INTERVAL);
+  }
+
+  function togglePause() {
+    isPaused = !isPaused;
+    var btn = document.getElementById('pauseBtn');
+    if (isPaused) {
+      clearInterval(scanTimer);
+      scanTimer = null;
+      btn.textContent = '▶';
+      btn.classList.add('pause');
+      showToast('已暂停识别');
+    } else {
+      startScanning();
+      btn.textContent = '⏯';
+      btn.classList.remove('pause');
+      showToast('继续识别中…');
+    }
+  }
+
+  function captureAndScan() {
+    if (isPaused || !video.videoWidth) return;
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // 中心区域采样（减少传输量）
+      var cropW = Math.min(canvas.width, 640);
+      var cropH = Math.min(canvas.height, 480);
+      var sx = Math.max(0, (canvas.width - cropW) / 2);
+      var sy = Math.max(0, (canvas.height - cropH) / 2);
+      var cropCanvas = document.createElement('canvas');
+      cropCanvas.width = cropW; cropCanvas.height = cropH;
+      cropCanvas.getContext('2d').drawImage(canvas, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
+
+      var base64 = cropCanvas.toDataURL('image/jpeg', 0.7);
+      if (base64 === lastScanText) return; // 画面无变化，跳过
+      lastScanText = base64;
+
+      sendToOCR(base64);
+    } catch(e) {}
+  }
+
+  // ========== OCR识别 ==========
+  function sendToOCR(base64) {
+    var token = getToken();
+    fetch('/api/translate/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' },
+      body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg' })
+    })
+    .then(function(r) { if (!r.ok) throw new Error('OCR failed'); return r.json(); })
+    .then(function(data) {
+      if (data && data.success && data.texts) {
+        renderOverlay(data.texts);
+      }
+    })
+    .catch(function(e) { console.warn('OCR error:', e.message); });
+  }
+
+  function renderOverlay(texts) {
+    overlay.innerHTML = '';
+    if (!texts || !texts.length) return;
+
+    texts.forEach(function(item, i) {
+      var el = document.createElement('div');
+      el.className = 'overlay-item';
+      el.textContent = item.translated || item.original;
+      el.style.top = ((item.y || 20 + i * 60) / 720 * 100) + '%';
+      el.style.left = ((item.x || 10) / 1280 * 100) + '%';
+      el.onclick = function() { showDetail(item); };
+      overlay.appendChild(el);
+    });
+  }
+
+  function showDetail(item) {
+    document.getElementById('detailOrig').textContent = item.original || '';
+    document.getElementById('detailTrans').textContent = item.translated || '';
+    detailPopup.classList.add('show');
+  }
+
+  function closeDetail() { detailPopup.classList.remove('show'); }
+
+  // ========== UI辅助 ==========
+  function showPlaceholder(icon, msg, showBtn) {
+    document.getElementById('phIcon').textContent = icon;
+    document.getElementById('phMsg').textContent = msg;
+    document.getElementById('phBtn').style.display = showBtn ? 'block' : 'none';
+    placeholder.classList.remove('hidden');
+  }
+
+  function hidePlaceholder() { placeholder.classList.add('hidden'); }
+
+  function handlePhAction() { startCamera(); }
+
+  function showToast(msg) {
+    var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 2000);
+  }
+
+  function getToken() {
+    if (window.AILOS && AILOS.getToken) return AILOS.getToken() || '';
+    try { return localStorage.getItem('yandao_token_v1') || ''; } catch(e) { return ''; }
+  }
+
+  // ========== 生命周期 ==========
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) { stopCamera(); }
+    else { startCamera(); }
+  });
+
+  window.addEventListener('beforeunload', stopCamera);
+
+  // 启动
+  startCamera();
+})();
+</script>
+</body>
+</html>

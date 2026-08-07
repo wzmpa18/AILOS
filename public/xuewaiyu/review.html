@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#7B2FBE">
+<title>AILOS - 错题本</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #7B2FBE;
+    --primary-hover: #6A28A5;
+    --primary-light: #F3E8FD;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --error: #EF4444;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: calc(var(--nav-height) + 20px);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* ============ Header ============ */
+  .header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); border: 1px solid var(--border);
+    cursor: pointer; font-size: 18px; color: var(--text-secondary);
+    text-decoration: none; flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .header-back:hover { background: var(--primary-light); }
+  .header-back:active { transform: scale(0.95); }
+  .header-title { font-size: 18px; font-weight: 700; flex: 1; }
+  .header-actions { display: flex; gap: 8px; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+  .toolbar {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .btn {
+    flex: 1; padding: 12px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--card-bg);
+    color: var(--text); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; display: flex;
+    align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-primary:active { transform: scale(0.98); background: var(--primary-hover); }
+  .btn-ghost:active { transform: scale(0.98); background: var(--primary-light); }
+  .btn-danger { color: var(--error); border-color: #FCA5A5; }
+  .btn-danger:active { background: #FEF2F2; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .count-tip { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+  .count-tip b { color: var(--primary); }
+
+  /* ============ Wrong Item ============ */
+  .wrong-item {
+    background: var(--card-bg); border-radius: var(--radius);
+    padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .wrong-main { flex: 1; min-width: 0; }
+  .wrong-word-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .wrong-word { font-size: 18px; font-weight: 700; color: var(--text); }
+  .wrong-phonetic { font-size: 13px; color: var(--text-muted); }
+  .wrong-tts {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--primary-light); color: var(--primary);
+    border: none; cursor: pointer; font-size: 15px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+  }
+  .wrong-tts:active { transform: scale(0.9); }
+  .wrong-meaning { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+  .wrong-meta { font-size: 12px; color: var(--text-muted); margin-top: 8px; display: flex; gap: 12px; }
+  .wrong-meta .badge { background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+  .wrong-del {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    background: #FEF2F2; color: var(--error); border: 1px solid #FCA5A5;
+    cursor: pointer; font-size: 15px; margin-top: 2px;
+  }
+  .wrong-del:active { transform: scale(0.95); }
+
+  /* ============ States ============ */
+  .loading, .empty {
+    text-align: center; padding: 48px 20px; color: var(--text-secondary);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty-desc { font-size: 13px; margin-bottom: 18px; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    margin: 0 auto 12px; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,41,59,.92); color: #fff; padding: 10px 18px;
+    border-radius: 10px; font-size: 13px; z-index: 9999; opacity: 0;
+    transition: all .25s; pointer-events: none; max-width: 80%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { background: rgba(239,68,68,.95); }
+</style>
+</head>
+<body>
+  <div class="header">
+    <a class="header-back" href="javascript:history.back()">←</a>
+    <div class="header-title">错题本</div>
+  </div>
+
+  <div class="container">
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btnPractice">开始错题重练</button>
+      <button class="btn btn-danger" id="btnClear">清空错题本</button>
+    </div>
+    <div class="count-tip" id="countTip"></div>
+    <div id="listWrap"></div>
+    <div id="stateWrap"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var API = '/api/v1/reviews';
+  var PAGE_SIZE = 20;
+  var lang = (window.AILOS && window.AILOS.getStudyLang ? window.AILOS.getStudyLang() : 'ja');
+  var page = 1;
+  var total = 0;
+  var loading = false;
+  var finished = false;
+
+  function getToken() {
+    try {
+      var t = localStorage.getItem('yandao_token_v1');
+      if (t) return t;
+      var a = localStorage.getItem('auth_tokens');
+      if (a) { try { var p = JSON.parse(a); return p.accessToken || p.token || a; } catch (e) { return a; } }
+    } catch (e) {}
+    return null;
+  }
+
+  function toast(msg, isErr) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (isErr ? ' err' : '');
+    setTimeout(function () { el.className = 'toast' + (isErr ? ' err' : ''); }, 2200);
+  }
+
+  function authHeaders() {
+    var h = { 'Content-Type': 'application/json' };
+    var tk = getToken();
+    if (tk) h['Authorization'] = 'Bearer ' + tk;
+    return h;
+  }
+
+  function fmtTime(d) {
+    if (!d) return '';
+    var dt = new Date(d);
+    if (isNaN(dt.getTime())) return '';
+    var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()) + ' ' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+  }
+
+  function showLoading() {
+    document.getElementById('stateWrap').innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
+  }
+  function showEmpty() {
+    document.getElementById('stateWrap').innerHTML =
+      '<div class="empty"><div class="empty-icon">📕</div>' +
+      '<div class="empty-title">还没有错题</div>' +
+      '<div class="empty-desc">去词汇练习答错题目，会自动加入错题本</div>' +
+      '<button class="btn btn-primary" style="flex:none;padding:10px 24px" onclick="location.href=\'vocabulary.html\'">去词汇练习</button></div>';
+  }
+  function clearState() { document.getElementById('stateWrap').innerHTML = ''; }
+
+  function refreshCountTip() {
+    var tip = document.getElementById('countTip');
+    if (total === 0) { tip.innerHTML = ''; return; }
+    tip.innerHTML = '共 <b>' + total + '</b> 条错题（上限 50 条 / 语言）';
+  }
+
+  function renderItem(it) {
+    var div = document.createElement('div');
+    div.className = 'wrong-item';
+    div.dataset.id = it.id;
+    var phonetic = it.phonetic ? ' /' + it.phonetic + '/' : '';
+    div.innerHTML =
+      '<div class="wrong-main">' +
+        '<div class="wrong-word-row">' +
+          '<span class="wrong-word"></span>' +
+          '<span class="wrong-phonetic"></span>' +
+          '<button class="wrong-tts" title="发音">🔊</button>' +
+        '</div>' +
+        '<div class="wrong-meaning"></div>' +
+        '<div class="wrong-meta">' +
+          '<span class="badge">错 ' + (it.wrongCount || 1) + ' 次</span>' +
+          '<span>最近：' + fmtTime(it.lastWrongAt) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<button class="wrong-del" title="删除">✕</button>';
+    div.querySelector('.wrong-word').textContent = it.word;
+    div.querySelector('.wrong-phonetic').textContent = phonetic;
+    div.querySelector('.wrong-meaning').textContent = it.meaning || '';
+
+    div.querySelector('.wrong-tts').addEventListener('click', function () {
+      if (window.playTTS) window.playTTS(it.word, lang);
+    });
+    div.querySelector('.wrong-del').addEventListener('click', function () {
+      if (!confirm('确定删除这条错题？')) return;
+      delItem(it.id, div);
+    });
+    return div;
+  }
+
+  function loadList(reset) {
+    if (loading || finished) return;
+    loading = true;
+    if (reset) {
+      page = 1; finished = false; total = 0;
+      document.getElementById('listWrap').innerHTML = '';
+    }
+    showLoading();
+    var url = API + '/wrong-questions?lang=' + encodeURIComponent(lang) + '&page=' + page + '&pageSize=' + PAGE_SIZE;
+    fetch(url, { headers: authHeaders() })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        loading = false;
+        clearState();
+        var data = res.d && (res.d.data || res.d);
+        var items = data.items || data.list || [];
+        total = data.total != null ? data.total : total;
+        refreshCountTip();
+        if (items.length === 0 && page === 1) { showEmpty(); return; }
+        var wrap = document.getElementById('listWrap');
+        items.forEach(function (it) { wrap.appendChild(renderItem(it)); });
+        if (items.length < PAGE_SIZE) finished = true;
+        page++;
+      })
+      .catch(function () {
+        loading = false; clearState();
+        toast('加载失败，请重试', true);
+      });
+  }
+
+  function delItem(id, el) {
+    el.style.opacity = '.5';
+    fetch(API + '/wrong-questions/' + id, { method: 'DELETE', headers: authHeaders() })
+      .then(function (r) {
+        if (!r.ok) throw new Error('fail');
+        el.remove();
+        total = Math.max(0, total - 1);
+        refreshCountTip();
+        toast('已删除');
+        if (document.getElementById('listWrap').children.length === 0) showEmpty();
+      })
+      .catch(function () { el.style.opacity = '1'; toast('删除失败', true); });
+  }
+
+  function clearAll() {
+    if (!confirm('确定清空当前语言（' + lang + '）的全部错题？此操作不可恢复。')) return;
+    var btn = document.getElementById('btnClear');
+    btn.disabled = true;
+    fetch(API + '/wrong-questions?lang=' + encodeURIComponent(lang), { method: 'DELETE', headers: authHeaders() })
+      .then(function (r) {
+        btn.disabled = false;
+        if (!r.ok) throw new Error('fail');
+        document.getElementById('listWrap').innerHTML = '';
+        total = 0; finished = true; refreshCountTip();
+        showEmpty();
+        toast('已清空错题本');
+      })
+      .catch(function () { btn.disabled = false; toast('清空失败', true); });
+  }
+
+  function startPractice() {
+    location.href = 'vocabulary.html?mode=review&lang=' + encodeURIComponent(lang);
+  }
+
+  // 触底加载
+  function onScroll() {
+    if (loading || finished) return;
+    var sc = window.innerHeight + window.scrollY;
+    if (sc >= document.body.offsetHeight - 120) loadList(false);
+  }
+
+  // 游客错题合并：登录后把本地错题合并入库
+  function mergeGuestWrong() {
+    var token = getToken();
+    if (!token) return; // 未登录不合并
+    var keys = ['yandao_game_wrong_guest_vocab', 'yandao_game_wrong_guest_sentence'];
+    var items = [];
+    keys.forEach(function (k) {
+      try {
+        var raw = localStorage.getItem(k);
+        if (!raw) return;
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          arr.forEach(function (it) {
+            items.push({ word: it.word, meaning: it.meaning, questionType: it.questionType || 'vocab_choice', language: it.language || lang });
+          });
+        }
+        localStorage.removeItem(k);
+      } catch (e) {}
+    });
+    if (!items.length) return;
+    fetch(API + '/wrong-questions/merge-guest', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ lang: lang, items: items })
+    }).then(function () { /* 合并后刷新列表 */ loadList(true); })
+      .catch(function () {});
+  }
+
+  document.getElementById('btnClear').addEventListener('click', clearAll);
+  document.getElementById('btnPractice').addEventListener('click', startPractice);
+  window.addEventListener('scroll', onScroll);
+
+  // 语言切换后刷新
+  window.addEventListener('languageChanged', function (e) {
+    if (e && e.detail && e.detail.lang) lang = e.detail.lang;
+    else if (window.AILOS && window.AILOS.getStudyLang) lang = window.AILOS.getStudyLang();
+    loadList(true);
+  });
+
+  mergeGuestWrong();
+  loadList(true);
+})();
+</script>
+</body>
+</html>

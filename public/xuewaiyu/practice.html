@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>AI 自适应句型练习 - 言道学学外语</title>
+<style>
+:root {
+  --primary: #4F46E5; --primary-hover: #4338CA; --primary-light: #EEF2FF;
+  --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #1E293B;
+  --text-secondary: #64748B; --text-muted: #94A3B8; --border: #E2E8F0;
+  --radius: 16px; --radius-sm: 10px; --success: #10B981; --warning: #F59E0B; --danger: #EF4444;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+  --nav-height: 64px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  line-height: 1.6; -webkit-tap-highlight-color: transparent;
+  padding-bottom: calc(var(--nav-height) + 20px);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+
+/* Header */
+.header{background:var(--card-bg);border-bottom:1px solid var(--border);padding:16px 20px;
+  position:sticky;top:0;z-index:100;}
+.header-inner{display:flex;align-items:center;gap:12px;max-width:800px;margin:0 auto;}
+.header-back{font-size:20px;text-decoration:none;color:var(--text);padding:4px;}
+.header-title{font-size:18px;font-weight:700;}
+
+/* Container */
+.container{max-width:800px;margin:0 auto;padding:20px;}
+
+/* Config Card */
+.config-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+.config-card h3{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.duration-options{display:flex;gap:10px;flex-wrap:wrap;}
+.duration-btn{flex:1;min-width:80px;padding:14px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--card-bg);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+.duration-btn:hover{border-color:var(--primary);color:var(--primary);}
+.duration-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.duration-custom{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.duration-custom input{width:80px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;text-align:center;}
+.duration-custom input:focus{outline:none;border-color:var(--primary);}
+.config-desc{font-size:13px;color:var(--text-secondary);margin-top:12px;}
+
+/* Streak Bar */
+.streak-bar{background:linear-gradient(135deg,var(--primary),#6366F1);border-radius:var(--radius);
+  padding:20px;color:#fff;margin-bottom:16px;box-shadow:var(--shadow-md);}
+.streak-info{display:flex;justify-content:space-between;align-items:center;}
+.streak-left{font-size:14px;opacity:0.9;}
+.streak-right{font-size:28px;font-weight:800;}
+.streak-progress{margin-top:12px;background:rgba(255,255,255,.2);border-radius:10px;height:8px;overflow:hidden;}
+.streak-bar-fill{height:100%;background:#fff;border-radius:10px;transition:width .5s;}
+
+/* Practice Section */
+.practice-start{background:var(--card-bg);border-radius:var(--radius);padding:32px 24px;
+  box-shadow:var(--shadow);text-align:center;}
+.practice-start h2{font-size:22px;font-weight:800;margin-bottom:8px;}
+.practice-start .sub{font-size:14px;color:var(--text-secondary);margin-bottom:24px;}
+.btn-start{display:inline-flex;align-items:center;gap:8px;padding:14px 40px;
+  background:var(--primary);color:#fff;border:none;border-radius:50px;font-size:16px;font-weight:700;
+  cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(79,70,229,.35);}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(79,70,229,.45);}
+.btn-start:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* Sentence Card */
+.sentence-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;
+  box-shadow:var(--shadow);margin-bottom:16px;display:none;}
+.sentence-card.show{display:block;}
+.card-progress{font-size:13px;color:var(--text-muted);margin-bottom:12px;}
+.card-progress .current{color:var(--primary);font-weight:700;}
+.sentence-main{font-size:24px;font-weight:700;color:var(--primary);margin-bottom:8px;line-height:1.4;}
+.sentence-phonetic{font-size:15px;color:var(--text-muted);margin-bottom:4px;}
+.sentence-meaning{font-size:16px;color:var(--text-secondary);margin-bottom:12px;}
+.sentence-grammar{font-size:13px;color:var(--text-muted);background:var(--bg);padding:8px 12px;border-radius:8px;margin-bottom:8px;line-height:1.6;}
+.sentence-scene{font-size:13px;color:var(--text-muted);}
+
+/* Question Types */
+.question-area{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+.question-label{font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* Listen Select */
+.listen-select-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.listen-select-btn{padding:14px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--card-bg);font-size:14px;cursor:pointer;transition:all .2s;text-align:center;}
+.listen-select-btn:hover{border-color:var(--primary);}
+.listen-select-btn.correct{background:#ECFDF5;border-color:var(--success);color:var(--success);}
+.listen-select-btn.wrong{background:#FEF2F2;border-color:var(--danger);color:var(--danger);}
+.listen-select-btn:disabled{cursor:default;}
+.btn-speak{padding:10px 20px;background:var(--primary-light);color:var(--primary);
+  border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px;}
+
+/* Fill Blank */
+.fill-input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius-sm);
+  font-size:16px;transition:all .2s;}
+.fill-input:focus{outline:none;border-color:var(--primary);}
+.fill-input.correct{border-color:var(--success);background:#ECFDF5;}
+.fill-input.wrong{border-color:var(--danger);background:#FEF2F2;}
+.fill-hint{font-size:13px;color:var(--text-muted);margin-top:6px;}
+
+/* Shadow Speak */
+.shadow-area{text-align:center;}
+.shadow-record-btn{width:72px;height:72px;border-radius:50%;border:3px solid var(--danger);
+  background:var(--card-bg);cursor:pointer;transition:all .2s;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:28px;margin:16px auto;}
+.shadow-record-btn.recording{border-color:var(--danger);background:#FEF2F2;animation:pulse-rec 1.5s infinite;}
+.shadow-record-btn:disabled{cursor:default;opacity:.6;}
+@keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
+.shadow-feedback{font-size:15px;margin-top:12px;font-weight:600;}
+
+/* Action Buttons */
+.question-actions{margin-top:16px;display:flex;gap:10px;}
+.btn-action{flex:1;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;border:none;}
+.btn-submit{background:var(--primary);color:#fff;}
+.btn-submit:hover{background:var(--primary-hover);}
+.btn-submit:disabled{opacity:.5;}
+.btn-skip{background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);}
+.btn-next{display:none;background:var(--primary);color:#fff;}
+.btn-next.show{display:block;}
+
+/* Completion */
+.completion-card{background:var(--card-bg);border-radius:var(--radius);padding:32px 24px;
+  box-shadow:var(--shadow);text-align:center;display:none;}
+.completion-card.show{display:block;}
+.completion-icon{font-size:64px;margin-bottom:16px;}
+.completion-title{font-size:24px;font-weight:800;margin-bottom:8px;}
+.completion-stats{display:flex;justify-content:center;gap:30px;margin:20px 0;}
+.completion-stat{text-align:center;}
+.completion-stat .num{font-size:32px;font-weight:800;color:var(--primary);}
+.completion-stat .label{font-size:13px;color:var(--text-muted);margin-top:4px;}
+.completion-weak{margin:20px 0;text-align:left;background:var(--bg);padding:16px;border-radius:var(--radius-sm);}
+.completion-weak h4{font-size:14px;font-weight:700;margin-bottom:8px;}
+.completion-weak span{display:inline-block;background:var(--warning);color:#fff;
+  padding:2px 10px;border-radius:12px;font-size:12px;margin:2px 4px;}
+.btn-again{margin-top:16px;padding:12px 32px;background:var(--primary);color:#fff;border:none;
+  border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* Report */
+.report-card{background:var(--card-bg);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);margin-top:16px;display:none;}
+.report-card.show{display:block;}
+.report-card h3{font-size:16px;font-weight:700;margin-bottom:12px;}
+
+/* Loading */
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);
+  border-radius:50%;animation:spin .8s linear infinite;margin:40px auto;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TTS */
+.tts-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;
+  background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  font-size:13px;color:var(--text-secondary);cursor:pointer;margin-bottom:8px;}
+
+/* Back to top */
+.btn-top{position:fixed;bottom:80px;right:20px;width:44px;height:44px;border-radius:50%;
+  background:var(--card-bg);box-shadow:var(--shadow-md);display:none;align-items:center;
+  justify-content:center;font-size:20px;cursor:pointer;z-index:50;border:1px solid var(--border);}
+.btn-top.show{display:flex;}
+
+@media(max-width:480px){
+  .container{padding:16px;}
+  .sentence-main{font-size:20px;}
+  .listen-select-options{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="pageHeaderContainer" data-title="句型练习" data-show-back="true"></div>
+
+<div class="header" id="nativeHeader" style="display:none;">
+  <div class="header-inner">
+    <a class="header-back" href="javascript:history.back()">←</a>
+    <span class="header-title">AI 句型练习</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Config -->
+  <div class="config-card" id="configCard">
+    <h3>⏱️ 每日练习时长</h3>
+    <div class="duration-options">
+      <button class="duration-btn active" data-dur="10" onclick="setDuration(10,this)">10分钟<br><small>轻松</small></button>
+      <button class="duration-btn" data-dur="20" onclick="setDuration(20,this)">20分钟<br><small>标准</small></button>
+      <button class="duration-btn" data-dur="30" onclick="setDuration(30,this)">30分钟<br><small>强化</small></button>
+    </div>
+    <div class="duration-custom">
+      <span style="font-size:13px;color:var(--text-secondary)">或自定义:</span>
+      <input type="number" id="customDuration" min="5" max="120" value="15" placeholder="15">
+      <span style="font-size:12px;color:var(--text-muted)">分钟</span>
+      <button class="btn-action btn-submit" style="flex:0;padding:8px 16px;" onclick="setDuration(parseInt(document.getElementById('customDuration').value))">确定</button>
+    </div>
+    <div class="config-desc" id="configDesc">预计生成 <strong>5</strong> 句练习，涵盖基础→巩固→提升</div>
+  </div>
+
+  <!-- Streak -->
+  <div class="streak-bar" id="streakBar">
+    <div class="streak-info">
+      <div class="streak-left">🔥 连续打卡 <span id="streakDays">0</span> 天 · Day <span id="streakDay">1</span>/30</div>
+      <div class="streak-right" id="streakIcon">🌟</div>
+    </div>
+    <div class="streak-progress"><div class="streak-bar-fill" id="streakFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Start Practice -->
+  <div class="practice-start" id="startSection">
+    <h2>🚀 开始句型练习</h2>
+    <p class="sub">AI 将根据你的水平生成个性化句型练习</p>
+    <div id="startInfo" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      当前语言: <strong id="startLang">-</strong> · 等级: <strong id="startLevel">-</strong>
+    </div>
+    <button class="btn-start" id="btnStart" onclick="startPractice()">开始练习</button>
+  </div>
+
+  <!-- Practice Session -->
+  <div class="sentence-card" id="sentenceCard">
+    <div class="card-progress"><span class="current" id="cardIdx">1</span> / <span id="cardTotal">10</span></div>
+    <div class="tts-btn" onclick="speakCurrent()" id="ttsBtn">🔊 听发音</div>
+    <div class="sentence-main" id="sentenceText">-</div>
+    <div class="sentence-phonetic" id="sentencePhonetic">-</div>
+    <div class="sentence-meaning" id="sentenceMeaning">-</div>
+    <div class="sentence-grammar" id="sentenceGrammar">-</div>
+    <div class="sentence-scene" id="sentenceScene">-</div>
+
+    <div class="question-area" id="questionArea"></div>
+    <div class="question-actions">
+      <button class="btn-action btn-skip" onclick="skipQuestion()" id="btnSkip">跳过</button>
+      <button class="btn-action btn-submit" onclick="submitAnswer()" id="btnSubmit" disabled>提交</button>
+      <button class="btn-action btn-next" onclick="nextQuestion()" id="btnNext">下一句 →</button>
+    </div>
+  </div>
+
+  <!-- Completion -->
+  <div class="completion-card" id="completionCard">
+    <div class="completion-icon" id="completionIcon">🎉</div>
+    <div class="completion-title" id="completionTitle">练习完成！</div>
+    <div class="completion-stats">
+      <div class="completion-stat"><div class="num" id="compTotal">0</div><div class="label">总句数</div></div>
+      <div class="completion-stat"><div class="num" id="compCorrect">0</div><div class="label">正确</div></div>
+      <div class="completion-stat"><div class="num" id="compAccuracy">0%</div><div class="label">正确率</div></div>
+    </div>
+    <div class="completion-weak" id="compWeak">
+      <h4>📌 薄弱知识点</h4>
+      <div id="compWeakTags"></div>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin:16px 0;" id="compPendingReview"></div>
+    <button class="btn-again" onclick="resetPractice()">再来一组</button>
+  </div>
+
+  <!-- Report -->
+  <div class="report-card" id="reportCard">
+    <h3>📊 本周报告</h3>
+    <div id="reportContent" style="font-size:14px;color:var(--text-secondary);">加载中...</div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav：由 /xuewaiyu/assets/common.js 统一注入 7 项（宪法 六-1） -->
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="/xuewaiyu/assets/common.js?v=3.0.0-20260806"></script>
+<script>
+// ============ State ============
+var state = {
+  duration: 10,
+  sentences: [],
+  currentIdx: 0,
+  correctCount: 0,
+  wrongQuestions: [],
+  questionType: 'listen_select',
+  questionTypes: ['listen_select', 'fill_blank', 'shadow_speak'],
+  userAnswer: null,
+  isRecording: false,
+  mediaRecorder: null,
+  token: null,
+  language: '',   // 首帧占位，等 AILOS.getStudyLang() 确定后再渲染（v1.1.0 根治首屏串语）
+  level: 'beginner',
+};
+
+// ============ Init ============
+(async function init() {
+  // P3 修复：先等待 AILOS 就绪（从服务端同步语言），再调用接口
+  if (window.AILOS && window.AILOS.ready) {
+    try { await window.AILOS.ready(); } catch(e) { console.warn('AILOS.ready 等待超时:', e.message); }
+  }
+
+  try {
+    if (window.AILOS) {
+      state.language = AILOS.getStudyLang() || 'ja';
+      state.level = AILOS.getLevel() || 'beginner';
+      // P3: getToken 现在是同步的（不再需要 Promise）
+      var t = AILOS.getToken();
+      if (t) state.token = t;
+    }
+  } catch(e) {}
+  // Try localStorage（兜底，且仅当 AILOS 未给出时才用）
+  try {
+    var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token') || localStorage.getItem('yandao_token');
+    if (t) state.token = t;
+    if (!state.language) {
+      var l = localStorage.getItem('yandao_study_lang');
+      if (l) state.language = l;
+    }
+    // P3 兜底：URL 参数
+    if (!state.language) {
+      var urlParams = new URLSearchParams(window.location.search);
+      var urlLang = urlParams.get('lang');
+      if (urlLang) state.language = urlLang;
+    }
+  } catch(e) {}
+
+  // P3 最终兜底：日语（项目主推语言，避免英语闪屏）
+  if (!state.language) state.language = 'ja';
+
+  // 首帧：语言未确定时显示占位，禁止英语闪屏
+  document.getElementById('startLang').textContent = state.language || '加载中…';
+  document.getElementById('startLevel').textContent = state.level || 'beginner';
+
+  // 监听语言切换：语言确定或变化时重新拉取配置（根治串语，无需手动刷新）
+  if (window.AILOS && AILOS.on) {
+    AILOS.on('languageChanged', function (lang) {
+      state.language = lang || state.language;
+      document.getElementById('startLang').textContent = state.language;
+      if (state.currentIdx === 0) loadPracticeConfig();
+    });
+  }
+
+  // 先用本地持久化的时长渲染，避免接口慢/失败时丢失上次选择
+  try {
+    var savedDur = parseInt(localStorage.getItem('yandao_practice_duration'), 10);
+    if (savedDur >= 5 && savedDur <= 120) state.duration = savedDur;
+  } catch (e) {}
+  updateDurationUI();
+
+  // Load config（后端配置为准，覆盖本地）
+  apiGet('/api/practice/config').then(function(r) {
+    if (r.success && r.data && r.data.durationMinutes) {
+      state.duration = r.data.durationMinutes;
+      try { localStorage.setItem('yandao_practice_duration', String(state.duration)); } catch (e) {}
+      updateDurationUI();
+    }
+  }).catch(function(){});
+
+  apiGet('/api/practice/streak').then(function(r) {
+    if (r.success) updateStreakUI(r);
+  }).catch(function(){});
+
+  apiGet('/api/practice/report').then(function(r) {
+    if (r.success) updateReportUI(r.data);
+  }).catch(function(){});
+})();
+
+function apiGet(path) {
+  return fetch(path, { headers: state.token ? { Authorization: 'Bearer ' + state.token } : {} }).then(function(r) { return r.json(); });
+}
+
+function apiPost(path, body) {
+  return fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (state.token || '') },
+    body: JSON.stringify(body || {}),
+  }).then(function(r) { return r.json(); });
+}
+
+// ============ Duration Config ============
+function setDuration(val, btn) {
+  val = parseInt(val);
+  if (isNaN(val) || val < 5) { alert('最少 5 分钟'); return; }
+  if (val > 120) { alert('最多 120 分钟'); return; }
+  state.duration = val;
+  updateDurationUI();
+  // 本地持久化：后端不可用时下次进入仍能保留上次选择（宪法 四-1 设置持久化）
+  try { localStorage.setItem('yandao_practice_duration', String(val)); } catch (e) {}
+  // Save to backend
+  apiPost('/api/practice/config', { durationMinutes: val }).catch(function(){});
+}
+
+// 与后端 practiceService.calcSentenceCount 保持同一换算口径，避免"预计题量"与实际不符
+function calcSentenceCountFE(minutes, level) {
+  var rate = { beginner: 0.5, intermediate: 0.4, advanced: 0.3 }[level] || 0.4;
+  return Math.max(3, Math.round((parseInt(minutes, 10) || 10) * rate));
+}
+
+function updateDurationUI() {
+  var btns = document.querySelectorAll('.duration-btn');
+  var matched = false;
+  btns.forEach(function(b) {
+    var dv = parseInt(b.getAttribute('data-dur'));
+    var on = dv === state.duration;
+    if (on) matched = true;
+    b.classList.toggle('active', on);
+  });
+  var cnt = calcSentenceCountFE(state.duration, state.level);
+  document.getElementById('configDesc').innerHTML =
+    '当前 <strong>' + state.duration + '</strong> 分钟，预计生成 <strong>' + cnt + '</strong> 句练习，涵盖基础→巩固→提升';
+  // 自定义时长回显，便于用户确认"下次进入保留上次选择"
+  document.getElementById('customDuration').value = matched ? '' : state.duration;
+}
+
+// ============ Streak UI ============
+function updateStreakUI(data) {
+  document.getElementById('streakDays').textContent = data.streakDays || 0;
+  document.getElementById('streakDay').textContent = data.currentDay || 1;
+  document.getElementById('streakFill').style.width = ((data.currentDay || 1) / 30 * 100) + '%';
+  var icons = ['🌱','🌿','🌳','🌟','🏆'];
+  document.getElementById('streakIcon').textContent = icons[Math.min(Math.floor((data.streakDays || 0) / 7), 4)];
+}
+
+// ============ Report ============
+function updateReportUI(data) {
+  if (!data) return;
+  var el = document.getElementById('reportCard');
+  el.classList.add('show');
+  var content = document.getElementById('reportContent');
+  var week = data.week || {};
+  content.innerHTML = '<div style="display:flex;gap:24px;margin-bottom:12px;">' +
+    '<div><strong>' + (week.sessions || 0) + '</strong><br><small>本周练习</small></div>' +
+    '<div><strong>' + (week.totalSentences || 0) + '</strong><br><small>练习句数</small></div>' +
+    '<div><strong>' + (week.accuracy ? (week.accuracy * 100).toFixed(0) + '%' : '-') + '</strong><br><small>正确率</small></div>' +
+    '</div>';
+
+  if (data.topWeakPoints && data.topWeakPoints.length > 0) {
+    content.innerHTML += '<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">薄弱点:</div>';
+    data.topWeakPoints.forEach(function(p) {
+      content.innerHTML += '<span style="display:inline-block;background:#FEF3C7;color:#92400E;padding:2px 10px;border-radius:12px;font-size:12px;margin:2px 4px;">' + p.point + ' (' + p.count + ')</span>';
+    });
+  }
+
+  if (data.pendingReview > 0) {
+    content.innerHTML += '<div style="margin-top:12px;font-size:13px;color:var(--warning);">📝 待复习错题: <strong>' + data.pendingReview + '</strong> 题</div>';
+  }
+}
+
+// ============ Practice Flow ============
+function startPractice() {
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnStart').textContent = '⏳ AI 生成中...';
+
+  // v1.1.0 修复：必须把本次选择的时长透传给后端，否则题量恒按旧配置生成（宪法 四-1）
+  var url = '/api/practice/sentences?language=' + state.language
+          + '&level=' + state.level
+          + '&duration=' + (state.duration || 10);
+  apiGet(url).then(function(r) {
+    if (!r.success) { alert('生成失败: ' + (r.error || '未知错误')); document.getElementById('btnStart').disabled = false; document.getElementById('btnStart').textContent = '开始练习'; return; }
+
+    state.sentences = r.sentences || [];
+    state.currentIdx = 0;
+    state.correctCount = 0;
+    state.wrongQuestions = [];
+
+    if (state.sentences.length === 0) { alert('未能生成句型，请重试'); document.getElementById('btnStart').disabled = false; document.getElementById('btnStart').textContent = '开始练习'; return; }
+
+    document.getElementById('startSection').style.display = 'none';
+    document.getElementById('configCard').style.display = 'none';
+    showQuestion();
+  }).catch(function(e) {
+    alert('网络错误，请重试');
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStart').textContent = '开始练习';
+  });
+}
+
+function showQuestion() {
+  var card = document.getElementById('sentenceCard');
+  card.classList.add('show');
+  document.getElementById('cardTotal').textContent = state.sentences.length;
+  document.getElementById('cardIdx').textContent = state.currentIdx + 1;
+
+  var s = state.sentences[state.currentIdx];
+  document.getElementById('sentenceText').textContent = s.sentence || '';
+  document.getElementById('sentencePhonetic').textContent = s.phonetic || '';
+  document.getElementById('sentenceMeaning').textContent = s.meaning || '';
+
+  // 语法解析和场景：仅首次展示，作答后不显示
+  var cardGrammar = document.getElementById('sentenceGrammar');
+  var cardScene = document.getElementById('sentenceScene');
+  if (this._lastGrammarVisible !== false) {
+    cardGrammar.textContent = '📖 ' + (s.grammar || '');
+    cardGrammar.style.display = s.grammar ? '' : 'none';
+    cardScene.textContent = '🎬 ' + (s.scene || '');
+    cardScene.style.display = s.scene ? '' : 'none';
+  }
+
+  // v1.1.0 题型分级（宪法 四-2）：
+  //   初级 -> 全部四选一选择题，点击即可作答，无需键盘输入；
+  //   中级 -> 选择题为主，逐步加入填空；
+  //   高级 -> 选择/填空/跟读轮换。
+  //   保留原有题型组件，仅按难度做展示控制，未删除任何题型实现。
+  var lv = state.level || 'beginner';
+  if (lv === 'beginner') {
+    state.questionType = 'listen_select';
+  } else if (lv === 'intermediate') {
+    state.questionType = ['listen_select', 'listen_select', 'fill_blank'][state.currentIdx % 3];
+  } else {
+    state.questionType = ['listen_select', 'fill_blank', 'shadow_speak'][state.currentIdx % 3];
+  }
+  state.userAnswer = null;
+
+  document.getElementById('btnSubmit').disabled = true;
+  document.getElementById('btnSubmit').style.display = '';
+  document.getElementById('btnNext').classList.remove('show');
+  document.getElementById('btnNext').style.display = 'none';
+  document.getElementById('btnSubmit').textContent = '提交';
+
+  renderQuestion(s);
+}
+
+function renderQuestion(s) {
+  // 防御：初级难度强制只渲染选择题，杜绝后端/异常题型混入输入题（v1.1.0 题型分级加固）
+  if (state.level === 'beginner') {
+    state.questionType = 'listen_select';
+  }
+  var area = document.getElementById('questionArea');
+  var type = state.questionType;
+
+  if (type === 'listen_select') {
+    // Generate 3 wrong options
+    var allMeanings = state.sentences.map(function(x) { return x.meaning; }).filter(function(m, i) { return m && i !== state.currentIdx; });
+    // Shuffle and pick 3
+    var opts = [s.meaning];
+    // 打乱干扰项来源，避免每题干扰项固定
+    allMeanings.sort(function() { return Math.random() - 0.5; });
+    for (var i = 0; i < allMeanings.length && opts.length < 4; i++) {
+      if (opts.indexOf(allMeanings[i]) === -1) opts.push(allMeanings[i]);
+    }
+    // v1.1.0 修复：题目数量少时干扰项不足，会退化成"二选一/三选一"，
+    // 违反「初级全部为四选一选择题」，此处用通用干扰项补足到 4 个。
+    var FILLER = ['以上都不对', '（无对应释义）', '这个说法不成立', '与原句含义相反'];
+    for (var k = 0; k < FILLER.length && opts.length < 4; k++) {
+      if (opts.indexOf(FILLER[k]) === -1) opts.push(FILLER[k]);
+    }
+    opts.sort(function() { return Math.random() - 0.5; });
+
+    area.innerHTML = '<div class="question-label">🎧 听音选义 — 选择正确的中文翻译</div>' +
+      '<div class="listen-select-options">' +
+      opts.map(function(o) {
+        return '<button class="listen-select-btn" onclick="selectListenOption(this, \'' + escapeHtml(o) + '\')">' + o + '</button>';
+      }).join('') +
+      '</div>';
+  } else if (type === 'fill_blank') {
+    // Create fill-in by removing a key word
+    var words = s.sentence.split(/\s+/);
+    var blankIdx = Math.floor(words.length * 0.4 + Math.random() * words.length * 0.3);
+    if (blankIdx >= words.length) blankIdx = words.length - 1;
+    var blankWord = words[blankIdx];
+    var display = words.map(function(w, i) { return i === blankIdx ? '_____' : w; }).join(' ');
+
+    area.innerHTML = '<div class="question-label">✏️ 填空补全 — 补全句子中缺失的单词</div>' +
+      '<div style="font-size:18px;font-weight:600;margin-bottom:12px;color:var(--text);">' + display + '</div>' +
+      '<input class="fill-input" type="text" id="fillInput" placeholder="输入缺失的单词..." oninput="onFillInput(this.value,\'' + escapeAttr(blankWord) + '\')">' +
+      '<div class="fill-hint" id="fillResult"></div>';
+  } else if (type === 'shadow_speak') {
+    area.innerHTML = '<div class="question-label">🗣️ 跟读评分 — 朗读上方句子</div>' +
+      '<div class="shadow-area">' +
+      '<div class="shadow-record-btn" id="recordBtn" onclick="toggleRecord()">🎤</div>' +
+      '<div style="font-size:13px;color:var(--text-muted);" id="recordHint">点击按钮开始录音</div>' +
+      '<div class="shadow-feedback" id="shadowFeedback"></div>' +
+      '</div>';
+  }
+}
+
+function selectListenOption(el, selected) {
+  var correct = state.sentences[state.currentIdx].meaning;
+  var isCorrect = selected === correct;
+
+  document.querySelectorAll('.listen-select-btn').forEach(function(b) {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    if (b === el && !isCorrect) b.classList.add('wrong');
+  });
+
+  state.userAnswer = selected;
+  handleAnswer(isCorrect);
+}
+
+function onFillInput(val, correctWord) {
+  document.getElementById('btnSubmit').disabled = !val.trim();
+  state.userAnswer = val.trim();
+  state._correctWord = correctWord;
+}
+
+function submitAnswer() {
+  if (state.questionType === 'fill_blank') {
+    var isCorrect = state.userAnswer && state.userAnswer.toLowerCase().trim() === state._correctWord.toLowerCase().trim();
+    var input = document.getElementById('fillInput');
+    if (input) {
+      input.classList.add(isCorrect ? 'correct' : 'wrong');
+      input.disabled = true;
+    }
+    var result = document.getElementById('fillResult');
+    if (result) result.textContent = isCorrect ? '✅ 正确！' : '❌ 正确答案：' + state._correctWord;
+    handleAnswer(isCorrect);
+  }
+}
+
+function handleAnswer(isCorrect) {
+  document.getElementById('btnSubmit').style.display = 'none';
+  document.getElementById('btnNext').style.display = '';
+  document.getElementById('btnNext').classList.add('show');
+
+  if (isCorrect) {
+    state.correctCount++;
+  } else {
+    var s = state.sentences[state.currentIdx];
+    state.wrongQuestions.push({
+      questionType: state.questionType,
+      sentence: s.sentence || '',
+      meaning: s.meaning || '',
+      grammarPoint: s.grammar || '',
+      userAnswer: state.userAnswer || '',
+      correctAnswer: s.meaning || state._correctWord || '',
+    });
+  }
+
+  // Show grammar info after answer
+  var s = state.sentences[state.currentIdx];
+  document.getElementById('sentenceGrammar').textContent = '📖 ' + (s.grammar || '');
+  document.getElementById('sentenceGrammar').style.display = s.grammar ? '' : 'none';
+  document.getElementById('sentenceScene').textContent = '🎬 ' + (s.scene || '');
+  document.getElementById('sentenceScene').style.display = s.scene ? '' : 'none';
+}
+
+function skipQuestion() {
+  var s = state.sentences[state.currentIdx];
+  state.wrongQuestions.push({
+    questionType: state.questionType,
+    sentence: s.sentence || '',
+    meaning: s.meaning || '',
+    grammarPoint: s.grammar || '',
+    userAnswer: '',
+    correctAnswer: s.meaning || '',
+  });
+  nextQuestion();
+}
+
+function nextQuestion() {
+  state.currentIdx++;
+  if (state.currentIdx >= state.sentences.length) {
+    finishPractice();
+  } else {
+    showQuestion();
+  }
+}
+
+function finishPractice() {
+  document.getElementById('sentenceCard').classList.remove('show');
+  document.getElementById('completionCard').classList.add('show');
+
+  var accuracy = state.correctCount / state.sentences.length;
+  document.getElementById('compTotal').textContent = state.sentences.length;
+  document.getElementById('compCorrect').textContent = state.correctCount;
+  document.getElementById('compAccuracy').textContent = (accuracy * 100).toFixed(0) + '%';
+
+  var icon = accuracy >= 0.8 ? '🎉' : accuracy >= 0.6 ? '👍' : '💪';
+  var title = accuracy >= 0.8 ? '太棒了！' : accuracy >= 0.6 ? '做得不错！' : '继续加油！';
+  document.getElementById('completionIcon').textContent = icon;
+  document.getElementById('completionTitle').textContent = title;
+
+  // Weak points
+  var weakSet = {};
+  state.wrongQuestions.forEach(function(q) {
+    if (q.grammarPoint) weakSet[q.grammarPoint] = (weakSet[q.grammarPoint] || 0) + 1;
+  });
+  var tagsHtml = '';
+  Object.keys(weakSet).forEach(function(k) {
+    tagsHtml += '<span>' + k + ' (' + weakSet[k] + ')</span>';
+  });
+  document.getElementById('compWeakTags').innerHTML = tagsHtml || '<span style="color:var(--text-muted)">无</span>';
+  document.getElementById('compPendingReview').textContent = state.wrongQuestions.length > 0
+    ? '📝 ' + state.wrongQuestions.length + ' 道错题已自动归集，明日可复习'
+    : '✅ 全部正确，无错题';
+
+  // Submit to backend
+  var weakPoints = Object.keys(weakSet);
+  apiPost('/api/practice/submit', {
+    language: state.language,
+    level: state.level,
+    languageType: 'system',
+    durationMinutes: state.duration,
+    totalCount: state.sentences.length,
+    correctCount: state.correctCount,
+    wrongQuestions: state.wrongQuestions,
+  }).catch(function(e) { console.error('submit error', e); });
+
+  // Refresh streak & report
+  apiGet('/api/practice/streak').then(function(r) { if (r.success) updateStreakUI(r); }).catch(function(){});
+  apiGet('/api/practice/report').then(function(r) { if (r.success) updateReportUI(r.data); }).catch(function(){});
+}
+
+function resetPractice() {
+  document.getElementById('completionCard').classList.remove('show');
+  document.getElementById('startSection').style.display = '';
+  document.getElementById('configCard').style.display = '';
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStart').textContent = '开始练习';
+  state.sentences = [];
+  state.currentIdx = 0;
+  state.correctCount = 0;
+  state.wrongQuestions = [];
+}
+
+// ============ TTS（宪法 四-3 发音加固：兼容 Web 与 APP，修复偶发无声） ============
+var TTS_LANG_MAP = { ja: 'ja-JP', zh: 'zh-CN', ko: 'ko-KR', en: 'en-US',
+  fr: 'fr-FR', de: 'de-DE', es: 'es-ES', ru: 'ru-RU' };
+
+function ttsLangTag() {
+  return TTS_LANG_MAP[state.language] || 'en-US';
+}
+
+function speakText(text) {
+  if (!text) return;
+  var langTag = ttsLangTag();
+
+  // 1) APP 内优先走原生 TTS（WebView 的 speechSynthesis 常不可用）
+  try {
+    if (window.AilosNative && typeof window.AilosNative.speakText === 'function') {
+      window.AilosNative.speakText(text, langTag);
+      return;
+    }
+  } catch (e) {}
+
+  // 2) Web 端：speechSynthesis
+  if (!('speechSynthesis' in window)) {
+    showTtsHint('当前环境不支持语音播放，建议在 APP 内使用');
+    return;
+  }
+
+  // 偶发无声主因：上一条未取消 / voices 尚未异步加载完成
+  function doSpeak() {
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = langTag;
+      u.rate = 0.9;
+      var voices = window.speechSynthesis.getVoices() || [];
+      // 精确匹配 -> 前缀匹配，找到对应语种的发音人，避免用错音色导致"读不出来"
+      var v = voices.filter(function (x) { return x.lang && x.lang.replace('_', '-') === langTag; })[0]
+           || voices.filter(function (x) { return x.lang && x.lang.toLowerCase().indexOf(langTag.split('-')[0]) === 0; })[0];
+      if (v) u.voice = v;
+      u.onerror = function () { showTtsHint('播放失败，请重试'); };
+      window.speechSynthesis.speak(u);
+    } catch (e) {
+      showTtsHint('播放失败，请重试');
+    }
+  }
+
+  var vs = window.speechSynthesis.getVoices();
+  if (!vs || vs.length === 0) {
+    // voices 异步加载：监听一次 voiceschanged，并做超时兜底
+    var fired = false;
+    var once = function () {
+      if (fired) return;
+      fired = true;
+      window.speechSynthesis.onvoiceschanged = null;
+      doSpeak();
+    };
+    window.speechSynthesis.onvoiceschanged = once;
+    setTimeout(once, 350);
+  } else {
+    doSpeak();
+  }
+}
+
+function showTtsHint(msg) {
+  var el = document.getElementById('ttsBtn');
+  if (!el) return;
+  var old = el.textContent;
+  el.textContent = '⚠️ ' + msg;
+  setTimeout(function () { el.textContent = old; }, 2000);
+}
+
+function speakCurrent() {
+  var s = state.sentences[state.currentIdx];
+  speakText(s && s.sentence);
+}
+
+// ============ Recording ============
+function toggleRecord() {
+  var btn = document.getElementById('recordBtn');
+  if (state.isRecording) {
+    stopRecord();
+    return;
+  }
+  if (!navigator.mediaDevices) {
+    state.userAnswer = 'recording-not-supported';
+    var hint = document.getElementById('recordHint');
+    if (hint) hint.textContent = '当前环境暂不支持录音功能，建议在 APP 内使用';
+    handleSimulatedSpeak();
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    state.isRecording = true;
+    btn.classList.add('recording');
+    document.getElementById('recordHint').textContent = '🔴 录音中...';
+    state.mediaRecorder = new MediaRecorder(stream);
+    state.mediaRecorder.start();
+    setTimeout(function() { stopRecord(); }, 5000);
+  }).catch(function() {
+    state.userAnswer = 'mic-denied';
+    var hint = document.getElementById('recordHint');
+    if (hint) hint.textContent = '麦克风权限未授权，请在设置中开启录音权限';
+    handleSimulatedSpeak();
+  });
+}
+
+function stopRecord() {
+  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+    state.mediaRecorder.stop();
+  }
+  state.isRecording = false;
+  var btn = document.getElementById('recordBtn');
+  if (btn) btn.classList.remove('recording');
+  document.getElementById('recordHint').textContent = '✅ 录音完成';
+  handleSimulatedSpeak();
+}
+
+function handleSimulatedSpeak() {
+  // Simulated scoring (real scoring would use server-side STT)
+  var score = 60 + Math.floor(Math.random() * 40);
+  document.getElementById('shadowFeedback').textContent = '综合评分: ' + score + '分';
+  var isCorrect = score >= 70;
+  state.userAnswer = 'speech-score-' + score;
+  handleAnswer(isCorrect);
+}
+
+// ============ Helpers ============
+function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function escapeAttr(s) { return (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+</script>
+
+<style>
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:var(--nav-height);background:var(--card-bg);
+  border-top:1px solid var(--border);display:flex;z-index:100;max-width:100%;
+}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--text-muted);font-size:10px;gap:2px;transition:all .2s;}
+.bottom-nav .nav-item.active{color:var(--primary);}
+.bottom-nav .nav-icon{font-size:20px;}
+</style>
+
+</body>
+</html>

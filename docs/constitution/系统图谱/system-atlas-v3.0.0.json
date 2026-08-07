@@ -1,0 +1,208 @@
+{
+  "version": "3.0.0",
+  "constitution_version": "3.0",
+  "generated_at": "2026-08-05",
+  "last_updated": "2026-08-05",
+  "core_os_layers": {
+    "L5": {
+      "name": "应用接入层",
+      "pages": 27,
+      "entry_point": "CoreOS Facade",
+      "constraint": "禁止直连 L3/L1"
+    },
+    "L4": {
+      "name": "Core OS 调度内核",
+      "components": ["EventBus", "GlobalStateMachine", "DependencyGuard", "GovernanceGuard"],
+      "constraint": "唯一中枢，所有请求必经此层"
+    },
+    "L3": {
+      "name": "AILOS Brain AI 内核",
+      "subsystems": ["PromptCenter", "MemoryCenter", "ContextBuilder", "LanguageGuard", "ModelRouter", "OutputValidator", "QuotaManager", "CostManager", "RetryEngine", "AuditLogger", "VoiceSubsystem", "OCRSubsystem"],
+      "constraint": "唯一 AI 出口，禁止绕过"
+    },
+    "L2": {
+      "name": "六大领域业务层",
+      "domains": ["vocabulary", "grammar", "reading", "speaking", "social", "billing"],
+      "constraint": "DDD 完全隔离，跨领域仅通过 EventBus"
+    },
+    "L1": {
+      "name": "数据持久内核",
+      "tables": 85,
+      "cache": "Redis 只读",
+      "constraint": "SSOT 唯一真值源，仅 Repository 可写"
+    }
+  },
+  "domains": [
+    {
+      "name": "vocabulary",
+      "layer": "L2",
+      "routes": ["/api/vocabulary/words", "/api/vocabulary/practice", "/api/vocabulary/progress", "/api/content?type=vocabulary", "/api/content/custom"],
+      "services": ["vocabularyService"],
+      "tables_ssot": ["vocabulary_words", "vocabulary_progress"],
+      "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "vocabulary_repository", "EventBus 发布接口", "user_profiles（只读）"],
+      "forbidden_calls": ["ReadingService", "GrammarService", "SpeakingService", "PaymentService", "SocialService", "直连大模型 API", "Redis 写操作"]
+    },
+    {
+      "name": "grammar",
+      "layer": "L2",
+      "routes": ["/api/grammar/points", "/api/grammar/practice", "/api/grammar/progress", "/api/content?type=grammar"],
+      "services": ["grammarService"],
+      "tables_ssot": ["grammar_points"],
+      "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "grammar_repository", "EventBus"],
+      "forbidden_calls": ["VocabularyService", "ReadingService", "直连大模型 API", "Redis 写操作"]
+    },
+    {
+      "name": "reading",
+      "layer": "L2",
+      "routes": ["/api/reading/articles", "/api/reading/questions", "/api/reading/submit", "/api/content?type=reading"],
+      "services": ["readingService"],
+      "tables_ssot": ["reading_articles"],
+      "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "reading_repository", "EventBus"],
+      "forbidden_calls": ["VocabularyService", "GrammarService", "直连大模型 API", "Redis 写操作"]
+    },
+    {
+      "name": "speaking",
+      "layer": "L2",
+      "routes": ["/api/speaking/scenarios", "/api/speaking/practice", "/api/speaking/record", "/api/practice"],
+      "services": ["speakingService"],
+      "tables_ssot": ["speaking_records"],
+      "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "speaking_repository", "EventBus"],
+      "forbidden_calls": ["VocabularyService", "GrammarService", "直连外部 TTS 服务", "Redis 写操作"]
+    },
+    {
+      "name": "social",
+      "layer": "L2",
+      "routes": ["/api/v1/social/friends", "/api/v1/social/groups", "/api/v1/social/posts", "/api/v1/social/timeline"],
+      "services": ["socialService"],
+      "tables_ssot": ["social_friends", "social_groups", "social_posts"],
+      "allowed_calls": ["CoreOS Facade", "social_repository", "EventBus"],
+      "forbidden_calls": ["任何学习领域", "付费领域", "AI 生成内容（无 Brain）", "Redis 写操作"]
+    },
+    {
+      "name": "billing",
+      "layer": "L2",
+      "routes": ["/api/billing/packages", "/api/billing/buy", "/api/billing/payment", "/api/membership/plans", "/api/membership/status", "/api/membership/orders"],
+      "services": ["billingService", "membershipService"],
+      "tables_ssot": ["billing_orders", "billing_plans", "membership_records"],
+      "allowed_calls": ["CoreOS Facade", "billing_repository", "EventBus", "第三方支付 SDK"],
+      "forbidden_calls": ["任何学习领域", "社交领域", "Redis 写操作"]
+    }
+  ],
+  "brain_subsystems": [
+    {"name": "PromptCenter", "function": "分场景强制标准化 Prompt 模板"},
+    {"name": "MemoryCenter", "function": "用户长期/短期学习记忆向量库"},
+    {"name": "ContextBuilder", "function": "三维语言自动注入 AI 请求上下文"},
+    {"name": "LanguageGuard", "function": "串语拦截校验，最高优先级", "critical": true},
+    {"name": "ModelRouter", "function": "模型分级调度、降级切换"},
+    {"name": "OutputValidator", "function": "内容合规/难度/格式校验"},
+    {"name": "QuotaManager", "function": "AI 额度管控"},
+    {"name": "CostManager", "function": "计费流水自动落库"},
+    {"name": "RetryEngine", "function": "异常重试策略"},
+    {"name": "AuditLogger", "function": "不可篡改审计日志，留存 180 天"},
+    {"name": "VoiceSubsystem", "function": "TTS/ASR 统一管控", "status": "planned"},
+    {"name": "OCRSubsystem", "function": "视觉识别统一管控", "status": "planned"}
+  ],
+  "events": [
+    {"name": "UserRegistered", "trigger": "auth", "subscribers": ["onboarding", "audit"]},
+    {"name": "ProfileUpdated", "trigger": "user/profile", "subscribers": ["cache_invalidation", "audit"]},
+    {"name": "NativeLangChanged", "trigger": "language", "subscribers": ["ContextBuilder", "cache_invalidation"]},
+    {"name": "PlacementCompleted", "trigger": "placement", "subscribers": ["plan_generation", "companion"]},
+    {"name": "LevelUpgraded", "trigger": "learning_paths", "subscribers": ["dashboard", "companion", "achievement"]},
+    {"name": "DailyPlanGenerated", "trigger": "companion/dailyPlan", "subscribers": ["dashboard", "notification"]},
+    {"name": "LearningCompleted", "trigger": "practice", "subscribers": ["points", "leaderboard", "companion", "audit"]},
+    {"name": "WrongAnswerCreated", "trigger": "practice", "subscribers": ["notebook", "review"]},
+    {"name": "PhaseCompleted", "trigger": "dailyPlan", "subscribers": ["companion", "progress"]},
+    {"name": "CompanionCreated", "trigger": "onboarding", "subscribers": ["dashboard", "notification"]},
+    {"name": "PointsEarned", "trigger": "points", "subscribers": ["leaderboard", "notification"]},
+    {"name": "MembershipActivated", "trigger": "billing", "subscribers": ["dashboard", "entitlements"]},
+    {"name": "QuotaDeducted", "trigger": "languageBilling", "subscribers": ["quota_cache", "audit"]},
+    {"name": "FriendAdded", "trigger": "social", "subscribers": ["notification", "feed"]},
+    {"name": "GroupCreated", "trigger": "social", "subscribers": ["notification", "feed"]}
+  ],
+  "violations": [
+    {
+      "id": "VC-001",
+      "level": "L1",
+      "type": "bypass_brain",
+      "file": "src/services/aiService.js:96-125",
+      "description": "_callDirect() 直连混元 API",
+      "target": "删除直连，全部经 Brain ModelRouter",
+      "stage": "P2",
+      "department": "AI调度中心·模型路由部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-002",
+      "level": "L1",
+      "type": "bypass_brain",
+      "file": "src/services/ocr/hunyuanVisionAdapter.js:11,28",
+      "description": "OCR 独立密钥直连混元",
+      "target": "重构为 Brain OCRSubsystem",
+      "stage": "P2",
+      "department": "AI调度中心·视觉识别部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-003",
+      "level": "L1",
+      "type": "bypass_brain",
+      "file": "src/services/voiceService.js:120",
+      "description": "TTS 直连腾讯云",
+      "target": "重构为 Brain VoiceSubsystem",
+      "stage": "P2",
+      "department": "AI调度中心·语音交互部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-004",
+      "level": "L1",
+      "type": "bypass_brain",
+      "file": "src/services/voiceService.js:170",
+      "description": "ASR 直连腾讯云",
+      "target": "重构为 Brain VoiceSubsystem",
+      "stage": "P2",
+      "department": "AI调度中心·语音交互部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-005",
+      "level": "L1",
+      "type": "bypass_facade",
+      "file": "27 HTML pages",
+      "description": "前端可直接 fetch 未授权内部 API",
+      "target": "DependencyGuard 全局中间件拦截",
+      "stage": "P2",
+      "department": "CoreOS治理中心·安全合规部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-006",
+      "level": "L1",
+      "type": "frontend_governance",
+      "file": "public/xuewaiyu/assets/common.js",
+      "description": "window.AILOS 暴露写操作方法",
+      "target": "仅暴露只读方法，写操作走后端接口",
+      "stage": "P2",
+      "department": "产品研发中心·前端基础架构部",
+      "status": "PENDING"
+    },
+    {
+      "id": "VC-007",
+      "level": "L1",
+      "type": "language_violation",
+      "file": "public/xuewaiyu/placement.html",
+      "description": "硬编码英语题库（已修复）",
+      "target": "API 加载 + LanguageGuard 兜底",
+      "stage": "DONE",
+      "department": "产品研发中心·学习产品部",
+      "status": "FROZEN"
+    }
+  ],
+  "deep_governance_gaps": [
+    {"id": "G1", "name": "版本号无强制CI校验", "stage": "P1", "department": "技术保障中心·运维部署部"},
+    {"id": "G2", "name": "图谱无机器可读元数据", "stage": "P1", "department": "安全合规审计中心·审计问责部"},
+    {"id": "G3", "name": "审计执行主体与周期未固化", "stage": "P1", "department": "安全合规审计中心·合规律政部"},
+    {"id": "G4", "name": "Stage里程碑无强制Deadline", "stage": "P1", "department": "平台治理中枢"},
+    {"id": "G5", "name": "本地开发环境无直连管控", "stage": "P2", "department": "技术保障中心·数据保障部"}
+  ]
+}

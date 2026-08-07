@@ -16,6 +16,9 @@ router.use(authenticate);
 // GET /api/learn/content?language=en&type=vocab&level=beginner
 router.get('/content', learnController.getContent);
 
+// GET /api/learn/content/:type/:language/:level  (兼容路径参数格式)
+router.get('/content/:type/:language/:level', (req, res, next) => learnController.getContentByPath(req, res, next));
+
 // GET /api/learn/config
 router.get('/config', learnController.getLearnConfig);
 

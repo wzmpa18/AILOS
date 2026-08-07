@@ -46,6 +46,7 @@ model User {
   isVerified Boolean @default(false)
   isGuest    Boolean @default(false)
   disabled   Boolean @default(false) // P1-6 账号禁用：禁用后无法登录与使用核心功能
+  status     String? @default("active") // v1.1.0 注销软删标记：deleted 表示已注销（保留数据审计）
 
   // Security
   lastLoginAt         DateTime?
@@ -850,6 +851,74 @@ model CourseBlueprint {
   @@index([status])
 }
 
+// ==================== P1: ExamQuestionBank — 考级题库 ====================
+model ExamQuestionBank {
+  id             String   @id @default(uuid())
+  language       String   @db.VarChar(10)
+  level          String   @db.VarChar(10)
+  module         String   @db.VarChar(30)
+  questionType   String   @db.VarChar(50) @map("question_type")
+  questionNumber Int?     @map("question_number")
+  questionText   String   @map("question_text")
+  options        Json     @default("[]")
+  correctAnswer  String   @db.VarChar(500) @map("correct_answer")
+  explanation    String?
+  points         Int      @default(1)
+  difficulty     Int      @default(1)
+  audioUrl       String?  @map("audio_url")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([language, level])
+  @@index([language, level, module])
+  @@map("exam_question_bank")
+}
+
+// ==================== P1: ExamRecord — 考试记录表 ====================
+model ExamRecord {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  language        String    @db.VarChar(10)
+  level           String    @db.VarChar(10)
+  totalScore      Int       @default(0) @map("total_score")
+  vocabScore      Int       @default(0) @map("vocab_score")
+  grammarScore    Int       @default(0) @map("grammar_score")
+  readingScore    Int       @default(0) @map("reading_score")
+  listeningScore  Int       @default(0) @map("listening_score")
+  passed          Boolean   @default(false)
+  status          String    @default("in_progress") @db.VarChar(20)
+  answers         Json      @default("[]")
+  startedAt       DateTime? @map("started_at")
+  submittedAt     DateTime? @map("submitted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("exam_record")
+}
+
+// ==================== P3: PlacementQuestionBank — 水平测试预生成题库 ====================
+// 解决 AI 实时生成延迟问题（用户感知"一直加载"）
+// 启动时批量预生成：7语言×2级别×10题=140题，毫秒级响应
+// P3 v3.1 改造：双选项集 - 低等级用户用 nativeLangOptions（母语翻译），高等级用户用 targetLangOptions（目标语言原生）
+model PlacementQuestionBank {
+  id                String   @id @default(uuid())
+  language          String   // ja/en/ko/fr/es/de/zh 目标学习语言
+  difficultyLevel   String   // beginner/intermediate
+  questionType      String   @default("vocabulary") // vocabulary/grammar/reading
+  questionText      String   // 题干（纯目标语言，无英语串语）
+  nativeLangOptions Json     // 母语翻译选项（低等级A1-B2用）
+  targetLangOptions Json     // 目标语言原生选项（高等级C1-C2用）
+  correctAnswer     String   // 正确答案（目标语言原文）
+  isActive          Boolean  @default(true)
+  version           String   @default("3.0.0")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([language, difficultyLevel])
+  @@index([isActive])
+  @@map("placement_question_bank")
+}
+
 // ==================== M1: GLOI Global Language Operating Infrastructure ====================
 
 // language_identities — 语言身份定义（BCP-47 + 扩展元数据）
@@ -1233,6 +1302,22 @@ model FriendSetting {
   @@map("friend_settings")
 }
 
+// friend_blacklist — 拉黑屏蔽关系（v1.1.0 宪法 3.2 增量新增）
+//   单向屏蔽：operator 拉黑 target 后，target 不能向 operator 发消息/看动态/发申请/评论互动。
+//   增量兼容：仅新增模型，不改动任何已有字段与表。
+model FriendBlacklist {
+  id         String   @id @default(uuid())
+  operatorId String   // 拉黑发起方
+  targetId   String   // 被拉黑方
+  createdAt  DateTime @default(now())
+
+  @@unique([operatorId, targetId]) // 联合唯一，重复拉黑幂等
+  @@index([operatorId])
+  @@index([targetId])
+
+  @@map("friend_blacklist")
+}
+
 // group — 群组
 model Group {
   id           String   @id @default(uuid())
@@ -1436,5 +1521,179 @@ model ReferralLink {
   @@index([referrerId])
   @@index([inviteCode])
   @@map("referral_links")
+}
+
+// ===================== v1.1.0: AI 自适应句型练习系统 =====================
+
+model PracticeConfig {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  durationMinutes Int    @default(10)  // 用户设置的每日练习时长（分钟）
+  currentDay    Int      @default(1)   // 30天计划当前天数
+  streakDays    Int      @default(0)   // 连续打卡天数
+  lastPracticeAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("practice_configs")
+}
+
+model SentencePracticeRecord {
+  id            String   @id @default(uuid())
+  userId        String
+  sessionDate   DateTime @default(now())
+  level         String   // beginner / intermediate / advanced
+  language      String   // en / ja / ko / ...
+  languageType  String   @default("system") // system / custom
+  totalCount    Int      // 本次练习句型总数
+  correctCount  Int      // 答对数量
+  accuracy      Decimal  @default(0)        // 正确率 0-1
+  durationMinutes Int
+  pattern       Json     // 生成配置快照 { basicCount, consolidationCount, improvementCount }
+  weakPoints    Json     @default("[]")      // 薄弱点列表 ["tense", "particle"...]
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, sessionDate])
+  @@map("sentence_practice_records")
+}
+
+model WrongQuestion {
+  id            String   @id @default(uuid())
+  userId        String
+  recordId      String?  // 关联 SentencePracticeRecord
+  questionType  String   // listen_select / fill_blank / shadow_speak
+  sentence      String   // 原始句子
+  meaning       String?  // 中文翻译
+  grammarPoint  String?  // 语法点
+  userAnswer    String?  // 用户答案
+  correctAnswer String?  // 正确答案
+  reviewedAt    DateTime? // 复习时间
+  reviewedCorrect Boolean @default(false)
+  reviewCount   Int      @default(0)  // 复习次数
+  language      String
+  createdAt     DateTime @default(now())
+
+  @@index([userId, reviewedAt])
+  @@index([userId, createdAt])
+  @@map("wrong_questions")
+}
+
+// ===================== v1.1.0: 自定义语言差异化计费 =====================
+
+model CustomLanguageQuota {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  totalQuota    Int      @default(50)   // 当月总配额（免费会员50次/月，高级会员无限）
+  usedQuota     Int      @default(0)
+  resetAt       DateTime                // 配额重置时间（下月1日）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("custom_language_quotas")
+}
+
+model LanguageBillingLog {
+  id            String   @id @default(uuid())
+  userId        String
+  language      String   // 自定义语言代码
+  serviceType   String   // vocab / grammar / sentence / reading / translate / chat / evaluate / listening
+  costAmount    Int      @default(1)   // 消耗配额数
+  quotaRemaining Int     // 剩余配额
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("language_billing_logs")
+}
+
+// ==================== 词汇学习全链路（Vocabulary v1）====================
+
+/// 词库：系统级共享词汇表（非用户数据）
+model VocabularyWord {
+  id       String  @id @default(uuid())
+  language String // ja / en / ko / zh / fr / de / es
+  level    String // beginner / intermediate / advanced
+  word     String // 单词 / 词组
+  phonetic String? // 音标 / 假名
+  meaning  String // 正确释义（中文）
+  example  String? // 例句
+  exampleMeaning String? // 例句释义
+  tags     String? // 分类标签，逗号分隔
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  progresses VocabularyProgress[]
+
+  @@unique([language, word])
+  @@index([language, level, isActive])
+  @@map("vocabulary_words")
+}
+
+/// 用户单词掌握度（每人每词一条）
+model VocabularyProgress {
+  id     String @id @default(uuid())
+  userId String
+  wordId String
+  word   VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  language     String
+  correctCount Int      @default(0)
+  wrongCount   Int      @default(0)
+  mastered     Boolean  @default(false) // 累计答对 >=2 次判定掌握
+  lastSeenAt   DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, wordId])
+  @@index([userId, language])
+  @@index([userId, mastered])
+  @@map("vocabulary_progress")
+}
+
+/// 用户每日学习统计（时长/经验，落库真实数据）
+model VocabularyDailyStat {
+  id       String   @id @default(uuid())
+  userId   String
+  language String
+  statDate DateTime @db.Date
+
+  studySeconds Int @default(0)
+  answered     Int @default(0)
+  correct      Int @default(0)
+  xpGained     Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, language, statDate])
+  @@index([userId, statDate])
+  @@map("vocabulary_daily_stats")
+}
+
+// ============================================================
+// P1-M语音模块：语音用量日志（2026-08-04 增量追加）
+// 纯追加，不修改已有模型。所有 TTS/ASR 调用落库，支持按用户/按天统计。
+// ============================================================
+model VoiceUsageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  scene     String   @default("vocab")
+  type      String   @default("tts")
+  lang      String   @default("en")
+  provider  String   @default("native")
+  chars     Int      @default(0)
+  duration  Int      @default(0)
+  success   Boolean  @default(true)
+  errCode   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([scene])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("voice_usage_logs")
 }
 

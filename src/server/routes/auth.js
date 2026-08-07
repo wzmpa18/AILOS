@@ -1,13 +1,14 @@
 ﻿const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { loginLimiter, registerLimiter, smsLimiter } = require('../middleware/rateLimit');
 
-router.post('/send-code', authController.sendSmsCode);
-router.post('/send-email-code', authController.sendEmailCode);
-router.post('/phone', authController.phoneAuth);
-router.post('/password', authController.passwordAuth);
-router.post('/login', authController.passwordAuth); // Alias: frontend uses /login, actual endpoint is /password
-router.post('/register', authController.register);
+router.post('/send-code', smsLimiter, authController.sendSmsCode);
+router.post('/send-email-code', smsLimiter, authController.sendEmailCode);
+router.post('/phone', loginLimiter, authController.phoneAuth);
+router.post('/password', loginLimiter, authController.passwordAuth);
+router.post('/login', loginLimiter, authController.passwordAuth); // Alias: frontend uses /login, actual endpoint is /password
+router.post('/register', registerLimiter, authController.register);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/wechat', authController.wechatAuth);

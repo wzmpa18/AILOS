@@ -2,13 +2,14 @@ const dotenv = require('dotenv');
 const path = require('path');
 
 // Load environment variables based on NODE_ENV
-const env = process.env.NODE_ENV || 'development';
+// 生产环境优先：PM2 可能不设置 NODE_ENV，默认 production
+const env = process.env.NODE_ENV || 'production';
 const envFile = `.env.${env}`;
 
 dotenv.config({ path: path.join(__dirname, `../../${envFile}`), override: true });
 
 const config = {
-  env: process.env.NODE_ENV || 'development',
+  env: process.env.NODE_ENV || 'production',
   port: parseInt(process.env.PORT) || 3000,
   apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
   
@@ -24,7 +25,7 @@ const config = {
   
   jwt: {
     secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   },
   
   hunyuan: {

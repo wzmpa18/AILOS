@@ -98,4 +98,45 @@ router.get('/progress', authenticate, async (req, res, next) => {
   }
 });
 
+// P3 任务4.3: 发音评测提交（零AI调用，纯规则打分）
+router.post('/pronunciation', authenticate, async (req, res) => {
+  try {
+    const { text, language, duration, size } = req.body;
+    if (!text) return res.status(400).json({ success: false, error: '缺少文本内容' });
+
+    const result = dailyPlanService.evaluatePronunciation(
+      { duration: duration || 0, size: size || 0 },
+      text,
+      language || 'ja'
+    );
+
+    if (result.level === '待加强') {
+      await dailyPlanService.syncWrongItems(req.user.userId, [{
+        word: text, type: 'speaking', content: text,
+        language: language || 'ja', level: '待加强',
+        itemId: 'pron_' + text.substring(0, 20)
+      }]);
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    logger.error('Pronunciation evaluation failed:', error.message);
+    res.status(500).json({ success: false, error: '发音评测失败，请重试' });
+  }
+});
+
+// P3 任务4.3: 错题批量同步复习队列
+router.post('/sync-wrong', authenticate, async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!items || !items.length) return res.status(400).json({ success: false, error: '缺少错题数据' });
+
+    const count = await dailyPlanService.syncWrongItems(req.user.userId, items);
+    res.json({ success: true, data: { synced: count } });
+  } catch (error) {
+    logger.error('Wrong items sync failed:', error.message);
+    res.status(500).json({ success: false, error: '错题同步失败' });
+  }
+});
+
 module.exports = router;

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>机构管理后台 · AILOS</title>
+<style>
+:root { --primary:#4F46E5; --primary-light:#EEF2FF; --bg:#F8FAFC; --sidebar-bg:#1E293B; --text:#1E293B; --text-secondary:#64748B; --border:#E2E8F0; --radius:12px; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+.sidebar { width:220px; background:var(--sidebar-bg); color:#fff; display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0;left:0;bottom:0; z-index:100; }
+.sidebar-header { padding:20px 16px; border-bottom:1px solid rgba(255,255,255,0.1); }
+.sidebar-header .logo { font-size:18px; font-weight:700; }
+.sidebar-header .sub { font-size:11px; color:#94A3B8; margin-top:4px; }
+.sidebar-nav { flex:1; overflow-y:auto; padding:12px 0; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:12px 16px; color:#CBD5E1; text-decoration:none; font-size:14px; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
+.nav-item:hover { background:rgba(255,255,255,0.05); color:#fff; }
+.nav-item.active { background:rgba(79,70,229,0.15); color:#fff; border-left-color:var(--primary); }
+.nav-item .icon { font-size:18px; width:24px; text-align:center; }
+.sidebar-footer { padding:12px 16px; border-top:1px solid rgba(255,255,255,0.1); }
+.sidebar-footer .user { font-size:13px; color:#94A3B8; }
+.sidebar-footer .logout { color:#EF4444; font-size:12px; cursor:pointer; margin-top:6px; display:block; }
+.main { margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { background:#fff; padding:16px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; }
+.topbar .title { font-size:18px; font-weight:600; }
+.topbar .org-name { font-size:13px; color:var(--text-secondary); }
+.content { flex:1; padding:24px; }
+.content-section { display:none; }
+.content-section.active { display:block; }
+.card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:16px; }
+.card-title { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+.stat-card { background:#fff; border-radius:var(--radius); padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.stat-card .stat-num { font-size:28px; font-weight:700; color:var(--primary); }
+.stat-card .stat-label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.table { width:100%; border-collapse:collapse; font-size:13px; }
+.table th { text-align:left; padding:10px 12px; background:#F8FAFC; color:var(--text-secondary); font-weight:600; border-bottom:1px solid var(--border); }
+.table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.table tr:hover { background:#F8FAFC; }
+.btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .15s; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { opacity:.9; }
+.btn-danger { background:#FEE2E2; color:#EF4444; }
+.btn-sm { padding:4px 10px; font-size:12px; }
+.btn-outline { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:13px; font-weight:600; margin-bottom:4px; color:var(--text-secondary); }
+.form-input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; outline:none; }
+.form-input:focus { border-color:var(--primary); }
+select.form-input { appearance:auto; }
+.modal-overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:#fff; border-radius:16px; padding:24px; max-width:480px; width:90%; max-height:80vh; overflow-y:auto; }
+.modal-title { font-size:16px; font-weight:600; margin-bottom:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+.toast { position:fixed; top:20px;right:20px; padding:12px 20px; border-radius:10px; font-size:14px; z-index:300; animation:slideIn .3s; }
+.toast.success { background:#D1FAE5; color:#065F46; }
+.toast.error { background:#FEE2E2; color:#991B1B; }
+@keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@media(max-width:768px) {
+  .sidebar { width:60px; }
+  .sidebar .nav-item span, .sidebar-header .sub, .sidebar-footer { display:none; }
+  .sidebar .nav-item { justify-content:center; padding:12px 0; }
+  .main { margin-left:60px; }
+  .card-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header"><div class="logo">AILOS 机构</div><div class="sub" id="orgNameDisplay">加载中…</div></div>
+  <div class="sidebar-nav">
+    <a class="nav-item active" data-section="overview" onclick="switchSection('overview')"><span class="icon">📊</span><span>数据概览</span></a>
+    <a class="nav-item" data-section="teachers" onclick="switchSection('teachers')"><span class="icon">👩‍🏫</span><span>教师管理</span></a>
+    <a class="nav-item" data-section="students" onclick="switchSection('students')"><span class="icon">👨‍🎓</span><span>学生管理</span></a>
+    <a class="nav-item" data-section="classes" onclick="switchSection('classes')"><span class="icon">📚</span><span>班级管理</span></a>
+    <a class="nav-item" data-section="homework" onclick="switchSection('homework')"><span class="icon">📝</span><span>作业管理</span></a>
+    <a class="nav-item" data-section="courses" onclick="switchSection('courses')"><span class="icon">📖</span><span>备课中心</span></a>
+    <a class="nav-item" data-section="reports" onclick="switchSection('reports')"><span class="icon">📈</span><span>数据报表</span></a>
+  </div>
+  <div class="sidebar-footer"><div class="user" id="userDisplay">管理员</div><a class="logout" onclick="doLogout()">退出登录</a></div>
+</div>
+<div class="main">
+  <div class="topbar"><div><div class="title" id="sectionTitle">数据概览</div><div class="org-name" id="orgSubtitle"></div></div><button class="btn btn-outline btn-sm" onclick="window.open('/xuewaiyu/home')">返回学生端</button></div>
+  <div class="content">
+    <div class="content-section active" id="section-overview"><div class="card-grid" id="overviewStats"></div></div>
+    <div class="content-section" id="section-teachers"><div class="card"><div class="card-title">👩‍🏫 教师管理 <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openTeacherModal()">+ 添加教师</button></div><table class="table"><thead><tr><th>姓名</th><th>手机号</th><th>权限</th><th>班级数</th><th>操作</th></tr></thead><tbody id="teacherList"><tr><td colspan="5">加载中…</td></tr></tbody></table></div></div>
+    <div class="content-section" id="section-students"><div class="card"><div class="card-title">👨‍🎓 学生管理 <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openStudentModal()">+ 添加学生</button> <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="importStudents()">批量导入</button></div><table class="table"><thead><tr><th>姓名</th><th>UID</th><th>班级</th><th>学习进度</th><th>操作</th></tr></thead><tbody id="studentList"><tr><td colspan="5">加载中…</td></tr></tbody></table></div></div>
+    <div class="content-section" id="section-classes"><div class="card"><div class="card-title">📚 班级管理 <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openClassModal()">+ 创建班级</button></div><table class="table"><thead><tr><th>班级名称</th><th>任课教师</th><th>学生数</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="classList"><tr><td colspan="5">加载中…</td></tr></tbody></table></div></div>
+    <div class="content-section" id="section-homework"><div class="card"><div class="card-title">📝 作业管理 <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openHomeworkModal()">+ 布置作业</button></div><table class="table"><thead><tr><th>作业标题</th><th>班级</th><th>截止时间</th><th>完成率</th><th>操作</th></tr></thead><tbody id="homeworkList"><tr><td colspan="5">加载中…</td></tr></tbody></table></div></div>
+    <div class="content-section" id="section-courses"><div class="card"><div class="card-title">📖 备课中心 <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="uploadMaterial()">+ 上传教材</button></div><table class="table"><thead><tr><th>课程标题</th><th>语言</th><th>等级</th><th>状态</th><th>操作</th></tr></thead><tbody id="courseList"><tr><td colspan="5">加载中…</td></tr></tbody></table></div></div>
+  <div class="content-section" id="section-reports"><div class="card"><div class="card-title">📈 数据报表</div><div id="reportContent">加载中…</div></div></div>
+  </div>
+</div>
+<script src="/xuewaiyu/assets/common.js?v=3.0.0-20260806"></script>
+<script>
+(function(){
+  'use strict';
+  var API_BASE = '/api/org';
+  var token = '';
+  var orgInfo = null;
+
+  async function init() {
+    token = (window.AILOS && AILOS.getToken) ? AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+    if (!token) { alert('请先登录机构管理员账号'); location.href = '/xuewaiyu/login.html'; return; }
+    try {
+      var r = await fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (r.status === 403 || r.status === 401) { alert('无权访问机构后台'); location.href = '/xuewaiyu/home'; return; }
+      var d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      orgInfo = d.data;
+      document.getElementById('orgNameDisplay').textContent = orgInfo.organizationName || '机构';
+      document.getElementById('orgSubtitle').textContent = 'ID: ' + (orgInfo.organizationId || '');
+      document.getElementById('userDisplay').textContent = orgInfo.nickname || '管理员';
+    } catch(e) { alert('加载机构信息失败'); location.href = '/xuewaiyu/home'; return; }
+    switchSection('overview');
+  }
+
+  var sections = ['overview','teachers','students','classes','homework','courses','reports'];
+  var titles = { overview:'数据概览', teachers:'教师管理', students:'学生管理', classes:'班级管理', homework:'作业管理', courses:'备课中心', reports:'数据报表' };
+
+  function switchSection(s) {
+    sections.forEach(function(x) {
+      document.getElementById('section-' + x).classList.toggle('active', x === s);
+      document.querySelector('[data-section="' + x + '"]').classList.toggle('active', x === s);
+    });
+    document.getElementById('sectionTitle').textContent = titles[s] || s;
+    if (s === 'overview') loadOverview();
+    else if (s === 'teachers') loadTeachers();
+    else if (s === 'students') loadStudents();
+    else if (s === 'classes') loadClasses();
+    else if (s === 'homework') loadHomework();
+    else if (s === 'courses') loadCourses();
+    else if (s === 'reports') loadReports();
+  }
+
+  function apiGet(p) { return fetch(API_BASE + p, { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+  function apiPost(p, d) { return fetch(API_BASE + p, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body:JSON.stringify(d||{}) }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+  function apiPut(p, d) { return fetch(API_BASE + p, { method:'PUT', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body:JSON.stringify(d||{}) }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+  function apiDel(p) { return fetch(API_BASE + p, { method:'DELETE', headers:{ 'Authorization':'Bearer '+token } }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+
+  async function loadOverview() {
+    try { var d = await apiGet('/dashboard'); var s = d.data || {}; document.getElementById('overviewStats').innerHTML = [{ l:'教师', n:s.teacherCount||0 },{ l:'学生', n:s.studentCount||0 },{ l:'班级', n:s.classCount||0 },{ l:'活跃', n:s.activeToday||0 }].map(function(x){ return '<div class="stat-card"><div class="stat-num">'+x.n+'</div><div class="stat-label">'+x.l+'</div></div>'; }).join(''); } catch(e) { showToast('加载失败', 'error'); }
+  }
+
+  async function loadTeachers() {
+    try {
+      var d = await apiGet('/teachers');
+      var list = d.data && d.data.teachers ? d.data.teachers : (d.data || []);
+      var h = '';
+      if (!list.length) h = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748B">暂无教师</td></tr>';
+      else list.forEach(function(t) {
+        h += '<tr><td>'+(t.nickname||t.name||t.phone||'-')+'</td><td>'+(t.phone||t.email||'-')+'</td><td>'+(t.role==='admin'?'管理员':'教师')+'</td><td>'+(t.classCount||0)+'</td>'+
+          '<td><button class="btn btn-outline btn-sm" onclick="editTeacher(\''+(t.id||t.userId)+'\',\''+(t.nickname||'')+'\',\''+(t.role||'teacher')+'\')">编辑</button> <button class="btn btn-danger btn-sm" onclick="removeItem(\'teachers\',\''+(t.id||t.userId)+'\')">移除</button></td></tr>';
+      });
+      document.getElementById('teacherList').innerHTML = h;
+    } catch(e) { showToast('加载失败', 'error'); }
+  }
+
+  function openTeacherModal() {
+    showModal('添加教师',
+      '<div class="form-group"><label class="form-label">手机号 *</label><input class="form-input" id="mPhone"></div><div class="form-group"><label class="form-label">姓名</label><input class="form-input" id="mName"></div><div class="form-group"><label class="form-label">密码</label><input class="form-input" id="mPwd" type="password" value="123456"></div><div class="form-group"><label class="form-label">角色</label><select class="form-input" id="mRole"><option value="teacher">教师</option><option value="admin">管理员</option></select></div>',
+      function() { var ph = document.getElementById('mPhone').value.trim(); if (!ph) { showToast('请输入手机号', 'error'); return; } apiPost('/teachers', { phone:ph, nickname:document.getElementById('mName').value.trim(), password:document.getElementById('mPwd').value||'123456', role:document.getElementById('mRole').value }).then(function(){ closeModal(); loadTeachers(); showToast('添加成功', 'success'); }).catch(function(e){ showToast('添加失败', 'error'); }); });
+  }
+
+  function editTeacher(id, name, role) {
+    showModal('编辑教师',
+      '<div class="form-group"><label class="form-label">姓名</label><input class="form-input" id="mName" value="'+name+'"></div><div class="form-group"><label class="form-label">角色</label><select class="form-input" id="mRole"><option value="teacher"'+(role==='teacher'?' selected':'')+'>教师</option><option value="admin"'+(role==='admin'?' selected':'')+'>管理员</option></select></div>',
+      function() { apiPut('/teachers/'+id, { nickname:document.getElementById('mName').value.trim(), role:document.getElementById('mRole').value }).then(function(){ closeModal(); loadTeachers(); showToast('更新成功', 'success'); }).catch(function(){ showToast('更新失败', 'error'); }); });
+  }
+
+  async function loadStudents() {
+    try {
+      var d = await apiGet('/students');
+      var list = d.data && d.data.students ? d.data.students : (d.data || []);
+      var h = '';
+      if (!list.length) h = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748B">暂无学生</td></tr>';
+      else list.forEach(function(s) {
+        h += '<tr><td>'+(s.nickname||s.name||'-')+'</td><td>'+(s.uid||s.userId||s.phone||'-')+'</td><td>'+(s.className||'未分配')+'</td><td>'+(s.level||'A1')+' · '+(s.totalStudyMinutes||0)+'分钟</td>'+
+          '<td><button class="btn btn-outline btn-sm" onclick="editStudent(\''+(s.id||s.userId)+'\',\''+(s.nickname||'')+'\',\''+(s.classId||'')+'\')">分班</button> <button class="btn btn-danger btn-sm" onclick="removeItem(\'students\',\''+(s.id||s.userId)+'\')">移除</button></td></tr>';
+      });
+      document.getElementById('studentList').innerHTML = h;
+    } catch(e) { showToast('加载失败', 'error'); }
+  }
+
+  function openStudentModal() {
+    showModal('添加学生', '<div class="form-group"><label class="form-label">手机号/UID *</label><input class="form-input" id="mUid"></div><div class="form-group"><label class="form-label">姓名</label><input class="form-input" id="mName"></div><div class="form-group"><label class="form-label">密码</label><input class="form-input" id="mPwd" type="password" value="123456"></div>',
+      function() { var u = document.getElementById('mUid').value.trim(); if (!u) { showToast('请输入UID', 'error'); return; } apiPost('/students', { uid:u, nickname:document.getElementById('mName').value.trim(), password:document.getElementById('mPwd').value||'123456' }).then(function(){ closeModal(); loadStudents(); showToast('添加成功', 'success'); }).catch(function(e){ showToast('添加失败', 'error'); }); });
+  }
+
+  function editStudent(id, name, classId) {
+    apiGet('/classes').then(function(d) {
+      var classes = d.data && d.data.classes ? d.data.classes : (d.data||[]);
+      var opts = '<option value="">未分配</option>';
+      classes.forEach(function(c){ opts += '<option value="'+(c.id||'')+'"'+(c.id===classId?' selected':'')+'>'+(c.name||'')+'</option>'; });
+      showModal('分配班级 - '+name, '<div class="form-group"><label class="form-label">选择班级</label><select class="form-input" id="mClassId">'+opts+'</select></div>',
+        function() { apiPut('/students/'+id, { classId:document.getElementById('mClassId').value }).then(function(){ closeModal(); loadStudents(); showToast('分配成功', 'success'); }).catch(function(){ showToast('分配失败', 'error'); }); });
+    }).catch(function(){ showToast('加载班级失败', 'error'); });
+  }
+
+  function importStudents() { var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv'; inp.onchange = function() { if (this.files[0]) { var fd = new FormData(); fd.append('file', this.files[0]); fetch(API_BASE + '/students/import', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd }).then(function(r){ return r.json(); }).then(function(){ showToast('导入完成', 'success'); loadStudents(); }).catch(function(){ showToast('导入失败', 'error'); }); } }; inp.click(); }
+
+  async function loadClasses() {
+    try {
+      var d = await apiGet('/classes');
+      var list = d.data && d.data.classes ? d.data.classes : (d.data || []);
+      var h = '';
+      if (!list.length) h = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748B">暂无班级</td></tr>';
+      else list.forEach(function(c) {
+        h += '<tr><td>'+(c.name||'-')+'</td><td>'+(c.teacherName||'未分配')+'</td><td>'+(c.studentCount||0)+'</td><td>'+(c.createdAt||'').substring(0,10)+'</td>'+
+          '<td><button class="btn btn-outline btn-sm" onclick="editClass(\''+(c.id||'')+'\',\''+(c.name||'')+'\',\''+(c.teacherId||'')+'\')">编辑</button> <button class="btn btn-danger btn-sm" onclick="removeItem(\'classes\',\''+(c.id||'')+'\')">删除</button></td></tr>';
+      });
+      document.getElementById('classList').innerHTML = h;
+    } catch(e) { showToast('加载失败', 'error'); }
+  }
+
+  function openClassModal() {
+    showModal('创建班级', '<div class="form-group"><label class="form-label">班级名称 *</label><input class="form-input" id="mName" placeholder="如：日语初级A班"></div>',
+      function() { var n = document.getElementById('mName').value.trim(); if (!n) { showToast('请输入班级名称', 'error'); return; } apiPost('/classes', { name:n }).then(function(){ closeModal(); loadClasses(); showToast('创建成功', 'success'); }).catch(function(){ showToast('创建失败', 'error'); }); });
+  }
+
+  function editClass(id, name, teacherId) {
+    apiGet('/teachers').then(function(d) {
+      var teachers = d.data && d.data.teachers ? d.data.teachers : (d.data||[]);
+      var opts = '<option value="">未分配</option>';
+      teachers.forEach(function(t){ opts += '<option value="'+(t.id||t.userId||'')+'"'+(t.id===teacherId||t.userId===teacherId?' selected':'')+'>'+(t.nickname||t.phone||'')+'</option>'; });
+      showModal('编辑班级', '<div class="form-group"><label class="form-label">班级名称</label><input class="form-input" id="mName" value="'+name+'"></div><div class="form-group"><label class="form-label">任课教师</label><select class="form-input" id="mTeacherId">'+opts+'</select></div>',
+        function() { apiPut('/classes/'+id, { name:document.getElementById('mName').value.trim(), teacherId:document.getElementById('mTeacherId').value }).then(function(){ closeModal(); loadClasses(); showToast('更新成功', 'success'); }).catch(function(){ showToast('更新失败', 'error'); }); });
+    }).catch(function(){ showToast('加载教师失败', 'error'); });
+  }
+
+  async function loadHomework() {
+    try { var d = await apiGet('/homework'); var list = d.data && d.data.homework ? d.data.homework : (d.data||[]); var h=''; if (!list.length) h='<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748B">暂无作业</td></tr>'; else list.forEach(function(hw) { h+='<tr><td>'+hw.title+'</td><td>'+hw.className+'</td><td>'+(hw.deadline||'-').substring(0,10)+'</td><td>'+hw.completionRate+'%</td><td><button class="btn btn-outline btn-sm" onclick="viewHomework(\''+hw.id+'\')">查看</button> <button class="btn btn-danger btn-sm" onclick="removeItem(\'homework\',\''+hw.id+'\')">删除</button></td></tr>'; }); document.getElementById('homeworkList').innerHTML = h; } catch(e) { showToast('加载作业失败', 'error'); }
+  }
+  function openHomeworkModal() {
+    apiGet('/classes').then(function(d) { var classes = d.data && d.data.classes ? d.data.classes : (d.data||[]); var opts = classes.map(function(c){ return '<option value="'+c.id+'">'+c.name+'</option>'; }).join('');
+      showModal('布置作业',
+        '<div class="form-group"><label class="form-label">作业标题 *</label><input class="form-input" id="mTitle"></div><div class="form-group"><label class="form-label">班级</label><select class="form-input" id="mClassId">'+opts+'</select></div>'+
+        '<div class="form-group"><label class="form-label">作业类型（可多选）</label><div style="display:flex;gap:8px;flex-wrap:wrap"><label style="font-size:13px"><input type="checkbox" value="text" checked> 文字</label><label style="font-size:13px"><input type="checkbox" value="image"> 图片</label><label style="font-size:13px"><input type="checkbox" value="audio"> 录音</label><label style="font-size:13px"><input type="checkbox" value="video"> 视频</label></div></div>'+
+        '<div class="form-group"><label class="form-label">截止日期</label><input class="form-input" id="mDeadline" type="date"></div><div class="form-group"><label style="font-size:13px"><input type="checkbox" id="mAllowLate" checked> 允许补交</label></div>',
+        function() { var t = document.getElementById('mTitle').value.trim(); if (!t) { showToast('请输入作业标题', 'error'); return; }
+          var types = []; document.querySelectorAll('#modalOverlay input[type=checkbox][value]').forEach(function(cb){ if (cb.checked) types.push(cb.value); });
+          apiPost('/homework', { title:t, classId:document.getElementById('mClassId').value, homeworkTypes:types, allowLate:document.getElementById('mAllowLate').checked, deadline:document.getElementById('mDeadline').value })
+            .then(function(){ closeModal(); loadHomework(); showToast('作业已布置', 'success'); }).catch(function(){ showToast('布置失败', 'error'); }); });
+    }).catch(function(){ showToast('加载班级失败', 'error'); });
+  }  function viewHomework(id) { apiGet('/homework/'+id).then(function(d) { var hw = d.data && d.data.homework; if (hw) { showToast(hw.title + ' - 提交: ' + (hw.submittedCount||0) + '/' + (hw.totalCount||0), 'success'); } }).catch(function(){ showToast('加载详情失败', 'error'); }); }
+  async function loadCourses() {
+    try { var d = await apiGet('/courses'); var list = d.data && d.data.courses ? d.data.courses : (d.data||[]); var h=''; if (!list.length) h='<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748B">暂无课程</td></tr>'; else list.forEach(function(co) { h+='<tr><td>'+(co.title||'未命名')+'</td><td>'+(co.targetLanguage||'-')+'</td><td>'+(co.level||'-')+'</td><td>'+(co.published?'已发布':'草稿')+'</td><td><button class="btn btn-outline btn-sm" onclick="publishCourse(\''+co.id+'\')">发布</button> <button class="btn btn-danger btn-sm" onclick="removeItem(\'courses\',\''+co.id+'\')">删除</button></td></tr>'; }); document.getElementById('courseList').innerHTML = h; } catch(e) { showToast('加载课程失败', 'error'); }
+  }
+  function uploadMaterial() {
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,.pdf'; input.multiple = true;
+    input.onchange = function() {
+      if (!this.files || !this.files.length) return;
+      showToast('正在识别教材内容…', 'success');
+      var images = []; var total = this.files.length; var loaded = 0;
+      for (var i = 0; i < this.files.length; i++) {
+        (function(file) {
+          var reader = new FileReader();
+          reader.onload = function(e) { images.push({ base64: e.target.result, mimeType: file.type }); loaded++; if (loaded === total) doExtract(images); };
+          reader.readAsDataURL(file);
+        })(this.files[i]);
+      }
+    };
+    input.click();
+  }
+  function doExtract(images) {
+    apiPost('/courses/extract', { images: images }).then(function(d) {
+      if (!d.success) { showToast(d.error||'识别失败', 'error'); return; }
+      var k = d.data.knowledge;
+      var msg = '识别成功！生词'+(k.words||[]).length+'个，语法'+(k.grammar||[]).length+'个，主题'+(k.topics||[]).length+'个。是否生成课程？';
+      if (confirm(msg)) {
+        showToast('正在生成课程…', 'success');
+        apiPost('/courses/generate', { knowledge: k, targetLanguage: (window.AILOS?AILOS.getStudyLang():'ja'), level: 'A2', scene: '新课', duration: 45 }).then(function(gd) {
+          if (gd.success) { showToast('课程生成成功！可在列表中查看', 'success'); loadCourses(); }
+          else { showToast(gd.error||'生成失败', 'error'); }
+        }).catch(function(){ showToast('生成失败', 'error'); });
+      }
+    }).catch(function(){ showToast('识别失败，请重试', 'error'); });
+  }
+  function publishCourse(id) {
+    apiGet('/classes').then(function(d) { var classes = d.data&&d.data.classes?d.data.classes:(d.data||[]); var opts = classes.map(function(c){ return '<option value="'+c.id+'">'+c.name+'</option>'; }).join('');
+      showModal('发布到班级', '<div class="form-group"><label class="form-label">选择班级</label><select class="form-input" id="mClassIds" multiple style="height:120px">'+opts+'</select></div>',
+        function() { var sel = document.getElementById('mClassIds'); var ids = []; for (var i=0;i<sel.options.length;i++) { if (sel.options[i].selected) ids.push(sel.options[i].value); }
+          apiPost('/courses/'+id+'/publish', { classIds: ids }).then(function(){ closeModal(); loadCourses(); showToast('已发布', 'success'); }).catch(function(){ showToast('发布失败', 'error'); }); });
+    }).catch(function(){ showToast('加载班级失败', 'error'); });
+  }
+  async function loadReports() {
+    try {
+      var d = await apiGet('/reports/overview');
+      var s = d.data || {};
+      var html = '<div class="card-grid">' +
+        '<div class="stat-card"><div class="stat-num">'+s.studentCount+'</div><div class="stat-label">学生总数</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.teacherCount+'</div><div class="stat-label">教师总数</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.classCount+'</div><div class="stat-label">班级总数</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.activeToday+'</div><div class="stat-label">今日活跃</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+(s.totalStudyMinutes||0)+'</div><div class="stat-label">累计学习(分钟)</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+(s.totalWords||0)+'</div><div class="stat-label">掌握词汇量</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+(s.courseCount||0)+'</div><div class="stat-label">生成课程</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+(s.homeworkCompletionRate||0)+'%</div><div class="stat-label">作业完成率</div></div>' +
+        '</div>' +
+        '<div class="card" style="margin-top:16px"><div class="card-title">📈 近7天趋势</div><div id="trendChart" style="height:200px;display:flex;align-items:flex-end;gap:8px;padding:10px 0"></div></div>' +
+        '<div class="card" style="margin-top:16px"><div class="card-title">📚 班级数据 <select class="form-input" id="classFilter" onchange="loadClassReport(this.value)" style="width:auto;display:inline;margin-left:8px"><option value="">全部班级</option></select></div><div id="classReport"></div></div>';
+      document.getElementById('reportContent').innerHTML = html;
+
+      // 加载趋势
+      apiGet('/reports/trends?days=7').then(function(td) {
+        var trends = td.data && td.data.trends ? td.data.trends : [];
+        var maxXp = 10;
+        trends.forEach(function(t) { if (t.xp > maxXp) maxXp = t.xp; });
+        var chartHtml = '';
+        trends.forEach(function(t) {
+          var h = maxXp > 0 ? Math.round(t.xp / maxXp * 180) : 5;
+          chartHtml += '<div style="flex:1;text-align:center"><div style="background:var(--primary);height:'+h+'px;border-radius:4px 4px 0 0;min-height:4px"></div><div style="font-size:10px;color:var(--text-secondary);margin-top:4px">'+t.date.substring(5)+'</div></div>';
+        });
+        document.getElementById('trendChart').innerHTML = chartHtml || '<p style="color:var(--text-secondary)">暂无数据</p>';
+      }).catch(function(){});
+
+      // 加载班级列表
+      apiGet('/classes').then(function(cd) {
+        var classes = cd.data && cd.data.classes ? cd.data.classes : (cd.data||[]);
+        var opts = classes.map(function(cl){ return '<option value="'+cl.id+'">'+cl.name+'</option>'; }).join('');
+        document.getElementById('classFilter').innerHTML += opts;
+      }).catch(function(){});
+    } catch(e) { showToast('加载报表失败', 'error'); }
+  }
+
+  function loadClassReport(classId) {
+    if (!classId) { document.getElementById('classReport').innerHTML = ''; return; }
+    apiGet('/reports/class/' + classId).then(function(d) {
+      var s = d.data || {};
+      document.getElementById('classReport').innerHTML =
+        '<div class="card-grid">' +
+        '<div class="stat-card"><div class="stat-num">'+s.studentCount+'</div><div class="stat-label">班级人数</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.homeworkAvgScore+'</div><div class="stat-label">作业均分</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.homeworkCompletionRate+'%</div><div class="stat-label">完成率</div></div>' +
+        '<div class="stat-card"><div class="stat-num">'+s.avgStudyMinutes+'</div><div class="stat-label">平均学习(分钟)</div></div>' +
+        '</div>';
+    }).catch(function(){});
+  }
+
+  function removeItem(type, id) { if (!confirm('确定移除？')) return; apiDel('/'+type+'/'+id).then(function(){ showToast('已移除', 'success'); switchSection(type); }).catch(function(e){ showToast('移除失败', 'error'); }); }
+  function showToast(msg, type) { var t = document.createElement('div'); t.className = 'toast ' + (type||'success'); t.textContent = msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2000); }
+  function showModal(title, body, onConfirm) {
+    var overlay = document.getElementById('modalOverlay') || (function() { var o = document.createElement('div'); o.id = 'modalOverlay'; o.className = 'modal-overlay'; o.innerHTML = '<div class="modal"><div class="modal-title"></div><div class="modal-body"></div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary modal-confirm">确定</button></div></div>'; o.onclick = function(e) { if (e.target === o) closeModal(); }; document.body.appendChild(o); return o; })();
+    overlay.querySelector('.modal-title').textContent = title;
+    overlay.querySelector('.modal-body').innerHTML = body;
+    overlay.querySelector('.modal-confirm').onclick = onConfirm;
+    overlay.classList.add('open');
+  }
+  function closeModal() { var o = document.getElementById('modalOverlay'); if (o) o.classList.remove('open'); }
+  function doLogout() { if (window.AILOS && AILOS.clearToken) AILOS.clearToken(); location.href = '/xuewaiyu/login.html'; }
+
+  init();
+})();
+</script>
+</body>
+</html>

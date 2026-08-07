@@ -1,0 +1,131 @@
+{
+  "version": "3.0.0",
+  "constitution_version": "2.6.0",
+  "atlas_version": "3.0.0",
+  "binding_rule": "蓝图版本号 = 图谱版本号 = 宪法配套版本号，三者必须同步更新，版本不一致直接判定审计不通过",
+  "generated_at": "2026-08-05",
+  "last_updated": "2026-08-05",
+  "status": "conditional_pass",
+  "hardening_items": ["HARD-01", "HARD-02", "HARD-03", "HARD-04"],
+  "freeze_condition": "4项硬伤全部闭环后正式冻结生效",
+
+  "layers": {
+    "L5_presentation": {
+      "name": "接入层",
+      "entry_type": "27 HTML 页面 + common.js 统一引擎",
+      "callable_layers": ["L4_coreos"],
+      "forbidden_layers": ["L3_brain", "L2_domain", "L1_infra"],
+      "rule": "仅调用 CoreOS Facade，禁止直连下层"
+    },
+    "L4_coreos": {
+      "name": "Core OS 调度内核",
+      "components": ["EventBus", "DependencyGuard", "CacheManager", "AuthMiddleware"],
+      "callable_layers": ["L3_brain", "L2_domain", "L1_infra"],
+      "forbidden_layers": [],
+      "rule": "唯一中枢，所有请求必经此层"
+    },
+    "L3_brain": {
+      "name": "Brain AI 内核",
+      "subsystems": ["BrainFacade", "LanguageGuard", "ModelRouter", "QuotaManager", "AuditLogger", "PromptCenter", "MemoryCenter", "ContextBuilder", "OutputValidator", "CostManager", "RetryEngine", "VoiceSubsystem", "OCRSubsystem"],
+      "callable_layers": ["L1_infra"],
+      "forbidden_layers": [],
+      "rule": "唯一 AI 出口，禁止绕过；仅对后端服务内部开放，不对前端直接暴露接口"
+    },
+    "L2_domain": {
+      "name": "六大领域业务层",
+      "domains": ["vocabulary", "grammar", "reading", "speaking", "social", "billing"],
+      "callable_layers": ["L3_brain", "L1_infra"],
+      "forbidden_layers": [],
+      "rule": "DDD 完全隔离，跨领域仅通过 EventBus"
+    },
+    "L1_infra": {
+      "name": "数据持久层",
+      "components": ["PostgreSQL (SSOT)", "Redis (只读缓存)", "文件存储"],
+      "callable_layers": [],
+      "forbidden_layers": [],
+      "rule": "SSOT 唯一真值源，仅 Repository 可写 DB，仅 CacheManager 可写 Redis"
+    }
+  },
+
+  "legal_call_chains": [
+    {"path": "页面 → Controller → Service → Repository → DB", "legal": true, "level": null, "clause": null},
+    {"path": "页面 → Controller → BrainFacade → 适配器 → 第三方 API", "legal": true, "level": null, "clause": null},
+    {"path": "Service → CacheManager.invalidate() → Redis", "legal": true, "level": null, "clause": null},
+    {"path": "页面 → fetch('/api/ai/chat') 直接调 AI", "legal": false, "level": "L1_CRITICAL", "clause": "CoreOS 6.2", "fix": "HARD-02: 前端所有 AI 请求必须经由 Controller → BrainFacade，禁止直连 /api/ai/*"},
+    {"path": "Service → axios.post(混元API) 直连模型", "legal": false, "level": "L1_CRITICAL", "clause": "CoreOS 6.2"},
+    {"path": "Service → redis.set() 直写缓存", "legal": false, "level": "L1_CRITICAL", "clause": "CoreOS 0.1"},
+    {"path": "词汇Service → 支付Service 直接调用", "legal": false, "level": "L1_CRITICAL", "clause": "CoreOS 0.2"},
+    {"path": "页面 → localStorage.setItem() 改语言", "legal": false, "level": "L1_CRITICAL", "clause": "产品宪法 9.2"}
+  ],
+
+  "violation_rules": [
+    {"id": "VR-001", "type": "frontend_direct_ai", "description": "前端直连 /api/ai/* 网关端点", "level": "L1_CRITICAL", "clause": "CoreOS 6.2 + HARD-02", "ci_detection": "扫描所有 HTML/JS 中 fetch('/api/ai/...')", "runtime_detection": "DependencyGuard 路由归属自动识别", "penalty": "CI阻断 + 403/9001"},
+    {"id": "VR-002", "type": "direct_model_call", "description": "业务层直连混元/DeepSeek/腾讯云模型 API", "level": "L1_CRITICAL", "clause": "CoreOS 0.4", "ci_detection": "扫描 hunyuan/deepseek/tencentcloudapi 域名", "runtime_detection": "DependencyGuard 调用栈+路由归属", "penalty": "CI阻断 + 403/9001"},
+    {"id": "VR-003", "type": "direct_redis_write", "description": "业务层直写 Redis", "level": "L1_CRITICAL", "clause": "CoreOS 0.1", "ci_detection": "扫描 redis.set/setex/hset/del", "runtime_detection": "DependencyGuard 底层SDK拦截", "penalty": "CI阻断 + 403/9001"},
+    {"id": "VR-004", "type": "cross_domain_call", "description": "跨领域 Service 直接 import", "level": "L1_CRITICAL", "clause": "CoreOS 0.2", "ci_detection": "扫描跨领域 import", "runtime_detection": "DependencyGuard 路由归属", "penalty": "CI阻断 + 403/9001"},
+    {"id": "VR-005", "type": "hardcoded_question_bank", "description": "前端硬编码题库", "level": "L1_CRITICAL", "clause": "产品宪法 9.2 + HARD-04", "ci_detection": "扫描 HTML/JS 中 question/option/answer 硬编码数组", "runtime_detection": null, "penalty": "CI阻断"},
+    {"id": "VR-006", "type": "frontend_language_param", "description": "前端传 lang 参数被后端忽略", "level": "L1_CRITICAL", "clause": "产品宪法 3.1", "ci_detection": null, "runtime_detection": "ContextResolver 忽略前端参数", "penalty": "后端强制覆盖"},
+    {"id": "VR-007", "type": "ancient_exemption_claim", "description": "以'历史遗留'申请豁免", "level": "L1_CRITICAL", "clause": "Z1.1", "ci_detection": null, "runtime_detection": null, "penalty": "驳回 → 限期整改"},
+    {"id": "VR-008", "type": "unregistered_api", "description": "未登记接口/服务", "level": "L1_CRITICAL", "clause": "Z1.3", "ci_detection": "扫描路由与蓝图服务清单比对", "runtime_detection": null, "penalty": "禁止上线"}
+  ],
+
+  "domains": [
+    {"name": "vocabulary", "layer": "L2", "routes": ["/api/vocabulary/words", "/api/vocabulary/practice", "/api/vocabulary/progress", "/api/content?type=vocabulary", "/api/content/custom"], "services": ["vocabularyService"], "tables_ssot": ["vocabulary_words", "vocabulary_progress"], "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "vocabulary_repository", "EventBus 发布接口", "user_profiles（只读）"], "forbidden_calls": ["ReadingService", "GrammarService", "SpeakingService", "PaymentService", "SocialService", "直连大模型 API", "Redis 写操作"]},
+    {"name": "grammar", "layer": "L2", "routes": ["/api/grammar/points", "/api/grammar/practice", "/api/grammar/progress", "/api/content?type=grammar"], "services": ["grammarService"], "tables_ssot": ["grammar_points"], "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "grammar_repository", "EventBus"], "forbidden_calls": ["VocabularyService", "ReadingService", "直连大模型 API", "Redis 写操作"]},
+    {"name": "reading", "layer": "L2", "routes": ["/api/reading/articles", "/api/reading/questions", "/api/reading/submit", "/api/content?type=reading"], "services": ["readingService"], "tables_ssot": ["reading_articles"], "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "reading_repository", "EventBus"], "forbidden_calls": ["VocabularyService", "GrammarService", "直连大模型 API", "Redis 写操作"]},
+    {"name": "speaking", "layer": "L2", "routes": ["/api/speaking/scenarios", "/api/speaking/practice", "/api/speaking/record", "/api/practice"], "services": ["speakingService"], "tables_ssot": ["speaking_records"], "allowed_calls": ["CoreOS Facade", "AILOS Brain 内核", "speaking_repository", "EventBus"], "forbidden_calls": ["VocabularyService", "GrammarService", "直连外部 TTS 服务", "Redis 写操作"]},
+    {"name": "social", "layer": "L2", "routes": ["/api/v1/social/friends", "/api/v1/social/groups", "/api/v1/social/posts", "/api/v1/social/timeline"], "services": ["socialService"], "tables_ssot": ["social_friends", "social_groups", "social_posts"], "allowed_calls": ["CoreOS Facade", "social_repository", "EventBus"], "forbidden_calls": ["任何学习领域", "付费领域", "AI 生成内容（无 Brain）", "Redis 写操作"]},
+    {"name": "billing", "layer": "L2", "routes": ["/api/billing/packages", "/api/billing/buy", "/api/billing/payment", "/api/membership/plans", "/api/membership/status", "/api/membership/orders"], "services": ["billingService", "membershipService"], "tables_ssot": ["billing_orders", "billing_plans", "membership_records"], "allowed_calls": ["CoreOS Facade", "billing_repository", "EventBus", "第三方支付 SDK"], "forbidden_calls": ["任何学习领域", "社交领域", "Redis 写操作"]}
+  ],
+
+  "services": [
+    {"name": "BrainFacade", "type": "facade", "layer": "L3", "file": "src/core/brain/facade.js", "methods": ["generateText", "generateVoice", "recognizeImage"]},
+    {"name": "CacheManager", "type": "infrastructure", "layer": "L4", "file": "src/core/cacheManager.js", "methods": ["invalidate", "blacklistToken", "blacklistUser", "setRiskFlag", "incrRiskCounter"]},
+    {"name": "DependencyGuard", "type": "middleware", "layer": "L4", "file": "src/server/middleware/dependencyGuard.js", "methods": ["dependencyGuard (Express middleware)"], "note": "HARD-03 改造：基于路由归属+调用栈自动识别，不信任Header"},
+    {"name": "aiService", "type": "brain_internal", "layer": "L3", "file": "src/services/aiService.js", "methods": ["callHunyuan"], "visibility": "仅 BrainFacade 内部"},
+    {"name": "voiceAdapter", "type": "brain_adapter", "layer": "L3", "file": "src/core/brain/adapters/voiceAdapter.js", "methods": ["synthesize"], "visibility": "仅 BrainFacade 内部"},
+    {"name": "ocrAdapter", "type": "brain_adapter", "layer": "L3", "file": "src/core/brain/adapters/ocrAdapter.js", "methods": ["recognize"], "visibility": "仅 BrainFacade 内部"},
+    {"name": "authService", "type": "infrastructure", "layer": "L4", "file": "src/services/authService.js"},
+    {"name": "vocabularyService", "type": "domain", "layer": "L2", "file": "src/services/vocabularyService.js"},
+    {"name": "grammarService", "type": "domain", "layer": "L2", "file": "src/services/grammarService.js"},
+    {"name": "readingService", "type": "domain", "layer": "L2", "file": "src/services/readingService.js"},
+    {"name": "speakingService", "type": "domain", "layer": "L2", "file": "src/services/speakingService.js"},
+    {"name": "socialService", "type": "domain", "layer": "L2", "file": "src/services/socialService.js"},
+    {"name": "billingService", "type": "domain", "layer": "L2", "file": "src/services/billingService.js"}
+  ],
+
+  "cache_keys": [
+    {"pattern": "profile:{userId}", "category": "用户资料", "ttl": null, "writer": "CacheManager"},
+    {"pattern": "blacklist:token:{hash}", "category": "Token 黑名单", "ttl": "Token TTL", "writer": "CacheManager"},
+    {"pattern": "blacklist:uid:{userId}", "category": "用户级黑名单", "ttl": "30d", "writer": "CacheManager"},
+    {"pattern": "dfp:{type}:{key}", "category": "设备风控", "ttl": "24h", "writer": "CacheManager"},
+    {"pattern": "ailos:ai:cache:{hash}", "category": "AI 缓存", "ttl": "1h", "writer": "CacheManager"}
+  ],
+
+  "ci_integration": {
+    "scanner_script": "scripts/ci-violation-scanner.js",
+    "scanner_version": "2.1",
+    "binding_rule": "CI 扫描脚本必须基于本 JSON 文件做一致性校验，代码与蓝图不符直接阻断 PR",
+    "version_check": {"field": "commit_message", "pattern": "\\[图谱版本:v\\d+\\.\\d+\\.\\d+\\]", "required": true, "violation_on_mismatch": "L1_CRITICAL"},
+    "detection_dimensions": ["直连模型扫描", "直写缓存扫描", "跨模块耦合", "字符串拼接绕过", "变量名模糊匹配", "注释内违规代码", "动态加载旁路", "前端硬编码题库检测 (HARD-04)"],
+    "bypass_tests": [{"name": "字符串拼接绕过", "expected": "拦截"}, {"name": "变量名模糊匹配", "expected": "拦截"}, {"name": "注释内违规代码", "expected": "拦截"}, {"name": "合法代码", "expected": "放行"}]
+  },
+
+  "runtime_guard": {
+    "component": "DependencyGuard",
+    "version": "2.0",
+    "note": "HARD-03 改造：基于路由归属+调用文件路径+模块上下文自动识别，完全不信任前端/调用方传入的身份标识",
+    "detection_methods": {
+      "direct_ai_call": "基于请求来源（Referer + 路由归属）自动判定是否为前端请求 → 拦截 /api/ai/* 网关端点",
+      "cross_domain_call": "基于调用文件路径（从调用栈获取）自动判定 Service 归属领域 → 拦截跨领域调用",
+      "direct_redis_write": "底层 SDK 拦截：在 Redis 客户端层面注入写操作检测，不依赖 Header"
+    },
+    "no_header_trust": "完全废弃 X-Caller-Module / X-Caller-Service / X-Redis-Write / X-Caller-File 等自报身份 Header",
+    "bypass_test_cases": [
+      {"name": "伪造 brain Header 调用 AI", "expected": "拦截（路由归属检测到前端来源）"},
+      {"name": "不传任何 Header 调用 AI", "expected": "拦截（默认判定为前端请求）"},
+      {"name": "伪造 CacheManager Header 写 Redis", "expected": "拦截（底层 SDK 调用栈检测）"},
+      {"name": "合法后端 Service 经 BrainFacade", "expected": "放行（调用栈确认来自 BrainFacade）"}
+    ]
+  }
+}

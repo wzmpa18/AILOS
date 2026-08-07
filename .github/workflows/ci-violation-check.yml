@@ -1,0 +1,38 @@
+# AILOS CI 违宪扫描流水线
+# 图谱版本: v3.0.0 | 宪法版本: v2.6.0
+# 
+# 触发条件：所有 PR 提交
+# 功能：自动扫描一级违宪模式，命中直接拦截合并
+
+name: CI 违宪扫描
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  violation-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Run Violation Scanner
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          node scripts/governance/ci-violation-scanner.js --commit-msg "$COMMIT_MSG"
+        continue-on-error: false
+
+      - name: Run Ledger Validator
+        run: |
+          node scripts/governance/ledger-validator.js --ledger docs/constitution/ledger/MASTER_LEDGER_v3.0.0.md
+        continue-on-error: false

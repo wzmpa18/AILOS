@@ -569,6 +569,81 @@ const blueprintController = {
       })),
     });
   },
+
+  /**
+   * P3: GET /api/placement/questions?language=ja&level=beginner&count=6
+   * 从预生成题库 PlacementQuestionBank 取题，毫秒级响应
+   * 解决 placement.html 实时调用 AI 导致"一直加载"的问题
+   */
+  async getPlacementQuestions(req, res, next) {
+    try {
+      const language = req.query.language || 'ja';
+      const level = req.query.level || 'beginner';
+      const count = Math.min(parseInt(req.query.count) || 6, 20);
+      const cefrLevel = req.query.cefrLevel || (req.user && req.user.level) || 'A1';
+
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+
+      // P3 v3.1: C1/C2 高等级用户返回 targetLangOptions（目标语言原生选项）
+      // A1-B2 低等级用户返回 nativeLangOptions（母语翻译选项）
+      const isHighLevel = (cefrLevel && (cefrLevel.startsWith('C') || cefrLevel === 'C1' || cefrLevel === 'C2'));
+
+      const rows = await prisma.$queryRawUnsafe(
+        `SELECT id, language, "difficultyLevel" AS "difficultyLevel",
+                "questionText" AS "questionText",
+                "nativeLangOptions" AS "nativeLangOptions",
+                "targetLangOptions" AS "targetLangOptions",
+                "correctAnswer" AS "correctAnswer",
+                "questionType" AS "questionType"
+         FROM placement_question_bank
+         WHERE language = $1 AND "difficultyLevel" = $2 AND "isActive" = true
+         ORDER BY RANDOM()
+         LIMIT $3`,
+        language, level, count
+      );
+      await prisma.$disconnect();
+
+      if (!rows || rows.length === 0) {
+        const prisma2 = new PrismaClient();
+        const fallback = await prisma2.$queryRawUnsafe(
+          `SELECT id, language, "difficultyLevel" AS "difficultyLevel",
+                  "questionText" AS "questionText",
+                  "nativeLangOptions" AS "nativeLangOptions",
+                  "targetLangOptions" AS "targetLangOptions",
+                  "correctAnswer" AS "correctAnswer",
+                  "questionType" AS "questionType"
+           FROM placement_question_bank
+           WHERE language = $1 AND "isActive" = true
+           ORDER BY RANDOM()
+           LIMIT $2`,
+          language, count
+        );
+        await prisma2.$disconnect();
+
+        if (fallback && fallback.length > 0) {
+          const formattedQuestions = fallback.map(q => {
+            const raw = isHighLevel ? (q.targetLangOptions || q.nativeLangOptions) : (q.nativeLangOptions || q.targetLangOptions);
+            return { id: q.id, question: q.questionText, options: JSON.parse(raw), correctAnswer: q.correctAnswer, language: q.language, difficultyLevel: q.difficultyLevel, questionType: q.questionType };
+          });
+          return res.json({ success: true, questions: formattedQuestions, total: formattedQuestions.length, source: 'pre_generated_bank', optionMode: isHighLevel ? 'targetLangOptions' : 'nativeLangOptions', language, level });
+        }
+        logger.warn('PlacementQuestionBank 为空，降级到 AI 生成');
+        return blueprintController.generateQuestions(req, res, next);
+      }
+
+      const formattedQuestions = rows.map(q => {
+        const raw = isHighLevel ? (q.targetLangOptions || q.nativeLangOptions) : (q.nativeLangOptions || q.targetLangOptions);
+        return { id: q.id, question: q.questionText, options: JSON.parse(raw), correctAnswer: q.correctAnswer, language: q.language, difficultyLevel: q.difficultyLevel, questionType: q.questionType };
+      });
+
+      res.json({ success: true, questions: formattedQuestions, total: formattedQuestions.length, source: 'pre_generated_bank', optionMode: isHighLevel ? 'targetLangOptions' : 'nativeLangOptions', language, level });
+      logger.info(`PlacementQuestions: ${formattedQuestions.length} 题 (${language}/${level}, mode: ${isHighLevel ? 'target' : 'native'})`);
+    } catch (error) {
+      logger.error('getPlacementQuestions 失败:', error.message);
+      blueprintController.generateQuestions(req, res, next);
+    }
+  },
 };
 
 module.exports = blueprintController;

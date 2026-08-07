@@ -33,6 +33,17 @@ const SYSTEM_EXPLAIN_LANG = process.env.SYSTEM_EXPLAIN_LANG || 'zh-CN';
 
 class AIGateway {
   /**
+   * 输出必须依赖用户输入的场景：禁止资产库复用。
+   * _searchAsset 只按 targetLanguage/explanationLanguage/contentType 检索，
+   * 不做输入文本匹配，对这些场景复用资产会返回与用户输入无关的内容。
+   */
+  static INPUT_DEPENDENT_SCENES = new Set([
+    'translate',
+    'grammar_check',
+    'conversation',
+  ]);
+
+  /**
    * 统一 AI 调用入口
    * @param {Object} params
    * @param {string} params.scene - 场景: lesson_generate, explanation, conversation, review
@@ -233,8 +244,9 @@ class AIGateway {
       logEntry.latencyMs = Date.now() - startTime;
       await this._logRequest(logEntry);
 
-      // 9. 资产落库（异步，不阻塞响应；skipAsset 场景不回存）
-      if (!skipAsset) {
+      // 9. 资产落库（异步，不阻塞响应；skipAsset 与输入依赖型场景不回存）
+      // 输入依赖型场景的输出只对当次输入有效，回存会持续污染资产库
+      if (!skipAsset && !AIGateway.INPUT_DEPENDENT_SCENES.has(scene)) {
         this._saveToAssets(messages, { content: outputText }, ctx, scene).catch(() => {});
       }
 
@@ -285,6 +297,14 @@ class AIGateway {
    */
   async _searchAsset(scene, params, languageContext) {
     try {
+      // BUGFIX(P0)：资产检索仅按 语言+contentType 匹配，完全忽略用户输入文本，
+      // 对「输出必须依赖用户输入」的场景会返回 reuseCount 最高的无关资产。
+      // 实测：/api/ai/translate 输入「我明天要去东京出差」返回资产「天気/てんき/天气」。
+      // 这类场景直接禁用资产复用，走真实 AI 调用。
+      if (AIGateway.INPUT_DEPENDENT_SCENES.has(scene)) {
+        return null;
+      }
+
       const targetLang = languageContext.primaryTargetLanguage;
       const explanationLang = languageContext.explanationLanguage;
 
@@ -486,6 +506,7 @@ class AIGateway {
       translate: 'vocabulary',
       grammar_check: 'grammar',
       exercise_generate: 'quiz',
+      sentence_practice: 'sentence_pattern',
     };
     return map[scene] || 'lesson';
   }
