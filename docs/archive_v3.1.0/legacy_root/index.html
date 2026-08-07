@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>言道 AILOS</title>
+  <style>body{font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0f1115;color:#e8eaed}</style>
+<script src="/xuewaiyu/assets/devicefp.js"></script>
+</head>
+<body>
+  <p>正在进入言道…</p>
+  <script>
+    (function () {
+      var hasToken = false;
+      try {
+        hasToken = !!(localStorage.getItem('yandao_token_v1') || localStorage.getItem('auth_tokens'));
+      } catch (e) {}
+      location.replace(hasToken ? '/xuewaiyu/home.html' : '/xuewaiyu/login.html');
+    })();
+  </script>
+  <noscript><a href="/xuewaiyu/login.html" style="color:#7aa2ff">点击进入</a></noscript>
+</body>
+</html>

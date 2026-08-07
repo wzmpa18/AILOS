@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.YandaoLearn" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#3B82F6</item>
+        <item name="colorPrimaryDark">#1E40AF</item>
+        <item name="colorAccent">#06B6D4</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">#1E40AF</item>
+    </style>
+</resources>

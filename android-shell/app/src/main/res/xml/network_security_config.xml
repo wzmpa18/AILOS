@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 生产环境：仅允许 HTTPS -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">yandao.vip</domain>
+    </domain-config>
+</network-security-config>

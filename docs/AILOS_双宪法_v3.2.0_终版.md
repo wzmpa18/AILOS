@@ -2697,6 +2697,83 @@ Stage 9 二次驳回整改 — 最终判定 2026-07-30：
 - 所有生成内容需语法正确、场景真实、难度匹配
 - 自定义语言通过 AI Prompt 生成对应语种内容
 
+---
+
+#### 新增：移动端(APP)产品规范 (Product Chapter 15)
+
+**15.1 同源一致原则**
+- APP 与线上 H5 版本必须 100% 同源，构建代码来自同一 Git 标签
+- APP 仅做 WebView 容器封装 + 原生能力桥接，不改动 H5 业务代码
+- 禁止在 APP 中夹带未提交的本地修改或临时补丁
+- 版本号同步递增：代码发版 → H5 上线 → APK 构建，三者版本号一一对应
+
+**15.2 权限合规规范**
+- 所有安卓权限必须与业务功能一一对应，禁止冗余权限
+- 权限清单：INTERNET(网络)、CAMERA(拍照翻译)、RECORD_AUDIO(语音对话)、READ_EXTERNAL_STORAGE(图片上传)
+- 所有权限必须在隐私协议中明确告知用户用途
+- 首次启动必须弹出隐私协议弹窗，用户同意后再加载内容和获取权限
+- 权限调用前弹出系统权限说明弹窗，告知用户用途
+- 禁止强制授权：用户拒绝权限后不得强制退出 APP
+
+**15.3 安全规范**
+- 禁止在构建包中硬编码敏感密钥、数据库地址
+- 所有生产环境配置通过云端环境变量注入
+- 签名文件加密存储，禁止明文提交至 Git
+- 网络安全配置仅允许 HTTPS，禁止明文 HTTP 流量
+- allowBackup=false，禁止应用数据备份
+- 禁止注入任何第三方统计 SDK、广告 SDK
+
+**15.4 版本固化与可追溯**
+- 构建全过程留痕：构建日志、产物哈希、版本映射永久存档
+- APK 产物必须计算 MD5/SHA256 哈希，存入版本档案
+- 版本映射固化：Git标签 ↔ APK版本 ↔ 线上H5版本 三者完全对应
+- 后续迭代严格遵循：代码发版 → H5 上线 → APK 构建 的顺序
+
+**15.5 上架合规**
+- 满足工信部上架要求：隐私协议弹窗、权限说明、用户协议可访问
+- 应用图标统一品牌视觉（鹦鹉头像），启动页无第三方广告
+- targetSdkVersion 符合应用商店要求（≥33）
+- 支持后续版本升级（签名一致性）
+
+---
+
+#### 新增：移动端技术条款 (Technical Appendix M)
+
+**M.1 APK 构建配置标准**
+- 包名：ai.yandao.ailos（固定，不可变更）
+- 版本号格式：versionName=X.Y.Z，versionCode=XYZ（如 3.2.0 → 320）
+- 最低兼容：Android 8.0 (API 26)
+- 目标版本：compileSdk=34, targetSdk=34
+- 构建类型：release（minifyEnabled=true, shrinkResources=true）
+- 签名方案：V2 签名（v2SigningEnabled=true），PKCS12 keystore
+
+**M.2 WebView 容器架构标准**
+- WebView 全屏展示：无标题栏、无地址栏，与 H5 视觉无缝衔接
+- JavaScript 必须开启，DOM Storage 必须开启（H5 本地缓存依赖）
+- 混合内容策略：MIXED_CONTENT_NEVER_ALLOW（禁止 HTTPS 页面加载 HTTP 资源）
+- 文件访问：setAllowFileAccess(false)，setAllowContentAccess(true)
+- JS 桥接接口：window.AndroidBridge，所有方法必须 @JavascriptInterface 注解
+- 返回键适配：页面可返回时返回上一页，首页二次确认退出
+
+**M.3 原生能力桥接标准**
+- 相机桥接：H5 调用 AndroidBridge.requestCameraPermission() → 原生弹窗授权
+- 录音桥接：H5 调用 AndroidBridge.requestMicrophonePermission() → 原生弹窗授权
+- 文件上传：WebChromeClient.onShowFileChooser → 系统文件选择器 + 拍照选项
+- 系统分享：AndroidBridge.shareText() → 系统分享面板
+- 外部链接：shouldOverrideUrlLoading → 非本域名跳转系统浏览器
+
+**M.4 云端构建流水线标准**
+- 构建平台：Codemagic (mac_mini_m2)
+- 构建流程：Decode keystore → Config SDK → Build Release → Verify Signature → Hash and Rename
+- 环境变量注入：KEYSTORE_PASSWORD、KEY_ALIAS、KEY_PASSWORD（通过 Codemagic 环境变量组）
+- 产物命名：yandao_learn_v{version}_release.apk
+- 产物归档：APK + build_manifest.json + mapping.txt
+
+**M.5 冻结层延伸**
+- android-shell/ 目录下的 build.gradle 签名配置、AndroidManifest.xml 权限清单纳入冻结管理
+- MainActivity.java 核心逻辑（隐私弹窗、返回键、WebView 初始化）禁止非授权修改
+- codemagic.yaml 构建流程配置变更需总工程师审批
+
 **14.5 错题强化规则**
 - 错题自动归集到错题库，支持按知识点分类
 - 次日复习推送：基于间隔重复算法推荐复习

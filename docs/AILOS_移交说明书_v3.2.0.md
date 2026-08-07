@@ -251,3 +251,158 @@ NEWS_CRAWL_JOB_DISABLED=0
 ---
 
 > **v3.2.0 正式封版移交。请运维团队按部署指南执行线上部署，部署完成后进行全量功能验证。**
+
+---
+
+## 十一、APK 构建说明
+
+### 11.1 构建源
+
+| 项 | 值 |
+|----|-----|
+| Git 标签 | v3.2.0-production |
+| Git 哈希 | edb1537 |
+| 构建平台 | Codemagic (mac_mini_m2) |
+| 构建配置文件 | `codemagic.yaml` |
+| 壳工程路径 | `android-shell/` |
+
+### 11.2 构建步骤
+
+1. **拉取代码**：Codemagic 拉取 Git 仓库，切换至 `v3.2.0-production` 标签，执行哈希校验
+2. **环境注入**：通过 Codemagic 环境变量组注入 `KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`
+3. **签名文件解码**：base64 解码 keystore → OpenSSL 转换为 PKCS12 (AES-256-CBC + SHA256) → 生成 keystore.properties
+4. **构建执行**：`./gradlew clean assembleRelease --stacktrace`（开启混淆 + 资源压缩 + V2 签名）
+5. **签名验证**：`apksigner verify --verbose` 验证 APK 签名
+6. **哈希计算与重命名**：计算 MD5/SHA256，重命名为 `yandao_learn_v3.2.0_release.apk`，生成 `build_manifest_v3.2.0.json`
+
+### 11.3 构建产物
+
+| 产物 | 路径 | 说明 |
+|------|------|------|
+| APK 安装包 | `app/build/outputs/apk/release/yandao_learn_v3.2.0_release.apk` | 正式 release 包 |
+| 构建清单 | `app/build/outputs/apk/release/build_manifest_v3.2.0.json` | 版本/哈希/构建信息 |
+| 混淆映射 | `app/build/outputs/mapping/release/mapping.txt` | ProGuard 映射文件 |
+| 构建日志 | Codemagic 构建日志页面 | 全程日志记录 |
+
+### 11.4 Codemagic 操作流程
+
+1. 登录 codemagic.io → 选择 AILOS 仓库
+2. 确认 `codemagic.yaml` 配置正确（构建名: AILOS v3.2.0 Release Build）
+3. 在环境变量组中配置: `KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`
+4. 触发构建（推送 `v3.2.0-*` 标签或手动触发）
+5. 等待构建完成（预计 5-10 分钟）
+6. 下载产物: Artifacts → APK + build_manifest + mapping.txt
+
+---
+
+## 十二、版本映射表
+
+### 12.1 三端版本对应关系
+
+| 维度 | 值 | 说明 |
+|------|-----|------|
+| Git 标签 | v3.2.0-production | 代码基线（唯一构建源） |
+| Git 哈希 | edb1537 | 提交指纹 |
+| 线上 H5 版本 | v3.2.0 | https://yandao.vip/xuewaiyu/ |
+| APK versionName | 3.2.0 | 应用显示版本 |
+| APK versionCode | 320 | 构建版本号 |
+| Codemagic 构建名 | AILOS v3.2.0 Release Build | CI/CD 标识 |
+
+### 12.2 版本迭代规则
+
+后续迭代严格遵循以下顺序：
+
+```
+代码发版（Git tag） → H5 上线（deploy.sh 部署） → APK 构建（Codemagic）
+```
+
+- 版本号同步递增：v3.3.0 → versionCode=330, versionName=3.3.0
+- 禁止跳过 H5 上线直接构建 APK
+- 禁止使用未发布的代码标签构建 APK
+- 每次 APK 构建必须基于对应版本的 Git 标签
+
+---
+
+## 十三、上架注意事项
+
+### 13.1 应用商店素材
+
+| 素材 | 规格 | 状态 |
+|------|------|------|
+| 应用图标 | 鹦鹉头像，自适应图标 (ic_launcher + ic_launcher_round) | ✅ 已配置 |
+| 应用名称 | 言道外语 | ✅ 已配置 |
+| 启动页 | 品牌视觉，无第三方广告 | ✅ 无广告 |
+| 应用截图 | 至少 5 张（首页/词汇/翻译/社交/个人中心） | ⏳ 需准备 |
+| 简短描述 | 80 字内 | ✅ 已撰写 |
+| 详细描述 | 400 字内 | ✅ 已撰写 |
+
+### 13.2 隐私合规
+
+- 首次启动弹出隐私协议弹窗（用户同意后才加载内容）✅
+- 所有权限在隐私协议中有对应说明 ✅
+- 无第三方统计 SDK / 广告 SDK ✅
+- 网络安全配置仅允许 HTTPS ✅
+- allowBackup=false ✅
+
+### 13.3 上架前检查清单
+
+- [ ] APK 已使用正式 release 签名
+- [ ] 包名正确: ai.yandao.ailos
+- [ ] 版本号正确: 3.2.0 (320)
+- [ ] 应用图标已替换为鹦鹉头像
+- [ ] 隐私协议弹窗首次启动正常弹出
+- [ ] 所有权限在隐私协议中有对应说明
+- [ ] 无第三方 SDK 注入
+- [ ] targetSdkVersion ≥ 33（当前 34）
+- [ ] 真机安装测试通过
+- [ ] 核心功能全链路验证通过
+
+详细清单参见: `docs/APP_STORE_READINESS_v3.2.0.md`
+
+---
+
+## 十四、APP 版本迭代与运维规则
+
+### 14.1 版本迭代
+
+| 规则 | 说明 |
+|------|------|
+| 版本号格式 | versionName=X.Y.Z, versionCode=XYZ |
+| 迭代顺序 | 代码发版 → H5 上线 → APK 构建 |
+| 构建源 | 必须基于对应版本的 Git 标签 |
+| 签名一致性 | 所有版本必须使用同一签名密钥，确保可升级 |
+| 向后兼容 | 新版本不得破坏旧版本用户数据 |
+
+### 14.2 热更新规则
+
+- APP 采用 WebView 容器架构，H5 页面更新即等于 APP 内容更新
+- H5 更新通过 `deploy.sh` 部署到线上，用户下次打开 APP 即加载最新版本
+- 静态资源追加 `?v=<SHA>` 版本号，强制 WebView 刷新缓存
+- 无需重新发布 APK 即可更新业务内容
+
+### 14.3 灰度发布规则
+
+| 阶段 | 范围 | 验证项 |
+|------|------|--------|
+| 内测 | 开发团队 | 功能完整性、崩溃监控 |
+| 封闭测试 | 邀请用户 | 用户体验、性能反馈 |
+| 开放测试 | 应用商店测试轨道 | 兼容性、覆盖率 |
+| 正式发布 | 全量用户 | 监控告警、用户反馈 |
+
+### 14.4 回滚规则
+
+- H5 回滚：通过 `deploy.sh` 的回滚机制（备份三件套 + git checkout）
+- APK 回滚：应用商店提供回滚到上一版本的功能
+- 紧急回滚：下架当前版本 + 通知用户降级
+
+### 14.5 相关文档索引
+
+| 文档 | 路径 |
+|------|------|
+| APK 构建报告 | `docs/APK_BUILD_REPORT_v3.2.0.md` |
+| APP 上架准备清单 | `docs/APP_STORE_READINESS_v3.2.0.md` |
+| APK 真机验证报告 | `docs/APK_DEVICE_VERIFICATION_v3.2.0.md` |
+| 双宪法 v3.2.0 终版 | `docs/AILOS_双宪法_v3.2.0_终版.md` |
+| 架构蓝图 v3.2.0 终版 | `docs/AILOS_架构蓝图_v3.2.0_终版.md` |
+| 终验审计报告 v3.2.0 | `docs/终验审计报告v3.2.0.md` |
+| 移交说明书 v3.2.0 | `docs/AILOS_移交说明书_v3.2.0.md`（本文档） |

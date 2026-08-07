@@ -869,3 +869,115 @@ const list = await prisma.socialTimeline.findMany({
 | SocialTimeline 优质推荐排序生效 | ✅ |
 
 > **v3.2.0 架构增量定稿。与双宪法 v3.2.0 增量条款、终验审计报告 v3.2.0 同步生效。**
+
+---
+
+# 第五编：移动端架构（APK 容器层）
+
+## 5.1 架构定位
+
+AILOS 移动端采用 **WebView 容器架构**，APP 仅作为 H5 的原生外壳，不包含独立业务逻辑。核心原则：同源一致、零业务代码修改、原生能力通过桥接暴露。
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  APK 容器层                          │
+│  ┌───────────────────────────────────────────────┐  │
+│  │  MainActivity (WebView 容器)                   │  │
+│  │  ├── 隐私协议弹窗（首次启动）                  │  │
+│  │  ├── WebView 初始化 + JS 桥接                  │  │
+│  │  ├── 返回键适配（goBack / 二次确认退出）       │  │
+│  │  └── 下拉刷新                                  │  │
+│  ├───────────────────────────────────────────────┤  │
+│  │  WebAppInterface (JS Bridge)                   │  │
+│  │  ├── getAppVersion() / getAppVersionCode()    │  │
+│  │  ├── requestCameraPermission()                │  │
+│  │  ├── requestMicrophonePermission()            │  │
+│  │  ├── requestStoragePermission()               │  │
+│  │  ├── hasPermission()                           │  │
+│  │  └── shareText()                               │  │
+│  ├───────────────────────────────────────────────┤  │
+│  │  WebChromeClient                               │  │
+│  │  └── onShowFileChooser (文件上传桥接)          │  │
+│  └───────────────────────────────────────────────┘  │
+│                       ↕ HTTPS                       │
+│  ┌───────────────────────────────────────────────┐  │
+│  │  线上 H5 (https://yandao.vip/xuewaiyu/)        │  │
+│  │  27 HTML 页面 + common.js 统一引擎             │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+## 5.2 合法调用链路（移动端）
+
+| 调用路径 | 是否合法 | 说明 |
+|---------|---------|------|
+| H5 → window.AndroidBridge.requestCameraPermission() → 原生权限弹窗 | ✅ 合法 | JS 桥接标准路径 |
+| H5 → WebChromeClient.onShowFileChooser → 系统文件选择器 | ✅ 合法 | 文件上传标准路径 |
+| H5 → fetch('/api/...') → 线上后端 | ✅ 合法 | 与浏览器端完全一致 |
+| 原生代码 → 直接调用后端 API | ❌ 禁止 | 原生仅做容器，不含业务逻辑 |
+| 原生代码 → 硬编码密钥/配置 | ❌ 一级违宪 | 必须通过 BuildConfig 注入 |
+| APP → 注入第三方统计 SDK | ❌ 一级违宪 | 保持纯净，禁止第三方 SDK |
+
+## 5.3 网络安全架构
+
+| 配置项 | 值 | 说明 |
+|--------|-----|------|
+| usesCleartextTraffic | false | 禁止明文 HTTP |
+| network_security_config | cleartextTrafficPermitted=false | 仅允许 HTTPS |
+| MixedContentMode | MIXED_CONTENT_NEVER_ALLOW | 禁止 HTTPS 页面加载 HTTP 资源 |
+| SSL 错误处理 | handler.cancel() | SSL 错误时禁止继续加载 |
+| allowBackup | false | 禁止应用数据备份 |
+
+## 5.4 权限架构
+
+| 权限 | 使用场景 | 必须性 | 硬件特性声明 |
+|------|---------|--------|-------------|
+| INTERNET | 网络访问 | 必须 | — |
+| ACCESS_NETWORK_STATE | 网络状态检测 | 必须 | — |
+| CAMERA | 拍照翻译 | 可选 | camera (required=false) |
+| RECORD_AUDIO | 语音对话 | 可选 | microphone (required=false) |
+| READ_EXTERNAL_STORAGE | 图片上传(API≤32) | 可选 | — |
+| READ_MEDIA_IMAGES | 图片上传(API≥33) | 可选 | — |
+| POST_NOTIFICATIONS | 学习提醒 | 可选 | — |
+
+## 5.5 云端构建流水线
+
+```
+Git Tag v3.2.0-production (edb1537)
+   │
+   ▼
+Codemagic 拉取代码 → 哈希校验
+   │
+   ▼
+环境变量注入 (KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD)
+   │
+   ▼
+Decode Keystore → OpenSSL 转换 → PKCS12 (AES-256-CBC + SHA256)
+   │
+   ▼
+./gradlew clean assembleRelease --stacktrace
+   │  ├── minifyEnabled=true (ProGuard 混淆)
+   │  ├── shrinkResources=true (资源压缩)
+   │  └── V2 签名
+   ▼
+apksigner verify --verbose (签名验证)
+   │
+   ▼
+Hash Calculation (MD5 + SHA256) + APK Rename
+   │
+   ▼
+产物归档: yandao_learn_v3.2.0_release.apk + build_manifest_v3.2.0.json + mapping.txt
+```
+
+## 5.6 版本映射表
+
+| 维度 | 值 | 对应关系 |
+|------|-----|---------|
+| Git 标签 | v3.2.0-production | 代码基线 |
+| Git 哈希 | edb1537 | 提交指纹 |
+| H5 版本 | v3.2.0 | 线上版本 |
+| APK versionName | 3.2.0 | 应用版本 |
+| APK versionCode | 320 | 构建版本号 |
+| Codemagic 构建名 | AILOS v3.2.0 Release Build | CI/CD 标识 |
+
+> 三者完全对应：代码发版 → H5 上线 → APK 构建，版本号同步递增。

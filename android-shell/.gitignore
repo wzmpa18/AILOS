@@ -1,0 +1,21 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# 签名文件 - 禁止明文提交至Git
+*.keystore
+*.jks
+*.p12
+keystore.properties
+
+# 构建产物
+app/build/
+*.apk
+*.aab

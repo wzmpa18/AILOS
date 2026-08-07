@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ===== 必选权限（与业务功能一一对应，隐私协议中明确告知）===== -->
+
+    <!-- 网络访问：所有功能基础 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 拍照翻译：调用相机拍照 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- 语音对话：录音功能 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- 图片上传：读取相册图片 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- 文件上传（Android 13+） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- ===== 硬件特性声明（非强制，仅声明使用）===== -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.YandaoLearn"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="false"
+        android:hardwareAccelerated="true"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask">
+
+            <!-- 隐私协议弹窗在 MainActivity 中处理，同意后再加载数据 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- 支持外部链接打开 APP（深度链接） -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="yandao.vip" android:pathPrefix="/xuewaiyu" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

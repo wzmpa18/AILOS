@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ai.yandao.ailos'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ai.yandao.ailos"
+        minSdk 26
+        targetSdk 34
+        versionCode 320
+        versionName "3.2.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // 生产环境配置 - 通过 BuildConfig 注入，不硬编码敏感信息
+        buildConfigField "String", "BASE_URL", "\"https://yandao.vip/xuewaiyu/\""
+        buildConfigField "String", "API_BASE_URL", "\"https://yandao.vip/xuewaiyu/api/\""
+    }
+
+    signingConfigs {
+        release {
+            // 签名文件路径由云端构建环境变量注入，不硬编码
+            def keystorePropertiesFile = file("/tmp/keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                def keystoreProperties = new Properties()
+                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeType keystoreProperties['storeType'] ?: "pkcs12"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+
+            // V2 签名
+            v1SigningEnabled false
+            v2SigningEnabled true
+
+            buildConfigField "boolean", "DEBUG_MODE", "false"
+        }
+        debug {
+            minifyEnabled false
+            buildConfigField "boolean", "DEBUG_MODE", "true"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.webkit:webkit:1.9.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+}

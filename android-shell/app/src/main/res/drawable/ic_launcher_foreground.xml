@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  鹦鹉头像 - 自适应图标前景
+  使用矢量图绘制简化鹦鹉轮廓，实际发布时替换为设计稿 PNG
+  尺寸: 108dp x 108dp (自适应图标标准)
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 鹦鹉身体（简化圆形轮廓） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30 C40,30 32,42 32,56 C32,70 42,80 54,80 C66,80 76,70 76,56 C76,42 68,30 54,30 Z"/>
+
+    <!-- 鹦鹉眼睛 -->
+    <path
+        android:fillColor="#1E40AF"
+        android:pathData="M46,50 C46,47 48,45 51,45 C54,45 56,47 56,50 C56,53 54,55 51,55 C48,55 46,53 46,50 Z"/>
+
+    <!-- 鹦鹉喙 -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M58,54 L66,58 L58,62 Z"/>
+
+    <!-- 鹦鹉翅膀 -->
+    <path
+        android:fillColor="#06B6D4"
+        android:pathData="M62,56 C68,58 72,62 72,68 C68,66 64,62 62,56 Z"/>
+
+</vector>
