@@ -698,6 +698,7 @@ function renderNews(items, reset) {
     var title = n.title || '无标题';
     var summary = truncate(n.summary || n.description || '', 100);
     var source = n.source || n.sourceName || (n.source && n.source.name) || '来源不明';
+    var author = n.author || '';
     var origUrl = n.url || n.originalUrl || n.link || (n.id ? (EP.newsDetail + n.id) : '#');
     var hot = (news.sort === 'hot' && n.hot) ? '<span class="news-hot">🔥' + escapeHtml(n.hot) + '</span>' : '';
     var timeStr = formatTime(n.publishedAt || n.createdAt || n.created_at);
@@ -709,7 +710,7 @@ function renderNews(items, reset) {
         '<div class="news-summary">' + escapeHtml(summary) + '</div>' +
       '</a>' +
       '<div class="news-meta">' +
-        '<div class="news-source"><span>来源:</span><span class="src-name">' + escapeHtml(source) + '</span>' + (timeStr ? ' · ' + escapeHtml(timeStr) : '') + '</div>' +
+        '<div class="news-source"><span>来源:</span><span class="src-name">' + escapeHtml(source) + '</span>' + (author ? ' · 作者: ' + escapeHtml(author) : '') + (timeStr ? ' · ' + escapeHtml(timeStr) : '') + '</div>' +
         '<div class="news-actions">' +
           hot +
           '<button onclick="openReportModal(\'' + n.id + '\')">举报</button>' +

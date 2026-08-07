@@ -50,6 +50,38 @@ async function checkDailyLimit(sourceId, dailyLimit) {
 }
 
 /**
+ * 带指数退避的重试包装器（整改4：失败退避重试机制）
+ * @param {Function} fn - 异步函数
+ * @param {number} maxRetries - 最大重试次数，默认3
+ * @returns {Promise<any>} 函数返回值
+ */
+async function fetchWithRetry(fn, maxRetries = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fn();
+      if (result && result.length > 0) return result;
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        logger.info(`[newsAggregator] 第${attempt}/${maxRetries}次抓取返回空，${delay}ms后重试`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        logger.warn(`[newsAggregator] 第${attempt}/${maxRetries}次抓取失败: ${e.message}，${delay}ms后重试`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+  if (lastError) {
+    logger.error(`[newsAggregator] ${maxRetries}次重试均失败:`, lastError.message);
+  }
+  return [];
+}
+
+/**
  * 模拟抓取单篇文章（实际生产环境对接RSS/HTML解析）
  * 这里实现一个通用的轻量级HTTP抓取器，支持RSS/JSON feed
  * 合规声明：仅提取标题+摘要+链接，不存储全文内容
@@ -58,15 +90,15 @@ async function fetchFromSource(source) {
   const articles = [];
 
   try {
-    // 如果来源有feedUrl（RSS/Atom），尝试解析
+    // 如果来源有feedUrl（RSS/Atom），尝试解析（整改4：带指数退避重试）
     if (source.feedUrl) {
-      const fetched = await fetchRssFeed(source.feedUrl, source);
+      const fetched = await fetchWithRetry(() => fetchRssFeed(source.feedUrl, source));
       articles.push(...fetched);
     }
 
     // 如果来源只有url，记录日志（实际生产对接HTML解析器）
     if (articles.length === 0 && source.url) {
-      logger.info(`[newsAggregator] 来源 ${source.name} 无feedUrl，跳过自动抓取（需手动配置或HTML解析器）`);
+      logger.info(`[newsAggregator] 来源 ${source.name} 无feedUrl或抓取失败，跳过自动抓取（需手动配置或HTML解析器）`);
     }
   } catch (e) {
     logger.error(`[newsAggregator] 抓取来源 ${source.name} 失败:`, e.message);

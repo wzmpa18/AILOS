@@ -215,6 +215,7 @@
       var approved = s.approvedArticles || s.articlesApproved || 0;
       var reports = s.pendingReports || s.reports || s.reportCount || 0;
       var aiCalls = s.aiCalls || s.aiCallCount || 0;
+      var aiEnabled = (s.aiCalls && s.aiCalls.enabled) || false;
       var totalArticles = s.totalArticles || (pending + approved) || 0;
 
       var html = '<div class="stats-grid">' +
@@ -224,6 +225,12 @@
         '<div class="stat-card"><div class="stat-icon">🚩</div><div class="stat-value">' + reports + '</div><div class="stat-label">待处理举报</div></div>' +
         '<div class="stat-card"><div class="stat-icon">🤖</div><div class="stat-value">' + aiCalls + '</div><div class="stat-label">AI 调用次数</div></div>' +
         '</div>';
+
+      // 整改5：全局AI开关控件
+      html += '<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;">' +
+        '<div><strong>全局AI辅助过滤</strong><div style="font-size:12px;color:#888;margin-top:4px;">开启后，抓取资讯时将调用AI识别低质广告内容（默认关闭，零AI额度消耗）</div></div>' +
+        '<button class="btn ' + (aiEnabled ? 'btn-danger' : 'btn-primary') + '" onclick="toggleAI(' + !aiEnabled + ')">' + (aiEnabled ? '关闭AI' : '开启AI') + '</button>' +
+      '</div>';
 
       // 最近待审核文章快捷区
       html += '<div class="card"><h2>待审核文章（最近）<span class="h-actions"><button class="btn-ghost btn" onclick="switchTab(\'articles\')">查看全部</button></span></h2><div id="recentPending">加载中...</div></div>';
@@ -461,6 +468,17 @@
       });
       html += '</tbody></table></div></div>';
       c.innerHTML = html;
+    }
+
+    /* ============ 全局AI开关（整改5） ============ */
+    async function toggleAI(enable) {
+      var r = await apiCall('POST', '/admin/news/ai-toggle', { enabled: enable });
+      if (r.success) {
+        alert(enable ? 'AI辅助过滤已开启' : 'AI辅助过滤已关闭');
+        loadOverview();
+      } else {
+        alert(r.message || '操作失败');
+      }
     }
 
     /* ============ 手动抓取 ============ */

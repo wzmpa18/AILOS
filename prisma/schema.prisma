@@ -1818,15 +1818,15 @@ model NewsReport {
   @@map("news_reports")
 }
 
-/// news_audit_log — 资讯管理审计日志（审核、置顶、下架、广告投放等操作留痕）
+/// news_audit_log — 资讯管理审计日志（审核、置顶、下架、广告投放、AI处理等操作留痕）
 model NewsAuditLog {
   id          String   @id @default(uuid())
   articleId   String?
   article     NewsArticle? @relation(fields: [articleId], references: [id], onDelete: SetNull)
-  operatorId  String
-  operator    User     @relation("NewsAuditOperator", fields: [operatorId], references: [id], onDelete: Cascade)
+  operatorId  String?
+  operator    User?    @relation("NewsAuditOperator", fields: [operatorId], references: [id], onDelete: Cascade)
 
-  action      String   // approve|reject|offline|pin|unpin|ad_place|ad_remove|source_block|source_unblock
+  action      String   // approve|reject|offline|pin|unpin|ad_place|ad_remove|source_block|source_unblock|source_create|source_update|source_delete|ai_process|ai_toggle
   detail      Json?    // 操作详情
   beforeState String?  // 操作前状态
   afterState  String?  // 操作后状态

@@ -12,6 +12,14 @@ const brainFacade = require('../core/brain/facade');
 const aiQuotaService = require('./aiQuotaService');
 
 // ============================================================
+// 全局AI开关状态（整改5：支持管理员动态切换，默认关闭）
+// 初始值从环境变量读取，运行时可通过setAIEnabled动态修改
+// ============================================================
+let _aiEnabledGlobal = process.env.NEWS_AI_ENABLED === 'true';
+function getAIEnabled() { return _aiEnabledGlobal; }
+function setAIEnabled(enabled) { _aiEnabledGlobal = Boolean(enabled); }
+
+// ============================================================
 // 第一层：关键词规则过滤（正则匹配，零AI消耗）
 // ============================================================
 
@@ -135,6 +143,28 @@ async function aiBasedFilter(title, summary, sourceName) {
     // 记录AI用量
     await aiQuotaService.recordUsage('system', 'news_ad_detect', result.usage?.totalTokens || 0);
 
+    // 整改3（审计6）：AI调用写入NewsAuditLog，实现操作级审计追溯
+    try {
+      await prisma.newsAuditLog.create({
+        data: {
+          articleId: null,
+          operatorId: null,
+          action: 'ai_process',
+          beforeState: 'pending_filter',
+          afterState: Boolean(aiResult.isAd) ? 'ai_ad_detected' : 'ai_passed',
+          detail: {
+            title: (title || '').slice(0, 100),
+            source: sourceName || '',
+            tokens: result.usage?.totalTokens || 0,
+            aiResult: aiResult.isAd ? 'ad_detected' : 'passed',
+            reason: aiResult.reason || null,
+          },
+        },
+      });
+    } catch (auditErr) {
+      logger.error('[newsFilter] AI审计日志写入失败:', auditErr.message);
+    }
+
     // 解析AI返回
     const content = result.content || result.text || '';
     let aiResult;
@@ -200,6 +230,8 @@ async function whitelistFilter(sourceId) {
 async function comprehensiveFilter(params, opts = {}) {
   const { title, summary, sourceId, sourceName } = params;
   const { enableAI = false } = opts;
+  // 整改5：全局AI开关闭联，全局关闭时强制禁用AI（双重管控）
+  const aiActuallyEnabled = enableAI && _aiEnabledGlobal;
 
   let aiUsed = false;
   let aiCallCount = 0;
@@ -220,8 +252,8 @@ async function comprehensiveFilter(params, opts = {}) {
   // 第三层：白名单校验
   const whitelistResult = await whitelistFilter(sourceId);
 
-  // 第二层：AI辅助识别（可开关，默认关闭）
-  if (enableAI && !whitelistResult.isWhitelist) {
+  // 第二层：AI辅助识别（可开关，默认关闭；整改5：受全局AI开关管控）
+  if (aiActuallyEnabled && !whitelistResult.isWhitelist) {
     const aiResult = await aiBasedFilter(title, summary, sourceName);
     aiUsed = aiResult.aiUsed;
     aiCallCount = aiResult.aiUsed ? 1 : 0;
@@ -280,6 +312,8 @@ module.exports = {
   comprehensiveFilter,
   generateContentHash,
   truncateSummary,
+  getAIEnabled,
+  setAIEnabled,
   AD_KEYWORD_PATTERNS,
   SENSITIVE_KEYWORDS,
 };

@@ -10,6 +10,7 @@
 const cron = require('node-cron');
 const logger = require('../utils/logger');
 const newsAggregator = require('../services/newsAggregatorService');
+const newsFilter = require('../services/newsFilterService');
 
 let _task = null;
 
@@ -21,8 +22,8 @@ async function runOnce() {
   logger.info('[newsCrawlJob] 定时资讯抓取任务开始');
 
   try {
-    // 默认关闭AI深度处理，实现零AI额度消耗
-    const enableAI = process.env.NEWS_AI_ENABLED === 'true';
+    // 整改5：使用全局AI开关状态（管理员可通过后台/api/admin/news/ai-toggle动态切换）
+    const enableAI = newsFilter.getAIEnabled();
     const result = await newsAggregator.crawlAll({ enableAI });
 
     logger.info('[newsCrawlJob] 抓取完成', {

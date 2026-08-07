@@ -11,6 +11,7 @@ const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/adminAuth');
 const prisma = require('../../config/database');
 const logger = require('../../utils/logger');
+const newsFilter = require('../../services/newsFilterService');
 
 // 全部路由需要管理员权限
 router.use(authenticate, requireAdmin);
@@ -479,10 +480,41 @@ router.get('/stats', async (req, res) => {
       sources: { total: totalSources, active: activeSources },
       articles: { total: totalArticles, pending: pendingArticles, approved: approvedArticles },
       reports: { total: totalReports, pending: pendingReports },
-      aiCalls: { total: aiCalls._sum.aiCallCount || 0 },
+      aiCalls: { total: aiCalls._sum.aiCallCount || 0, enabled: newsFilter.getAIEnabled() },
     });
   } catch (e) {
     return err(res, 'ADMIN_NEWS_5018', e.message, 500);
+  }
+});
+
+// ============================================================
+// 全局AI开关（整改5：支持管理员动态切换AI辅助过滤）
+// ============================================================
+
+// GET /api/admin/news/ai-status — 获取全局AI开关状态
+router.get('/ai-status', async (req, res) => {
+  try {
+    return ok(res, { aiEnabled: newsFilter.getAIEnabled() });
+  } catch (e) {
+    return err(res, 'ADMIN_NEWS_5019', e.message, 500);
+  }
+});
+
+// POST /api/admin/news/ai-toggle — 切换全局AI开关
+// Body: { enabled: true|false }
+router.post('/ai-toggle', async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const beforeState = newsFilter.getAIEnabled();
+    newsFilter.setAIEnabled(enabled !== false);
+    const afterState = newsFilter.getAIEnabled();
+
+    await writeAuditLog(null, req.userId, 'ai_toggle', String(beforeState), String(afterState), { enabled: afterState });
+
+    logger.info(`[adminNews] AI开关切换: ${beforeState} → ${afterState} (操作人: ${req.userId})`);
+    return ok(res, { aiEnabled: afterState }, afterState ? 'AI辅助过滤已开启' : 'AI辅助过滤已关闭');
+  } catch (e) {
+    return err(res, 'ADMIN_NEWS_5020', e.message, 500);
   }
 });
 
