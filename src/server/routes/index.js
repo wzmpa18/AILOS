@@ -102,6 +102,12 @@ safeUse('/v1/social', './social') && routeCount++;
 // Social Dynamics (Stage 9 M5)
 safeUse('/v1/social/timeline', './socialTimeline') && routeCount++;
 
+// v3.2.0: News Aggregation — 站外资讯聚合模块
+safeUse('/v1/news', './news') && routeCount++;
+
+// v3.2.0: Admin News Management — 后台资讯管理
+safeUse('/admin/news', './adminNews') && routeCount++;
+
 // Feedback 意见反馈 (v1.1.0 查漏补缺)
 safeUse('/feedback', './feedback') && routeCount++;
 

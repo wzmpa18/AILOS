@@ -14,6 +14,19 @@ const prisma = new PrismaClient();
 // Default avatar URL
 const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
 
+// v3.2.0: 内容标签映射
+const TAG_LABELS = {
+  experience: '学习经验',
+  study_abroad: '留学移民',
+  exam_prep: '备考分享',
+  find_partner: '找搭子',
+};
+
+// v3.2.0: 获取内容标签列表
+router.get('/tags', (req, res) => {
+  return ok(res, Object.entries(TAG_LABELS).map(([value, label]) => ({ value, label })));
+});
+
 // All routes require auth
 router.use(authenticate);
 
@@ -28,12 +41,14 @@ function err(res, code, message, status = 400) {
   return res.status(status).json({ success: false, error: code, message });
 }
 
-// GET /api/v1/social/timeline/feed?page=1&limit=20&type=all|friend|group|system
+// GET /api/v1/social/timeline/feed?page=1&limit=20&type=all|friend|group|system&sort=latest|quality&tag=experience|study_abroad|exam_prep|find_partner
 router.get('/feed', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
     const type = req.query.type || 'all';
+    const sort = req.query.sort || 'latest'; // v3.2.0: latest|quality
+    const tag = req.query.tag || ''; // v3.2.0: 内容标签筛选
     const skip = (page - 1) * limit;
 
     const where = {};
@@ -44,11 +59,31 @@ router.get('/feed', async (req, res) => {
       ];
     }
 
+    // v3.2.0: 内容标签筛选
+    if (tag && tag !== 'all') {
+      where.tag = tag;
+    }
+
+    // v3.2.0: 优质推荐排序 — 优先展示高赞、高收藏、评论多的用户动态
+    let orderBy;
+    if (sort === 'quality') {
+      // 综合热度排序：加精优先 → 点赞数 → 收藏数 → 评论数 → 时间
+      orderBy = [
+        { isQuality: 'desc' },
+        { likeCount: 'desc' },
+        { favoriteCount: 'desc' },
+        { commentCount: 'desc' },
+        { createdAt: 'desc' },
+      ];
+    } else {
+      orderBy = [{ createdAt: 'desc' }];
+    }
+
     const total = await prisma.socialTimeline.count({ where });
     // P0 FIX: Query more items than needed, then filter out violating content
     const rawItems = await prisma.socialTimeline.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip,
       take: limit * 2,  // Fetch 2x to compensate for filtered items
       include: {
@@ -97,7 +132,12 @@ router.get('/feed', async (req, res) => {
         metadata: item.metadata ? JSON.parse(item.metadata) : null,
         createdAt: item.createdAt,
         likeCount: item.likeCount || 0,
-        commentCount: item.commentCount || 0
+        commentCount: item.commentCount || 0,
+        // v3.2.0 增量字段
+        tag: item.tag || null,
+        tagLabel: item.tag ? TAG_LABELS[item.tag] || item.tag : null,
+        isQuality: item.isQuality || false,
+        favoriteCount: item.favoriteCount || 0,
       })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
@@ -131,6 +171,11 @@ router.post('/post', async (req, res) => {
       return res.status(httpCode).json(filterResult.errorResponse || { success: false, code: 9004, error: 'content blocked' });
     }
 
+    // v3.2.0: 支持发布时选择内容标签
+    const { tag } = req.body;
+    const validTags = ['experience', 'study_abroad', 'exam_prep', 'find_partner'];
+    const postTag = tag && validTags.includes(tag) ? tag : null;
+
     const post = await prisma.socialTimeline.create({
       data: {
         actorId: req.userId,
@@ -138,7 +183,8 @@ router.post('/post', async (req, res) => {
         content: content.trim(),
         metadata: JSON.stringify({ images, ...metadata }),
         likeCount: 0,
-        commentCount: 0
+        commentCount: 0,
+        tag: postTag, // v3.2.0: 内容标签
       },
       include: {
         actor: { select: { id: true, nickname: true, avatar: true } }
@@ -157,7 +203,11 @@ router.post('/post', async (req, res) => {
       metadata: JSON.parse(post.metadata),
       createdAt: post.createdAt,
       likeCount: 0,
-      commentCount: 0
+      commentCount: 0,
+      tag: post.tag,
+      tagLabel: post.tag ? TAG_LABELS[post.tag] || post.tag : null,
+      isQuality: false,
+      favoriteCount: 0,
     }, '发布成功');
   } catch (e) {
     console.error(`[Timeline] post error:`, e.message);
@@ -210,6 +260,63 @@ router.post('/like/:id', async (req, res) => {
   } catch (e) {
     console.error(`[Timeline] like error:`, e.message);
     return err(res, 'TIMELINE_4009', e.message, 500);
+  }
+});
+
+// v3.2.0: POST /api/v1/social/timeline/quality/:id — 管理员加精/取消加精
+// Body: { isQuality: true|false }
+const { requireAdmin } = require('../middleware/adminAuth');
+router.post('/quality/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { isQuality } = req.body;
+    const post = await prisma.socialTimeline.findUnique({ where: { id: req.params.id } });
+    if (!post) return err(res, 'TIMELINE_4010', '动态不存在', 404);
+
+    const updated = await prisma.socialTimeline.update({
+      where: { id: req.params.id },
+      data: {
+        isQuality: isQuality !== false,
+        qualityMarkedBy: req.userId,
+        qualityMarkedAt: new Date(),
+      },
+    });
+
+    return ok(res, {
+      id: updated.id,
+      isQuality: updated.isQuality,
+      qualityMarkedBy: updated.qualityMarkedBy,
+      qualityMarkedAt: updated.qualityMarkedAt,
+    }, isQuality !== false ? '已加精' : '已取消加精');
+  } catch (e) {
+    console.error(`[Timeline] quality error:`, e.message);
+    return err(res, 'TIMELINE_4011', e.message, 500);
+  }
+});
+
+// v3.2.0: POST /api/v1/social/timeline/favorite/:id — 用户收藏/取消收藏
+router.post('/favorite/:id', async (req, res) => {
+  try {
+    const post = await prisma.socialTimeline.findUnique({ where: { id: req.params.id } });
+    if (!post) return err(res, 'TIMELINE_4012', '动态不存在', 404);
+
+    // 收藏数+1或-1（简化实现：每次切换状态）
+    const isFavoriting = !req.body.cancel;
+    if (isFavoriting) {
+      await prisma.socialTimeline.update({
+        where: { id: req.params.id },
+        data: { favoriteCount: { increment: 1 } },
+      });
+      return ok(res, { favorited: true, favoriteCount: (post.favoriteCount || 0) + 1 });
+    } else {
+      await prisma.socialTimeline.update({
+        where: { id: req.params.id },
+        data: { favoriteCount: { decrement: 1 } },
+      });
+      return ok(res, { favorited: false, favoriteCount: Math.max(0, (post.favoriteCount || 0) - 1) });
+    }
+  } catch (e) {
+    console.error(`[Timeline] favorite error:`, e.message);
+    return err(res, 'TIMELINE_4013', e.message, 500);
   }
 });
 

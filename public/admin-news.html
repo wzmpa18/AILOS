@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资讯管理后台 - 言道学学外语</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; }
+    .nav { background: #001529; color: #fff; padding: 14px 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .nav h1 { font-size: 17px; font-weight: 500; white-space: nowrap; }
+    .nav .tabs { margin-left: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+    .nav .tabs a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; cursor: pointer; padding: 4px 2px; border-bottom: 2px solid transparent; }
+    .nav .tabs a.active { color: #fff; border-bottom-color: #1890ff; }
+    .nav .nav-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+    .nav .crawl-btn { background: #52c41a; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .nav .crawl-btn:active { opacity: 0.85; }
+    .nav .back-link { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 13px; }
+    .container { max-width: 1280px; margin: 18px auto; padding: 0 16px 40px; }
+    .card { background: #fff; border-radius: 8px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 16px; margin-bottom: 14px; color: #333; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .card h2 .h-actions { display: flex; gap: 8px; align-items: center; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .toolbar input, .toolbar select { padding: 7px 11px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; outline: none; }
+    .toolbar input:focus, .toolbar select:focus { border-color: #1890ff; }
+    .toolbar button, .btn { padding: 7px 16px; background: #1890ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .toolbar button:active, .btn:active { opacity: 0.85; }
+    .btn-success { background: #52c41a; }
+    .btn-warning { background: #fa8c16; }
+    .btn-danger { background: #ff4d4f; }
+    .btn-ghost { background: #fff; color: #666; border: 1px solid #d9d9d9; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    th { background: #fafafa; font-weight: 500; color: #666; white-space: nowrap; }
+    tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    .badge-pending { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+    .badge-approved { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .badge-rejected { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+    .badge-offline { background: #f5f5f5; color: #999; border: 1px solid #d9d9d9; }
+    .badge-blocked { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+    .badge-normal { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .badge-pin { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+    .badge-ad { background: #fff0f6; color: #eb2f96; border: 1px solid #ffadd2; }
+    .btn-sm { padding: 3px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; margin-bottom: 2px; }
+    .btn-primary { background: #1890ff; color: #fff; }
+    .btn-sm.btn-success { background: #52c41a; color: #fff; }
+    .btn-sm.btn-warning { background: #fa8c16; color: #fff; }
+    .btn-sm.btn-danger { background: #ff4d4f; color: #fff; }
+    .btn-sm.btn-ghost { background: #fff; color: #666; border: 1px solid #d9d9d9; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #fff; border-radius: 8px; padding: 22px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 16px; font-size: 16px; }
+    .modal .form-group { margin-bottom: 12px; }
+    .modal label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
+    .modal input, .modal select, .modal textarea { width: 100%; padding: 8px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; font-family: inherit; outline: none; }
+    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: #1890ff; }
+    .modal textarea { min-height: 70px; resize: vertical; }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .loading { text-align: center; padding: 40px; color: #999; }
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 22px; border-radius: 6px; font-size: 13px; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90vw; }
+    .toast.show { opacity: 1; }
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .stat-card { background: #fff; border-radius: 8px; padding: 18px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+    .stat-card .stat-icon { font-size: 24px; margin-bottom: 6px; }
+    .stat-card .stat-value { font-size: 26px; font-weight: 700; color: #1890ff; }
+    .stat-card .stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+    .stat-card .stat-sub { font-size: 11px; color: #bbb; margin-top: 2px; }
+    .empty { text-align: center; padding: 30px; color: #999; font-size: 13px; }
+    .meta-line { font-size: 12px; color: #999; margin-top: 2px; }
+    .title-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav { padding: 12px 14px; }
+      .nav .tabs { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <h1>AILOS 资讯管理后台</h1>
+    <div class="tabs">
+      <a onclick="switchTab('overview')" id="tab-overview" class="active">概览</a>
+      <a onclick="switchTab('sources')" id="tab-sources">来源管理</a>
+      <a onclick="switchTab('articles')" id="tab-articles">资讯审核</a>
+      <a onclick="switchTab('reports')" id="tab-reports">举报处理</a>
+      <a onclick="switchTab('logs')" id="tab-logs">审计日志</a>
+    </div>
+    <div class="nav-right">
+      <button class="crawl-btn" onclick="openCrawlModal()">手动抓取</button>
+      <a class="back-link" href="/xuewaiyu/home">返回前台</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="content">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ============ 通用 ============ */
+    var API = '/api';
+    function getToken() {
+      try {
+        var t = localStorage.getItem('token') || localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+        if (t) return t;
+        var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}');
+        return s.accessToken || s.access_token || '';
+      } catch (e) { return ''; }
+    }
+    function authHeaders() {
+      var t = getToken();
+      var h = { 'Content-Type': 'application/json' };
+      if (t) h['Authorization'] = 'Bearer ' + t;
+      return h;
+    }
+    async function apiCall(method, path, body) {
+      var resp = await fetch(API + path, {
+        method: method,
+        headers: authHeaders(),
+        body: body ? JSON.stringify(body) : undefined
+      });
+      try { return await resp.json(); }
+      catch (e) { return { success: false, message: '响应解析失败 (HTTP ' + resp.status + ')' }; }
+    }
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2200);
+    }
+    function escapeHtml(s) {
+      if (s === undefined || s === null) return '';
+      var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+    }
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function fmtTime(iso) {
+      if (!iso) return '-';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso);
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function empty(html) { return '<div class="empty">' + html + '</div>'; }
+
+    var CATEGORY_MAP = {
+      all: '全部', study_method: '学习方法', study_abroad: '留学移民',
+      exam_policy: '考试政策', language_culture: '语种文化', overseas_hot: '海外热点', general: '综合资讯'
+    };
+    function catName(code) { return CATEGORY_MAP[code] || code || '-'; }
+
+    var STATUS_MAP = {
+      pending: { label: '待审核', cls: 'badge-pending' },
+      approved: { label: '已通过', cls: 'badge-approved' },
+      rejected: { label: '已拒绝', cls: 'badge-rejected' },
+      offline: { label: '已下架', cls: 'badge-offline' }
+    };
+    function statusBadge(s) {
+      var m = STATUS_MAP[s] || { label: s || '-', cls: 'badge-offline' };
+      return '<span class="badge ' + m.cls + '">' + m.label + '</span>';
+    }
+
+    /* ============ 弹窗控制 ============ */
+    function openModal(html) {
+      document.getElementById('modalContent').innerHTML = html;
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    /* ============ Tab 切换 ============ */
+    var currentTab = 'overview';
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tabs a').forEach(function(a) { a.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      loadTab(tab);
+    }
+    async function loadTab(tab) {
+      var c = document.getElementById('content');
+      c.innerHTML = '<div class="loading">加载中...</div>';
+      try {
+        if (tab === 'overview') await loadOverview();
+        else if (tab === 'sources') await loadSources();
+        else if (tab === 'articles') await loadArticles();
+        else if (tab === 'reports') await loadReports();
+        else if (tab === 'logs') await loadLogs();
+      } catch (e) {
+        c.innerHTML = empty('加载失败：' + escapeHtml(e.message));
+      }
+    }
+
+    /* ============ 概览 ============ */
+    async function loadOverview() {
+      var d = await apiCall('GET', '/admin/news/stats');
+      var c = document.getElementById('content');
+      if (!d.success) { c.innerHTML = empty(d.message || '加载统计失败'); return; }
+      var s = d.data || {};
+      var sources = s.sources || s.sourceCount || 0;
+      var pending = s.pendingArticles || s.articlesPending || 0;
+      var approved = s.approvedArticles || s.articlesApproved || 0;
+      var reports = s.pendingReports || s.reports || s.reportCount || 0;
+      var aiCalls = s.aiCalls || s.aiCallCount || 0;
+      var totalArticles = s.totalArticles || (pending + approved) || 0;
+
+      var html = '<div class="stats-grid">' +
+        '<div class="stat-card"><div class="stat-icon">📡</div><div class="stat-value">' + sources + '</div><div class="stat-label">资讯来源数</div></div>' +
+        '<div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value">' + totalArticles + '</div><div class="stat-label">文章总数</div><div class="stat-sub">待审核 ' + pending + ' / 已通过 ' + approved + '</div></div>' +
+        '<div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">' + pending + '</div><div class="stat-label">待审核文章</div></div>' +
+        '<div class="stat-card"><div class="stat-icon">🚩</div><div class="stat-value">' + reports + '</div><div class="stat-label">待处理举报</div></div>' +
+        '<div class="stat-card"><div class="stat-icon">🤖</div><div class="stat-value">' + aiCalls + '</div><div class="stat-label">AI 调用次数</div></div>' +
+        '</div>';
+
+      // 最近待审核文章快捷区
+      html += '<div class="card"><h2>待审核文章（最近）<span class="h-actions"><button class="btn-ghost btn" onclick="switchTab(\'articles\')">查看全部</button></span></h2><div id="recentPending">加载中...</div></div>';
+      c.innerHTML = html;
+      // 拉取待审核
+      var pa = await apiCall('GET', '/admin/news/articles?status=pending&page=1&pageSize=8');
+      var rp = document.getElementById('recentPending');
+      if (pa.success) {
+        var items = (pa.data && pa.data.items) || pa.data || [];
+        if (!Array.isArray(items) || items.length === 0) { rp.innerHTML = empty('暂无待审核文章'); return; }
+        var t = '<div class="table-wrap"><table><thead><tr><th>标题</th><th>来源</th><th>分类</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+        items.forEach(function(a) {
+          t += '<tr><td class="title-cell" title="' + escapeHtml(a.title) + '">' + escapeHtml(a.title) + '</td><td>' + escapeHtml(a.sourceName || a.source || (a.source && a.source.name) || '-') + '</td><td>' + catName(a.category) + '</td><td>' + fmtTime(a.createdAt) + '</td><td><button class="btn-sm btn-primary" onclick="articleAction(\'' + a.id + '\',\'approve\')">通过</button><button class="btn-sm btn-danger" onclick="articleAction(\'' + a.id + '\',\'reject\')">拒绝</button></td></tr>';
+        });
+        t += '</tbody></table></div>';
+        rp.innerHTML = t;
+      } else {
+        rp.innerHTML = empty(pa.message || '加载失败');
+      }
+    }
+
+    /* ============ 来源管理 ============ */
+    var sourcesPage = 1;
+    async function loadSources() {
+      var d = await apiCall('GET', '/admin/news/sources?page=' + sourcesPage + '&pageSize=50');
+      var c = document.getElementById('content');
+      if (!d.success) { c.innerHTML = empty(d.message || '加载来源失败'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      var html = '<div class="card"><h2>资讯来源管理<span class="h-actions"><button class="btn btn-success" onclick="openSourceModal()">+ 新增来源</button></span></h2>';
+      if (items.length === 0) { html += empty('暂无来源，点击右上角新增'); html += '</div>'; c.innerHTML = html; return; }
+      html += '<div class="table-wrap"><table><thead><tr><th>名称</th><th>URL</th><th>分类</th><th>状态</th><th>抓取数</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
+      items.forEach(function(s) {
+        var blocked = s.isBlocked || s.blocked || s.status === 'blocked';
+        var statusHtml = blocked ? '<span class="badge badge-blocked">已拉黑</span>' : '<span class="badge badge-normal">正常</span>';
+        html += '<tr>' +
+          '<td>' + escapeHtml(s.name) + '</td>' +
+          '<td class="title-cell" title="' + escapeHtml(s.url || s.feedUrl || '') + '">' + escapeHtml(s.url || s.feedUrl || '-') + '</td>' +
+          '<td>' + catName(s.category) + '</td>' +
+          '<td>' + statusHtml + '</td>' +
+          '<td>' + (s.crawlCount || s.articleCount || 0) + '</td>' +
+          '<td>' + fmtTime(s.createdAt) + '</td>' +
+          '<td>' +
+            '<button class="btn-sm btn-primary" onclick="openSourceModal(\'' + s.id + '\')">编辑</button>' +
+            (blocked ? '<button class="btn-sm btn-success" onclick="sourceAction(\'' + s.id + '\',\'unblock\')">解除</button>' : '<button class="btn-sm btn-warning" onclick="sourceAction(\'' + s.id + '\',\'block\')">拉黑</button>') +
+            '<button class="btn-sm btn-danger" onclick="sourceAction(\'' + s.id + '\',\'delete\')">删除</button>' +
+          '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      c.innerHTML = html;
+    }
+
+    function openSourceModal(id) {
+      if (id) {
+        // 编辑：先拉取来源详情（用列表接口找）
+        apiCall('GET', '/admin/news/sources?page=1&pageSize=200').then(function(d) {
+          var items = (d && d.success) ? ((d.data && d.data.items) || d.data || []) : [];
+          var src = items.filter(function(x) { return String(x.id) === String(id); })[0] || {};
+          renderSourceForm(src);
+        });
+      } else {
+        renderSourceForm({});
+      }
+    }
+    function renderSourceForm(s) {
+      var html = '<h3>' + (s.id ? '编辑来源' : '新增来源') + '</h3>' +
+        '<div class="form-group"><label>来源名称</label><input id="srcName" value="' + escapeHtml(s.name || '') + '" placeholder="如：沪江英语"></div>' +
+        '<div class="form-group"><label>抓取 URL（RSS/网页）</label><input id="srcUrl" value="' + escapeHtml(s.url || s.feedUrl || '') + '" placeholder="https://..."></div>' +
+        '<div class="form-group"><label>分类</label><select id="srcCat">' +
+          Object.keys(CATEGORY_MAP).filter(function(k){return k!=='all';}).map(function(k){return '<option value="' + k + '"' + (s.category === k ? ' selected' : '') + '>' + CATEGORY_MAP[k] + '</option>';}).join('') +
+        '</select></div>' +
+        '<div class="form-group"><label>启用</label><select id="srcEnabled"><option value="1"' + (!s.isBlocked ? ' selected' : '') + '>启用</option><option value="0"' + (s.isBlocked ? ' selected' : '') + '>禁用</option></select></div>' +
+        '<div class="actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="submitSource(' + (s.id ? '\'' + s.id + '\'' : 'null') + ')">保存</button></div>';
+      openModal(html);
+    }
+    function submitSource(id) {
+      var name = document.getElementById('srcName').value.trim();
+      var url = document.getElementById('srcUrl').value.trim();
+      var category = document.getElementById('srcCat').value;
+      var enabled = document.getElementById('srcEnabled').value === '1';
+      if (!name) { showToast('请填写来源名称'); return; }
+      if (!url) { showToast('请填写抓取 URL'); return; }
+      var body = { name: name, url: url, feedUrl: url, category: category, enabled: enabled, isBlocked: !enabled };
+      var method = id ? 'PUT' : 'POST';
+      var path = id ? '/admin/news/sources/' + id : '/admin/news/sources';
+      apiCall(method, path, body).then(function(d) {
+        if (d.success) { closeModal(); showToast(id ? '已更新' : '已新增'); loadSources(); }
+        else showToast(d.message || '操作失败');
+      });
+    }
+    function sourceAction(id, action) {
+      var path = '/admin/news/sources/' + id + '/';
+      var confirmMsg = '';
+      if (action === 'block') { path += 'block'; confirmMsg = '确定拉黑该来源？拉黑后将停止抓取。'; }
+      else if (action === 'unblock') { path += 'unblock'; confirmMsg = '确定解除拉黑？'; }
+      else if (action === 'delete') { path = '/admin/news/sources/' + id; confirmMsg = '确定删除该来源？此操作不可恢复。'; }
+      if (!confirm(confirmMsg)) return;
+      apiCall(action === 'delete' ? 'DELETE' : 'POST', path).then(function(d) {
+        if (d.success) { showToast('操作成功'); loadSources(); }
+        else showToast(d.message || '操作失败');
+      });
+    }
+
+    /* ============ 资讯审核 ============ */
+    var articleStatus = 'pending';
+    async function loadArticles() {
+      var d = await apiCall('GET', '/admin/news/articles?status=' + articleStatus + '&page=1&pageSize=50');
+      var c = document.getElementById('content');
+      if (!d.success) { c.innerHTML = empty(d.message || '加载文章失败'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      var html = '<div class="card"><h2>资讯审核</h2>';
+      html += '<div class="toolbar"><label>状态：</label><select id="artStatusSel" onchange="changeArticleStatus(this.value)">';
+      ['pending', 'approved', 'rejected', 'offline'].forEach(function(st) {
+        html += '<option value="' + st + '"' + (articleStatus === st ? ' selected' : '') + '>' + STATUS_MAP[st].label + '</option>';
+      });
+      html += '</select><button class="btn-ghost btn" onclick="loadArticles()">刷新</button></div>';
+      if (items.length === 0) { html += empty('该状态下暂无文章'); html += '</div>'; c.innerHTML = html; return; }
+      html += '<div class="table-wrap"><table><thead><tr><th>标题</th><th>来源</th><th>分类</th><th>状态</th><th>标记</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+      items.forEach(function(a) {
+        var flags = '';
+        if (a.isPinned) flags += '<span class="badge badge-pin">置顶</span> ';
+        if (a.isOfficialAd) flags += '<span class="badge badge-ad">广告</span> ';
+        if (!flags) flags = '-';
+        var actions = '';
+        if (a.status === 'pending') {
+          actions += '<button class="btn-sm btn-success" onclick="articleAction(\'' + a.id + '\',\'approve\')">通过</button>';
+          actions += '<button class="btn-sm btn-danger" onclick="articleAction(\'' + a.id + '\',\'reject\')">拒绝</button>';
+        }
+        if (a.status === 'approved') {
+          actions += '<button class="btn-sm btn-warning" onclick="articleAction(\'' + a.id + '\',\'offline\')">下架</button>';
+        }
+        if (a.status === 'offline' || a.status === 'rejected') {
+          actions += '<button class="btn-sm btn-success" onclick="articleAction(\'' + a.id + '\',\'approve\')">恢复通过</button>';
+        }
+        actions += (a.isPinned ? '<button class="btn-sm btn-ghost" onclick="articleAction(\'' + a.id + '\',\'unpin\')">取消置顶</button>' : '<button class="btn-sm btn-ghost" onclick="articleAction(\'' + a.id + '\',\'pin\')">置顶</button>');
+        actions += (a.isOfficialAd ? '<button class="btn-sm btn-ghost" onclick="articleAction(\'' + a.id + '\',\'ad-remove\')">撤销广告</button>' : '<button class="btn-sm btn-ghost" onclick="articleAction(\'' + a.id + '\',\'ad-place\')">投放广告</button>');
+        html += '<tr>' +
+          '<td class="title-cell" title="' + escapeHtml(a.title) + '">' + escapeHtml(a.title) + '</td>' +
+          '<td>' + escapeHtml(a.sourceName || a.source || (a.source && a.source.name) || '-') + '</td>' +
+          '<td>' + catName(a.category) + '</td>' +
+          '<td>' + statusBadge(a.status) + '</td>' +
+          '<td>' + flags + '</td>' +
+          '<td>' + fmtTime(a.createdAt) + '</td>' +
+          '<td>' + actions + '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      c.innerHTML = html;
+    }
+    function changeArticleStatus(st) { articleStatus = st; loadArticles(); }
+    function articleAction(id, action) {
+      var map = {
+        approve: { path: 'approve', method: 'POST', msg: '确定通过该文章？' },
+        reject: { path: 'reject', method: 'POST', msg: '确定拒绝该文章？' },
+        offline: { path: 'offline', method: 'POST', msg: '确定下架该文章？' },
+        pin: { path: 'pin', method: 'POST', msg: '确定置顶该文章？' },
+        unpin: { path: 'unpin', method: 'POST', msg: '确定取消置顶？' },
+        'ad-place': { path: 'ad-place', method: 'POST', msg: '确定投放为官方广告？' },
+        'ad-remove': { path: 'ad-remove', method: 'POST', msg: '确定撤销官方广告？' }
+      };
+      var m = map[action];
+      if (!m) return;
+      if (!confirm(m.msg)) return;
+      apiCall(m.method, '/admin/news/articles/' + id + '/' + m.path).then(function(d) {
+        if (d.success) { showToast('操作成功'); loadArticles(); }
+        else showToast(d.message || '操作失败');
+      });
+    }
+
+    /* ============ 举报处理 ============ */
+    async function loadReports() {
+      var d = await apiCall('GET', '/admin/news/reports?status=pending&page=1&pageSize=50');
+      var c = document.getElementById('content');
+      if (!d.success) { c.innerHTML = empty(d.message || '加载举报失败'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      var html = '<div class="card"><h2>举报处理<span class="h-actions"><button class="btn-ghost btn" onclick="loadReports()">刷新</button></span></h2>';
+      if (items.length === 0) { html += empty('暂无待处理举报'); html += '</div>'; c.innerHTML = html; return; }
+      html += '<div class="table-wrap"><table><thead><tr><th>被举报文章</th><th>举报原因</th><th>补充说明</th><th>举报人</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+      items.forEach(function(r) {
+        var art = r.article || {};
+        html += '<tr>' +
+          '<td class="title-cell" title="' + escapeHtml(art.title || r.articleTitle || '') + '">' + escapeHtml(art.title || r.articleTitle || r.articleId || '-') + '</td>' +
+          '<td>' + escapeHtml(r.reason || r.reasonLabel || '-') + '</td>' +
+          '<td class="title-cell" title="' + escapeHtml(r.detail || '') + '">' + escapeHtml(r.detail || '-') + '</td>' +
+          '<td>' + escapeHtml(r.reporterName || r.reporter || (r.user && r.user.nickname) || r.userId || '-') + '</td>' +
+          '<td>' + fmtTime(r.createdAt) + '</td>' +
+          '<td><button class="btn-sm btn-danger" onclick="openReportAction(\'' + r.id + '\',\'resolve\')">确认违规</button><button class="btn-sm btn-ghost" onclick="openReportAction(\'' + r.id + '\',\'dismiss\')">驳回</button></td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      c.innerHTML = html;
+    }
+    var reportActionTarget = null;
+    function openReportAction(id, action) {
+      reportActionTarget = { id: id, action: action };
+      var title = action === 'resolve' ? '确认违规（将自动下架文章）' : '驳回举报';
+      var html = '<h3>' + title + '</h3>' +
+        '<div class="form-group"><label>处理说明（可选）</label><textarea id="reportReasonInput" placeholder="请填写处理说明..."></textarea></div>' +
+        '<div class="actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn ' + (action === 'resolve' ? 'btn-danger' : 'btn-primary') + '" onclick="submitReportAction()">确认</button></div>';
+      openModal(html);
+    }
+    function submitReportAction() {
+      if (!reportActionTarget) return;
+      var reason = document.getElementById('reportReasonInput').value.trim();
+      apiCall('POST', '/admin/news/reports/' + reportActionTarget.id + '/resolve', {
+        action: reportActionTarget.action, reason: reason
+      }).then(function(d) {
+        if (d.success) { closeModal(); showToast('处理成功'); loadReports(); }
+        else showToast(d.message || '处理失败');
+      });
+    }
+
+    /* ============ 审计日志 ============ */
+    async function loadLogs() {
+      var d = await apiCall('GET', '/admin/news/audit-logs?page=1&pageSize=100');
+      var c = document.getElementById('content');
+      if (!d.success) { c.innerHTML = empty(d.message || '加载日志失败'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      var html = '<div class="card"><h2>审计日志<span class="h-actions"><button class="btn-ghost btn" onclick="loadLogs()">刷新</button></span></h2>';
+      if (items.length === 0) { html += empty('暂无审计日志'); html += '</div>'; c.innerHTML = html; return; }
+      html += '<div class="table-wrap"><table><thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>';
+      items.forEach(function(l) {
+        var detailText = l.detail || (l.metadata ? JSON.stringify(l.metadata) : '');
+        html += '<tr>' +
+          '<td>' + fmtTime(l.createdAt || l.time) + '</td>' +
+          '<td>' + escapeHtml(l.operatorName || l.operator || (l.user && l.user.nickname) || l.userId || '-') + '</td>' +
+          '<td>' + escapeHtml(l.action || l.type || '-') + '</td>' +
+          '<td class="title-cell" title="' + escapeHtml(l.target || l.targetId || '') + '">' + escapeHtml(l.target || l.targetType || l.targetId || '-') + '</td>' +
+          '<td class="title-cell" title="' + escapeHtml(detailText) + '">' + escapeHtml(detailText || '-') + '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      c.innerHTML = html;
+    }
+
+    /* ============ 手动抓取 ============ */
+    function openCrawlModal() {
+      var html = '<h3>手动触发抓取</h3>' +
+        '<p style="font-size:13px;color:#666;margin-bottom:14px;">将立即从已启用的资讯来源抓取最新内容。开启 AI 处理可自动生成摘要与分类（消耗 AI 额度）。</p>' +
+        '<div class="form-group"><label><input type="checkbox" id="crawlAI" style="width:auto;margin-right:6px;">启用 AI 处理（生成摘要/分类）</label></div>' +
+        '<div class="actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-success" id="crawlSubmitBtn" onclick="submitCrawl()">开始抓取</button></div>';
+      openModal(html);
+    }
+    function submitCrawl() {
+      var enableAI = document.getElementById('crawlAI').checked;
+      var btn = document.getElementById('crawlSubmitBtn');
+      btn.disabled = true; btn.textContent = '抓取中...';
+      apiCall('POST', '/v1/news/crawl', { enableAI: enableAI }).then(function(d) {
+        btn.disabled = false; btn.textContent = '开始抓取';
+        if (d.success) {
+          closeModal();
+          var info = d.data || {};
+          var msg = '抓取已触发';
+          if (info.crawled !== undefined || info.fetched !== undefined || info.count !== undefined) {
+            msg += '，新增 ' + (info.crawled || info.fetched || info.count || 0) + ' 篇';
+          }
+          showToast(msg);
+          switchTab('overview');
+        } else {
+          showToast(d.message || '抓取失败');
+        }
+      });
+    }
+
+    /* ============ 初始化 ============ */
+    (function init() {
+      var t = getToken();
+      if (!t) {
+        document.getElementById('content').innerHTML = '<div class="card"><div class="empty">未检测到登录态，请先登录管理员账号。<br><br><a href="/xuewaiyu/login.html" class="btn btn-primary" style="display:inline-block;text-decoration:none;">去登录</a></div></div>';
+        return;
+      }
+      switchTab('overview');
+    })();
+  </script>
+</body>
+</html>

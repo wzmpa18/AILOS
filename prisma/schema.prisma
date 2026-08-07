@@ -106,6 +106,10 @@ model User {
   sentMessages           Message[]
  contentAuditLogs ContentAuditLog[]
 
+  // v3.2.0 增量：社交板块升级反向关系
+  newsReports         NewsReport[]        @relation("NewsReporter")
+  newsAuditLogs       NewsAuditLog[]      @relation("NewsAuditOperator")
+
   @@index([phone])
   @@index([email])
   @@index([wechatOpenId])
@@ -1256,11 +1260,20 @@ model SocialTimeline {
   commentCount Int      @default(0)
   createdAt    DateTime @default(now())
 
+  // v3.2.0 增量字段：社交板块升级（纯新增，不修改原有字段）
+  tag              String?   // 内容标签：experience|study_abroad|exam_prep|find_partner
+  isQuality        Boolean   @default(false) // 加精标识，后台审核标记
+  qualityMarkedBy  String?   // 加精操作管理员ID
+  qualityMarkedAt  DateTime? // 加精时间
+  favoriteCount    Int       @default(0) // 收藏数
+
   likes SocialTimelineLike[]
 
   @@index([actorId])
   @@index([createdAt])
   @@index([likeCount])
+  @@index([tag])
+  @@index([isQuality])
 }
 
 // social_timeline_like — 动态点赞记录（唯一用户-动态复合键防重）
@@ -1695,5 +1708,135 @@ model VoiceUsageLog {
   @@index([createdAt])
   @@index([userId, createdAt])
   @@map("voice_usage_logs")
+}
+
+// ============================================================
+// v3.2.0 社交板块升级：站外资讯聚合模块（纯增量，不修改已有模型）
+// 对齐《双宪法v3.2.0》《架构蓝图v3.2.0》社交域资讯聚合条款
+// 合规优先：仅存储标题+摘要+来源+原文链接，绝不全文转载
+// ============================================================
+
+/// news_source — 资讯来源管理（后台可增删，白名单机制）
+model NewsSource {
+  id          String   @id @default(uuid())
+  name        String   @unique // 来源名称
+  url         String   @unique // 来源主页URL
+  feedUrl     String?  // RSS/Atom订阅地址（如支持）
+  category    String   @default("general") // learning_method|study_abroad|exam_policy|culture|hotspot|general
+  language    String   @default("zh-CN") // 资讯语种
+  isActive    Boolean  @default(true) // 是否启用抓取
+  isWhitelist Boolean  @default(false) // 白名单来源（允许展示官方广告）
+  isBlacklist Boolean  @default(false) // 黑名单来源（拉黑后不再抓取）
+  crawlCount  Int      @default(0) // 累计抓取次数
+  lastCrawlAt DateTime? // 最后抓取时间
+  dailyLimit  Int      @default(10) // 每日抓取上限（单来源）
+  metadata    Json?    // 扩展配置（选择器、编码等）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  articles NewsArticle[]
+
+  @@index([isActive])
+  @@index([isWhitelist])
+  @@index([isBlacklist])
+  @@index([category])
+  @@map("news_sources")
+}
+
+/// news_article — 资讯文章（仅标题+摘要+来源+原文链接，绝不全文转载）
+model NewsArticle {
+  id          String   @id @default(uuid())
+  sourceId    String
+  source      NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  title       String   // 文章标题
+  summary     String   // 摘要（100字以内，由系统截取或AI生成）
+  originalUrl String   @unique // 原文链接（跳转至源站）
+  author      String?  // 原作者/来源标注
+
+  category    String   @default("general") // learning_method|study_abroad|exam_policy|culture|hotspot|general
+  language    String   @default("zh-CN")
+  tags        String[] @default([]) // AI/规则打标
+
+  // 合规与审核状态
+  status      String   @default("pending") // pending|approved|rejected|offline
+  isAd        Boolean  @default(false) // 是否被识别为广告内容
+  isOfficialAd Boolean @default(false) // 是否为白名单官方广告
+  adReason    String?  // 广告识别原因
+
+  // AI处理记录
+  aiProcessed Boolean  @default(false) // 是否经过AI深度处理
+  aiCallCount Int      @default(0) // AI调用次数（单条限制1次）
+
+  // 展示控制
+  isPinned    Boolean  @default(false) // 是否置顶
+  viewCount   Int      @default(0) // 浏览次数
+  reportCount Int      @default(0) // 举报次数
+
+  // 内容哈希（去重）
+  contentHash String?  @unique // 标题+URL的MD5，用于增量去重
+
+  publishedAt DateTime? // 原文发布时间
+  crawledAt   DateTime  @default(now()) // 抓取时间
+  reviewedAt  DateTime? // 审核时间
+  reviewedBy  String?   // 审核人
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reports    NewsReport[]
+  auditLogs  NewsAuditLog[]
+
+  @@index([sourceId])
+  @@index([status])
+  @@index([category])
+  @@index([isAd])
+  @@index([isPinned])
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@map("news_articles")
+}
+
+/// news_report — 用户举报记录
+model NewsReport {
+  id        String   @id @default(uuid())
+  articleId String
+  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter  User     @relation("NewsReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reason    String   // violation|ad|infringement|other
+  detail    String?  // 举报详情
+  status    String   @default("pending") // pending|resolved|dismissed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([articleId])
+  @@index([reporterId])
+  @@index([status])
+  @@map("news_reports")
+}
+
+/// news_audit_log — 资讯管理审计日志（审核、置顶、下架、广告投放等操作留痕）
+model NewsAuditLog {
+  id          String   @id @default(uuid())
+  articleId   String?
+  article     NewsArticle? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  operatorId  String
+  operator    User     @relation("NewsAuditOperator", fields: [operatorId], references: [id], onDelete: Cascade)
+
+  action      String   // approve|reject|offline|pin|unpin|ad_place|ad_remove|source_block|source_unblock
+  detail      Json?    // 操作详情
+  beforeState String?  // 操作前状态
+  afterState  String?  // 操作后状态
+
+  createdAt   DateTime @default(now())
+
+  @@index([articleId])
+  @@index([operatorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("news_audit_logs")
 }
 

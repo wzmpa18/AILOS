@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>言道学学外语 资讯详情</title>
+  <script src="/xuewaiyu/assets/common.js"></script>
+  <style>
+    :root {
+      --primary: #4A90D9;
+      --primary-light: #EBF3FC;
+      --bg: #F5F7FA;
+      --card-bg: #FFFFFF;
+      --text: #2C3E50;
+      --text-secondary: #7F8C8D;
+      --text-muted: #95A5A6;
+      --border: #E8ECF1;
+      --danger: #E74C3C;
+      --warning: #FA8C16;
+      --nav-height: 64px;
+      --header-height: 56px;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: calc(var(--nav-height) + 20px);
+      padding-top: calc(var(--header-height) + 10px);
+      min-height: 100vh;
+    }
+    /* Header */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 999; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .header .back-btn {
+      width: 32px; height: 32px; border: none; background: none; font-size: 22px;
+      color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .header h1 { font-size: 17px; font-weight: 700; flex: 1; text-align: center; }
+    .header .spacer { width: 32px; }
+    /* Article */
+    .article { margin: 8px 16px; background: var(--card-bg); border-radius: var(--radius); padding: 20px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .article-flags { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .flag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    .flag-pin { background: #FFF4E6; color: var(--warning); }
+    .flag-ad { background: #FFF1F0; color: var(--danger); }
+    .flag-cat { background: var(--primary-light); color: var(--primary); }
+    .article-title { font-size: 20px; font-weight: 700; line-height: 1.4; color: var(--text); margin-bottom: 12px; }
+    .article-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .article-meta .meta-source { color: var(--primary); font-weight: 600; }
+    .article-summary { font-size: 14px; color: var(--text-secondary); line-height: 1.6; background: var(--bg); padding: 12px 14px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 16px; }
+    .article-body { font-size: 15px; line-height: 1.8; color: var(--text); word-break: break-word; }
+    .article-body p { margin-bottom: 14px; }
+    .article-body img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+    .article-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .original-link { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: var(--primary); color: #fff; border: none; border-radius: 20px; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .original-link:active { opacity: 0.8; }
+    .report-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); padding: 9px 18px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+    .report-btn:active { color: var(--danger); border-color: var(--danger); }
+    /* States */
+    .state-wrap { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+    .state-wrap .icon { font-size: 48px; margin-bottom: 12px; }
+    .state-wrap .text { font-size: 14px; margin-bottom: 16px; }
+    .state-wrap button { padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 20px; font-size: 14px; cursor: pointer; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Report Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: flex-end; }
+    .modal-overlay.active { display: flex; }
+    .modal-sheet { background: var(--card-bg); border-radius: 20px 20px 0 0; width: 100%; max-height: 80vh; padding: 20px 16px; position: relative; animation: slideUp 0.25s ease; overflow-y: auto; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-sheet .close-btn { position: absolute; top: 12px; right: 16px; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .modal-sheet h3 { font-size: 16px; margin-bottom: 14px; }
+    .modal-sheet .form-group { margin-bottom: 12px; }
+    .modal-sheet label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px; }
+    .modal-sheet select, .modal-sheet textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: var(--bg); color: var(--text); }
+    .modal-sheet textarea { min-height: 80px; resize: none; }
+    .modal-sheet .actions { display: flex; gap: 12px; margin-top: 16px; }
+    .modal-sheet .actions button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; cursor: pointer; }
+    .btn-cancel { border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    .btn-danger { border: none; background: var(--danger); color: #fff; }
+    /* Toast */
+    .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 10px 24px; border-radius: 20px; font-size: 13px; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <button class="back-btn" onclick="goBack()">←</button>
+  <h1>资讯详情</h1>
+  <div class="spacer"></div>
+</div>
+
+<!-- Content -->
+<div id="content">
+  <div class="state-wrap">
+    <div class="spinner"></div>
+    <div class="text">正在加载资讯...</div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-sheet">
+    <button class="close-btn" onclick="closeReportModal()">✕</button>
+    <h3>举报资讯</h3>
+    <div class="form-group">
+      <label>举报原因</label>
+      <select id="reportReason">
+        <option value="false_info">虚假信息</option>
+        <option value="ad_marketing">广告营销</option>
+        <option value="vulgar">内容低俗</option>
+        <option value="clickbait">标题党</option>
+        <option value="copyright">侵权抄袭</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>补充说明（可选）</label>
+      <textarea id="reportDetail" maxlength="500" placeholder="请描述具体问题..."></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" onclick="closeReportModal()">取消</button>
+      <button class="btn-danger" id="reportSubmitBtn" onclick="submitReport()">提交举报</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 工具 ============ */
+function getToken() {
+  try {
+    var t = localStorage.getItem('token') || localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+    if (t) return t;
+    var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}');
+    return s.accessToken || s.access_token || '';
+  } catch (e) { return ''; }
+}
+function authHeaders() {
+  var t = getToken();
+  var h = { 'Content-Type': 'application/json' };
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function formatTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function goBack() {
+  if (document.referrer && document.referrer.indexOf(location.origin) === 0) history.back();
+  else location.href = '/xuewaiyu/community-trend.html';
+}
+
+var CATEGORY_MAP = {
+  all: '全部', study_method: '学习方法', study_abroad: '留学移民',
+  exam_policy: '考试政策', language_culture: '语种文化', overseas_hot: '海外热点', general: '综合资讯'
+};
+
+var newsId = new URLSearchParams(location.search).get('id');
+var reportTargetId = null;
+
+function renderState(html) {
+  document.getElementById('content').innerHTML = html;
+}
+
+function loadDetail() {
+  if (!newsId) {
+    renderState('<div class="state-wrap"><div class="icon">⚠️</div><div class="text">缺少资讯ID参数</div><button onclick="goBack()">返回</button></div>');
+    return;
+  }
+  fetch('/api/v1/news/detail/' + encodeURIComponent(newsId), { headers: authHeaders() })
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(d) {
+      if (!d.success || !d.data) {
+        renderState('<div class="state-wrap"><div class="icon">📄</div><div class="text">' + escapeHtml(d.message || '资讯不存在或已下架') + '</div><button onclick="goBack()">返回</button></div>');
+        return;
+      }
+      renderArticle(d.data);
+    })
+    .catch(function() {
+      renderState('<div class="state-wrap"><div class="icon">📡</div><div class="text">网络错误，请重试</div><button onclick="loadDetail()">重试</button></div>');
+    });
+}
+
+function renderArticle(n) {
+  reportTargetId = n.id || newsId;
+  var flagsHtml = '';
+  if (n.isPinned) flagsHtml += '<span class="flag flag-pin">置顶</span>';
+  if (n.isOfficialAd) flagsHtml += '<span class="flag flag-ad">广告</span>';
+  var catName = CATEGORY_MAP[n.category] || n.categoryName || n.category || '';
+  if (catName) flagsHtml += '<span class="flag flag-cat">' + escapeHtml(catName) + '</span>';
+
+  var source = n.source || n.sourceName || (n.source && n.source.name) || '来源不明';
+  var timeStr = formatTime(n.publishedAt || n.createdAt || n.created_at);
+  var summary = n.summary || n.description || '';
+  var content = n.content || n.body || '';
+  // 简单换行处理：将 \n 转 <br>，分段
+  var contentHtml = escapeHtml(content).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
+  var origUrl = n.url || n.originalUrl || n.link || '#';
+
+  var html = '<div class="article">' +
+    (flagsHtml ? '<div class="article-flags">' + flagsHtml + '</div>' : '') +
+    '<h1 class="article-title">' + escapeHtml(n.title || '无标题') + '</h1>' +
+    '<div class="article-meta">' +
+      '<span class="meta-source">来源: ' + escapeHtml(source) + '</span>' +
+      (n.author ? '<span>· 作者: ' + escapeHtml(n.author) + '</span>' : '') +
+      (timeStr ? '<span>· ' + escapeHtml(timeStr) + '</span>' : '') +
+      (n.viewCount !== undefined ? '<span>· 阅读 ' + escapeHtml(n.viewCount) + '</span>' : '') +
+    '</div>' +
+    (summary ? '<div class="article-summary">' + escapeHtml(summary) + '</div>' : '') +
+    '<div class="article-body"><p>' + (contentHtml || '暂无正文内容') + '</p></div>' +
+    '<div class="article-footer">' +
+      (origUrl && origUrl !== '#' ? '<a class="original-link" href="' + escapeHtml(origUrl) + '" target="_blank" rel="noopener noreferrer">查看原文 ↗</a>' : '<span></span>') +
+      '<button class="report-btn" onclick="openReportModal()">举报</button>' +
+    '</div>' +
+  '</div>';
+
+  renderState(html);
+}
+
+/* ============ 举报 ============ */
+function openReportModal() {
+  var token = getToken();
+  if (!token) { showToast('请先登录后再举报'); return; }
+  document.getElementById('reportReason').value = 'false_info';
+  document.getElementById('reportDetail').value = '';
+  document.getElementById('reportSubmitBtn').disabled = false;
+  document.getElementById('reportModal').classList.add('active');
+}
+function closeReportModal() {
+  document.getElementById('reportModal').classList.remove('active');
+}
+function submitReport() {
+  if (!reportTargetId) return;
+  var reason = document.getElementById('reportReason').value;
+  var detail = document.getElementById('reportDetail').value.trim();
+  var btn = document.getElementById('reportSubmitBtn');
+  btn.disabled = true; btn.textContent = '...';
+  fetch('/api/v1/news/report/' + encodeURIComponent(reportTargetId), {
+    method: 'POST', headers: authHeaders(),
+    body: JSON.stringify({ reason: reason, detail: detail })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      btn.disabled = false; btn.textContent = '提交举报';
+      if (d.success) { closeReportModal(); showToast('举报已提交，感谢您的反馈'); }
+      else showToast(d.message || '举报失败');
+    })
+    .catch(function() {
+      btn.disabled = false; btn.textContent = '提交举报';
+      showToast('网络错误，请重试');
+    });
+}
+document.getElementById('reportModal').addEventListener('click', function(e) {
+  if (e.target === this) closeReportModal();
+});
+
+/* ============ 初始化 ============ */
+if (window.AILOS && window.AILOS.init) { try { AILOS.init(); } catch (e) {} }
+loadDetail();
+</script>
+
+  <!-- Bottom Navigation (auto-injected by common.js ensureNav with community nav) -->
+  <nav class="bottom-nav"></nav>
+
+</body>
+</html>

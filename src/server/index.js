@@ -83,6 +83,13 @@ const server = app.listen(PORT, () => {
   } catch (e) {
     logger.error('启动一致性巡检任务失败:', e.message);
   }
+
+  // v3.2.0：启动资讯定时抓取任务（每日06:00/18:00）
+  try {
+    require('../jobs/newsCrawlJob').start();
+  } catch (e) {
+    logger.error('启动资讯抓取任务失败:', e.message);
+  }
 });
 
 // Graceful shutdown
