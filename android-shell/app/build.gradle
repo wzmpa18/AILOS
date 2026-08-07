@@ -5,6 +5,12 @@ plugins {
 android {
     namespace 'ai.yandao.ailos'
     compileSdk 34
+    buildToolsVersion "34.0.0"
+
+    // 修复AAPT2编译AndroidX库中.9.png资源失败的问题
+    aaptOptions {
+        cruncherEnabled = false
+    }
 
     defaultConfig {
         applicationId "ai.yandao.ailos"
@@ -65,8 +71,8 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.webkit:webkit:1.9.0'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 }
