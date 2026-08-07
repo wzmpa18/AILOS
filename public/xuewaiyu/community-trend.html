@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>言道学学外语 社群动态</title>
-  <script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
+  <script src="/xuewaiyu/assets/common.js"></script>
   <style>
     :root {
       --primary: #4A90D9;
@@ -17,8 +17,10 @@
       --border: #E8ECF1;
       --danger: #E74C3C;
       --success: #27AE60;
+      --warning: #FA8C16;
       --nav-height: 64px;
       --header-height: 56px;
+      --tab-height: 46px;
       --radius: 12px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,7 +29,7 @@
       background: var(--bg);
       color: var(--text);
       padding-bottom: calc(var(--nav-height) + 20px);
-      padding-top: calc(var(--header-height) + 10px);
+      padding-top: calc(var(--header-height) + var(--tab-height) + 10px);
       min-height: 100vh;
     }
     /* Header */
@@ -44,6 +46,26 @@
       cursor: pointer; transition: opacity 0.2s;
     }
     .header .post-btn:active { opacity: 0.8; }
+    .header .post-btn.hidden { visibility: hidden; }
+    /* Tab Bar */
+    .tab-bar {
+      position: fixed; top: var(--header-height); left: 0; right: 0; height: var(--tab-height);
+      display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border);
+      z-index: 998;
+    }
+    .tab-bar .tab {
+      flex: 1; text-align: center; line-height: var(--tab-height); font-size: 15px;
+      font-weight: 600; color: var(--text-secondary); cursor: pointer; position: relative;
+      transition: color 0.2s;
+    }
+    .tab-bar .tab.active { color: var(--primary); }
+    .tab-bar .tab.active::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 32px; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0;
+    }
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; }
     /* Create Post Card */
     .create-card {
       margin: 8px 16px; padding: 14px 16px; background: var(--card-bg);
@@ -52,11 +74,31 @@
     }
     .create-card .avatar {
       width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light);
-      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden;
     }
-    .create-card .placeholder {
-      flex: 1; color: var(--text-muted); font-size: 14px;
+    .create-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .create-card .placeholder { flex: 1; color: var(--text-muted); font-size: 14px; }
+    /* Toolbar */
+    .toolbar {
+      margin: 8px 16px; padding: 10px 12px; background: var(--card-bg);
+      border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
+    .toolbar-row { display: flex; align-items: center; gap: 8px; }
+    .toolbar-row + .toolbar-row { margin-top: 8px; }
+    .toolbar-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; width: 36px; }
+    .chip-row { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .chip {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--bg); font-size: 12px; color: var(--text-secondary); cursor: pointer;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .seg { display: flex; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; flex-shrink: 0; }
+    .seg .seg-btn {
+      padding: 5px 14px; border: none; background: var(--bg); font-size: 12px;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .seg .seg-btn.active { background: var(--primary); color: #fff; }
     /* Post Item */
     .post-list { padding: 0 16px; }
     .post-item {
@@ -66,27 +108,58 @@
     .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .post-header .p-avatar {
       width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light);
-      display: flex; align-items: center; justify-content: center; font-size: 16px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; overflow: hidden;
     }
-    .post-header .p-info { flex: 1; }
-    .post-header .p-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .post-header .p-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .post-header .p-info { flex: 1; min-width: 0; }
+    .post-header .p-name { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
     .post-header .p-time { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .quality-badge {
+      display: inline-block; background: linear-gradient(135deg, #FFB300, #FF8F00); color: #fff;
+      font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; line-height: 1.5;
+    }
+    .post-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .post-tag {
+      font-size: 11px; color: var(--primary); background: var(--primary-light);
+      padding: 2px 8px; border-radius: 10px;
+    }
     .post-body { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 12px; word-break: break-word; }
     .post-images { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .post-images img {
       width: calc(33.33% - 4px); height: 0; padding-bottom: calc(33.33% - 4px);
-      object-fit: cover; border-radius: 8px; background: var(--bg);
-      position: relative;
+      object-fit: cover; border-radius: 8px; background: var(--bg); position: relative;
     }
     .post-actions { display: flex; gap: 24px; padding-top: 8px; border-top: 1px solid var(--border); }
     .post-actions .action-btn {
       display: flex; align-items: center; gap: 5px; background: none; border: none;
-      font-size: 13px; color: var(--text-secondary); cursor: pointer; padding: 4px 0;
-      transition: color 0.15s;
+      font-size: 13px; color: var(--text-secondary); cursor: pointer; padding: 4px 0; transition: color 0.15s;
     }
     .post-actions .action-btn.liked { color: var(--primary); }
+    .post-actions .action-btn.faved { color: var(--warning); }
     .post-actions .action-btn:active { opacity: 0.7; }
+    /* News Item */
+    .news-list { padding: 0 16px; }
+    .news-item {
+      margin-bottom: 10px; background: var(--card-bg); border-radius: var(--radius);
+      padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .news-item.pinned { border-left: 3px solid var(--primary); }
+    .news-flags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .flag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    .flag-pin { background: #FFF4E6; color: var(--warning); }
+    .flag-ad { background: #FFF1F0; color: var(--danger); }
+    .news-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+    .news-link { color: inherit; text-decoration: none; display: block; }
+    .news-link:active { opacity: 0.7; }
+    .news-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+    .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); }
+    .news-source { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .news-source .src-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .news-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .news-actions a { color: var(--primary); text-decoration: none; font-size: 12px; }
+    .news-actions button { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; padding: 2px 0; }
+    .news-actions button:active { color: var(--danger); }
+    .news-hot { color: var(--danger); font-weight: 600; }
     /* Post Modal */
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -95,8 +168,8 @@
     .modal-overlay.active { display: flex; }
     .modal-sheet {
       background: var(--card-bg); border-radius: 20px 20px 0 0;
-      width: 100%; max-height: 70vh; padding: 20px 16px;
-      animation: slideUp 0.25s ease;
+      width: 100%; max-height: 80vh; padding: 20px 16px; position: relative;
+      animation: slideUp 0.25s ease; overflow-y: auto;
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .modal-sheet textarea {
@@ -105,6 +178,7 @@
       color: var(--text); background: var(--bg);
     }
     .modal-sheet textarea:focus { border-color: var(--primary); }
+    .modal-sheet .modal-label { font-size: 13px; color: var(--text-secondary); margin: 14px 0 8px; }
     .modal-sheet .modal-footer {
       display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
     }
@@ -120,6 +194,16 @@
       border-radius: 50%; border: none; background: var(--bg); font-size: 18px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
+    .modal-sheet .form-group { margin-bottom: 12px; }
+    .modal-sheet .form-group select, .modal-sheet .form-group input, .modal-sheet .form-group textarea {
+      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; font-family: inherit; outline: none; background: var(--bg); color: var(--text);
+    }
+    .modal-sheet .form-group select:focus, .modal-sheet .form-group input:focus, .modal-sheet .form-group textarea:focus { border-color: var(--primary); }
+    .modal-sheet .actions { display: flex; gap: 12px; margin-top: 16px; }
+    .modal-sheet .actions button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; cursor: pointer; }
+    .btn-cancel { border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    .btn-danger { border: none; background: var(--danger); color: #fff; }
     /* Empty state */
     .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
@@ -131,7 +215,7 @@
       position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
       background: var(--text); color: #fff; padding: 10px 24px; border-radius: 20px;
       font-size: 13px; z-index: 3000; opacity: 0; transition: opacity 0.3s;
-      pointer-events: none; white-space: nowrap;
+      pointer-events: none; white-space: nowrap; max-width: 90vw; text-overflow: ellipsis; overflow: hidden;
     }
     .toast.show { opacity: 1; }
   </style>
@@ -140,36 +224,122 @@
 
 <!-- Header -->
 <div class="header">
-  <h1 data-i18n="trend_title">动态</h1>
-  <button class="post-btn" onclick="openPostModal()" data-i18n="trend_post">发布</button>
+  <h1 id="pageTitle">动态</h1>
+  <button class="post-btn" id="postBtn" onclick="openPostModal()">发布</button>
 </div>
 
-<!-- Create post prompt -->
-<div class="create-card" onclick="openPostModal()">
-  <div class="avatar" id="userAvatarInit"><img src="/xuewaiyu/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>
-  <span class="placeholder" data-i18n="trend_placeholder">分享你的学习动态...</span>
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <div class="tab active" id="tabFeed" onclick="switchTab('feed')">站内动态</div>
+  <div class="tab" id="tabNews" onclick="switchTab('news')">站外资讯</div>
 </div>
 
-<!-- Post list -->
-<div class="post-list" id="postList">
-  <div class="loading">加载中…</div>
+<!-- ============ Tab1: 站内动态 ============ -->
+<div class="section active" id="feedSection">
+  <!-- Create post prompt -->
+  <div class="create-card" onclick="openPostModal()">
+    <div class="avatar" id="userAvatarInit"><img src="/assets/images/default_avatar.png" alt="avatar"></div>
+    <span class="placeholder">分享你的学习动态...</span>
+  </div>
+
+  <!-- Feed Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-row">
+      <span class="toolbar-label">排序</span>
+      <div class="seg" id="feedSortSeg">
+        <button class="seg-btn active" onclick="setFeedSort('latest', this)">最新</button>
+        <button class="seg-btn" onclick="setFeedSort('quality', this)">优质推荐</button>
+      </div>
+    </div>
+    <div class="toolbar-row">
+      <span class="toolbar-label">标签</span>
+      <div class="chip-row" id="feedTagRow"></div>
+    </div>
+  </div>
+
+  <!-- Post list -->
+  <div class="post-list" id="postList">
+    <div class="empty-state">
+      <div class="empty-icon">📰</div>
+      <div class="empty-text" id="emptyText">还没有动态，发布第一条吧</div>
+    </div>
+  </div>
+  <div class="loading" id="loadingMore" style="display:none">加载中...</div>
 </div>
 
-<div class="loading" id="loadingMore" style="display:none">加载中...</div>
+<!-- ============ Tab2: 站外资讯 ============ -->
+<div class="section" id="newsSection">
+  <div class="toolbar">
+    <div class="toolbar-row">
+      <span class="toolbar-label">分类</span>
+      <div class="chip-row" id="newsCatRow"></div>
+    </div>
+    <div class="toolbar-row">
+      <span class="toolbar-label">排序</span>
+      <div class="seg" id="newsSortSeg">
+        <button class="seg-btn active" onclick="setNewsSort('latest', this)">最新</button>
+        <button class="seg-btn" onclick="setNewsSort('hot', this)">热门</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="news-list" id="newsList">
+    <div class="empty-state">
+      <div class="empty-icon">🌐</div>
+      <div class="empty-text">暂无资讯</div>
+    </div>
+  </div>
+  <div class="loading" id="newsLoadingMore" style="display:none">加载中...</div>
+</div>
 
 <!-- Post Modal -->
 <div class="modal-overlay" id="postModal">
-  <div class="modal-sheet" style="position:relative">
+  <div class="modal-sheet">
     <button class="close-btn" onclick="closePostModal()">✕</button>
-    <textarea 
-      id="postContent" 
-      maxlength="2000" 
-      placeholder="记录此刻..."
-      data-i18n-attrib="placeholder|trend_input_placeholder"
-    ></textarea>
+    <textarea id="postContent" maxlength="2000" placeholder="记录此刻..."></textarea>
+    <div class="modal-label">选择标签（可选）</div>
+    <div class="chip-row" id="postTagRow"></div>
     <div class="modal-footer">
       <span class="char-count" id="charCount">0/2000</span>
-      <button class="submit-btn" id="submitBtn" onclick="submitPost()" data-i18n="trend_submit">发布</button>
+      <button class="submit-btn" id="submitBtn" onclick="submitPost()">发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-sheet" style="max-height:none; text-align:center">
+    <p style="font-size:15px; margin-bottom:16px; padding:16px 0">确定删除这条动态？</p>
+    <div class="actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">取消</button>
+      <button class="btn-danger" onclick="confirmDelete()">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-sheet">
+    <button class="close-btn" onclick="closeReportModal()">✕</button>
+    <h3 style="font-size:16px; margin-bottom:14px;">举报资讯</h3>
+    <div class="form-group">
+      <label style="font-size:13px; color:var(--text-secondary); display:block; margin-bottom:6px;">举报原因</label>
+      <select id="reportReason">
+        <option value="false_info">虚假信息</option>
+        <option value="ad_marketing">广告营销</option>
+        <option value="vulgar">内容低俗</option>
+        <option value="clickbait">标题党</option>
+        <option value="copyright">侵权抄袭</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="font-size:13px; color:var(--text-secondary); display:block; margin-bottom:6px;">补充说明（可选）</label>
+      <textarea id="reportDetail" maxlength="500" placeholder="请描述具体问题..." style="min-height:80px; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:14px; resize:none; outline:none; background:var(--bg); width:100%;"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" onclick="closeReportModal()">取消</button>
+      <button class="btn-danger" id="reportSubmitBtn" onclick="submitReport()">提交举报</button>
     </div>
   </div>
 </div>
@@ -177,349 +347,570 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Delete confirm -->
-<div class="modal-overlay" id="deleteModal">
-  <div class="modal-sheet" style="max-height:none; text-align:center">
-    <p style="font-size:15px; margin-bottom:16px; padding:16px 0" data-i18n="trend_delete_confirm">确定删除这条动态？</p>
-    <div style="display:flex; gap:12px">
-      <button onclick="closeDeleteModal()" style="flex:1; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); font-size:14px; cursor:pointer;" data-i18n="cancel">取消</button>
-      <button onclick="confirmDelete()" style="flex:1; padding:12px; border:none; border-radius:10px; background:var(--danger); color:#fff; font-size:14px; cursor:pointer;" data-i18n="delete">删除</button>
-    </div>
-  </div>
-</div>
-
 <script>
-
-function getAilosToken() {
-  var t = localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
-  if (!t) {
-    try { var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}'); t = s.accessToken || s.access_token; } catch(e) {}
-  }
-  return t;
+/* ============ 通用工具 ============ */
+function getToken() {
+  try {
+    var t = localStorage.getItem('token') || localStorage.getItem('yandao_token_v1') || localStorage.getItem('ailos_token');
+    if (t) return t;
+    var s = JSON.parse(localStorage.getItem('auth_tokens') || localStorage.getItem('ailos_session') || '{}');
+    return s.accessToken || s.access_token || '';
+  } catch (e) { return ''; }
 }
-function getAilosHeaders() {
-  var t = getAilosToken();
-  return t ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+function authHeaders() {
+  var t = getToken();
+  var h = { 'Content-Type': 'application/json' };
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function formatTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  var now = new Date();
+  var diff = now - d;
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function truncate(s, n) {
+  s = s || '';
+  return s.length > n ? s.slice(0, n) + '...' : s;
 }
 
-(function() {
-  var page = 1, hasMore = true, isLoading = false;
-  var deleteTargetId = null;
+/* ============ 端点定义（同源 /api） ============ */
+var EP = {
+  feed: '/api/v1/social/timeline/feed',
+  post: '/api/v1/social/timeline/post',
+  like: '/api/v1/social/timeline/like/',
+  favorite: '/api/v1/social/timeline/favorite/',
+  tags: '/api/v1/social/timeline/tags',
+  newsList: '/api/v1/news/list',
+  newsDetail: '/api/v1/news/detail/',
+  newsCategories: '/api/v1/news/categories',
+  newsReport: '/api/v1/news/report/'
+};
 
-  // i18n
-  var I18N = {
-    zh: {
-      trend_title: '动态', trend_post: '发布', trend_placeholder: '分享你的学习动态...',
-      trend_submit: '发布', trend_input_placeholder: '记录此刻...',
-      trend_delete_confirm: '确定删除这条动态？', cancel: '取消', delete: '删除',
-      empty_feed: '还没有动态，发布第一条吧', load_more: '加载中...',
-      post_success: '发布成功！', delete_success: '已删除', content_too_short: '内容不能为空',
-      content_too_long: '内容不能超过2000字', network_error: '网络错误，请重试'
-    },
-    en: {
-      trend_title: 'Trends', trend_post: 'Post', trend_placeholder: 'Share your learning moments...',
-      trend_submit: 'Post', trend_input_placeholder: 'What\'s on your mind...',
-      trend_delete_confirm: 'Delete this post?', cancel: 'Cancel', delete: 'Delete',
-      empty_feed: 'No posts yet. Share your first moment!', load_more: 'Loading...',
-      post_success: 'Posted!', delete_success: 'Deleted', content_too_short: 'Content cannot be empty',
-      content_too_long: 'Content must be under 2000 characters', network_error: 'Network error, please retry'
-    },
-    ja: {
-      trend_title: '動向', trend_post: '投稿', trend_placeholder: '学習の瞬間を共有...',
-      trend_submit: '投稿', trend_input_placeholder: '今の気持ち...',
-      trend_delete_confirm: 'この投稿を削除しますか？', cancel: 'キャンセル', delete: '削除',
-      empty_feed: 'まだ投稿がありません', load_more: '読み込み中...',
-      post_success: '投稿しました！', delete_success: '削除しました', content_too_short: '内容を入力してください',
-      content_too_long: '2000文字以内で入力してください', network_error: 'ネットワークエラー'
-    },
-    ko: {
-      trend_title: '트렌드', trend_post: '글쓰기', trend_placeholder: '학습 순간을 공유하세요...',
-      trend_submit: '게시', trend_input_placeholder: '지금의 생각...',
-      trend_delete_confirm: '이 게시물을 삭제할까요?', cancel: '취소', delete: '삭제',
-      empty_feed: '아직 게시물이 없습니다', load_more: '로딩 중...',
-      post_success: '게시 완료!', delete_success: '삭제됨', content_too_short: '내용을 입력하세요',
-      content_too_long: '2000자 이내로 입력하세요', network_error: '네트워크 오류'
-    },
-    fr: {
-      trend_title: 'Tendances', trend_post: 'Publier', trend_placeholder: 'Partagez vos moments...',
-      trend_submit: 'Publier', trend_input_placeholder: 'Quoi de neuf...',
-      trend_delete_confirm: 'Supprimer cette publication ?', cancel: 'Annuler', delete: 'Supprimer',
-      empty_feed: 'Aucune publication', load_more: 'Chargement...',
-      post_success: 'Publié !', delete_success: 'Supprimé', content_too_short: 'Contenu vide',
-      content_too_long: '2000 caractères max', network_error: 'Erreur réseau'
-    },
-    es: {
-      trend_title: 'Tendencias', trend_post: 'Publicar', trend_placeholder: 'Comparte momentos...',
-      trend_submit: 'Publicar', trend_input_placeholder: '¿Qué hay de nuevo?...',
-      trend_delete_confirm: '¿Eliminar publicación?', cancel: 'Cancelar', delete: 'Eliminar',
-      empty_feed: 'Sin publicaciones', load_more: 'Cargando...',
-      post_success: '¡Publicado!', delete_success: 'Eliminado', content_too_short: 'Contenido vacío',
-      content_too_long: '2000 caracteres máx', network_error: 'Error de red'
-    },
-    de: {
-      trend_title: 'Trends', trend_post: 'Posten', trend_placeholder: 'Teile Lernmomente...',
-      trend_submit: 'Posten', trend_input_placeholder: 'Was gibt\'s Neues?...',
-      trend_delete_confirm: 'Beitrag löschen?', cancel: 'Abbrechen', delete: 'Löschen',
-      empty_feed: 'Noch keine Beiträge', load_more: 'Laden...',
-      post_success: 'Gepostet!', delete_success: 'Gelöscht', content_too_short: 'Inhalt leer',
-      content_too_long: 'Max 2000 Zeichen', network_error: 'Netzwerkfehler'
+/* ============ 标签/分类默认映射 ============ */
+var TAG_MAP = {
+  experience: '学习经验',
+  study_abroad: '留学移民',
+  exam_prep: '备考分享',
+  find_partner: '找搭子'
+};
+var CATEGORY_MAP = {
+  all: '全部',
+  study_method: '学习方法',
+  study_abroad: '留学移民',
+  exam_policy: '考试政策',
+  language_culture: '语种文化',
+  overseas_hot: '海外热点',
+  general: '综合资讯'
+};
+
+/* ============ 状态 ============ */
+var currentTab = 'feed';
+var feed = { page: 1, hasMore: true, isLoading: false, sort: 'latest', tag: 'all' };
+var news = { page: 1, hasMore: true, isLoading: false, category: 'all', sort: 'latest' };
+var deleteTargetId = null;
+var reportTargetId = null;
+var selectedPostTag = '';
+
+/* ============ Tab 切换 ============ */
+window.switchTab = function(tab) {
+  currentTab = tab;
+  document.getElementById('tabFeed').classList.toggle('active', tab === 'feed');
+  document.getElementById('tabNews').classList.toggle('active', tab === 'news');
+  document.getElementById('feedSection').classList.toggle('active', tab === 'feed');
+  document.getElementById('newsSection').classList.toggle('active', tab === 'news');
+  document.getElementById('pageTitle').textContent = tab === 'feed' ? '动态' : '资讯';
+  document.getElementById('postBtn').classList.toggle('hidden', tab !== 'feed');
+  if (tab === 'news' && !news.loaded) loadNews(true);
+};
+
+/* ============ 标签/分类加载 ============ */
+function normalizeList(d, fallbackMap) {
+  var list = [];
+  if (d && d.success) {
+    var raw = d.data;
+    if (Array.isArray(raw)) list = raw;
+    else if (raw && Array.isArray(raw.tags)) list = raw.tags;
+    else if (raw && Array.isArray(raw.items)) list = raw.items;
+    else if (raw && Array.isArray(raw.categories)) list = raw.categories;
+    else if (raw && Array.isArray(raw.list)) list = raw.list;
+  }
+  return list.map(function(t) {
+    if (typeof t === 'string') return { code: t, name: fallbackMap[t] || t };
+    if (t && typeof t === 'object') {
+      return { code: t.code || t.value || t.key || t.id, name: t.name || t.label || fallbackMap[t.code || t.value] || t.code || '' };
     }
-  };
-
-  function _(key) {
-    var lang = (window.AILOS && window.AILOS.getUILang()) ? window.AILOS.getUILang() : 'zh';
-    var map = I18N[lang] || I18N['zh'];
-    return map[key] || I18N['zh'][key] || key;
-  }
-
-  function applyI18n() {
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n');
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
-      el.textContent = _(key);
-    });
-    document.querySelectorAll('[data-i18n-attrib]').forEach(function(el) {
-      var parts = el.getAttribute('data-i18n-attrib').split('|');
-      if (parts.length === 2) el.setAttribute(parts[0], _(parts[1]));
-    });
-    document.getElementById('emptyText').textContent = _('empty_feed');
-  }
-
-  // Token
-  function getToken() {
-    var t = getAilosToken();
-    if (!t) {
-      /* token handled by getAilosToken() */
-    }
-    return t;
-  }
-  function authHeaders() {
-    var t = getToken();
-    return getAilosHeaders();
-  }
-
-  // Toast
-  function showToast(msg) {
-    var t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 2000);
-  }
-
-  // Load feed
-  function loadFeed(reset) {
-    if (isLoading) return;
-    if (!hasMore && !reset) return;
-    isLoading = true;
-    if (reset) { page = 1; hasMore = true; document.getElementById('postList').innerHTML = ''; }
-    document.getElementById('loadingMore').style.display = 'block';
-
-    var url = '/xuewaiyu/api/v1/social/timeline/feed?page=' + page + '&limit=20';
-    fetch(url, { headers: authHeaders() })
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(d) {
-        document.getElementById('loadingMore').style.display = 'none';
-        if (!d.success) { showToast(d.message || _('network_error')); return; }
-        var items = d.data.items || [];
-        if (items.length === 0 && reset) {
-          document.getElementById('postList').innerHTML = '<div class="empty-state"><div class="empty-icon">📰</div><div class="empty-text">' + _('empty_feed') + '</div></div>';
-          hasMore = false;
-          return;
-        }
-        renderPosts(items, reset);
-        if (items.length < 20) hasMore = false;
-        else page++;
-        isLoading = false;
-      })
-      .catch(function(e) {
-        document.getElementById('loadingMore').style.display = 'none';
-        showToast(_('network_error'));
-        isLoading = false;
-      });
-  }
-
-  function renderPosts(items, reset) {
-    var container = document.getElementById('postList');
-    if (reset) container.innerHTML = '';
-
-    for (var i = 0; i < items.length; i++) {
-      var p = items[i];
-      var div = document.createElement('div');
-      div.className = 'post-item';
-      div.setAttribute('data-post-id', p.id);
-
-      var initials = (p.actor && p.actor.nickname) ? p.actor.nickname.charAt(0).toUpperCase() : '?';
-      var timeStr = formatTime(p.createdAt);
-
-      var imagesHtml = '';
-      if (p.metadata && p.metadata.images && p.metadata.images.length > 0) {
-        imagesHtml = '<div class="post-images">' +
-          p.metadata.images.map(function(img) {
-            return '<img src="' + escapeHtml(img) + '" alt="post image" onerror="this.style.display=\'none\'">';
-          }).join('') +
-          '</div>';
-      }
-
-      div.innerHTML = '' +
-        '<div class="post-header">' +
-          (p.actor && p.actor.avatar
-            ? '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="' + p.actor.avatar + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>'
-            : '<div class="p-avatar" style="padding:0;overflow:hidden;"><img src="/xuewaiyu/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;"></div>') +
-          '<div class="p-info">' +
-            '<div class="p-name">' + escapeHtml(p.actor ? p.actor.nickname : '用户') + '</div>' +
-            '<div class="p-time">' + timeStr + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="post-body">' + escapeHtml(p.content) + '</div>' +
-        imagesHtml +
-        '<div class="post-actions">' +
-          '<button class="action-btn like-btn" onclick="toggleLike(\'' + p.id + '\', this)">' +
-            '<span>👍</span> <span class="like-count">' + (p.likeCount || 0) + '</span>' +
-          '</button>' +
-          '<button class="action-btn" onclick="deletePost(\'' + p.id + '\')">' +
-            '<span>🗑️</span>' +
-          '</button>' +
-        '</div>';
-
-      container.appendChild(div);
-    }
-  }
-
-  function formatTime(iso) {
-    if (!iso) return '';
-    var d = new Date(iso);
-    var now = new Date();
-    var diff = now - d;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
-    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
-  }
-
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-  // Post Modal
-  window.openPostModal = function() {
-    document.getElementById('postModal').classList.add('active');
-    document.getElementById('postContent').value = '';
-    document.getElementById('charCount').textContent = '0/2000';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('postContent').focus();
-  };
-  window.closePostModal = function() {
-    document.getElementById('postModal').classList.remove('active');
-  };
-
-  document.getElementById('postContent').addEventListener('input', function() {
-    var len = this.value.length;
-    var el = document.getElementById('charCount');
-    el.textContent = len + '/2000';
-    el.className = 'char-count' + (len > 2000 ? ' over' : '');
+    return { code: String(t), name: String(t) };
   });
+}
 
-  document.getElementById('postModal').addEventListener('click', function(e) {
-    if (e.target === this) closePostModal();
-  });
-
-  // Submit post
-  window.submitPost = function() {
-    var content = document.getElementById('postContent').value.trim();
-    if (!content) { showToast(_('content_too_short')); return; }
-    if (content.length > 2000) { showToast(_('content_too_long')); return; }
-
-    var btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = '...';
-
-    fetch('/xuewaiyu/api/v1/social/timeline/post', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ content: content, type: 'text', images: [] })
-    })
+function loadTags() {
+  fetch(EP.tags, { headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      btn.disabled = false; btn.textContent = _('trend_submit');
-      if (!d.success) { showToast(d.message || _('network_error')); return; }
+      var list = normalizeList(d, TAG_MAP);
+      var merged = {};
+      // 先放默认标签保证顺序与完整
+      Object.keys(TAG_MAP).forEach(function(k) { merged[k] = TAG_MAP[k]; });
+      list.forEach(function(t) { if (t.code && t.code !== 'all') merged[t.code] = t.name; });
+      renderFeedTagChips(merged);
+      renderPostTagChips(merged);
+    })
+    .catch(function() {
+      renderFeedTagChips(TAG_MAP);
+      renderPostTagChips(TAG_MAP);
+    });
+}
+
+function renderFeedTagChips(map) {
+  var row = document.getElementById('feedTagRow');
+  var html = '<button class="chip active" data-tag="all" onclick="setFeedTag(\'all\', this)">全部</button>';
+  Object.keys(map).forEach(function(code) {
+    html += '<button class="chip" data-tag="' + escapeHtml(code) + '" onclick="setFeedTag(\'' + escapeHtml(code) + '\', this)">' + escapeHtml(map[code]) + '</button>';
+  });
+  row.innerHTML = html;
+}
+
+function renderPostTagChips(map) {
+  var row = document.getElementById('postTagRow');
+  var html = '<button class="chip active" data-tag="" onclick="selectPostTag(\'\', this)">不选择</button>';
+  Object.keys(map).forEach(function(code) {
+    html += '<button class="chip" data-tag="' + escapeHtml(code) + '" onclick="selectPostTag(\'' + escapeHtml(code) + '\', this)">' + escapeHtml(map[code]) + '</button>';
+  });
+  row.innerHTML = html;
+  selectedPostTag = '';
+}
+
+function loadCategories() {
+  fetch(EP.newsCategories, { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var list = normalizeList(d, CATEGORY_MAP);
+      var merged = {};
+      Object.keys(CATEGORY_MAP).forEach(function(k) { merged[k] = CATEGORY_MAP[k]; });
+      list.forEach(function(t) { if (t.code) merged[t.code] = t.name; });
+      renderNewsCatChips(merged);
+    })
+    .catch(function() {
+      renderNewsCatChips(CATEGORY_MAP);
+    });
+}
+
+function renderNewsCatChips(map) {
+  var row = document.getElementById('newsCatRow');
+  var html = '';
+  Object.keys(map).forEach(function(code) {
+    var cls = code === news.category ? 'chip active' : 'chip';
+    html += '<button class="' + cls + '" data-cat="' + escapeHtml(code) + '" onclick="setNewsCategory(\'' + escapeHtml(code) + '\', this)">' + escapeHtml(map[code]) + '</button>';
+  });
+  row.innerHTML = html;
+}
+
+/* ============ 排序/筛选交互 ============ */
+window.setFeedSort = function(sort, btn) {
+  if (feed.sort === sort) return;
+  feed.sort = sort;
+  document.querySelectorAll('#feedSortSeg .seg-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  loadFeed(true);
+};
+window.setFeedTag = function(tag, btn) {
+  if (feed.tag === tag) return;
+  feed.tag = tag;
+  document.querySelectorAll('#feedTagRow .chip').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  loadFeed(true);
+};
+window.setNewsSort = function(sort, btn) {
+  if (news.sort === sort) return;
+  news.sort = sort;
+  document.querySelectorAll('#newsSortSeg .seg-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  loadNews(true);
+};
+window.setNewsCategory = function(cat, btn) {
+  if (news.category === cat) return;
+  news.category = cat;
+  document.querySelectorAll('#newsCatRow .chip').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  loadNews(true);
+};
+
+/* ============ 动态列表 ============ */
+function loadFeed(reset) {
+  if (feed.isLoading) return;
+  if (!feed.hasMore && !reset) return;
+  feed.isLoading = true;
+  if (reset) { feed.page = 1; feed.hasMore = true; document.getElementById('postList').innerHTML = ''; }
+  document.getElementById('loadingMore').style.display = 'block';
+
+  var url = EP.feed + '?page=' + feed.page + '&limit=20&sort=' + encodeURIComponent(feed.sort);
+  if (feed.tag && feed.tag !== 'all') url += '&tag=' + encodeURIComponent(feed.tag);
+
+  fetch(url, { headers: authHeaders() })
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(d) {
+      document.getElementById('loadingMore').style.display = 'none';
+      feed.isLoading = false;
+      if (!d.success) { showToast(d.message || '网络错误，请重试'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      if (items.length === 0 && reset) {
+        document.getElementById('postList').innerHTML = '<div class="empty-state"><div class="empty-icon">📰</div><div class="empty-text">还没有动态，发布第一条吧</div></div>';
+        feed.hasMore = false;
+        return;
+      }
+      renderPosts(items, reset);
+      if (items.length < 20) feed.hasMore = false;
+      else feed.page++;
+    })
+    .catch(function() {
+      document.getElementById('loadingMore').style.display = 'none';
+      feed.isLoading = false;
+      showToast('网络错误，请重试');
+    });
+}
+
+function renderPosts(items, reset) {
+  var container = document.getElementById('postList');
+  if (reset) container.innerHTML = '';
+  // 移除可能残留的空状态
+  var empty = container.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  for (var i = 0; i < items.length; i++) {
+    var p = items[i];
+    var div = document.createElement('div');
+    div.className = 'post-item';
+    div.setAttribute('data-post-id', p.id);
+
+    var actor = p.actor || p.user || {};
+    var name = actor.nickname || actor.username || '用户';
+    var avatar = actor.avatar || '/assets/images/default_avatar.png';
+    var timeStr = formatTime(p.createdAt || p.created_at);
+
+    var imagesHtml = '';
+    var imgs = (p.metadata && p.metadata.images) || p.images || [];
+    if (imgs.length > 0) {
+      imagesHtml = '<div class="post-images">' + imgs.map(function(img) {
+        return '<img src="' + escapeHtml(img) + '" alt="post image" onerror="this.style.display=\'none\'">';
+      }).join('') + '</div>';
+    }
+
+    var qualityHtml = p.isQuality ? '<span class="quality-badge">精</span>' : '';
+    var tagCode = p.tag || (p.metadata && p.metadata.tag) || '';
+    var tagHtml = tagCode ? '<div class="post-tags"><span class="post-tag">#' + escapeHtml(TAG_MAP[tagCode] || tagCode) + '</span></div>' : '';
+
+    var liked = p.liked || p.isLiked || false;
+    var favd = p.favorited || p.isFavorited || false;
+
+    div.innerHTML =
+      '<div class="post-header">' +
+        '<div class="p-avatar"><img src="' + escapeHtml(avatar) + '" alt="avatar" onerror="this.src=\'/assets/images/default_avatar.png\'"></div>' +
+        '<div class="p-info">' +
+          '<div class="p-name">' + escapeHtml(name) + ' ' + qualityHtml + '</div>' +
+          '<div class="p-time">' + timeStr + '</div>' +
+        '</div>' +
+      '</div>' +
+      tagHtml +
+      '<div class="post-body">' + escapeHtml(p.content) + '</div>' +
+      imagesHtml +
+      '<div class="post-actions">' +
+        '<button class="action-btn like-btn' + (liked ? ' liked' : '') + '" onclick="toggleLike(\'' + p.id + '\', this)">' +
+          '<span>👍</span> <span class="like-count">' + (p.likeCount || 0) + '</span>' +
+        '</button>' +
+        '<button class="action-btn fav-btn' + (favd ? ' faved' : '') + '" onclick="toggleFavorite(\'' + p.id + '\', this)">' +
+          '<span>⭐</span> <span class="fav-count">' + (p.favoriteCount || 0) + '</span>' +
+        '</button>' +
+        '<button class="action-btn" onclick="deletePost(\'' + p.id + '\')"><span>🗑️</span></button>' +
+      '</div>';
+
+    container.appendChild(div);
+  }
+}
+
+/* ============ 资讯列表 ============ */
+function loadNews(reset) {
+  if (news.isLoading) return;
+  if (!news.hasMore && !reset) return;
+  news.isLoading = true;
+  if (reset) { news.page = 1; news.hasMore = true; document.getElementById('newsList').innerHTML = ''; }
+  document.getElementById('newsLoadingMore').style.display = 'block';
+
+  var url = EP.newsList + '?page=' + news.page + '&limit=20&category=' + encodeURIComponent(news.category) + '&sort=' + encodeURIComponent(news.sort);
+
+  fetch(url, { headers: authHeaders() })
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(d) {
+      document.getElementById('newsLoadingMore').style.display = 'none';
+      news.isLoading = false;
+      news.loaded = true;
+      if (!d.success) { showToast(d.message || '网络错误，请重试'); return; }
+      var items = (d.data && d.data.items) || d.data || [];
+      if (!Array.isArray(items)) items = [];
+      if (items.length === 0 && reset) {
+        document.getElementById('newsList').innerHTML = '<div class="empty-state"><div class="empty-icon">🌐</div><div class="empty-text">暂无资讯</div></div>';
+        news.hasMore = false;
+        return;
+      }
+      renderNews(items, reset);
+      if (items.length < 20) news.hasMore = false;
+      else news.page++;
+    })
+    .catch(function() {
+      document.getElementById('newsLoadingMore').style.display = 'none';
+      news.isLoading = false;
+      showToast('网络错误，请重试');
+    });
+}
+
+function renderNews(items, reset) {
+  var container = document.getElementById('newsList');
+  if (reset) container.innerHTML = '';
+  var empty = container.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  for (var i = 0; i < items.length; i++) {
+    var n = items[i];
+    var div = document.createElement('div');
+    div.className = 'news-item' + (n.isPinned ? ' pinned' : '');
+
+    var flagsHtml = '';
+    if (n.isPinned) flagsHtml += '<span class="flag flag-pin">置顶</span>';
+    if (n.isOfficialAd) flagsHtml += '<span class="flag flag-ad">广告</span>';
+
+    var title = n.title || '无标题';
+    var summary = truncate(n.summary || n.description || '', 100);
+    var source = n.source || n.sourceName || (n.source && n.source.name) || '来源不明';
+    var author = n.author || '';
+    var origUrl = n.url || n.originalUrl || n.link || (n.id ? (EP.newsDetail + n.id) : '#');
+    var hot = (news.sort === 'hot' && n.hot) ? '<span class="news-hot">🔥' + escapeHtml(n.hot) + '</span>' : '';
+    var timeStr = formatTime(n.publishedAt || n.createdAt || n.created_at);
+
+    div.innerHTML =
+      (flagsHtml ? '<div class="news-flags">' + flagsHtml + '</div>' : '') +
+      '<a class="news-link" href="' + escapeHtml(origUrl) + '" target="_blank" rel="noopener noreferrer">' +
+        '<div class="news-title">' + escapeHtml(title) + '</div>' +
+        '<div class="news-summary">' + escapeHtml(summary) + '</div>' +
+      '</a>' +
+      '<div class="news-meta">' +
+        '<div class="news-source"><span>来源:</span><span class="src-name">' + escapeHtml(source) + '</span>' + (author ? ' · 作者: ' + escapeHtml(author) : '') + (timeStr ? ' · ' + escapeHtml(timeStr) : '') + '</div>' +
+        '<div class="news-actions">' +
+          hot +
+          '<button onclick="openReportModal(\'' + n.id + '\')">举报</button>' +
+        '</div>' +
+      '</div>';
+
+    container.appendChild(div);
+  }
+}
+
+/* ============ 发布动态 ============ */
+window.openPostModal = function() {
+  document.getElementById('postModal').classList.add('active');
+  document.getElementById('postContent').value = '';
+  document.getElementById('charCount').textContent = '0/2000';
+  document.getElementById('submitBtn').disabled = false;
+  // 重置选中标签
+  var chips = document.querySelectorAll('#postTagRow .chip');
+  chips.forEach(function(c) { c.classList.toggle('active', c.getAttribute('data-tag') === ''); });
+  selectedPostTag = '';
+  setTimeout(function() { document.getElementById('postContent').focus(); }, 100);
+};
+window.closePostModal = function() {
+  document.getElementById('postModal').classList.remove('active');
+};
+window.selectPostTag = function(tag, btn) {
+  selectedPostTag = tag;
+  document.querySelectorAll('#postTagRow .chip').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+};
+
+document.getElementById('postContent').addEventListener('input', function() {
+  var len = this.value.length;
+  var el = document.getElementById('charCount');
+  el.textContent = len + '/2000';
+  el.className = 'char-count' + (len > 2000 ? ' over' : '');
+});
+
+document.getElementById('postModal').addEventListener('click', function(e) {
+  if (e.target === this) closePostModal();
+});
+
+window.submitPost = function() {
+  var content = document.getElementById('postContent').value.trim();
+  if (!content) { showToast('内容不能为空'); return; }
+  if (content.length > 2000) { showToast('内容不能超过2000字'); return; }
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '...';
+
+  var body = { content: content, type: 'text', images: [], metadata: {} };
+  if (selectedPostTag) {
+    body.tag = selectedPostTag;
+    body.metadata.tag = selectedPostTag;
+  }
+
+  fetch(EP.post, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify(body)
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      btn.disabled = false; btn.textContent = '发布';
+      if (!d.success) { showToast(d.message || '网络错误，请重试'); return; }
       closePostModal();
-      showToast(_('post_success'));
+      showToast('发布成功！');
       loadFeed(true);
     })
-    .catch(function(e) {
-      btn.disabled = false; btn.textContent = _('trend_submit');
-      showToast(_('network_error'));
+    .catch(function() {
+      btn.disabled = false; btn.textContent = '发布';
+      showToast('网络错误，请重试');
     });
-  };
+};
 
-  // Like
-  window.toggleLike = function(postId, btn) {
-    fetch('/xuewaiyu/api/v1/social/timeline/like/' + postId, {
-      method: 'POST', headers: authHeaders()
-    })
+/* ============ 点赞 / 收藏 ============ */
+window.toggleLike = function(postId, btn) {
+  fetch(EP.like + postId, { method: 'POST', headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.success && d.data) {
-        btn.classList.toggle('liked', d.data.liked);
-        btn.querySelector('.like-count').textContent = d.data.likeCount;
+        btn.classList.toggle('liked', !!(d.data.liked || d.data.isLiked));
+        var lc = btn.querySelector('.like-count');
+        if (lc) lc.textContent = (d.data.likeCount !== undefined ? d.data.likeCount : (d.data.likeCount || 0));
+      } else if (d.success) {
+        // 无明细数据，本地切换
+        var cur = parseInt(btn.querySelector('.like-count').textContent, 10) || 0;
+        var isLiked = btn.classList.toggle('liked');
+        btn.querySelector('.like-count').textContent = isLiked ? cur + 1 : Math.max(0, cur - 1);
+      } else {
+        showToast(d.message || '操作失败');
       }
-    });
-  };
-
-  // Delete
-  window.deletePost = function(postId) {
-    deleteTargetId = postId;
-    document.getElementById('deleteModal').classList.add('active');
-  };
-  window.closeDeleteModal = function() {
-    document.getElementById('deleteModal').classList.remove('active');
-    deleteTargetId = null;
-  };
-  window.confirmDelete = function() {
-    if (!deleteTargetId) return;
-    fetch('/xuewaiyu/api/v1/social/timeline/post/' + deleteTargetId, {
-      method: 'DELETE', headers: authHeaders()
     })
+    .catch(function() { showToast('网络错误，请重试'); });
+};
+
+window.toggleFavorite = function(postId, btn) {
+  fetch(EP.favorite + postId, { method: 'POST', headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success && d.data) {
+        btn.classList.toggle('faved', !!(d.data.favorited || d.data.isFavorited));
+        var fc = btn.querySelector('.fav-count');
+        if (fc) fc.textContent = (d.data.favoriteCount !== undefined ? d.data.favoriteCount : (d.data.favoriteCount || 0));
+      } else if (d.success) {
+        var cur = parseInt(btn.querySelector('.fav-count').textContent, 10) || 0;
+        var isFav = btn.classList.toggle('faved');
+        btn.querySelector('.fav-count').textContent = isFav ? cur + 1 : Math.max(0, cur - 1);
+      } else {
+        showToast(d.message || '操作失败');
+      }
+    })
+    .catch(function() { showToast('网络错误，请重试'); });
+};
+
+/* ============ 删除动态 ============ */
+window.deletePost = function(postId) {
+  deleteTargetId = postId;
+  document.getElementById('deleteModal').classList.add('active');
+};
+window.closeDeleteModal = function() {
+  document.getElementById('deleteModal').classList.remove('active');
+  deleteTargetId = null;
+};
+window.confirmDelete = function() {
+  if (!deleteTargetId) return;
+  fetch('/api/v1/social/timeline/post/' + deleteTargetId, { method: 'DELETE', headers: authHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       closeDeleteModal();
-      if (d.success) { showToast(_('delete_success')); loadFeed(true); }
-      else showToast(d.message || _('network_error'));
+      if (d.success) { showToast('已删除'); loadFeed(true); }
+      else showToast(d.message || '删除失败');
+    })
+    .catch(function() { closeDeleteModal(); showToast('网络错误，请重试'); });
+};
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+
+/* ============ 举报资讯 ============ */
+window.openReportModal = function(newsId) {
+  var token = getToken();
+  if (!token) { showToast('请先登录后再举报'); return; }
+  reportTargetId = newsId;
+  document.getElementById('reportReason').value = 'false_info';
+  document.getElementById('reportDetail').value = '';
+  document.getElementById('reportSubmitBtn').disabled = false;
+  document.getElementById('reportModal').classList.add('active');
+};
+window.closeReportModal = function() {
+  document.getElementById('reportModal').classList.remove('active');
+  reportTargetId = null;
+};
+window.submitReport = function() {
+  if (!reportTargetId) return;
+  var reason = document.getElementById('reportReason').value;
+  var detail = document.getElementById('reportDetail').value.trim();
+  var btn = document.getElementById('reportSubmitBtn');
+  btn.disabled = true; btn.textContent = '...';
+  fetch(EP.newsReport + reportTargetId, {
+    method: 'POST', headers: authHeaders(),
+    body: JSON.stringify({ reason: reason, detail: detail })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      btn.disabled = false; btn.textContent = '提交举报';
+      if (d.success) { closeReportModal(); showToast('举报已提交，感谢您的反馈'); }
+      else showToast(d.message || '举报失败');
+    })
+    .catch(function() {
+      btn.disabled = false; btn.textContent = '提交举报';
+      showToast('网络错误，请重试');
     });
-  };
+};
+document.getElementById('reportModal').addEventListener('click', function(e) {
+  if (e.target === this) closeReportModal();
+});
 
-  document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) closeDeleteModal();
-  });
+/* ============ 无限滚动 ============ */
+window.addEventListener('scroll', function() {
+  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+    if (currentTab === 'feed') loadFeed(false);
+    else loadNews(false);
+  }
+});
 
-  // Infinite scroll
-  window.addEventListener('scroll', function() {
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
-      loadFeed(false);
+/* ============ 初始化 ============ */
+function init() {
+  if (window.AILOS && window.AILOS.init) { try { AILOS.init(); } catch (e) {} }
+  loadTags();
+  loadCategories();
+  loadFeed(true);
+  // 用户头像首字母
+  try {
+    var sess = JSON.parse(localStorage.getItem('ailos_session') || '{}');
+    if (sess.user && sess.user.nickname) {
+      var el = document.getElementById('userAvatarInit');
+      el.innerHTML = sess.user.nickname.charAt(0).toUpperCase();
     }
-  });
-
-  // Listen for language change
-  window.addEventListener('languageChanged', applyI18n);
-
-  // Init
-  function init() {
-    applyI18n();
-    loadFeed(true);
-
-    // Try to show user avatar initial
-    try {
-      var sess = JSON.parse(localStorage.getItem('ailos_session') || '{}');
-      if (sess.user && sess.user.nickname) {
-        document.getElementById('userAvatarInit').textContent = sess.user.nickname.charAt(0).toUpperCase();
-      }
-    } catch(e) {}
-  }
-
-  // Wait for AILOS then init
-  if (window.AILOS && window.AILOS.init) {
-    AILOS.init();
-  }
-  init();
-})();
+  } catch (e) {}
+}
+init();
 </script>
 
   <!-- Bottom Navigation (auto-injected by common.js ensureNav with community nav) -->
