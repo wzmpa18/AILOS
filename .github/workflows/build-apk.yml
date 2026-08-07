@@ -1,6 +1,7 @@
-# AILOS v1.0 Beta - GitHub Actions 自动打包工作流
-# 完全免费，仓库原生集成，签名信息存GitHub Secrets
-# 基线: 879cfc9 | 分支: main(Release) / dev(Debug)
+# AILOS v3.2.0 - GitHub Actions 自动打包工作流
+# 仓库原生集成，签名信息存GitHub Secrets
+# 基线: ccc7651 | 分支: main(Release) / dev(Debug)
+# 与codemagic.yaml构建逻辑对齐：keystore.properties签名方式
 
 name: Build AILOS APK
 
@@ -11,8 +12,9 @@ on:
   workflow_dispatch:  # 支持手动触发
 
 env:
-  BASELINE_SHA: 879cfc9
-  VERSION_NAME: '1.0.0'
+  BASELINE_SHA: ccc7651
+  VERSION_NAME: '3.2.0'
+  VERSION_CODE: '320'
   JAVA_VERSION: '17'
   JAVA_DISTRO: 'temurin'
 
@@ -37,7 +39,7 @@ jobs:
       - name: Pre-build Baseline Check
         run: |
           set -e
-          echo "=== AILOS Pre-build Baseline Check ==="
+          echo "=== AILOS v3.2.0 Pre-build Baseline Check ==="
           
           # 1. Git基线
           CURRENT_SHA=$(git rev-parse --short HEAD)
@@ -59,6 +61,8 @@ jobs:
           # 5. 壳工程文件完整性
           [ ! -f "android-shell/app/build.gradle" ] && echo "FAIL: app/build.gradle missing" && exit 1
           [ ! -f "android-shell/app/src/main/java/ai/yandao/ailos/MainActivity.java" ] && echo "FAIL: MainActivity missing" && exit 1
+          [ ! -f "android-shell/gradlew" ] && echo "FAIL: gradlew missing" && exit 1
+          [ ! -f "android-shell/gradle/wrapper/gradle-wrapper.jar" ] && echo "FAIL: gradle-wrapper.jar missing" && exit 1
           echo "5. Shell project files: OK"
           
           # 6. 签名环境变量（仅Release需要）
@@ -73,7 +77,7 @@ jobs:
           fi
           
           # 7. 无密钥泄露
-          if grep -rn '\.keystore\|\.jks' android-shell/ --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv'; then
+          if grep -rn '\.keystore\|\.jks' android-shell/ --include='*.java' --include='*.gradle' --include='*.xml' 2>/dev/null | grep -v '.gitignore\|System.getenv\|keystore.properties\|keystoreProperties'; then
             echo "FAIL: Keystore reference found in code" && exit 1
           fi
           echo "7. No keystore in code: OK"
@@ -82,7 +86,8 @@ jobs:
           grep -q 'minifyEnabled true' android-shell/app/build.gradle && echo "8. ProGuard enabled: OK" || { echo "FAIL: ProGuard not enabled"; exit 1; }
           
           # 9. 版本号
-          grep -q 'versionName "1.0.0"' android-shell/app/build.gradle && echo "9. Version 1.0.0: OK" || { echo "FAIL: Version mismatch"; exit 1; }
+          grep -q 'versionName "3.2.0"' android-shell/app/build.gradle && echo "9. Version 3.2.0: OK" || { echo "FAIL: Version mismatch"; exit 1; }
+          grep -q 'versionCode 320' android-shell/app/build.gradle && echo "9a. VersionCode 320: OK" || { echo "FAIL: VersionCode mismatch"; exit 1; }
           
           # 10. 包名
           grep -q 'applicationId "ai.yandao.ailos"' android-shell/app/build.gradle && echo "10. Package name: OK" || { echo "FAIL: Package name wrong"; exit 1; }
@@ -107,14 +112,52 @@ jobs:
           packages: 'platform-tools build-tools;34.0.0 platforms;android-34'
 
       # ============================================================
-      # 5. 解码签名文件（仅Release）
+      # 5. 解码签名文件 + 转换为现代PKCS12格式（仅Release）
+      #    与codemagic.yaml构建逻辑对齐
       # ============================================================
-      - name: Decode Keystore (Release only)
+      - name: Decode and Convert Keystore (Release only)
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         run: |
-          echo "${{ secrets.AILOS_KEYSTORE_BASE64 }}" | base64 --decode > $HOME/ailos-release.keystore
-          echo "Keystore decoded to $HOME/ailos-release.keystore"
-          echo "KEYSTORE_PATH=$HOME/ailos-release.keystore" >> $GITHUB_ENV
+          set -e
+          echo "=== Step 1: Decode base64 keystore ==="
+          echo "${{ secrets.AILOS_KEYSTORE_BASE64 }}" | base64 --decode > /tmp/yandao-original.keystore
+          FILE_SIZE=$(stat -c%s /tmp/yandao-original.keystore 2>/dev/null || stat -f%z /tmp/yandao-original.keystore 2>/dev/null)
+          echo "Decoded file size: $FILE_SIZE bytes"
+          if [ "$FILE_SIZE" -lt 2000 ]; then
+            echo "FATAL: keystore file too small! Expected ~2728 bytes"
+            exit 1
+          fi
+
+          echo "=== Step 2: Extract key+cert via OpenSSL ==="
+          STORE_PASS="${{ secrets.AILOS_KEYSTORE_PASSWORD }}"
+          KEY_ALIAS_VAL="${{ secrets.AILOS_KEY_ALIAS }}"
+          KEY_PASS="${{ secrets.AILOS_KEY_PASSWORD }}"
+
+          openssl pkcs12 -in /tmp/yandao-original.keystore -nodes -passin pass:"$STORE_PASS" -out /tmp/yandao-key-cert.pem 2>&1
+          if [ ! -s /tmp/yandao-key-cert.pem ]; then
+            echo "FATAL: OpenSSL extraction failed, PEM file is empty"
+            exit 1
+          fi
+          echo "OpenSSL extraction: PASS"
+
+          echo "=== Step 3: Create MODERN PKCS12 keystore (AES-256-CBC + SHA256) ==="
+          openssl pkcs12 -export \
+            -in /tmp/yandao-key-cert.pem \
+            -out /tmp/yandao-release.keystore \
+            -passout pass:"$STORE_PASS" \
+            -name "$KEY_ALIAS_VAL" \
+            -keypbe AES-256-CBC \
+            -certpbe AES-256-CBC \
+            -macalg SHA256 2>&1
+
+          echo "=== Step 4: Verify with keytool ==="
+          keytool -list -keystore /tmp/yandao-release.keystore -storepass "$STORE_PASS" -storetype pkcs12 2>&1
+
+          echo "=== Step 5: Generate keystore.properties ==="
+          printf 'storeFile=/tmp/yandao-release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\nstoreType=pkcs12\n' \
+            "$STORE_PASS" "$KEY_ALIAS_VAL" "$KEY_PASS" \
+            > /tmp/keystore.properties
+          echo "keystore.properties created at /tmp/keystore.properties"
 
       # ============================================================
       # 6. 构建APK
@@ -123,34 +166,84 @@ jobs:
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         working-directory: android-shell
         run: |
-          ./gradlew clean assembleRelease \
-            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
-            -Pandroid.injected.signing.store.password=${{ secrets.AILOS_KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.AILOS_KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.AILOS_KEY_PASSWORD }}
+          chmod +x gradlew
+          echo "gradlew exists: $(test -f ./gradlew && echo YES || echo NO)"
+          echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
+          ./gradlew clean assembleRelease --stacktrace
 
       - name: Build Debug APK
         if: github.ref == 'refs/heads/dev'
         working-directory: android-shell
-        run: ./gradlew clean assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleDebug
 
       # ============================================================
-      # 7. Zipalign + 签名验证
+      # 7. 签名验证 + 哈希计算 + 重命名
       # ============================================================
-      - name: Zipalign and Verify
+      - name: Verify and Hash APK
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         working-directory: android-shell
         run: |
+          set -e
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          RENAMED_PATH="app/build/outputs/apk/release/yandao_learn_v3.2.0_release.apk"
+
+          if [ ! -f "$APK_PATH" ]; then
+            echo "FATAL: APK not found at $APK_PATH"
+            exit 1
+          fi
+
+          echo "=== APK Signature Verification ==="
           BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0
-          $BUILD_TOOLS/zipalign -f 4 app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
-          $BUILD_TOOLS/apksigner verify --verbose app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
-          cp app/build/outputs/mapping/release/mapping.txt app/build/outputs/apk/release/mapping_v1.0.0.txt
-          echo "=== Release APK signed and verified ==="
+          if [ -x "$BUILD_TOOLS/apksigner" ]; then
+            "$BUILD_TOOLS/apksigner" verify --verbose "$APK_PATH"
+          else
+            jarsigner -verify -verbose "$APK_PATH" 2>&1 | head -20
+          fi
+
+          echo "=== Hash Calculation & Rename ==="
+          cp "$APK_PATH" "$RENAMED_PATH"
+          MD5=$(md5sum "$RENAMED_PATH" | awk '{print $1}')
+          SHA256=$(sha256sum "$RENAMED_PATH" | awk '{print $1}')
+          FILE_SIZE=$(stat -c%s "$RENAMED_PATH" 2>/dev/null || stat -f%z "$RENAMED_PATH" 2>/dev/null)
+          echo "MD5: $MD5"
+          echo "SHA256: $SHA256"
+          echo "File Size: $FILE_SIZE bytes ($(( FILE_SIZE / 1024 / 1024 )) MB)"
+
+          # Copy mapping file
+          cp app/build/outputs/mapping/release/mapping.txt app/build/outputs/apk/release/mapping_v3.2.0.txt 2>/dev/null || true
+
+          # Generate build manifest
+          BUILD_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+          GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "unknown")
+          cat > app/build/outputs/apk/release/build_manifest_v3.2.0.json << EOF
+          {
+            "app_name": "言道外语 (AILOS)",
+            "package_name": "ai.yandao.ailos",
+            "version_name": "3.2.0",
+            "version_code": 320,
+            "apk_file": "yandao_learn_v3.2.0_release.apk",
+            "md5": "$MD5",
+            "sha256": "$SHA256",
+            "file_size_bytes": $FILE_SIZE,
+            "build_date_utc": "$BUILD_DATE",
+            "git_commit": "$GIT_SHA",
+            "git_tag": "$GIT_TAG",
+            "min_sdk": 26,
+            "target_sdk": 34,
+            "signing_scheme": "V2",
+            "build_source": "github_actions"
+          }
+          EOF
+          echo "=== Build Manifest ==="
+          cat app/build/outputs/apk/release/build_manifest_v3.2.0.json
 
       - name: Rename Debug APK
         if: github.ref == 'refs/heads/dev'
         working-directory: android-shell
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/AILOS_v1.0.0_Debug.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/yandao_learn_v3.2.0_debug.apk
 
       # ============================================================
       # 8. 上传构建产物
@@ -159,18 +252,19 @@ jobs:
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
-          name: AILOS_v1.0.0_Release
+          name: yandao_learn_v3.2.0_release
           path: |
-            android-shell/app/build/outputs/apk/release/AILOS_v1.0.0_Release.apk
-            android-shell/app/build/outputs/apk/release/mapping_v1.0.0.txt
+            android-shell/app/build/outputs/apk/release/yandao_learn_v3.2.0_release.apk
+            android-shell/app/build/outputs/apk/release/mapping_v3.2.0.txt
+            android-shell/app/build/outputs/apk/release/build_manifest_v3.2.0.json
           retention-days: 90
 
       - name: Upload Debug APK
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
-          name: AILOS_v1.0.0_Debug
-          path: android-shell/app/build/outputs/apk/debug/AILOS_v1.0.0_Debug.apk
+          name: yandao_learn_v3.2.0_debug
+          path: android-shell/app/build/outputs/apk/debug/yandao_learn_v3.2.0_debug.apk
           retention-days: 30
 
       # ============================================================
@@ -179,16 +273,16 @@ jobs:
       - name: Build Summary
         if: always()
         run: |
-          echo "## AILOS APK构建结果" >> $GITHUB_STEP_SUMMARY
-          echo "- 基线: \`879cfc9\`" >> $GITHUB_STEP_SUMMARY
+          echo "## AILOS v3.2.0 APK构建结果" >> $GITHUB_STEP_SUMMARY
+          echo "- 基线: \`ccc7651\`" >> $GITHUB_STEP_SUMMARY
           echo "- 分支: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- 构建号: \`#${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ job.status }}" == "success" ]]; then
             echo "- 状态: ✅ 成功" >> $GITHUB_STEP_SUMMARY
             if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
-              echo "- 产物: \`AILOS_v1.0.0_Release.apk\` (Release签名)" >> $GITHUB_STEP_SUMMARY
+              echo "- 产物: \`yandao_learn_v3.2.0_release.apk\` (Release签名)" >> $GITHUB_STEP_SUMMARY
             else
-              echo "- 产物: \`AILOS_v1.0.0_Debug.apk\` (Debug)" >> $GITHUB_STEP_SUMMARY
+              echo "- 产物: \`yandao_learn_v3.2.0_debug.apk\` (Debug)" >> $GITHUB_STEP_SUMMARY
             fi
             echo "下载: Actions页面 → 本次运行 → Artifacts" >> $GITHUB_STEP_SUMMARY
           else
