@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const auth = require('../middleware/auth');
-const prisma = require('../../../config/database');
+const prisma = require('../../config/database');
 const logger = require('../../utils/logger');
 
 // 内存存储：避免临时文件落盘，校验后再写入目标目录

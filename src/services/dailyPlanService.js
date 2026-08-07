@@ -156,7 +156,7 @@ class DailyPlanService {
         };
       }
 
-      const updated = // P3 任务4.3: 同步打卡记录和进度
+      // P3 任务4.3: 同步打卡记录和进度
       try {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -168,7 +168,7 @@ class DailyPlanService {
         // 更新用户XP
         await prisma.user.update({ where: { id: userId }, data: { xp: { increment: score } } });
       } catch(e) { logger.warn('Checkin sync failed:', e.message); }
-      await prisma.dailyLearningPlan.update({
+      const updated = await prisma.dailyLearningPlan.update({
         where: { userId_dayNumber: { userId, dayNumber: Number(dayNumber) } },
         data: { status: 'completed', score: Math.round(score), completedAt: new Date() },
       });
