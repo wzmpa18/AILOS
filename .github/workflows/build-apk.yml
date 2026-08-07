@@ -112,25 +112,40 @@ jobs:
           distribution: ${{ env.JAVA_DISTRO }}
 
       # ============================================================
-      # 4. 配置Android SDK
+      # 4. 配置Android SDK（使用runner预装SDK，不额外安装）
       # ============================================================
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools build-tools;35.0.0 platforms;android-34'
-
-      # ============================================================
-      # 4a. 配置SDK路径（与codemagic.yaml对齐）
-      # ============================================================
-      - name: Config SDK Path
+      - name: Config Android SDK and Debug Info
         working-directory: android-shell
         run: |
+          set -x
+          echo "=== Environment Variables ==="
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          
           SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           echo "Using SDK dir: $SDK_DIR"
+          
+          echo "=== Installed Build Tools ==="
+          ls -la "$SDK_DIR/build-tools/" 2>/dev/null || echo "build-tools dir not found"
+          
+          echo "=== Installed Platforms ==="
+          ls -la "$SDK_DIR/platforms/" 2>/dev/null || echo "platforms dir not found"
+          
+          echo "=== Writing local.properties ==="
           echo "sdk.dir=$SDK_DIR" > local.properties
           cat local.properties
+          
+          echo "=== Gradlew Check ==="
+          chmod +x gradlew
+          file gradlew
+          head -1 gradlew
+          
+          echo "=== Gradle Wrapper Properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          
+          echo "=== Gradle Version ==="
+          ./gradlew --version
+
 
       # ============================================================
       # 5. 解码签名文件 + 转换为现代PKCS12格式（仅Release）
@@ -191,7 +206,7 @@ jobs:
           echo "gradlew exists: $(test -f ./gradlew && echo YES || echo NO)"
           echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
           echo "HAS_SIGNING_SECRETS: ${{ env.HAS_SIGNING_SECRETS }}"
-          ./gradlew clean assembleRelease --stacktrace
+          ./gradlew clean assembleRelease --stacktrace --info
 
       - name: Build Debug APK (fallback when no signing secrets)
         if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS != 'true'
@@ -199,7 +214,7 @@ jobs:
         run: |
           chmod +x gradlew
           echo "No signing secrets available, building debug APK as fallback"
-          ./gradlew clean assembleDebug --stacktrace
+          ./gradlew clean assembleDebug --stacktrace --info
 
       - name: Build Debug APK
         if: github.ref == 'refs/heads/dev'
@@ -225,7 +240,7 @@ jobs:
           fi
 
           echo "=== APK Signature Verification ==="
-          BUILD_TOOLS=$ANDROID_HOME/build-tools/35.0.0
+          BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0
           if [ -x "$BUILD_TOOLS/apksigner" ]; then
             "$BUILD_TOOLS/apksigner" verify --verbose "$APK_PATH"
           else
