@@ -65,15 +65,23 @@ jobs:
           [ ! -f "android-shell/gradle/wrapper/gradle-wrapper.jar" ] && echo "FAIL: gradle-wrapper.jar missing" && exit 1
           echo "5. Shell project files: OK"
           
-          # 6. 签名环境变量（仅Release需要）
+          # 6. 签名环境变量（仅Release需要，非致命：Codemagic为主构建源）
           if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            [ -z "${{ secrets.AILOS_KEYSTORE_BASE64 }}" ] && echo "FAIL: AILOS_KEYSTORE_BASE64 not set" && exit 1
-            [ -z "${{ secrets.AILOS_KEYSTORE_PASSWORD }}" ] && echo "FAIL: AILOS_KEYSTORE_PASSWORD not set" && exit 1
-            [ -z "${{ secrets.AILOS_KEY_ALIAS }}" ] && echo "FAIL: AILOS_KEY_ALIAS not set" && exit 1
-            [ -z "${{ secrets.AILOS_KEY_PASSWORD }}" ] && echo "FAIL: AILOS_KEY_PASSWORD not set" && exit 1
-            echo "6. Signing secrets: OK"
+            SECRETS_OK="yes"
+            [ -z "${{ secrets.AILOS_KEYSTORE_BASE64 }}" ] && echo "WARNING: AILOS_KEYSTORE_BASE64 not set" && SECRETS_OK="no"
+            [ -z "${{ secrets.AILOS_KEYSTORE_PASSWORD }}" ] && echo "WARNING: AILOS_KEYSTORE_PASSWORD not set" && SECRETS_OK="no"
+            [ -z "${{ secrets.AILOS_KEY_ALIAS }}" ] && echo "WARNING: AILOS_KEY_ALIAS not set" && SECRETS_OK="no"
+            [ -z "${{ secrets.AILOS_KEY_PASSWORD }}" ] && echo "WARNING: AILOS_KEY_PASSWORD not set" && SECRETS_OK="no"
+            if [ "$SECRETS_OK" == "yes" ]; then
+              echo "6. Signing secrets: OK"
+              echo "HAS_SIGNING_SECRETS=true" >> $GITHUB_ENV
+            else
+              echo "6. Signing secrets: NOT SET (build will produce unsigned APK, Codemagic is primary build source)"
+              echo "HAS_SIGNING_SECRETS=false" >> $GITHUB_ENV
+            fi
           else
             echo "6. Debug build, signing not required"
+            echo "HAS_SIGNING_SECRETS=false" >> $GITHUB_ENV
           fi
           
           # 7. 无密钥泄露
@@ -116,7 +124,7 @@ jobs:
       #    与codemagic.yaml构建逻辑对齐
       # ============================================================
       - name: Decode and Convert Keystore (Release only)
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS == 'true'
         run: |
           set -e
           echo "=== Step 1: Decode base64 keystore ==="
@@ -163,13 +171,22 @@ jobs:
       # 6. 构建APK
       # ============================================================
       - name: Build Release APK
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS == 'true'
         working-directory: android-shell
         run: |
           chmod +x gradlew
           echo "gradlew exists: $(test -f ./gradlew && echo YES || echo NO)"
           echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
+          echo "HAS_SIGNING_SECRETS: ${{ env.HAS_SIGNING_SECRETS }}"
           ./gradlew clean assembleRelease --stacktrace
+
+      - name: Build Debug APK (fallback when no signing secrets)
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS != 'true'
+        working-directory: android-shell
+        run: |
+          chmod +x gradlew
+          echo "No signing secrets available, building debug APK as fallback"
+          ./gradlew clean assembleDebug --stacktrace
 
       - name: Build Debug APK
         if: github.ref == 'refs/heads/dev'
@@ -179,10 +196,10 @@ jobs:
           ./gradlew clean assembleDebug
 
       # ============================================================
-      # 7. 签名验证 + 哈希计算 + 重命名
+      # 7. 签名验证 + 哈希计算 + 重命名（Release签名版）
       # ============================================================
-      - name: Verify and Hash APK
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+      - name: Verify and Hash Release APK
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS == 'true'
         working-directory: android-shell
         run: |
           set -e
@@ -240,6 +257,54 @@ jobs:
           echo "=== Build Manifest ==="
           cat app/build/outputs/apk/release/build_manifest_v3.2.0.json
 
+      - name: Hash Debug APK (fallback, no signing secrets)
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS != 'true'
+        working-directory: android-shell
+        run: |
+          set -e
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          RENAMED_PATH="app/build/outputs/apk/debug/yandao_learn_v3.2.0_debug.apk"
+
+          if [ ! -f "$APK_PATH" ]; then
+            echo "FATAL: Debug APK not found at $APK_PATH"
+            exit 1
+          fi
+
+          echo "=== Hash Calculation (Debug Fallback) ==="
+          cp "$APK_PATH" "$RENAMED_PATH"
+          MD5=$(md5sum "$RENAMED_PATH" | awk '{print $1}')
+          SHA256=$(sha256sum "$RENAMED_PATH" | awk '{print $1}')
+          FILE_SIZE=$(stat -c%s "$RENAMED_PATH" 2>/dev/null || stat -f%z "$RENAMED_PATH" 2>/dev/null)
+          echo "MD5: $MD5"
+          echo "SHA256: $SHA256"
+          echo "File Size: $FILE_SIZE bytes ($(( FILE_SIZE / 1024 / 1024 )) MB)"
+
+          # Generate build manifest
+          BUILD_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+          GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "unknown")
+          cat > app/build/outputs/apk/debug/build_manifest_v3.2.0.json << EOF
+          {
+            "app_name": "言道外语 (AILOS)",
+            "package_name": "ai.yandao.ailos",
+            "version_name": "3.2.0",
+            "version_code": 320,
+            "apk_file": "yandao_learn_v3.2.0_debug.apk",
+            "md5": "$MD5",
+            "sha256": "$SHA256",
+            "file_size_bytes": $FILE_SIZE,
+            "build_date_utc": "$BUILD_DATE",
+            "git_commit": "$GIT_SHA",
+            "git_tag": "$GIT_TAG",
+            "min_sdk": 26,
+            "target_sdk": 34,
+            "signing_scheme": "debug",
+            "build_source": "github_actions_fallback"
+          }
+          EOF
+          echo "=== Build Manifest ==="
+          cat app/build/outputs/apk/debug/build_manifest_v3.2.0.json
+
       - name: Rename Debug APK
         if: github.ref == 'refs/heads/dev'
         working-directory: android-shell
@@ -249,7 +314,7 @@ jobs:
       # 8. 上传构建产物
       # ============================================================
       - name: Upload Release APK
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: yandao_learn_v3.2.0_release
@@ -258,6 +323,16 @@ jobs:
             android-shell/app/build/outputs/apk/release/mapping_v3.2.0.txt
             android-shell/app/build/outputs/apk/release/build_manifest_v3.2.0.json
           retention-days: 90
+
+      - name: Upload Debug APK (fallback, no signing secrets)
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && env.HAS_SIGNING_SECRETS != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: yandao_learn_v3.2.0_debug_fallback
+          path: |
+            android-shell/app/build/outputs/apk/debug/yandao_learn_v3.2.0_debug.apk
+            android-shell/app/build/outputs/apk/debug/build_manifest_v3.2.0.json
+          retention-days: 30
 
       - name: Upload Debug APK
         if: github.ref == 'refs/heads/dev'
