@@ -585,7 +585,14 @@
     document.head.appendChild(s);
   }
 
+  function isAuthPage() {
+    var p = location.pathname;
+    return p.indexOf('login') >= 0 || p.indexOf('register') >= 0 ||
+           p.indexOf('forgot') >= 0 || p.indexOf('reset') >= 0;
+  }
+
   function ensureNav() {
+    if (isAuthPage()) return;
     if (document.querySelector('.bottom-nav')) { renderNav(detectActive()); return; }
     var nav = document.createElement('nav');
     nav.className = 'bottom-nav';

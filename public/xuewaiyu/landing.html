@@ -69,6 +69,22 @@
   .cta-section p { color: var(--text-secondary); font-size: 16px; margin-bottom: 28px; }
   .cta-section .btn-primary { font-size: 18px; padding: 16px 40px; }
 
+  /* ===== Download Section ===== */
+  .download-section { max-width: 800px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+  .download-section h2 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .download-section p { font-size: 15px; color: var(--text-secondary); margin-bottom: 28px; }
+  .download-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+  .download-card { background: var(--card-bg); border-radius: var(--radius); padding: 32px 28px; box-shadow: var(--shadow); text-align: center; transition: all .3s; border: 2px solid transparent; min-width: 220px; }
+  .download-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-glow); }
+  .download-card .dl-icon { font-size: 48px; margin-bottom: 14px; }
+  .download-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .download-card .dl-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.6; }
+  .download-card .dl-version { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+  .btn-download { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 50px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; text-decoration: none; background: var(--primary); color: #fff; transition: all .2s; box-shadow: 0 4px 16px rgba(79,70,229,.3); }
+  .btn-download:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(79,70,229,.4); }
+  .btn-web { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 50px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; background: var(--accent-light); color: var(--accent); border: 2px solid var(--accent); transition: all .2s; }
+  .btn-web:hover { background: var(--accent); color: #fff; transform: translateY(-2px); }
+
   .site-footer { text-align: center; padding: 24px 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; }
   .site-footer a { color: var(--primary); text-decoration: none; }
   .site-footer a:hover { text-decoration: underline; }
@@ -97,6 +113,10 @@
     <a class="btn-primary btn-login-hero" href="/xuewaiyu/login.html" data-i18n="cta_login">登录</a>
     <a class="btn-outline" href="/xuewaiyu/login?mode=guest" data-i18n="cta_guest">免费游客体验</a>
     <a class="btn-outline btn-register-hero" href="/xuewaiyu/login?mode=register" data-i18n="cta_register">立即注册</a>
+  </div>
+  <div class="hero-cta" style="margin-top:16px">
+    <a class="btn-download" href="/xuewaiyu/download/yandao_learn_v3.2.0_release.apk" download>📱 下载APP</a>
+    <a class="btn-web" href="/xuewaiyu/home">🌐 网页版</a>
   </div>
 </section>
 
@@ -173,6 +193,28 @@
   </div>
 </section>
 
+<!-- Download Section -->
+<section class="download-section">
+  <h2>下载与体验</h2>
+  <p>两种方式，随时随地学外语</p>
+  <div class="download-cards">
+    <div class="download-card">
+      <div class="dl-icon">📱</div>
+      <h3>Android APP</h3>
+      <p class="dl-desc">下载安装包，体验原生APP流畅操作<br>支持相机扫码、拍照翻译等完整功能</p>
+      <a class="btn-download" href="/xuewaiyu/download/yandao_learn_v3.2.0_release.apk" download>⬇ 下载 APK (v3.2.0)</a>
+      <div class="dl-version">版本 v3.2.0 | 约 4.1 MB</div>
+    </div>
+    <div class="download-card">
+      <div class="dl-icon">🌐</div>
+      <h3>网页版</h3>
+      <p class="dl-desc">无需下载，浏览器直接打开<br>电脑手机均可访问，数据实时同步</p>
+      <a class="btn-web" href="/xuewaiyu/home">🚀 进入网页版</a>
+      <div class="dl-version">推荐使用 Chrome / Safari 浏览器</div>
+    </div>
+  </div>
+</section>
+
 <!-- Bottom CTA -->
 <section class="cta-section">
   <h2 data-i18n="cta_bottom_title">准备好开始你的语言学习之旅了吗？</h2>
@@ -183,6 +225,8 @@
 <footer class="site-footer">
   <span data-i18n="footer_brand">东莞言道科技有限公司</span> &copy; 2026 &nbsp;|&nbsp;
   <a href="https://www.yandao.vip" data-i18n="footer_company">企业官网</a> &nbsp;|&nbsp;
+  <a href="/xuewaiyu/download/yandao_learn_v3.2.0_release.apk" download>下载APP</a> &nbsp;|&nbsp;
+  <a href="/xuewaiyu/home">网页版</a> &nbsp;|&nbsp;
   <a href="/xuewaiyu/login.html" data-i18n="footer_login">登录</a> &nbsp;|&nbsp;
   <a href="/xuewaiyu/terms.html" data-i18n="footer_terms">服务条款</a>
   <br><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="icp-record" id="icpRecord" data-i18n="footer_icp">粤ICP备2026071165号-2</a>

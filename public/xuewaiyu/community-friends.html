@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -403,7 +403,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="/xuewaiyu/assets/common.js?v=20260808p3"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p5"></script>
 <script>
 
 function getAilosToken() {
@@ -490,7 +490,7 @@ function getToken() {
   return null;
 }
 
-function apiUrl(path) { return '/xuewaiyu/api/v1/social' + path; }
+function apiUrl(path) { return '/api/v1/social' + path; }
 
 async function apiGet(path) {
   var token = getToken(); if (!token) throw new Error('NOT_AUTH');
@@ -547,7 +547,7 @@ function avatarColor(name) {
 function avatarText(name) { return (name || '?').charAt(0).toUpperCase(); }
 function avatarImg(avatarUrl, name) {
   if (avatarUrl) return '<img src="' + avatarUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-  return '<img src="/xuewaiyu/assets/images/default_avatar.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  return '<img src="/xuewaiyu/assets/images/parrot_logo.png" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
 }
 
 // ===== Search User =====
@@ -600,7 +600,23 @@ async function loadFriends() {
     if (!Array.isArray(friends)) friends = friends ? (friends.friends || []) : [];
     renderFriendList(friends);
   } catch (e) {
-    if (e.message !== 'NOT_AUTH') showToast(t('error_network'), 'error');
+    if (e.message === 'NOT_AUTH') {
+      // Show empty state with login prompt
+      var list = document.getElementById('friendList');
+      var empty = document.getElementById('emptyState');
+      if (list) list.innerHTML = '';
+      if (empty) {
+        empty.classList.remove('hidden');
+        var emptyIcon = empty.querySelector('.empty-icon');
+        var emptyTitle = empty.querySelector('.empty-title');
+        var emptySub = empty.querySelector('.empty-sub');
+        if (emptyIcon) emptyIcon.textContent = '🔒';
+        if (emptyTitle) emptyTitle.textContent = '请先登录';
+        if (emptySub) emptySub.textContent = '登录后即可添加好友、一起学习';
+      }
+    } else {
+      showToast(t('error_network'), 'error');
+    }
   }
 }
 
@@ -746,7 +762,15 @@ async function loadPrivacy() {
     setToggle('toggleUidSearch', 'toggleUidBg', 'toggleUidDot', p.allowUidSearch !== false);
     setToggle('toggleDiscover', 'toggleDiscBg', 'toggleDiscDot', p.allowDiscover !== false);
     setToggle('toggleGroupInvite', 'toggleGrpBg', 'toggleGrpDot', p.allowGroupInvite !== false);
-  } catch (e) {}
+  } catch (e) {
+    if (e.message === 'NOT_AUTH') {
+      // Not logged in - close the privacy overlay and prompt login
+      closePrivacy();
+      showToast('请先登录后再进行隐私设置', 'error');
+    } else {
+      showToast(t('error_network'), 'error');
+    }
+  }
 }
 
 function setToggle(inputId, bgId, dotId, on) {

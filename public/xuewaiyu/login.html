@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -138,9 +138,14 @@
     .card { padding: 24px 18px 20px; }
     .sms-row { flex-direction: column; }
   }
+
+  /* === 鉴权页覆盖：屏蔽 common.js 注入的底部导航栏与返回按钮 === */
+  .bottom-nav { display: none !important; }
+  .ailos-back-btn { display: none !important; }
+  body { padding-bottom: 20px !important; }
 </style>
 <script src="/xuewaiyu/assets/devicefp.js"></script>
-<script src="/xuewaiyu/assets/common.js?v=20260808p3"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p5"></script>
 </head>
 <body>
 <div class="container">
