@@ -105,26 +105,36 @@ workflows:
           echo "=== Configuring SDK Path ==="
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo ""
+          echo "=== Java Version ==="
+          java -version 2>&1
+          echo ""
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "local.properties created:"
           cat local.properties
           echo ""
+          echo "=== Accepting Android SDK Licenses ==="
+          yes | sdkmanager --licenses 2>/dev/null || echo "License acceptance may have partially failed"
+          echo ""
           echo "=== Installed SDK Packages ==="
           sdkmanager --list_installed 2>/dev/null | grep -i "build-tools\|platforms\|platform-tools" || true
           echo ""
-          echo "=== Ensuring build-tools;34.0.0 and platforms;android-34 ==="
-          yes | sdkmanager "build-tools;34.0.0" "platforms;android-34" 2>/dev/null || echo "SDK packages may already be installed"
+          echo "=== Ensuring build-tools;33.0.2 and platforms;android-33 ==="
+          yes | sdkmanager "build-tools;33.0.2" "platforms;android-33" 2>/dev/null || echo "SDK packages may already be installed"
           echo ""
           echo "=== Verify SDK packages installed ==="
-          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools;34.0.0\|platforms;android-34" || echo "WARNING: expected packages not found"
+          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools;33.0.2\|platforms;android-33" || echo "WARNING: expected packages not found"
 
       - name: Build Release APK
         script: |-
           #!/bin/bash
           echo "========================================"
-          echo "=== Pre-build File Verification ==="
+          echo "=== Pre-build Environment Info ==="
           echo "========================================"
           echo "Working directory: $(pwd)"
+          echo "Java version: $(java -version 2>&1)"
+          echo "ANDROID_HOME: $ANDROID_HOME"
           echo ""
           echo "=== Critical File Check ==="
           ls -la gradlew app/build.gradle settings.gradle gradle.properties 2>&1
@@ -144,11 +154,14 @@ workflows:
           echo "=== build.gradle (root) ==="
           cat build.gradle
           echo ""
-          echo "=== app/build.gradle (key sections) ==="
-          head -30 app/build.gradle
+          echo "=== app/build.gradle ==="
+          cat app/build.gradle
           echo ""
           echo "=== gradle-wrapper.properties ==="
           cat gradle/wrapper/gradle-wrapper.properties
+          echo ""
+          echo "=== gradle.properties ==="
+          cat gradle.properties
           echo ""
 
           chmod +x gradlew
@@ -158,7 +171,7 @@ workflows:
           echo ""
 
           echo "========================================"
-          echo "=== Starting Build (with --info) ==="
+          echo "=== Starting Build (with --stacktrace --info) ==="
           echo "========================================"
           set +e
           ./gradlew clean assembleRelease --stacktrace --info 2>&1 | tee /tmp/gradle-build.log
@@ -171,13 +184,28 @@ workflows:
             echo "========================================"
             echo ""
             echo "=== 'What went wrong' section ==="
-            grep -A 20 "What went wrong" /tmp/gradle-build.log || true
+            grep -A 30 "What went wrong" /tmp/gradle-build.log || true
+            echo ""
+            echo "=== 'FAILURE:' section ==="
+            grep -A 10 "^FAILURE:" /tmp/gradle-build.log || true
             echo ""
             echo "=== Error/FAILED lines ==="
-            grep -i "error\|FAILED\|exception\|cannot find" /tmp/gradle-build.log | tail -80
+            grep -i "error\|FAILED\|exception\|cannot find\|Could not" /tmp/gradle-build.log | tail -80
             echo ""
-            echo "=== Last 200 lines of build log ==="
+            echo "========================================"
+            echo "=== FIRST 200 lines of build log ==="
+            echo "========================================"
+            head -200 /tmp/gradle-build.log
+            echo ""
+            echo "========================================"
+            echo "=== LAST 200 lines of build log ==="
+            echo "========================================"
             tail -200 /tmp/gradle-build.log
+            echo ""
+            echo "========================================"
+            echo "=== Available Gradle Tasks (for debugging) ==="
+            echo "========================================"
+            ./gradlew tasks --all 2>&1 | head -100 || true
             exit $BUILD_EXIT_CODE
           fi
 
@@ -270,7 +298,7 @@ workflows:
             "git_commit": "$GIT_SHA",
             "git_tag": "$GIT_TAG",
             "min_sdk": 26,
-            "target_sdk": 34,
+            "target_sdk": 33,
             "signing_scheme": "V2"
           }
           EOF

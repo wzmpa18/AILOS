@@ -4,8 +4,8 @@ plugins {
 
 android {
     namespace 'ai.yandao.ailos'
-    compileSdk 34
-    buildToolsVersion "34.0.0"
+    compileSdk 33
+    buildToolsVersion "33.0.2"
 
     // PNG crunching 禁用 — 避免部分 AAPT2 版本编译库资源 .9.png 失败
     aaptOptions {
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId "ai.yandao.ailos"
         minSdk 26
-        targetSdk 34
+        targetSdk 33
         versionCode 320
         versionName "3.2.0"
 
@@ -39,7 +39,7 @@ android {
                 keyPassword keystoreProperties['keyPassword']
                 storeType keystoreProperties['storeType'] ?: "pkcs12"
             }
-            // V2签名方案（AGP 8.x使用enableV1Signing/enableV2Signing）
+            // V2签名方案
             enableV1Signing false
             enableV2Signing true
         }
@@ -47,9 +47,10 @@ android {
 
     buildTypes {
         release {
+            // 仅保留基础压缩，关闭全量优化，避免混淆导致的编译异常
             minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
 
             buildConfigField "boolean", "DEBUG_MODE", "false"
@@ -61,19 +62,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        buildConfig true
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
 dependencies {
-    // 对标中医项目成功基线：三核心库 + WebView下拉刷新必需库
+    // 对标中医项目成功基线：稳定兼容版依赖
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.webkit:webkit:1.10.0'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.webkit:webkit:1.6.0'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 }
