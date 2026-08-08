@@ -47,10 +47,9 @@ android {
 
     buildTypes {
         release {
-            // 仅保留基础压缩，关闭全量优化，避免混淆导致的编译异常
-            minifyEnabled true
+            // 关闭混淆和非必要构建任务，减少编译失败概率（WebView壳不需要代码混淆）
+            minifyEnabled false
             shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
 
             buildConfigField "boolean", "DEBUG_MODE", "false"

@@ -130,38 +130,26 @@ workflows:
         script: |-
           #!/bin/bash
           echo "========================================"
-          echo "=== Pre-build Environment Info ==="
+          echo "=== Pre-build Check ==="
           echo "========================================"
           echo "Working directory: $(pwd)"
           echo "Java version: $(java -version 2>&1)"
           echo "ANDROID_HOME: $ANDROID_HOME"
           echo ""
+
           echo "=== Critical File Check ==="
           ls -la gradlew app/build.gradle settings.gradle gradle.properties 2>&1
           echo ""
           ls -la gradle/wrapper/ 2>&1
           echo ""
-          echo "=== gradlew first line ==="
-          head -1 gradlew
-          echo ""
+
           echo "=== Keystore Check ==="
           echo "keystore.properties: $(test -f /tmp/keystore.properties && echo EXISTS || echo NOT_FOUND)"
           echo "keystore file: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
           echo ""
+
           echo "=== local.properties ==="
           cat local.properties
-          echo ""
-          echo "=== build.gradle (root) ==="
-          cat build.gradle
-          echo ""
-          echo "=== app/build.gradle ==="
-          cat app/build.gradle
-          echo ""
-          echo "=== gradle-wrapper.properties ==="
-          cat gradle/wrapper/gradle-wrapper.properties
-          echo ""
-          echo "=== gradle.properties ==="
-          cat gradle.properties
           echo ""
 
           chmod +x gradlew
@@ -171,10 +159,11 @@ workflows:
           echo ""
 
           echo "========================================"
-          echo "=== Starting Build (with --stacktrace --info) ==="
+          echo "=== Starting Build ==="
+          echo "=== ./gradlew clean assembleRelease --stacktrace --console=plain ==="
           echo "========================================"
           set +e
-          ./gradlew clean assembleRelease --stacktrace --info 2>&1 | tee /tmp/gradle-build.log
+          ./gradlew clean assembleRelease --stacktrace --console=plain 2>&1 | tee /tmp/gradle-build.log
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
 
           if [ $BUILD_EXIT_CODE -ne 0 ]; then
@@ -184,28 +173,28 @@ workflows:
             echo "========================================"
             echo ""
             echo "=== 'What went wrong' section ==="
-            grep -A 30 "What went wrong" /tmp/gradle-build.log || true
+            grep -A 50 "What went wrong" /tmp/gradle-build.log || true
             echo ""
             echo "=== 'FAILURE:' section ==="
-            grep -A 10 "^FAILURE:" /tmp/gradle-build.log || true
+            grep -A 20 "^FAILURE:" /tmp/gradle-build.log || true
             echo ""
-            echo "=== Error/FAILED lines ==="
-            grep -i "error\|FAILED\|exception\|cannot find\|Could not" /tmp/gradle-build.log | tail -80
-            echo ""
-            echo "========================================"
-            echo "=== FIRST 200 lines of build log ==="
-            echo "========================================"
-            head -200 /tmp/gradle-build.log
+            echo "=== Error/Exception/Caused by lines ==="
+            grep -i "error\|FAILED\|exception\|cannot find\|Could not\|Caused by" /tmp/gradle-build.log | tail -50
             echo ""
             echo "========================================"
-            echo "=== LAST 200 lines of build log ==="
+            echo "=== LAST 100 lines of build log ==="
             echo "========================================"
-            tail -200 /tmp/gradle-build.log
+            tail -100 /tmp/gradle-build.log
             echo ""
             echo "========================================"
-            echo "=== Available Gradle Tasks (for debugging) ==="
+            echo "=== Build Reports (if any) ==="
             echo "========================================"
-            ./gradlew tasks --all 2>&1 | head -100 || true
+            find app/build/reports -type f -name "*.html" -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || echo "No reports found"
+            echo ""
+            echo "========================================"
+            echo "=== Build Outputs (if any) ==="
+            echo "========================================"
+            find app/build/outputs -type f 2>/dev/null || echo "No outputs found"
             exit $BUILD_EXIT_CODE
           fi
 
@@ -228,10 +217,11 @@ workflows:
           # Find apksigner - path varies across Codemagic build machines
           APKSIGNER=""
           for candidate in \
+            "$ANDROID_HOME/build-tools/33.0.2/apksigner" \
+            "$ANDROID_SDK_ROOT/build-tools/33.0.2/apksigner" \
             "$ANDROID_HOME/build-tools/34.0.0/apksigner" \
             "$ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner" \
             "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
-            "$ANDROID_HOME/build-tools/34.0.0-rc4/apksigner" \
             "$(find $ANDROID_HOME -name apksigner -type f 2>/dev/null | head -1)" \
             "$(find /usr/local -name apksigner -type f 2>/dev/null | head -1)"; do
             if [ -n "$candidate" ] && [ -x "$candidate" ]; then
