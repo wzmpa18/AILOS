@@ -90,6 +90,14 @@ const authController = {
           error: error.message === 'ACCOUNT_DISABLED' ? '账号已被禁用，无法登录' : error.message,
         });
       }
+      // 未设置密码的旧账号，返回 400 并给出明确提示
+      if (error.message.includes('尚未设置密码')) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+      // 账号锁定返回 429
+      if (error.message.includes('locked') || error.message.includes('Too many')) {
+        return res.status(429).json({ success: false, error: error.message });
+      }
       next(error);
     }
   },
@@ -97,7 +105,7 @@ const authController = {
   // Register with password (with SMS/email verification)
   async register(req, res, next) {
     try {
-      const { phone, email, password, code, nickname, uiLanguage, browserLanguage } = req.body;
+      const { phone, email, password, code, nickname, username, uiLanguage, browserLanguage } = req.body;
 
       // 必填字段校验
       if (!phone && !email) {
@@ -111,11 +119,45 @@ const authController = {
       }
 
       const result = await authService.registerWithPassword(
-        phone, email, password, code, nickname,
+        phone, email, password, code, nickname || username,
         { uiLanguage, browserLanguage, ipAddress: req.ip, userAgent: req.headers['user-agent'] }
       );
       res.json({ success: true, ...result });
     } catch (error) {
+      // 用户已存在返回 409
+      if (error.message === 'User already exists') {
+        return res.status(409).json({ success: false, error: '该手机号/邮箱已注册，请直接登录' });
+      }
+      // 验证码错误返回 400
+      if (error.message === 'Invalid or expired verification code') {
+        return res.status(400).json({ success: false, error: '验证码无效或已过期，请重新获取' });
+      }
+      next(error);
+    }
+  },
+
+  // Reset password with verification code
+  async resetPassword(req, res, next) {
+    try {
+      const { phone, email, code, newPassword, method } = req.body;
+      const identifier = phone || email;
+      
+      if (!identifier) {
+        return res.status(400).json({ success: false, error: 'Phone or email is required' });
+      }
+      if (!code) {
+        return res.status(400).json({ success: false, error: 'Verification code is required' });
+      }
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+      }
+
+      const result = await authService.resetPassword(identifier, newPassword, code, method || 'phone');
+      res.json({ success: true, ...result });
+    } catch (error) {
+      if (['Invalid or expired verification code', 'User not found'].includes(error.message)) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
       next(error);
     }
   },

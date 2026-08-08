@@ -9,6 +9,7 @@ router.post('/phone', loginLimiter, authController.phoneAuth);
 router.post('/password', loginLimiter, authController.passwordAuth);
 router.post('/login', loginLimiter, authController.passwordAuth); // Alias: frontend uses /login, actual endpoint is /password
 router.post('/register', registerLimiter, authController.register);
+router.post('/reset-password', loginLimiter, authController.resetPassword);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/wechat', authController.wechatAuth);

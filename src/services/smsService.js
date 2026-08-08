@@ -22,7 +22,9 @@ class SmsEmailService {
     this.sesFromEmail = process.env.SES_FROM_EMAIL || '';
     this.sesTemplateId = process.env.SES_TEMPLATE_ID || '';
     this.sesRegion = process.env.SES_REGION || 'ap-hongkong';
-    this.isConfigured = !!(this.secretId && this.secretKey);
+    // 检测是否为占位符值（防止用户未填写真实密钥时误判为已配置）
+    const isPlaceholder = (val) => !val || val.includes('请填入') || val.includes('your_') || val.length < 10;
+    this.isConfigured = !isPlaceholder(this.secretId) && !isPlaceholder(this.secretKey);
     this._initSdk();
   }
 
@@ -132,7 +134,7 @@ class SmsEmailService {
       const params = {
         FromEmailAddress: this.sesFromEmail,
         Destination: [email],
-        Subject: 'Your Verification Code',
+        Subject: '【言道外语】您的验证码',
         Template: {
           TemplateID: Number(this.sesTemplateId),
           TemplateData: JSON.stringify({ code }),

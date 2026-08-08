@@ -138,8 +138,11 @@ class AuthService {
         },
       });
 
-      if (!user || !user.passwordHash) {
+      if (!user) {
         throw new Error('Invalid credentials');
+      }
+      if (!user.passwordHash) {
+        throw new Error('该账号尚未设置密码，请使用短信验证码登录或通过找回密码设置密码');
       }
 
       if (user.disabled) {
@@ -254,7 +257,8 @@ class AuthService {
       }
 
       const code = generateSmsCode(6);
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      // 邮件验证码有效期5分钟（与SES模板"有效期5分钟"一致）
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       await prisma.smsVerification.create({
         data: {
@@ -265,8 +269,63 @@ class AuthService {
         },
       });
 
+      // 优先使用腾讯云SES SDK发送，失败时回退到SMTP(nodemailer)
+      let emailSent = false;
+
+      // 方式1: 腾讯云SES SDK API
+      if (!emailSent) {
+        try {
+          const smsService = require('./smsService');
+          await smsService.sendEmailCode(email, code);
+          emailSent = true;
+          logger.info(`Verification email sent to ${email} via Tencent SES API`);
+        } catch (sesError) {
+          logger.warn(`SES API failed for ${email}: ${sesError.message}, trying SMTP fallback...`);
+        }
+      }
+
+      // 方式2: SMTP (nodemailer) 回退
+      if (!emailSent) {
+        const smtpPass = process.env.SMTP_PASS || '';
+        const smtpUser = process.env.SMTP_USER || '';
+        const isSmtpConfigured = smtpPass && !smtpPass.includes('请填入') && smtpUser;
+        
+        if (isSmtpConfigured) {
+          try {
+            const nodemailer = require('nodemailer');
+            const transporter = nodemailer.createTransport({
+              host: process.env.SMTP_HOST || 'smtp.qcloudmail.com',
+              port: parseInt(process.env.SMTP_PORT || '465'),
+              secure: true,
+              auth: {
+                user: smtpUser,
+                pass: smtpPass,
+              },
+            });
+
+            await transporter.sendMail({
+              from: `"言道外语" <${smtpUser}>`,
+              to: email,
+              subject: '【言道外语】您的验证码',
+              text: `【言道科技】您的验证码是：${code}，有效期5分钟。请勿泄露给他人。`,
+              html: `<div style="padding:20px;font-family:sans-serif;max-width:480px;margin:0 auto;"><h2 style="color:#4F46E5;">言道外语 AILOS</h2><p>您好！</p><p>您的验证码是：</p><h1 style="color:#4F46E5;font-size:36px;letter-spacing:6px;text-align:center;padding:16px 0;">${code}</h1><p style="color:#666;">有效期5分钟。请勿泄露给他人。</p><p style="color:#999;font-size:12px;margin-top:20px;">如非本人操作，请忽略此邮件。</p></div>`,
+            });
+            emailSent = true;
+            logger.info(`Verification email sent to ${email} via SMTP`);
+          } catch (smtpError) {
+            logger.error(`SMTP send failed for ${email}: ${smtpError.message}`);
+          }
+        } else {
+          logger.warn(`SMTP not configured (placeholder password), skipping SMTP fallback for ${email}`);
+        }
+      }
+
+      if (!emailSent && config.env === 'production') {
+        logger.warn(`All email sending methods failed, code for ${email}: ${code}`);
+      }
+
       if (config.env !== 'production') {
-        logger.info(`Email Code for ${email}: ${code}`);
+        logger.info(`Email Code for ${email} (type: ${type}): ${code}`);
       }
 
       return { success: true, expiresAt, code: config.env === 'production' ? undefined : code };
@@ -285,10 +344,14 @@ class AuthService {
           throw new Error('Phone or email is required for verification');
         }
 
+        // 安全修复：按验证码类型过滤，防止跨类型验证码被滥用
+        // 手机注册码 type='register'，邮箱注册码 type='register_email'
+        const expectedType = phone ? 'register' : 'register_email';
         const verification = await prisma.smsVerification.findFirst({
           where: {
             phone: identifier,
             code,
+            type: expectedType,
             verified: false,
             expiresAt: { gt: new Date() },
           },
@@ -337,6 +400,64 @@ class AuthService {
       return { user: this.sanitizeUser(user), tokens };
     } catch (error) {
       logger.error('Register with password failed:', error);
+      throw error;
+    }
+  }
+
+  // Reset password with verification code
+  async resetPassword(identifier, newPassword, code, method = 'phone') {
+    try {
+      // 安全修复：按验证码类型过滤，防止跨类型验证码被滥用（如登录码重置密码）
+      const expectedType = method === 'email' ? 'reset_email' : 'reset';
+      const verification = await prisma.smsVerification.findFirst({
+        where: {
+          phone: identifier,
+          code,
+          type: expectedType,
+          verified: false,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!verification) {
+        throw new Error('Invalid or expired verification code');
+      }
+
+      await prisma.smsVerification.update({
+        where: { id: verification.id },
+        data: { verified: true },
+      });
+
+      // Find user by phone or email
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: identifier },
+            { email: identifier },
+          ],
+        },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Update password
+      const passwordHash = await hashPassword(newPassword);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+
+      logger.info(`Password reset successful for user ${user.id} (${identifier})`);
+      return { success: true, message: 'Password reset successful' };
+    } catch (error) {
+      logger.error('Reset password failed:', error);
       throw error;
     }
   }

@@ -37,9 +37,23 @@ const config = {
   },
   
   sms: {
-    apiKey: process.env.SMS_API_KEY,
-    apiSecret: process.env.SMS_API_SECRET,
+    secretId: process.env.TENCENT_SECRET_ID,
+    secretKey: process.env.TENCENT_SECRET_KEY,
+    appId: process.env.SMS_APP_ID,
+    appKey: process.env.SMS_APP_KEY,
+    signName: process.env.SMS_SIGN_NAME,
     templateId: process.env.SMS_TEMPLATE_ID,
+    region: process.env.SMS_REGION || 'ap-guangzhou',
+  },
+  
+  ses: {
+    fromEmail: process.env.SES_FROM_EMAIL,
+    templateId: process.env.SES_TEMPLATE_ID,
+    region: process.env.SES_REGION || 'ap-hongkong',
+    smtpHost: process.env.SMTP_HOST || 'smtp.qcloudmail.com',
+    smtpPort: parseInt(process.env.SMTP_PORT) || 465,
+    smtpUser: process.env.SMTP_USER,
+    smtpPass: process.env.SMTP_PASS,
   },
   
   wechat: {

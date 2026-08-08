@@ -1,0 +1,296 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<title>言道学学外语 - 游客预览</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+  }
+
+    padding: 5px 12px; border-radius: 20px; font-size: 13px; cursor: pointer;
+    border: 1.5px solid transparent; transition: all .2s; color: var(--text-secondary);
+    background: transparent;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* Guest banner */
+  .guest-banner {
+    background: linear-gradient(135deg, var(--primary), #6366F1);
+    color: #fff; border-radius: var(--radius); padding: 28px 24px;
+    margin: 20px 0 28px; text-align: center;
+  }
+  .guest-banner h2 { font-size: 22px; margin-bottom: 8px; }
+  .guest-banner p { opacity: .9; font-size: 14px; margin-bottom: 16px; }
+  .guest-banner .timer { font-size: 13px; opacity: .75; margin-bottom: 12px; }
+  .btn-cta {
+    display: inline-block; padding: 12px 28px; border-radius: 50px; font-size: 15px;
+    font-weight: 600; text-decoration: none; cursor: pointer;
+    background: #fff; color: var(--primary); transition: all .2s;
+  }
+  .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+
+  /* Section */
+  .section { margin-bottom: 28px; }
+  .section h3 { font-size: 18px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); }
+
+  /* Sample cards */
+  .sample-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .sample-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .sample-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .sample-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* AI partner intro */
+  .ai-partner {
+    background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow); display: flex; gap: 16px; align-items: flex-start;
+  }
+  .ai-partner .avatar { font-size: 48px; flex-shrink: 0; }
+  .ai-partner p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* Bottom CTA */
+  .bottom-cta {
+    text-align: center; padding: 32px 20px; background: var(--card-bg);
+    border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 20px;
+  }
+  .bottom-cta h3 { font-size: 20px; margin-bottom: 8px; border: none; padding: 0; }
+  .bottom-cta p { color: var(--text-secondary); font-size: 14px; margin-bottom: 18px; }
+  .btn-register {
+    display: inline-block; padding: 14px 36px; border-radius: 50px; font-size: 16px;
+    font-weight: 700; text-decoration: none; cursor: pointer;
+    background: var(--primary); color: #fff; transition: all .2s;
+    box-shadow: 0 4px 16px rgba(79,70,229,.35);
+  }
+  .btn-register:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+  @media (max-width: 480px) {
+    .ai-partner { flex-direction: column; }
+    .sample-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<script src="/xuewaiyu/assets/devicefp.js"></script>
+</head>
+<body>
+
+
+<div class="container">
+  <!-- Guest Banner -->
+  <div class="guest-banner">
+    <h2 data-i18n="guest_title">欢迎体验 AILOS</h2>
+    <p data-i18n="guest_sub">你正在以游客身份预览。注册后可解锁完整学习功能。</p>
+    <div class="timer" data-i18n="guest_timer">会话有效期：2小时</div>
+    <a class="btn-cta" href="/xuewaiyu/login" data-i18n="guest_register_btn">立即注册，开始学习</a>
+  </div>
+
+  <!-- Sample Courses -->
+  <div class="section">
+    <h3 data-i18n="sample_title">课程样例预览</h3>
+    <div class="sample-grid">
+      <div class="sample-card">
+        <h4 data-i18n="sample_1_title">基础问候语</h4>
+        <p data-i18n="sample_1_desc">学习用目标语言进行日常问候：你好、谢谢、再见等基础表达。</p>
+      </div>
+      <div class="sample-card">
+        <h4 data-i18n="sample_2_title">数字与计数</h4>
+        <p data-i18n="sample_2_desc">掌握1-100的数字表达，了解目标语言的计数规则。</p>
+      </div>
+      <div class="sample-card">
+        <h4 data-i18n="sample_3_title">自我介绍</h4>
+        <p data-i18n="sample_3_desc">学会用目标语言介绍自己的名字、国籍和职业。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Partner -->
+  <div class="section">
+    <h3 data-i18n="ai_title">AI学习伙伴</h3>
+    <div class="ai-partner">
+      <div class="avatar">🤖</div>
+      <div>
+        <p data-i18n="ai_desc">你的专属AI导师，用你的母语解释语法、生成例句、纠正发音。24小时在线，随时解答你的疑问。注册后即可与AI伙伴进行实时对话练习，体验个性化学习。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Community Preview -->
+  <div class="section">
+    <h3 data-i18n="community_title">学习社区</h3>
+    <div class="sample-grid">
+      <div class="sample-card">
+        <h4 data-i18n="community_1_title">全球学习者</h4>
+        <p data-i18n="community_1_desc">与来自世界各地的语言学习者一起交流，分享学习心得。</p>
+      </div>
+      <div class="sample-card">
+        <h4 data-i18n="community_2_title">学习打卡</h4>
+        <p data-i18n="community_2_desc">坚持每日学习打卡，养成语言学习好习惯。注册后加入打卡挑战。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="bottom-cta">
+    <h3 data-i18n="cta_title">准备好深入学习了吗？</h3>
+    <p data-i18n="cta_sub">免费注册，即刻获得完整AI个性化学习体验。</p>
+    <a class="btn-register" href="/xuewaiyu/login" data-i18n="cta_btn">免费注册言道学学外语</a>
+  </div>
+</div>
+
+<script>
+// ==================== GLOI i18n ====================
+const I18N = {
+  zh: {
+    guest_title: '欢迎体验 AILOS', guest_sub: '你正在以游客身份预览。注册后可解锁完整学习功能。',
+    guest_timer: '会话有效期：2小时', guest_register_btn: '立即注册，开始学习',
+    sample_title: '课程样例预览',
+    sample_1_title: '基础问候语', sample_1_desc: '学习用目标语言进行日常问候：你好、谢谢、再见等基础表达。',
+    sample_2_title: '数字与计数', sample_2_desc: '掌握1-100的数字表达，了解目标语言的计数规则。',
+    sample_3_title: '自我介绍', sample_3_desc: '学会用目标语言介绍自己的名字、国籍和职业。',
+    ai_title: 'AI学习伙伴',
+    ai_desc: '你的专属AI导师，用你的母语解释语法、生成例句、纠正发音。24小时在线，随时解答你的疑问。注册后即可与AI伙伴进行实时对话练习，体验个性化学习。',
+    community_title: '学习社区',
+    community_1_title: '全球学习者', community_1_desc: '与来自世界各地的语言学习者一起交流，分享学习心得。',
+    community_2_title: '学习打卡', community_2_desc: '坚持每日学习打卡，养成语言学习好习惯。注册后加入打卡挑战。',
+    cta_title: '准备好深入学习了吗？', cta_sub: '免费注册，即刻获得完整AI个性化学习体验。',
+    cta_btn: '免费注册言道学学外语',
+  },
+  en: {
+    guest_title: 'Welcome to AILOS', guest_sub: 'You are previewing as a guest. Register to unlock full learning features.',
+    guest_timer: 'Session expires in: 2 hours', guest_register_btn: 'Register Now',
+    sample_title: 'Course Samples',
+    sample_1_title: 'Basic Greetings', sample_1_desc: 'Learn everyday greetings: hello, thank you, goodbye and other basic expressions.',
+    sample_2_title: 'Numbers & Counting', sample_2_desc: 'Master numbers 1-100 and understand counting rules in your target language.',
+    sample_3_title: 'Self Introduction', sample_3_desc: 'Learn to introduce yourself — name, nationality, and occupation in your target language.',
+    ai_title: 'AI Learning Partner',
+    ai_desc: 'Your dedicated AI tutor explains grammar, generates examples, and corrects pronunciation in your native language. Available 24/7. Register to start real-time conversation practice with your AI partner.',
+    community_title: 'Learning Community',
+    community_1_title: 'Global Learners', community_1_desc: 'Connect with language learners worldwide and share your learning journey.',
+    community_2_title: 'Daily Check-in', community_2_desc: 'Build daily learning habits with check-in challenges. Join after registration.',
+    cta_title: 'Ready to dive deeper?', cta_sub: 'Sign up free for the complete AI-powered personalized learning experience.',
+    cta_btn: 'Sign Up Free',
+  },
+  ja: {
+    guest_title: 'AILOSへようこそ', guest_sub: 'ゲストとしてプレビュー中です。登録すると全機能が利用可能になります。',
+    guest_timer: 'セッション有効期限：2時間', guest_register_btn: '今すぐ登録',
+    sample_title: 'コースサンプル',
+    sample_1_title: '基本の挨拶', sample_1_desc: 'こんにちは、ありがとう、さようならなど、日常の挨拶を学びます。',
+    sample_2_title: '数字と数え方', sample_2_desc: '1から100までの数字の表現と数え方のルールを学びます。',
+    sample_3_title: '自己紹介', sample_3_desc: '名前、国籍、職業を目標言語で紹介する方法を学びます。',
+    ai_title: 'AI学習パートナー',
+    ai_desc: 'あなた専用のAIチューターが母語で文法を説明し、例文を生成し、発音を矯正します。24時間利用可能。登録してAIパートナーとのリアルタイム会話練習を始めましょう。',
+    community_title: '学習コミュニティ',
+    community_1_title: '世界中の学習者', community_1_desc: '世界中の言語学習者と交流し、学習体験を共有しましょう。',
+    community_2_title: 'デイリーチェックイン', community_2_desc: '毎日の学習習慣をチェックインで継続。登録後に参加できます。',
+    cta_title: 'さらに深く学ぶ準備はできましたか？', cta_sub: '無料登録で完全なAIパーソナライズ学習体験を。',
+    cta_btn: '無料登録',
+  },
+  ko: {
+    guest_title: 'AILOS에 오신 것을 환영합니다', guest_sub: '게스트로 미리보기 중입니다. 등록하면 모든 기능을 이용할 수 있습니다.',
+    guest_timer: '세션 유효 시간: 2시간', guest_register_btn: '지금 등록하기',
+    sample_title: '코스 샘플',
+    sample_1_title: '기본 인사말', sample_1_desc: '안녕하세요, 감사합니다, 안녕히 가세요 등 일상 인사말을 배웁니다.',
+    sample_2_title: '숫자와 세기', sample_2_desc: '1부터 100까지의 숫자 표현과 세기 규칙을 배웁니다.',
+    sample_3_title: '자기소개', sample_3_desc: '이름, 국적, 직업을 목표 언어로 소개하는 방법을 배웁니다.',
+    ai_title: 'AI 학습 파트너',
+    ai_desc: '당신만의 AI 튜터가 모국어로 문법을 설명하고 예문을 생성하며 발음을 교정합니다. 24시간 이용 가능. 등록 후 AI 파트너와 실시간 대화 연습을 시작하세요.',
+    community_title: '학습 커뮤니티',
+    community_1_title: '전 세계 학습자', community_1_desc: '전 세계 언어 학습자들과 교류하며 학습 경험을 공유하세요.',
+    community_2_title: '데일리 체크인', community_2_desc: '매일 학습 체크인으로 습관을 기르세요. 등록 후 참여할 수 있습니다.',
+    cta_title: '더 깊이 배울 준비가 되셨나요?', cta_sub: '무료 가입으로 완전한 AI 개인화 학습을 경험하세요.',
+    cta_btn: '무료 가입',
+  },
+  fr: {
+    guest_title: 'Bienvenue sur AILOS', guest_sub: 'Vous prévisualisez en tant qu\'invité. Inscrivez-vous pour débloquer toutes les fonctionnalités.',
+    guest_timer: 'Session valide : 2 heures', guest_register_btn: 'S\'inscrire',
+    sample_title: 'Échantillons de cours',
+    sample_1_title: 'Salutations de base', sample_1_desc: 'Apprenez les salutations quotidiennes : bonjour, merci, au revoir.',
+    sample_2_title: 'Nombres', sample_2_desc: 'Maîtrisez les nombres de 1 à 100 et les règles de comptage.',
+    sample_3_title: 'Présentation', sample_3_desc: 'Apprenez à vous présenter — nom, nationalité, profession.',
+    ai_title: 'Partenaire IA',
+    ai_desc: 'Votre tuteur IA dédié explique la grammaire et corrige votre prononciation. Disponible 24h/24. Inscrivez-vous pour pratiquer en temps réel.',
+    community_title: 'Communauté',
+    community_1_title: 'Apprenants du monde', community_1_desc: 'Échangez avec des apprenants du monde entier.',
+    community_2_title: 'Check-in quotidien', community_2_desc: 'Prenez l\'habitude d\'apprendre chaque jour.',
+    cta_title: 'Prêt à approfondir ?', cta_sub: 'Inscrivez-vous gratuitement pour l\'expérience complète.',
+    cta_btn: 'Inscription gratuite',
+  },
+  es: {
+    guest_title: 'Bienvenido a AILOS', guest_sub: 'Estás viendo como invitado. Regístrate para desbloquear todas las funciones.',
+    guest_timer: 'Sesión válida: 2 horas', guest_register_btn: 'Registrarse',
+    sample_title: 'Muestras de cursos',
+    sample_1_title: 'Saludos básicos', sample_1_desc: 'Aprende saludos cotidianos: hola, gracias, adiós.',
+    sample_2_title: 'Números', sample_2_desc: 'Domina los números del 1 al 100 y las reglas de conteo.',
+    sample_3_title: 'Presentación personal', sample_3_desc: 'Aprende a presentarte — nombre, nacionalidad, profesión.',
+    ai_title: 'Compañero IA',
+    ai_desc: 'Tu tutor IA personal explica gramática y corrige pronunciación. Disponible 24/7. Regístrate para practicar en tiempo real.',
+    community_title: 'Comunidad',
+    community_1_title: 'Estudiantes globales', community_1_desc: 'Conecta con estudiantes de idiomas de todo el mundo.',
+    community_2_title: 'Check-in diario', community_2_desc: 'Crea hábitos de aprendizaje diario con check-ins.',
+    cta_title: '¿Listo para profundizar?', cta_sub: 'Regístrate gratis para la experiencia completa.',
+    cta_btn: 'Registro gratuito',
+  },
+  de: {
+    guest_title: 'Willkommen bei AILOS', guest_sub: 'Du siehst eine Vorschau als Gast. Registriere dich für alle Funktionen.',
+    guest_timer: 'Sitzung gültig: 2 Stunden', guest_register_btn: 'Jetzt registrieren',
+    sample_title: 'Kursbeispiele',
+    sample_1_title: 'Grundlegende Begrüßungen', sample_1_desc: 'Lerne alltägliche Begrüßungen: Hallo, Danke, Auf Wiedersehen.',
+    sample_2_title: 'Zahlen', sample_2_desc: 'Beherrsche die Zahlen 1-100 und die Zählregeln.',
+    sample_3_title: 'Selbstvorstellung', sample_3_desc: 'Lerne, dich vorzustellen — Name, Nationalität, Beruf.',
+    ai_title: 'KI-Lernpartner',
+    ai_desc: 'Dein persönlicher KI-Tutor erklärt Grammatik und korrigiert die Aussprache. Rund um die Uhr verfügbar. Registriere dich für Echtzeit-Übungen.',
+    community_title: 'Lerngemeinschaft',
+    community_1_title: 'Globale Lernende', community_1_desc: 'Vernetze dich mit Sprachlernenden aus aller Welt.',
+    community_2_title: 'Täglicher Check-in', community_2_desc: 'Entwickle tägliche Lerngewohnheiten mit Check-ins.',
+    cta_title: 'Bereit zum Vertiefen?', cta_sub: 'Registriere dich kostenlos für die vollständige Erfahrung.',
+    cta_btn: 'Kostenlos registrieren',
+  },
+};
+
+const LANG_MAP = { 'zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh':'zh', 'en':'en','en-us':'en','en-gb':'en', 'ja':'ja','jp':'ja', 'ko':'ko','kr':'ko', 'fr':'fr', 'es':'es', 'de':'de' };
+const LANG_NAMES = { zh:'中文', en:'English', ja:'日本語', ko:'한국어', fr:'Français', es:'Español', de:'Deutsch' };
+
+function detectLang() {
+  try { const s = localStorage.getItem('yandao_ui_lang_v1'); if (s && I18N[s]) return s; } catch(e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  return LANG_MAP[nav] || 'zh';
+}
+
+let currentLang = detectLang();
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh[key]) || key; }
+
+
+
+
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const text = t(el.getAttribute('data-i18n'));
+    if (text !== undefined) el.textContent = text;
+  });
+}
+
+// Init
+updateI18n();
+</script>
+</body>
+</html>

@@ -51,6 +51,7 @@
   }
   .logo { text-align: center; margin-bottom: 6px; }
   .logo-icon { font-size: 40px; margin-bottom: 4px; }
+  .logo-icon img { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--primary-light); object-fit: cover; }
   .logo-text { font-size: 24px; font-weight: 800; color: var(--primary); }
   .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
@@ -77,6 +78,7 @@
   }
   .msg.error { display: block; background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
   .msg.success { display: block; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+  .msg.info { display: block; background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
 
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary); }
@@ -140,7 +142,7 @@
   <div class="card">
     <!-- Logo -->
     <div class="logo">
-      <div class="logo-icon">🌍</div>
+      <div class="logo-icon"><img src="/assets/images/parrot_logo.png" alt="AILOS"></div>
       <div class="logo-text" data-i18n="app_name">AILOS</div>
       <div class="logo-sub" data-i18n="app_subtitle">言道学外语</div>
     </div>
@@ -608,7 +610,8 @@ async function sendCode() {
 
   try {
     const path = currentMethod === 'phone' ? '/send-code' : '/send-email-code';
-    const body = currentMethod === 'phone' ? { phone } : { email };
+    const codeType = currentMode === 'register' ? 'register' : (currentMode === 'reset' ? 'reset' : 'login');
+    const body = currentMethod === 'phone' ? { phone, type: codeType } : { email, type: codeType };
     await apiCall(path, body);
     showMsg(t('msg_code_sent'), 'success');
     startCountdown();
@@ -682,10 +685,10 @@ async function handleSubmit() {
       result = await apiCall('/register', {
         phone: currentMethod === 'phone' ? phone : undefined,
         email: currentMethod === 'email' ? email : undefined,
-        code, password, username, method: currentMethod,
+        code, password, nickname: username, method: currentMethod,
       });
     } else {
-      result = await apiCall('/password', {
+      result = await apiCall('/reset-password', {
         phone: currentMethod === 'phone' ? phone : undefined,
         email: currentMethod === 'email' ? email : undefined,
         code, newPassword: password, method: currentMethod,
@@ -763,7 +766,13 @@ async function startGuestMode() {
     });
     const data = await resp.json();
     if (data.success) {
-      try { localStorage.setItem('yandao_guest_id_v1', data.guestId || ''); } catch(e) {}
+      try {
+        localStorage.setItem('yandao_guest_id_v1', data.guestId || '');
+        if (data.token) {
+          localStorage.setItem('yandao_token_v1', data.token);
+          localStorage.setItem('auth_tokens', JSON.stringify({ accessToken: data.token }));
+        }
+      } catch(e) {}
       window.location.href = '/xuewaiyu/guest.html';
     } else {
       showMsg(data.error || t('msg_guest_unavailable'), 'error');
