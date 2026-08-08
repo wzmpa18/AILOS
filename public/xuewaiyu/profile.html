@@ -453,7 +453,7 @@
 </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
 
 
 <!-- Toast -->
@@ -2255,9 +2255,9 @@ function showQRCode() {
   var userId = getUserId();
   var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
   urlEl.textContent = profileUrl;
-  // Google Charts QR API
-  var qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(profileUrl) + '&choe=UTF-8';
-  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p>QR生成失败</p>\'">';
+  // 使用 api.qrserver.com（Google Charts QR API 已废弃）
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(profileUrl);
+  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p style=\\"color:#ef4444;font-size:13px\\">QR生成失败</p><p style=\\"font-size:12px;color:#64748b;word-break:break-all\\">' + profileUrl + '</p>\'">';
   modal.style.display = 'flex';
 }
 

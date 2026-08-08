@@ -197,7 +197,7 @@
 </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
 
   <div class="toast" id="toast"></div>
 
@@ -424,9 +424,13 @@ async function init() {
     }
   }
 
-  // 确保邀请链接有值
+  // 确保邀请链接有值（统一格式：?inviteCode=XXXXXX）
   if (!inviteData.inviteUrl && inviteData.inviteCode) {
-    inviteData.inviteUrl = 'https://yandao.vip/xuewaiyu/register.html?invite=' + encodeURIComponent(inviteData.inviteCode);
+    inviteData.inviteUrl = 'https://yandao.vip/xuewaiyu/register.html?inviteCode=' + encodeURIComponent(inviteData.inviteCode);
+  }
+  // 修正已有链接中的 ?invite= 为 ?inviteCode=
+  if (inviteData.inviteUrl && inviteData.inviteUrl.indexOf('?invite=') >= 0) {
+    inviteData.inviteUrl = inviteData.inviteUrl.replace('?invite=', '?inviteCode=');
   }
 
   // 渲染用户信息
@@ -509,54 +513,54 @@ function drawPoster(ctx, W, H, qrImg) {
   // 清空画布
   ctx.clearRect(0, 0, W, H);
 
-  // 背景渐变
+  // 背景渐变（品牌色强化）
   var bgGrad = ctx.createLinearGradient(0, 0, 0, H);
   bgGrad.addColorStop(0, '#4F46E5');
-  bgGrad.addColorStop(0.5, '#6366F1');
+  bgGrad.addColorStop(0.4, '#6366F1');
   bgGrad.addColorStop(1, '#818CF8');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // 顶部白色圆角区域
+  // 顶部品牌区
   ctx.fillStyle = '#FFFFFF';
-  roundRect(ctx, 20, 80, W - 40, H - 100, 16);
+  ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🦜 AILOS 言道学外语', W / 2, 32);
+
+  // 主标题（强化爆点）
+  ctx.fillStyle = '#FBBF24';
+  ctx.font = 'bold 17px -apple-system, sans-serif';
+  ctx.fillText('免费学7国外语', W / 2, 58);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.fillText('邀好友躺赚佣金', W / 2, 78);
+
+  // 白色内容区
+  ctx.fillStyle = '#FFFFFF';
+  roundRect(ctx, 16, 92, W - 32, H - 108, 14);
   ctx.fill();
 
-  // LOGO/品牌名
-  ctx.fillStyle = '#4F46E5';
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('AILOS 言道学外语', W / 2, 50);
-
-  // 副标题
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.font = '13px -apple-system, sans-serif';
-  ctx.fillText('和我一起免费学外语，还能赚佣金', W / 2, 70);
-
-  // 用户头像（圆形裁剪）
-  var avatarSize = 60;
-  var avatarX = W / 2 - avatarSize / 2;
-  var avatarY = 105;
+  // 用户头像（圆形）
+  var avatarSize = 52;
+  var avatarY = 108;
   ctx.save();
   ctx.beginPath();
   ctx.arc(W / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
   if (inviteData._avatarImg && inviteData._avatarImg.naturalWidth > 0) {
-    ctx.drawImage(inviteData._avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+    ctx.drawImage(inviteData._avatarImg, W / 2 - avatarSize / 2, avatarY, avatarSize, avatarSize);
   } else {
-    // 默认占位
     ctx.fillStyle = '#EEF2FF';
-    ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+    ctx.fillRect(W / 2 - avatarSize / 2, avatarY, avatarSize, avatarSize);
     ctx.fillStyle = '#4F46E5';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     var initial = (inviteData.nickname || 'U').charAt(0).toUpperCase();
     ctx.fillText(initial, W / 2, avatarY + avatarSize / 2);
   }
   ctx.restore();
-  // 头像边框
   ctx.strokeStyle = '#4F46E5';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -565,56 +569,74 @@ function drawPoster(ctx, W, H, qrImg) {
 
   // 昵称
   ctx.fillStyle = '#1E293B';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = 'bold 15px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(inviteData.nickname || '学习者', W / 2, 190);
+  ctx.fillText(inviteData.nickname || '学习者', W / 2, 180);
 
-  // 邀请你文案
-  ctx.fillStyle = '#64748B';
-  ctx.font = '13px sans-serif';
-  ctx.fillText('邀请你一起学外语', W / 2, 212);
-
-  // 佣金信息
-  ctx.fillStyle = '#10B981';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.fillText('直推 15%  间推 5% 佣金', W / 2, 250);
-
-  ctx.fillStyle = '#64748B';
+  // 3条核心卖点
+  var points = [
+    '① AI母语教学，用中文教你学外语，零基础也能上手',
+    '② 直推15% + 间推5%，好友付费永久分佣',
+    '③ 单词/听力/口语全场景游戏化学习，边玩边涨水平'
+  ];
   ctx.font = '11px sans-serif';
-  ctx.fillText('多邀多得，上不封顶', W / 2, 270);
+  ctx.textAlign = 'left';
+  points.forEach(function(p, i) {
+    var y = 205 + i * 22;
+    // 卖点背景色块
+    ctx.fillStyle = i === 1 ? '#ECFDF5' : '#EEF2FF';
+    roundRect(ctx, 28, y - 13, W - 56, 20, 6);
+    ctx.fill();
+    // 卖点文字
+    ctx.fillStyle = i === 1 ? '#065F46' : '#3730A3';
+    ctx.fillText(p, 34, y);
+  });
 
-  // 二维码
-  var qrSize = 140;
+  // 二维码（放大）
+  var qrSize = 130;
   var qrX = W / 2 - qrSize / 2;
-  var qrY = 290;
+  var qrY = 280;
   if (qrImg && qrImg.naturalWidth > 0) {
+    // 白色底框
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(qrX - 6, qrY - 6, qrSize + 12, qrSize + 12);
     ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
   } else {
-    // 二维码加载失败的占位框
+    // 二维码加载失败兜底：显示邀请码
     ctx.fillStyle = '#F1F5F9';
-    ctx.fillRect(qrX, qrY, qrSize, qrSize);
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '12px sans-serif';
+    roundRect(ctx, qrX, qrY, qrSize, qrSize, 10);
+    ctx.fill();
+    ctx.fillStyle = '#4F46E5';
+    ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('扫码加入', W / 2, qrY + qrSize / 2);
+    ctx.fillText('扫码注册', W / 2, qrY + 40);
+    ctx.font = 'bold 20px Courier New, monospace';
+    ctx.fillText(inviteData.inviteCode || '------', W / 2, qrY + 75);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#64748B';
+    ctx.fillText('或手动输入邀请码', W / 2, qrY + 100);
   }
 
-  // 邀请码
+  // 邀请码（醒目）
   ctx.fillStyle = '#4F46E5';
-  ctx.font = 'bold 14px sans-serif';
+  ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('我的邀请码', W / 2, 460);
+  ctx.fillText('我的邀请码', W / 2, 432);
 
   ctx.fillStyle = '#1E293B';
-  ctx.font = 'bold 24px Courier New, monospace';
-  ctx.fillText(inviteData.inviteCode || '------', W / 2, 490);
+  ctx.font = 'bold 22px Courier New, monospace';
+  ctx.fillText(inviteData.inviteCode || '------', W / 2, 460);
 
-  // 底部合规提示
+  // 底部行动指令
+  ctx.fillStyle = '#4F46E5';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('长按识别二维码，免费开启外语学习+赚钱之旅', W / 2, 488);
+
+  // 合规提示
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '10px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('收益因人而异，取决于邀请人数与用户付费', W / 2, 520);
+  ctx.font = '9px sans-serif';
+  ctx.fillText('收益因人而异，取决于邀请人数与用户付费', W / 2, 508);
 
   // 显示 canvas，隐藏 loading
   document.getElementById('posterLoading').classList.add('hidden');
@@ -654,7 +676,7 @@ function copyInviteCode() {
 }
 
 function shareInvite() {
-  var shareUrl = inviteData.inviteUrl || ('https://yandao.vip/xuewaiyu/register.html?invite=' + encodeURIComponent(inviteData.inviteCode));
+  var shareUrl = inviteData.inviteUrl || ('https://yandao.vip/xuewaiyu/register.html?inviteCode=' + encodeURIComponent(inviteData.inviteCode));
   var shareText = '和我一起免费学外语，还能赚佣金！使用我的邀请码 ' + inviteData.inviteCode + ' 注册：' + shareUrl;
 
   if (navigator.share) {

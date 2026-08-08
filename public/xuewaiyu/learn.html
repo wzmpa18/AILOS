@@ -54,7 +54,7 @@
 <!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） -->
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
 <script>
 const API = '/api';
 
@@ -136,39 +136,45 @@ function showLoadError() {
 }
 
 function renderContent(data, todayPlan) {
-  const container = document.getElementById('learnContent');
+  var container = document.getElementById('learnContent');
+  var html = '';
 
   // P3 任务4.2: 今日学习任务卡片（30天计划）
   if (todayPlan) {
-    var planHtml = '<div class="section"><div class="section-title">📅 今日学习任务</div>';
+    html += '<div class="section"><div class="section-title">📅 今日学习任务</div>';
     if (todayPlan.tasks && todayPlan.tasks.length > 0) {
       todayPlan.tasks.forEach(function(task, idx) {
         var doneClass = task.completed ? 'status-ongoing' : 'status-new';
         var doneText = task.completed ? '已完成' : '待学习';
-        planHtml += '<div class="card-item" onclick="startDayLearn()">' +
+        html += '<div class="card-item" onclick="startDayLearn()">' +
           '<div class="icon" style="background:#EEF2FF">' + (idx+1) + '</div>' +
           '<div class="info"><div class="name">' + task.title + ' <span class="status-badge ' + doneClass + '">' + doneText + '</span></div>' +
           '<div class="desc">' + (task.desc || '') + ' · ' + (task.duration || 15) + '分钟</div></div>' +
           '<span class="arrow">→</span></div>';
       });
     } else {
-      planHtml += '<div class="card-item"><div class="icon">📖</div><div class="info"><div class="name">第' + (todayPlan.dayNumber || 1) + '天 · ' + (todayPlan.title || '学习任务') + '</div><div class="desc">' + (todayPlan.desc || '') + '</div></div><span class="arrow">→</span></div>';
+      html += '<div class="card-item" onclick="startDayLearn()"><div class="icon">📖</div><div class="info"><div class="name">第' + (todayPlan.dayNumber || 1) + '天 · ' + (todayPlan.title || '学习任务') + '</div><div class="desc">' + (todayPlan.desc || '开始今日学习') + '</div></div><span class="arrow">→</span></div>';
     }
-    planHtml += '<button onclick="startDayLearn()" style="width:100%;padding:14px;margin-top:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">🚀 开始今日学习</button></div>';
-    container.innerHTML = planHtml;
+    html += '<button onclick="startDayLearn()" style="width:100%;padding:14px;margin-top:10px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">🚀 开始今日学习</button></div>';
   } else {
-    container.innerHTML = '<div class="section"><div class="section-title">📅 今日学习任务</div><div class="card-item"><div class="icon">📖</div><div class="info"><div class="name">暂无学习计划</div><div class="desc">完成水平测试后自动生成专属学习计划</div></div></div></div>';
+    // 空状态：引导用户去完成水平测试生成计划
+    html += '<div class="section"><div class="section-title">📅 今日学习任务</div>' +
+      '<div class="card" style="text-align:center;padding:24px 16px">' +
+      '<div style="font-size:40px;margin-bottom:8px">🎯</div>' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:6px">暂无学习计划</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">完成水平测试后，AI将自动生成你的专属30天学习计划</div>' +
+      '<a href="placement.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none">🎯 去做水平测试</a>' +
+      '</div></div>';
   }
 
-  // 课程列表
-  const container = document.getElementById('learnContent');
-  const vp = VOCAB_PROGRESS;
-  const langName = LANG_LABEL[getStudyLang()] || getStudyLang();
-  const vocabDesc = vp
-    ? `${langName} · 已掌握 ${vp.learnedWords}/${vp.totalWords} 词 · 今日 ${vp.todayMinutes} 分钟`
-    : `${langName} · 积累核心词汇，打好语言基础`;
+  // 课程列表（追加，不覆盖上方计划区域）
+  var vp = VOCAB_PROGRESS;
+  var langName = LANG_LABEL[getStudyLang()] || getStudyLang();
+  var vocabDesc = vp
+    ? langName + ' · 已掌握 ' + vp.learnedWords + '/' + vp.totalWords + ' 词 · 今日 ' + vp.todayMinutes + ' 分钟'
+    : langName + ' · 积累核心词汇，打好语言基础';
 
-  const categories = [
+  var categories = [
     { icon: '📝', name: '词汇学习', desc: vocabDesc, type: 'vocab', status: (vp && vp.learnedWords > 0) ? 'ongoing' : 'new', progress: vp ? vp.progressPercent : 0 },
     { icon: '📖', name: '语法精讲', desc: '系统学习语法规则', type: 'grammar', status: 'new', progress: 0 },
     { icon: '🎧', name: '听力训练', desc: '提升听力理解能力', type: 'listening', status: 'new', progress: 0 },
@@ -176,19 +182,19 @@ function renderContent(data, todayPlan) {
     { icon: '💬', name: 'AI 对话', desc: '与AI导师实时对话练习', type: 'conversation', status: 'new', progress: 0 },
   ];
 
-  container.innerHTML = categories.map(c => `
-    <div class="section">
-      <div class="card-item" onclick="openModule('${c.type}')">
-        <div class="icon" style="background: var(--primary-light)">${c.icon}</div>
-        <div class="info">
-          <div class="name">${c.name} <span class="status-badge ${c.status === 'ongoing' ? 'status-ongoing' : 'status-new'}">${c.status === 'ongoing' ? '进行中' : '新课程'}</span></div>
-          <div class="desc">${c.desc}</div>
-          ${c.progress > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>` : ''}
-        </div>
-        <span class="arrow">→</span>
-      </div>
-    </div>
-  `).join('');
+  html += '<div class="section"><div class="section-title">📚 课程列表</div>';
+  categories.forEach(function(c) {
+    html += '<div class="card-item" onclick="openModule(\'' + c.type + '\')">' +
+      '<div class="icon" style="background: var(--primary-light)">' + c.icon + '</div>' +
+      '<div class="info">' +
+      '<div class="name">' + c.name + ' <span class="status-badge ' + (c.status === 'ongoing' ? 'status-ongoing' : 'status-new') + '">' + (c.status === 'ongoing' ? '进行中' : '新课程') + '</span></div>' +
+      '<div class="desc">' + c.desc + '</div>' +
+      (c.progress > 0 ? '<div class="progress-bar"><div class="progress-fill" style="width:' + c.progress + '%"></div></div>' : '') +
+      '</div><span class="arrow">→</span></div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
 }
 
 // 零空壳：每个入口都跳到真实可用页面
