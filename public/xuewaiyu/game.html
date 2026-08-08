@@ -173,7 +173,7 @@
 <!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） --><nav class="bottom-nav">
 </nav>
 
-<script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260809p10"></script>
 <script>
 // ============================================================
 // 多语言词库（宪法 五-1「题目匹配用户当前学习语言」、一-3 双语言规范）
@@ -384,19 +384,22 @@ function currentLang() {
     // 直接从 localStorage 读取 yandao_study_lang
     var sl = localStorage.getItem('yandao_study_lang');
     if (sl && WORD_BANKS[sl]) return sl;
+    // 兼容旧版key
+    var legacy = localStorage.getItem('yandao_target_lang');
+    if (legacy && WORD_BANKS[legacy]) return legacy;
   } catch (e) {}
-  return 'en';
+  return 'ja'; // 默认日语，与 common.js getStudyLang() 默认值一致
 }
 
 // TTS 语言标签映射（宪法 五-3 发音正常）
 var TTS_LANG = { ja: 'ja-JP', ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', fr: 'fr-FR', es: 'es-ES', de: 'de-DE' };
 
 // 按当前语言取词库
-var WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.en;
+var WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
 
 // 语言变更时热更新词库 + 重渲染当前题目与列表（宪法 1.1：切换语言后立即重渲染）
 window.addEventListener('languageChanged', function () {
-  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.en;
+  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
   renderGameList(); // 列表标题/名称随界面语言更新
   // 重渲染当前进行中的题型，确保题干/选项跟随界面语言
   if (typeof renderQuiz === 'function' && document.getElementById('quizArea') && document.getElementById('quizArea').classList.contains('active')) renderQuiz();
@@ -650,6 +653,8 @@ function hideAll() {
 function startGame(type) {
   hideAll();
   gameType = type;
+  // P10修复：每次启动游戏时重新读取当前语种，防止语种串线
+  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
   gameWords = shuffle(WORDS).slice(0, 10);
   gameIdx = 0;
   gameScore = 0;

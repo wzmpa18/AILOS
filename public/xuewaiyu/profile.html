@@ -451,9 +451,10 @@
   }
   .withdraw-method-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260809p10"></script>
 
 
 <!-- Toast -->
@@ -740,6 +741,13 @@
             <button class="btn btn-primary" id="btnChangePassword" onclick="changePassword()" data-i18n="btn_change_password">修改密码</button>
             <button class="btn btn-cancel" onclick="togglePasswordForm()" data-i18n="btn_cancel">取消</button>
           </div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+            <div style="background:#FEF2F2;border-radius:10px;padding:14px;margin-bottom:10px;">
+              <div style="font-size:14px;font-weight:600;color:#DC2626;margin-bottom:6px;">🗑️ 注销账号</div>
+              <div style="font-size:12px;color:#991B1B;margin-bottom:8px;">注销后账号数据永久删除，不可恢复，请谨慎操作</div>
+              <button class="btn btn-danger" style="width:100%;font-size:13px;" onclick="openDeleteModal()">确认注销账号</button>
+            </div>
+          </div>
         </div>
 
         <div class="settings-item" onclick="openInviteModal()">
@@ -747,15 +755,6 @@
           <div class="si-text">
             <div class="si-title" data-i18n="settings_invite_code">邀请码</div>
             <div class="si-desc" data-i18n="settings_invite_code_desc">邀请好友一起学习，赢取奖励</div>
-          </div>
-          <span class="si-arrow">›</span>
-        </div>
-
-        <div class="settings-item danger" onclick="openDeleteModal()">
-          <span class="si-icon">🗑️</span>
-          <div class="si-text">
-            <div class="si-title" data-i18n="settings_delete_account">注销账号</div>
-            <div class="si-desc" data-i18n="settings_delete_account_desc">永久删除你的账号和所有数据</div>
           </div>
           <span class="si-arrow">›</span>
         </div>
@@ -2248,17 +2247,64 @@ window.addEventListener('error', function(e) {
 });
 
 // ==================== Phase4: QR Code & Share ====================
+// 简单的 HTML 转义函数，防止 XSS
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function showQRCode() {
   var modal = document.getElementById('qrModal');
   var urlEl = document.getElementById('qrProfileUrl');
   var canvasEl = document.getElementById('qrCanvas');
-  var userId = getUserId();
-  var profileUrl = window.location.origin + '/xuewaiyu/profile.html?id=' + userId;
-  urlEl.textContent = profileUrl;
-  // 使用 api.qrserver.com（Google Charts QR API 已废弃）
-  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(profileUrl);
-  canvasEl.innerHTML = '<img src="' + qrUrl + '" alt="QR Code" style="width:200px;height:200px;display:block;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<p style=\\"color:#ef4444;font-size:13px\\">QR生成失败</p><p style=\\"font-size:12px;color:#64748b;word-break:break-all\\">' + profileUrl + '</p>\'">';
+  var inviteCode = (window.AILOS && AILOS.getInviteCode) ? AILOS.getInviteCode() : (localStorage.getItem('yandao_invite_code') || '');
+  // 统一邀请链接格式：注册页+邀请码
+  var shareUrl = inviteCode
+    ? (window.location.origin + '/xuewaiyu/register.html?inviteCode=' + encodeURIComponent(inviteCode))
+    : (window.location.origin + '/xuewaiyu/profile.html?id=' + getUserId());
+  urlEl.textContent = shareUrl;
+  canvasEl.innerHTML = ''; // 清空旧内容
+  try {
+    if (typeof QRCode !== 'undefined') {
+      // 使用 qrcode.js 本地生成，不依赖第三方API
+      new QRCode(canvasEl, {
+        text: shareUrl,
+        width: 200,
+        height: 200,
+        colorDark: '#1E293B',
+        colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } else {
+      throw new Error('QRCode library not loaded');
+    }
+  } catch (e) {
+    // 兜底：显示邀请码+复制按钮
+    canvasEl.innerHTML = '<div style="text-align:center">' +
+      '<p style="color:#ef4444;font-size:13px;margin-bottom:8px">二维码生成失败</p>' +
+      '<p style="font-size:18px;font-weight:700;color:#4F46E5;letter-spacing:2px;margin-bottom:10px">' + escapeHtml(inviteCode || '------') + '</p>' +
+      '<button onclick="copyInviteCode()" style="padding:8px 20px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">📋 复制邀请码</button>' +
+      '<p style="font-size:11px;color:#94A3B8;margin-top:8px;word-break:break-all">' + escapeHtml(shareUrl) + '</p>' +
+      '</div>';
+  }
   modal.style.display = 'flex';
+}
+
+function copyInviteCode() {
+  var inviteCode = (window.AILOS && AILOS.getInviteCode) ? AILOS.getInviteCode() : (localStorage.getItem('yandao_invite_code') || '');
+  if (inviteCode) {
+    try {
+      navigator.clipboard.writeText(inviteCode);
+      alert('邀请码已复制：' + inviteCode);
+    } catch (e) {
+      alert('邀请码：' + inviteCode);
+    }
+  }
 }
 
 function closeQRModal() {

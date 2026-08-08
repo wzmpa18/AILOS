@@ -195,9 +195,10 @@
     .user-card { flex-direction: column; text-align: center; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260809p10"></script>
 
   <div class="toast" id="toast"></div>
 
@@ -478,20 +479,60 @@ function generatePoster() {
   var W = canvas.width;
   var H = canvas.height;
 
-  // 二维码 URL
-  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inviteData.inviteUrl || 'https://yandao.vip');
+  var shareUrl = inviteData.inviteUrl || 'https://yandao.vip/xuewaiyu/register.html?inviteCode=' + encodeURIComponent(inviteData.inviteCode || '');
 
-  // 先加载二维码图片
+  // 使用 qrcode.js 本地生成二维码（不依赖第三方API）
   var qrImg = new Image();
-  qrImg.crossOrigin = 'anonymous';
-  qrImg.onload = function() {
-    drawPoster(ctx, W, H, qrImg);
-  };
-  qrImg.onerror = function() {
-    // 二维码加载失败，用纯文字兜底
+  try {
+    if (typeof QRCode !== 'undefined') {
+      // 创建临时div生成QR码
+      var tmpDiv = document.createElement('div');
+      tmpDiv.style.position = 'absolute';
+      tmpDiv.style.left = '-9999px';
+      document.body.appendChild(tmpDiv);
+      new QRCode(tmpDiv, {
+        text: shareUrl,
+        width: 200,
+        height: 200,
+        colorDark: '#1E293B',
+        colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      // qrcode.js 生成的是canvas或img，提取后绘制
+      setTimeout(function() {
+        var qrCanvas = tmpDiv.querySelector('canvas');
+        var qrImgEl = tmpDiv.querySelector('img');
+        if (qrCanvas) {
+          qrImg.onload = function() {
+            drawPoster(ctx, W, H, qrImg);
+            document.body.removeChild(tmpDiv);
+          };
+          qrImg.onerror = function() {
+            drawPoster(ctx, W, H, null);
+            document.body.removeChild(tmpDiv);
+          };
+          qrImg.src = qrCanvas.toDataURL('image/png');
+        } else if (qrImgEl) {
+          qrImg.onload = function() {
+            drawPoster(ctx, W, H, qrImg);
+            document.body.removeChild(tmpDiv);
+          };
+          qrImg.onerror = function() {
+            drawPoster(ctx, W, H, null);
+            document.body.removeChild(tmpDiv);
+          };
+          qrImg.src = qrImgEl.src;
+        } else {
+          drawPoster(ctx, W, H, null);
+          document.body.removeChild(tmpDiv);
+        }
+      }, 100);
+    } else {
+      throw new Error('QRCode library not loaded');
+    }
+  } catch (e) {
     drawPoster(ctx, W, H, null);
-  };
-  qrImg.src = qrUrl;
+  }
 
   // 同时加载头像（如果有）
   if (inviteData.avatar) {
@@ -499,7 +540,7 @@ function generatePoster() {
     avatarImg.crossOrigin = 'anonymous';
     avatarImg.onload = function() {
       inviteData._avatarImg = avatarImg;
-      // 如果二维码已加载完成会重新绘制，这里触发重绘
+      // 重绘海报（使用已加载的二维码）
       drawPoster(ctx, W, H, qrImg.complete && qrImg.naturalWidth > 0 ? qrImg : null);
     };
     avatarImg.onerror = function() {

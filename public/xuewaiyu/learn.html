@@ -54,7 +54,7 @@
 <!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） -->
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260809p10"></script>
 <script>
 const API = '/api';
 
@@ -79,9 +79,14 @@ async function loadVocabProgress() {
   const token = getToken();
   if (!token) return null;
   try {
+    // P10: 添加超时保护
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
     const res = await fetch(API + '/v1/practice/progress?lang=' + encodeURIComponent(getStudyLang()), {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: { 'Authorization': 'Bearer ' + token },
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     if (!res.ok) return null;
     const d = await res.json();
     return (d && d.success && d.data) ? d.data : null;
@@ -96,7 +101,14 @@ async function loadTodayPlan() {
   var token = getToken();
   if (!token) return null;
   try {
-    var r = await fetch(API + '/plan/today', { headers: { 'Authorization': 'Bearer ' + token } });
+    // P10: 添加10秒超时保护，防止永久卡在加载中
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+    var r = await fetch(API + '/plan/today', { 
+      headers: { 'Authorization': 'Bearer ' + token },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     if (!r.ok) return null;
     var d = await r.json();
     return (d && d.success && d.data) ? d.data : null;
@@ -108,14 +120,25 @@ async function loadContent() {
   // 仅在确实无凭证时跳登录，不做无理由强制登出
   if (!token) { window.location.href = 'login.html'; return; }
 
+  // P10: 整体10秒超时保护，防止永久卡在"加载中"
+  var loadTimeout = setTimeout(function() {
+    showLoadError();
+  }, 10000);
+
   try {
     var todayPlan = await loadTodayPlan();
+    // P10: 内容请求也添加超时保护
+    var contentController = new AbortController();
+    var contentTimeoutId = setTimeout(function() { contentController.abort(); }, 10000);
     const [res, vp] = await Promise.all([
       fetch(API + '/content?language=' + encodeURIComponent(getStudyLang()) + '&type=vocabulary', {
-        headers: { 'Authorization': 'Bearer ' + token }
+        headers: { 'Authorization': 'Bearer ' + token },
+        signal: contentController.signal
       }),
       loadVocabProgress()
     ]);
+    clearTimeout(contentTimeoutId);
+    clearTimeout(loadTimeout);
     VOCAB_PROGRESS = vp;
     // 仅 401 判定登录失效；其余错误保留登录态并给友好提示
     if (res.status === 401) { window.location.href = 'landing.html'; return; }
@@ -123,6 +146,7 @@ async function loadContent() {
     const data = await res.json();
     renderContent(data, todayPlan);
   } catch (e) {
+    clearTimeout(loadTimeout);
     showLoadError();
   }
 }

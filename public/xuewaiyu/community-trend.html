@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>言道学学外语 社群动态</title>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p9"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260809p10"></script>
   <style>
     :root {
       --primary: #4A90D9;
@@ -553,6 +553,36 @@ window.setNewsCategory = function(cat, btn) {
 };
 
 /* ============ 动态列表 ============ */
+// P10: 带重试的fetch封装（最多重试2次）
+function fetchWithRetry(url, options, maxRetry) {
+  maxRetry = maxRetry || 2;
+  var retryCount = 0;
+  function attempt() {
+    return fetch(url, options).then(function(r) {
+      if (r.status === 401) {
+        // 401不重试，直接返回让调用方处理
+        return r;
+      }
+      if (!r.ok && retryCount < maxRetry) {
+        retryCount++;
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(attempt()); }, 1000 * retryCount);
+        });
+      }
+      return r;
+    }).catch(function(e) {
+      if (retryCount < maxRetry) {
+        retryCount++;
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(attempt()); }, 1000 * retryCount);
+        });
+      }
+      throw e;
+    });
+  }
+  return attempt();
+}
+
 function loadFeed(reset) {
   if (feed.isLoading) return;
   if (!feed.hasMore && !reset) return;
@@ -563,9 +593,25 @@ function loadFeed(reset) {
   var url = EP.feed + '?page=' + feed.page + '&limit=20&sort=' + encodeURIComponent(feed.sort);
   if (feed.tag && feed.tag !== 'all') url += '&tag=' + encodeURIComponent(feed.tag);
 
-  fetch(url, { headers: authHeaders() })
-    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  fetchWithRetry(url, { headers: authHeaders() })
+    .then(function(r) {
+      if (r.status === 401) {
+        // 游客模式：社交动态需要登录
+        document.getElementById('loadingMore').style.display = 'none';
+        feed.isLoading = false;
+        document.getElementById('postList').innerHTML = '<div class="empty-state">' +
+          '<div class="empty-icon">🔒</div>' +
+          '<div class="empty-text">登录后查看更多动态</div>' +
+          '<a href="login.html" style="display:inline-block;margin-top:10px;padding:8px 24px;background:var(--primary);color:#fff;border-radius:20px;font-size:13px;text-decoration:none">去登录</a>' +
+          '</div>';
+        feed.hasMore = false;
+        return null;
+      }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(function(d) {
+      if (!d) return;
       document.getElementById('loadingMore').style.display = 'none';
       feed.isLoading = false;
       if (!d.success) { showFeedError(d.message || '加载失败，点击重试'); return; }
@@ -664,7 +710,8 @@ function loadNews(reset) {
 
   var url = EP.newsList + '?page=' + news.page + '&limit=20&category=' + encodeURIComponent(news.category) + '&sort=' + encodeURIComponent(news.sort);
 
-  fetch(url, { headers: authHeaders() })
+  // P10: 资讯接口公开访问，不强制鉴权，使用带重试的fetch
+  fetchWithRetry(url, { headers: { 'Content-Type': 'application/json' } }, 2)
     .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function(d) {
       document.getElementById('newsLoadingMore').style.display = 'none';
