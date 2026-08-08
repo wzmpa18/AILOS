@@ -100,25 +100,91 @@ workflows:
 
       - name: Config SDK Path and Install Build Tools
         script: |-
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "=== Installing required SDK packages ==="
+          #!/bin/bash
+          set -e
+          echo "=== Configuring SDK Path ==="
           echo "ANDROID_HOME=$ANDROID_HOME"
-          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools\|platforms" || true
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "local.properties created:"
+          cat local.properties
+          echo ""
+          echo "=== Installed SDK Packages ==="
+          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools\|platforms\|platform-tools" || true
+          echo ""
+          echo "=== Ensuring build-tools;34.0.0 and platforms;android-34 ==="
           yes | sdkmanager "build-tools;34.0.0" "platforms;android-34" 2>/dev/null || echo "SDK packages may already be installed"
+          echo ""
+          echo "=== Verify SDK packages installed ==="
+          sdkmanager --list_installed 2>/dev/null | grep -i "build-tools;34.0.0\|platforms;android-34" || echo "WARNING: expected packages not found"
 
       - name: Build Release APK
         script: |-
-          echo "=== Building Release APK ==="
-          echo "keystore.properties exists: $(test -f /tmp/keystore.properties && echo YES || echo NO)"
-          echo "keystore file size: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
-          echo "gradlew exists: $(test -f ./gradlew && echo YES || echo NO)"
-          echo "gradlew first line: $(head -1 ./gradlew)"
-          echo "local.properties: $(cat local.properties)"
+          #!/bin/bash
+          echo "========================================"
+          echo "=== Pre-build File Verification ==="
+          echo "========================================"
+          echo "Working directory: $(pwd)"
+          echo ""
+          echo "=== Critical File Check ==="
+          ls -la gradlew app/build.gradle settings.gradle gradle.properties 2>&1
+          echo ""
+          ls -la gradle/wrapper/ 2>&1
+          echo ""
+          echo "=== gradlew first line ==="
+          head -1 gradlew
+          echo ""
+          echo "=== Keystore Check ==="
+          echo "keystore.properties: $(test -f /tmp/keystore.properties && echo EXISTS || echo NOT_FOUND)"
+          echo "keystore file: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
+          echo ""
+          echo "=== local.properties ==="
+          cat local.properties
+          echo ""
+          echo "=== build.gradle (root) ==="
+          cat build.gradle
+          echo ""
+          echo "=== app/build.gradle (key sections) ==="
+          head -30 app/build.gradle
+          echo ""
+          echo "=== gradle-wrapper.properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          echo ""
+
           chmod +x gradlew
+
           echo "=== Gradle Version ==="
           ./gradlew --version
-          echo "=== Starting Build ==="
-          ./gradlew clean assembleRelease --stacktrace
+          echo ""
+
+          echo "========================================"
+          echo "=== Starting Build (with --info) ==="
+          echo "========================================"
+          set +e
+          ./gradlew clean assembleRelease --stacktrace --info 2>&1 | tee /tmp/gradle-build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo ""
+            echo "========================================"
+            echo "=== BUILD FAILED (exit code: $BUILD_EXIT_CODE) ==="
+            echo "========================================"
+            echo ""
+            echo "=== 'What went wrong' section ==="
+            grep -A 20 "What went wrong" /tmp/gradle-build.log || true
+            echo ""
+            echo "=== Error/FAILED lines ==="
+            grep -i "error\|FAILED\|exception\|cannot find" /tmp/gradle-build.log | tail -80
+            echo ""
+            echo "=== Last 200 lines of build log ==="
+            tail -200 /tmp/gradle-build.log
+            exit $BUILD_EXIT_CODE
+          fi
+
+          echo ""
+          echo "=== BUILD SUCCESS ==="
+          echo "APK location:"
+          ls -la app/build/outputs/apk/release/
 
       - name: Verify Signature
         script: |-

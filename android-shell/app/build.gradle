@@ -5,6 +5,7 @@ plugins {
 android {
     namespace 'ai.yandao.ailos'
     compileSdk 34
+    buildToolsVersion "34.0.0"
 
     // PNG crunching 禁用 — 避免部分 AAPT2 版本编译库资源 .9.png 失败
     aaptOptions {
@@ -70,8 +71,8 @@ android {
 }
 
 dependencies {
+    // 仅保留三个核心库，对标中医项目成功基线
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.webkit:webkit:1.10.0'
     implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 }
