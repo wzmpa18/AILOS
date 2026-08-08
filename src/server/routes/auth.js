@@ -14,6 +14,9 @@ router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/wechat', authController.wechatAuth);
 
+// GET /api/auth/check-exists - 注册查重接口（公开，无需登录）
+router.get('/check-exists', authController.checkExists);
+
 // BUG-019: 游客模式路由（之前遗漏，导致前端 /api/auth/guest 404）
 router.post('/guest', authController.createGuest);
 router.put('/guest/:guestId/progress', authController.updateGuestProgress);

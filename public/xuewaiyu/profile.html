@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -364,10 +364,96 @@
     content: ''; position: absolute; top: 0; width: 24px; height: 3px;
     background: var(--primary); border-radius: 0 0 3px 3px;
   }
+
+  /* ===== 分销团队板块 ===== */
+  .team-stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
+  }
+  .team-stat-card {
+    background: var(--bg); border-radius: var(--radius-sm); padding: 12px 8px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .team-stat-card.highlight { background: var(--primary-light); border-color: var(--primary); }
+  .team-stat-value { font-size: 18px; font-weight: 800; color: var(--primary); }
+  .team-stat-card.highlight .team-stat-value { color: var(--success); }
+  .team-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .team-action-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .team-action-row .btn { flex: 1; justify-content: center; }
+  .team-tabs {
+    display: flex; border-bottom: 2px solid var(--border); margin-bottom: 12px;
+  }
+  .team-tab {
+    flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all .2s;
+  }
+  .team-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .team-list { }
+  .team-list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px;
+  }
+  .team-list-item:last-child { border-bottom: none; }
+  .team-list-info { flex: 1; min-width: 0; }
+  .team-list-account { font-size: 13px; font-weight: 600; color: var(--text); }
+  .team-list-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .team-list-spent { font-size: 13px; font-weight: 600; color: var(--success); text-align: right; flex-shrink: 0; }
+  .team-load-more {
+    text-align: center; padding: 12px; font-size: 13px; color: var(--primary);
+    cursor: pointer; font-weight: 600;
+  }
+  .team-empty { text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; }
+  .commission-list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px;
+  }
+  .commission-list-item:last-child { border-bottom: none; }
+  .commission-info { flex: 1; min-width: 0; }
+  .commission-amount { font-size: 13px; font-weight: 600; color: var(--success); }
+  .commission-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .commission-status {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .commission-status.pending { background: var(--warning-light); color: var(--warning); }
+  .commission-status.available { background: var(--success-light); color: var(--success); }
+  .commission-status.withdrawn { background: var(--bg); color: var(--text-muted); }
+  .compliance-tip-inline {
+    background: var(--primary-light); border-radius: var(--radius-xs);
+    padding: 8px 12px; font-size: 11px; color: var(--text-secondary);
+    line-height: 1.5; border-left: 3px solid var(--primary); margin-top: 8px;
+  }
+
+  /* 提现弹窗表单 */
+  .withdraw-form { text-align: left; }
+  .withdraw-form .form-group { margin-bottom: 14px; }
+  .withdraw-form .form-group label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;
+  }
+  .withdraw-form .form-group input, .withdraw-form .form-group select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-xs); font-size: 14px; font-family: inherit;
+    background: var(--card-bg); color: var(--text); transition: border-color .2s;
+  }
+  .withdraw-form .form-group input:focus, .withdraw-form .form-group select:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+  }
+  .withdraw-balance {
+    background: var(--primary-light); border-radius: var(--radius-xs); padding: 10px 14px;
+    margin-bottom: 14px; font-size: 13px; color: var(--text-secondary);
+  }
+  .withdraw-balance strong { color: var(--success); font-size: 18px; }
+  .withdraw-method-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+  .withdraw-method-tab {
+    flex: 1; padding: 8px; text-align: center; border-radius: var(--radius-xs);
+    border: 1.5px solid var(--border); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all .2s; background: var(--card-bg); color: var(--text-secondary);
+  }
+  .withdraw-method-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
 
 
 <!-- Toast -->
@@ -437,6 +523,49 @@
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeLogoutModal()" data-i18n="btn_cancel">取消</button>
       <button class="btn btn-danger" id="btnConfirmLogout" onclick="performLogout()" data-i18n="btn_confirm_logout">确定退出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 提现弹窗 ===== -->
+<div class="modal-overlay" id="withdrawModal" style="display:none;">
+  <div class="modal" style="text-align:left; max-width:420px;">
+    <div class="modal-title" style="text-align:center;">💰 申请提现</div>
+    <div class="withdraw-balance" style="text-align:center;">
+      可提现余额：<strong id="withdrawBalance">¥0</strong>
+    </div>
+    <div class="withdraw-form">
+      <div class="form-group">
+        <label>提现金额（最低1元）</label>
+        <input type="number" id="withdrawAmount" placeholder="请输入提现金额" min="1" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>提现方式</label>
+        <div class="withdraw-method-tabs">
+          <div class="withdraw-method-tab active" onclick="selectWithdrawMethod('wechat', this)">💚 微信</div>
+          <div class="withdraw-method-tab" onclick="selectWithdrawMethod('alipay', this)">💙 支付宝</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>收款账号</label>
+        <input type="text" id="withdrawAccount" placeholder="请输入收款账号（微信/支付宝账号）">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeWithdrawModal()">取消</button>
+      <button class="btn btn-primary" id="btnSubmitWithdraw" onclick="submitWithdraw()">提交提现申请</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 提现进度弹窗 ===== -->
+<div class="modal-overlay" id="withdrawProgressModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-icon" id="withdrawProgressIcon">⏳</div>
+    <div class="modal-title" id="withdrawProgressTitle">提现申请处理中</div>
+    <div class="modal-desc" id="withdrawProgressDesc">您的提现申请已提交，请耐心等待审核到账</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeWithdrawProgressModal()">确定</button>
     </div>
   </div>
 </div>
@@ -639,6 +768,70 @@
           </div>
           <span class="si-arrow">›</span>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== 我的团队 - 分销统计概览 ===== -->
+    <div class="card" id="teamCard">
+      <div class="card-header">
+        <span class="icon">👥</span>
+        <span>我的团队</span>
+      </div>
+      <!-- 分销统计概览 -->
+      <div class="team-stats-grid">
+        <div class="team-stat-card highlight">
+          <div class="team-stat-value" id="distTotalEarnings">¥0</div>
+          <div class="team-stat-label">累计收益</div>
+        </div>
+        <div class="team-stat-card">
+          <div class="team-stat-value" id="distPendingEarnings">¥0</div>
+          <div class="team-stat-label">待结算</div>
+        </div>
+        <div class="team-stat-card">
+          <div class="team-stat-value" id="distWithdrawable">¥0</div>
+          <div class="team-stat-label">可提现</div>
+        </div>
+      </div>
+      <div class="team-stats-grid" style="margin-bottom:14px;">
+        <div class="team-stat-card">
+          <div class="team-stat-value" id="distDirectCount">0</div>
+          <div class="team-stat-label">直推人数</div>
+        </div>
+        <div class="team-stat-card">
+          <div class="team-stat-value" id="distIndirectCount">0</div>
+          <div class="team-stat-label">间推人数</div>
+        </div>
+        <div class="team-stat-card">
+          <div class="team-stat-value" id="distTotalCount">0</div>
+          <div class="team-stat-label">团队总人数</div>
+        </div>
+      </div>
+      <!-- 操作按钮 -->
+      <div class="team-action-row">
+        <button class="btn btn-primary" onclick="openWithdrawModal()">💰 去提现</button>
+        <button class="btn btn-outline" onclick="window.location.href='/xuewaiyu/invite.html'">🎁 邀请好友赚15%佣金</button>
+      </div>
+      <div class="compliance-tip-inline">
+        收益因人而异，取决于邀请人数与用户付费。多邀多得、上不封顶，平台不对收益做保本承诺。
+      </div>
+
+      <!-- Tab切换：直推/间推好友 -->
+      <div class="team-tabs" style="margin-top:16px;">
+        <div class="team-tab active" onclick="switchTeamTab('direct')">直推好友</div>
+        <div class="team-tab" onclick="switchTeamTab('indirect')">间推好友</div>
+      </div>
+      <div class="team-list" id="teamList">
+        <div class="team-empty">暂无好友，快去邀请吧！</div>
+      </div>
+      <div class="team-load-more" id="teamLoadMore" style="display:none;" onclick="loadMoreTeam()">加载更多</div>
+
+      <!-- 佣金收益明细 -->
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+        <div style="font-size:14px; font-weight:700; margin-bottom:10px;">佣金收益明细</div>
+        <div id="commissionList">
+          <div class="team-empty">暂无佣金记录</div>
+        </div>
+        <div class="team-load-more" id="commissionLoadMore" style="display:none;" onclick="loadMoreCommissions()">加载更多</div>
       </div>
     </div>
 
@@ -2034,6 +2227,11 @@ function init() {
   }
   // 无论上面是否出错，都必须调用 loadUserProfile，否则页面会白板
   loadUserProfile();
+  // 加载分销团队数据（异步，不阻塞页面渲染）
+  setTimeout(function() {
+    try { loadDistributionData(); } catch(e) { console.warn('[Profile] loadDistributionData error:', e); }
+    try { handleHashRoute(); } catch(e) {}
+  }, 800);
 }
 
 // 全局错误捕获：防止任何未捕获异常导致页面白板
@@ -2203,8 +2401,298 @@ document.addEventListener('keydown', function(e) {
     closeShareModal();
     closeInviteModal();
     closeLogoutModal();
+    closeWithdrawModal();
+    closeWithdrawProgressModal();
   }
 });
+
+// ==================== 分销团队板块 ====================
+var distStats = {
+  totalEarnings: 0, pendingEarnings: 0, withdrawableEarnings: 0,
+  directCount: 0, indirectCount: 0, inviteCode: ''
+};
+var teamState = { level: 'direct', page: 1, hasMore: false, loading: false };
+var commissionState = { page: 1, hasMore: false, loading: false };
+var withdrawMethod = 'wechat';
+
+// 脱敏函数
+function maskPhone(phone) {
+  if (!phone || phone.length < 7) return phone || '';
+  return phone.substring(0, 3) + '****' + phone.substring(phone.length - 4);
+}
+function maskEmail(email) {
+  if (!email || email.indexOf('@') === -1) return email || '';
+  var parts = email.split('@');
+  var name = parts[0];
+  var domain = parts[1];
+  if (name.length <= 1) return name + '***@' + domain;
+  return name.charAt(0) + '***@' + domain;
+}
+function maskAccount(account) {
+  if (!account) return '';
+  // 自动判断是手机号还是邮箱
+  if (/^[0-9+\-\s]{7,}$/.test(account)) return maskPhone(account);
+  if (account.indexOf('@') > -1) return maskEmail(account);
+  return account;
+}
+
+// 加载分销统计
+async function loadDistStats() {
+  try {
+    var data = await apiCall('GET', '/distribution/stats');
+    if (data && data.success && data.data) {
+      var d = data.data;
+      distStats.totalEarnings = d.totalEarnings || 0;
+      distStats.pendingEarnings = d.pendingEarnings || 0;
+      distStats.withdrawableEarnings = d.withdrawableEarnings || 0;
+      distStats.directCount = d.directCount || 0;
+      distStats.indirectCount = d.indirectCount || 0;
+      distStats.inviteCode = d.inviteCode || '';
+
+      document.getElementById('distTotalEarnings').textContent = '¥' + formatMoney(distStats.totalEarnings);
+      document.getElementById('distPendingEarnings').textContent = '¥' + formatMoney(distStats.pendingEarnings);
+      document.getElementById('distWithdrawable').textContent = '¥' + formatMoney(distStats.withdrawableEarnings);
+      document.getElementById('distDirectCount').textContent = distStats.directCount;
+      document.getElementById('distIndirectCount').textContent = distStats.indirectCount;
+      document.getElementById('distTotalCount').textContent = distStats.directCount + distStats.indirectCount;
+    }
+  } catch(e) {
+    console.warn('[Profile] loadDistStats error:', e);
+  }
+}
+
+function formatMoney(num) {
+  num = Number(num) || 0;
+  return num.toFixed(2);
+}
+
+// 加载团队列表
+async function loadTeamList(reset) {
+  if (teamState.loading) return;
+  if (reset) { teamState.page = 1; }
+  teamState.loading = true;
+
+  try {
+    var data = await apiCall('GET', '/distribution/team?page=' + teamState.page + '&level=' + teamState.level);
+    if (data && data.success && data.data) {
+      var list = data.data.list || [];
+      var total = data.data.total || 0;
+      teamState.hasMore = !!data.data.hasMore;
+
+      var listEl = document.getElementById('teamList');
+      if (teamState.page === 1) listEl.innerHTML = '';
+
+      if (list.length === 0 && teamState.page === 1) {
+        listEl.innerHTML = '<div class="team-empty">暂无' + (teamState.level === 'direct' ? '直推' : '间推') + '好友，快去邀请吧！</div>';
+      } else {
+        list.forEach(function(item) {
+          var account = item.maskedPhone || item.maskedEmail || maskAccount(item.phone || item.email || '');
+          var spent = item.totalSpent || 0;
+          var created = item.createdAt ? formatDateShort(item.createdAt) : '';
+          var html = '<div class="team-list-item">' +
+            '<div class="team-list-info">' +
+              '<div class="team-list-account">' + escapeHtml(account) + '</div>' +
+              '<div class="team-list-meta">注册时间：' + created + '</div>' +
+            '</div>' +
+            '<div class="team-list-spent">¥' + formatMoney(spent) + '</div>' +
+          '</div>';
+          listEl.insertAdjacentHTML('beforeend', html);
+        });
+      }
+
+      document.getElementById('teamLoadMore').style.display = teamState.hasMore ? 'block' : 'none';
+    }
+  } catch(e) {
+    console.warn('[Profile] loadTeamList error:', e);
+    if (teamState.page === 1) {
+      document.getElementById('teamList').innerHTML = '<div class="team-empty">加载失败，请稍后重试</div>';
+    }
+  } finally {
+    teamState.loading = false;
+  }
+}
+
+function switchTeamTab(level) {
+  teamState.level = level;
+  document.querySelectorAll('.team-tab').forEach(function(tab) {
+    tab.classList.toggle('active', tab.textContent.indexOf(level === 'direct' ? '直推' : '间推') > -1);
+  });
+  loadTeamList(true);
+}
+
+function loadMoreTeam() {
+  teamState.page++;
+  loadTeamList(false);
+}
+
+// 加载佣金明细
+async function loadCommissionList(reset) {
+  if (commissionState.loading) return;
+  if (reset) { commissionState.page = 1; }
+  commissionState.loading = true;
+
+  try {
+    var data = await apiCall('GET', '/distribution/commissions?page=' + commissionState.page);
+    if (data && data.success && data.data) {
+      var list = data.data.list || [];
+      commissionState.hasMore = list.length >= 20;
+
+      var listEl = document.getElementById('commissionList');
+      if (commissionState.page === 1) listEl.innerHTML = '';
+
+      if (list.length === 0 && commissionState.page === 1) {
+        listEl.innerHTML = '<div class="team-empty">暂无佣金记录</div>';
+      } else {
+        list.forEach(function(item) {
+          var amount = item.amount || 0;
+          var level = item.level || 'direct';
+          var rate = level === 'direct' ? '15%' : '5%';
+          var orderAmount = item.orderAmount || 0;
+          var status = item.status || 'pending';
+          var statusText = status === 'pending' ? '待结算' : (status === 'available' ? '可提现' : '已提现');
+          var statusClass = status === 'pending' ? 'pending' : (status === 'available' ? 'available' : 'withdrawn');
+          var time = item.createdAt ? formatDateShort(item.createdAt) : '';
+          var html = '<div class="commission-list-item">' +
+            '<div class="commission-info">' +
+              '<div class="commission-amount">+' + formatMoney(amount) + ' 元</div>' +
+              '<div class="commission-meta">订单¥' + formatMoney(orderAmount) + ' · ' + (level === 'direct' ? '直推' : '间推') + rate + ' · ' + time + '</div>' +
+            '</div>' +
+            '<span class="commission-status ' + statusClass + '">' + statusText + '</span>' +
+          '</div>';
+          listEl.insertAdjacentHTML('beforeend', html);
+        });
+      }
+
+      document.getElementById('commissionLoadMore').style.display = commissionState.hasMore ? 'block' : 'none';
+    }
+  } catch(e) {
+    console.warn('[Profile] loadCommissionList error:', e);
+    if (commissionState.page === 1) {
+      document.getElementById('commissionList').innerHTML = '<div class="team-empty">加载失败，请稍后重试</div>';
+    }
+  } finally {
+    commissionState.loading = false;
+  }
+}
+
+function loadMoreCommissions() {
+  commissionState.page++;
+  loadCommissionList(false);
+}
+
+function formatDateShort(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  } catch(e) { return ''; }
+}
+
+// ==================== 提现弹窗 ====================
+function openWithdrawModal() {
+  document.getElementById('withdrawBalance').textContent = '¥' + formatMoney(distStats.withdrawableEarnings);
+  document.getElementById('withdrawAmount').value = '';
+  document.getElementById('withdrawAccount').value = '';
+  withdrawMethod = 'wechat';
+  document.querySelectorAll('.withdraw-method-tab').forEach(function(tab, i) {
+    tab.classList.toggle('active', i === 0);
+  });
+  document.getElementById('withdrawModal').style.display = 'flex';
+}
+
+function closeWithdrawModal() {
+  document.getElementById('withdrawModal').style.display = 'none';
+}
+
+function selectWithdrawMethod(method, el) {
+  withdrawMethod = method;
+  document.querySelectorAll('.withdraw-method-tab').forEach(function(tab) {
+    tab.classList.remove('active');
+  });
+  el.classList.add('active');
+}
+
+async function submitWithdraw() {
+  var amount = parseFloat(document.getElementById('withdrawAmount').value);
+  var account = document.getElementById('withdrawAccount').value.trim();
+
+  if (!amount || amount < 1) {
+    showToast('提现金额最低1元', 'error');
+    return;
+  }
+  if (amount > distStats.withdrawableEarnings) {
+    showToast('提现金额不能超过可提现余额', 'error');
+    return;
+  }
+  if (!account) {
+    showToast('请输入收款账号', 'error');
+    return;
+  }
+
+  var btn = document.getElementById('btnSubmitWithdraw');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  try {
+    var data = await apiCall('POST', '/distribution/withdraw', {
+      amount: amount,
+      method: withdrawMethod,
+      account: account
+    });
+    if (data && data.success) {
+      closeWithdrawModal();
+      // 显示进度弹窗
+      document.getElementById('withdrawProgressIcon').textContent = '⏳';
+      document.getElementById('withdrawProgressTitle').textContent = '提现申请已提交';
+      document.getElementById('withdrawProgressDesc').textContent = '您的提现申请（¥' + formatMoney(amount) + '）已提交，请耐心等待审核到账。审核通过后将转入您的' + (withdrawMethod === 'wechat' ? '微信' : '支付宝') + '账户。';
+      document.getElementById('withdrawProgressModal').style.display = 'flex';
+      // 刷新统计
+      loadDistStats();
+    }
+  } catch(e) {
+    showToast(e.message || '提现失败，请重试', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '提交提现申请';
+  }
+}
+
+function closeWithdrawProgressModal() {
+  document.getElementById('withdrawProgressModal').style.display = 'none';
+}
+
+// 提现弹窗遮罩点击关闭
+document.getElementById('withdrawModal').addEventListener('click', function(e) {
+  if (e.target === this) closeWithdrawModal();
+});
+document.getElementById('withdrawProgressModal').addEventListener('click', function(e) {
+  if (e.target === this) closeWithdrawProgressModal();
+});
+
+// ==================== Hash 路由：#team / #withdraw ====================
+function handleHashRoute() {
+  var hash = location.hash;
+  if (hash === '#team' || hash === '#withdraw') {
+    // 滚动到团队卡片
+    var teamCard = document.getElementById('teamCard');
+    if (teamCard) {
+      teamCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (hash === '#withdraw') {
+      setTimeout(function() { openWithdrawModal(); }, 500);
+    }
+  }
+}
+
+// 监听 hash 变化
+window.addEventListener('hashchange', handleHashRoute);
+
+// ==================== 加载分销数据（profile 加载后调用） ====================
+async function loadDistributionData() {
+  await loadDistStats();
+  await loadTeamList(true);
+  await loadCommissionList(true);
+}
 
 init();
 </script>

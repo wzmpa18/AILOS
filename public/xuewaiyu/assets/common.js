@@ -74,14 +74,14 @@
 
   // ===== Phase4: 底部导航全8语种本地化（含繁体中文） =====
   var NAV_LABELS = {
-    zh: { home: '首页', learn: '学习', chat: 'AI对话', review: '复习', discover: '社交', companion: '伴读', profile: '我的' },
-    'zh-TW': { home: '首頁', learn: '學習', chat: 'AI對話', review: '複習', discover: '社交', companion: '伴讀', profile: '我的' },
-    en: { home: 'Home', learn: 'Learn', chat: 'AI Chat', review: 'Review', discover: 'Social', companion: 'Buddy', profile: 'Me' },
-    ja: { home: 'ホーム', learn: '学習', chat: 'AI会話', review: '復習', discover: '交流', companion: 'パートナー', profile: 'マイ' },
-    ko: { home: '홈', learn: '학습', chat: 'AI대화', review: '복습', discover: '소셜', companion: '파트너', profile: '내정보' },
-    fr: { home: 'Accueil', learn: 'Apprendre', chat: 'Chat IA', review: 'Réviser', discover: 'Social', companion: 'Partenaire', profile: 'Moi' },
-    es: { home: 'Inicio', learn: 'Aprender', chat: 'Chat IA', review: 'Repasar', discover: 'Social', companion: 'Amigo', profile: 'Yo' },
-    de: { home: 'Start', learn: 'Lernen', chat: 'KI-Chat', review: 'Wiederholen', discover: 'Sozial', companion: 'Partner', profile: 'Ich' }
+    zh: { home: '首页', learn: '学习', chat: 'AI对话', review: '复习', game: '游戏', discover: '社交', companion: '伴读', profile: '我的' },
+    'zh-TW': { home: '首頁', learn: '學習', chat: 'AI對話', review: '複習', game: '遊戲', discover: '社交', companion: '伴讀', profile: '我的' },
+    en: { home: 'Home', learn: 'Learn', chat: 'AI Chat', review: 'Review', game: 'Games', discover: 'Social', companion: 'Buddy', profile: 'Me' },
+    ja: { home: 'ホーム', learn: '学習', chat: 'AI会話', review: '復習', game: 'ゲーム', discover: '交流', companion: 'パートナー', profile: 'マイ' },
+    ko: { home: '홈', learn: '학습', chat: 'AI대화', review: '복습', game: '게임', discover: '소셜', companion: '파트너', profile: '내정보' },
+    fr: { home: 'Accueil', learn: 'Apprendre', chat: 'Chat IA', review: 'Réviser', game: 'Jeux', discover: 'Social', companion: 'Partenaire', profile: 'Moi' },
+    es: { home: 'Inicio', learn: 'Aprender', chat: 'Chat IA', review: 'Repasar', game: 'Juegos', discover: 'Social', companion: 'Amigo', profile: 'Yo' },
+    de: { home: 'Start', learn: 'Lernen', chat: 'KI-Chat', review: 'Wiederholen', game: 'Spiele', discover: 'Sozial', companion: 'Partner', profile: 'Ich' }
   };
 
   // ===== Stage9 M5: 社群模块 4Tab 导航本地化 =====
@@ -508,6 +508,7 @@
     { key: 'learn',     icon: '📚', label: '学习',   href: '/xuewaiyu/learn.html' },
     { key: 'chat',      icon: '💬', label: 'AI对话', href: '/xuewaiyu/chat.html' },
     { key: 'review',    icon: '🔄', label: '复习',   href: '/xuewaiyu/review.html' },
+    { key: 'game',      icon: '🎮', label: '游戏',   href: '/xuewaiyu/game.html' },
     { key: 'discover',  icon: '🌐', label: '社交',   href: '/xuewaiyu/community-friends.html' },
     { key: 'companion', icon: '🤝', label: '伴读',   href: '/xuewaiyu/ai-companion-builder.html' },
     { key: 'profile',   icon: '👤', label: '我的',   href: '/xuewaiyu/profile.html' }
@@ -539,6 +540,7 @@
     if (p.indexOf('learn') >= 0) return 'learn';
     if (p.indexOf('chat') >= 0) return 'chat';
     if (p.indexOf('review') >= 0) return 'review';
+    if (p.indexOf('game') >= 0) return 'game';
     if (p.indexOf('discover') >= 0) return 'discover';
     if (p.indexOf('ai-companion') >= 0) return 'companion';
     if (p.indexOf('placement') >= 0) return 'profile';

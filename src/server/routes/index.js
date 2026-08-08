@@ -123,6 +123,9 @@ safeUse('/content/custom', './customContent') && routeCount++;
 // 伴读计划（模块十一）— 个性化学习计划+每日任务+进度跟进
 safeUse('/companion', './companion') && routeCount++;
 
+// 两级分销系统 — 分销统计/团队/佣金/提现/排行榜/邀请海报
+safeUse('/distribution', './distribution') && routeCount++;
+
 console.log(`[ROUTES] ${routeCount} route modules loaded successfully`);
 
 module.exports = router;

@@ -37,6 +37,13 @@
     .toast-box .toast-msg { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:16px; }
     .toast-box .toast-btn { padding:10px 36px; background:var(--primary); color:#fff; border:none; border-radius:20px; font-size:14px; font-weight:600; cursor:pointer; }
     .toast-box .toast-btn-secondary { background:#f3f4f6; color:var(--text); margin-left:8px; }
+    /* 每日学习时长选择 */
+    .duration-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .duration-card { padding:16px 12px; background:#fff; border:2px solid var(--border); border-radius:12px; text-align:center; cursor:pointer; transition:all .15s; }
+    .duration-card:active { transform:scale(.97); }
+    .duration-card.sel { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .duration-card .duration-num { font-size:24px; font-weight:800; }
+    .duration-card .duration-unit { font-size:13px; margin-top:2px; }
   </style>
 </head>
 <body>
@@ -87,11 +94,18 @@
         </div>
       </div>
 
-      <button class="btn-primary" id="applyBtn" style="margin-top:18px;font-size:17px;padding:16px;">
-        🚀 开启我的第一课
-      </button>
-      <button class="btn-secondary" id="customizeBtn" style="margin-top:10px;">
-        🤝 定制专属伴读计划
+      <!-- 每日学习时长选择（新增步骤） -->
+      <div id="durationSection" style="margin-top:18px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;">⏰ 选择每日学习时长</div>
+        <div class="duration-grid">
+          <div class="duration-card" data-minutes="15"><div class="duration-num">15</div><div class="duration-unit">分钟</div></div>
+          <div class="duration-card" data-minutes="30"><div class="duration-num">30</div><div class="duration-unit">分钟</div></div>
+          <div class="duration-card" data-minutes="60"><div class="duration-num">1</div><div class="duration-unit">小时</div></div>
+          <div class="duration-card" data-minutes="120"><div class="duration-num">2</div><div class="duration-unit">小时</div></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="generatePlanBtn" style="margin-top:14px;display:none;font-size:17px;padding:16px;">
+        🚀 生成学习计划
       </button>
       <button class="btn-secondary" id="retryBtn" style="margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);">
         重新测试
@@ -109,7 +123,7 @@
   <!-- Toast 容器 -->
   <div id="toastContainer"></div>
 
-  <script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
   <script>
     // ===== P3 改造：DOMContentLoaded 双重绑定 + 全场景异常兜底 + 硬编码题库彻底删除 =====
     var _PLACEMENT_READY = false;
@@ -505,27 +519,79 @@
           applyUIText();
           var sb = document.getElementById('startBtn');
           if (sb) sb.textContent = t('startBtn');
+          // 重置时长选择
+          selectedDuration = 0;
+          document.querySelectorAll('.duration-card').forEach(function(c) { c.classList.remove('sel'); });
+          var gpBtn = document.getElementById('generatePlanBtn');
+          if (gpBtn) { gpBtn.style.display = 'none'; gpBtn.disabled = false; gpBtn.textContent = '🚀 生成学习计划'; }
         };
       }
 
-      // applyBtn
-      var applyBtn = document.getElementById('applyBtn');
-      if (applyBtn) {
-        applyBtn.onclick = function () {
-          try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
+      // 每日学习时长选择
+      var selectedDuration = 0;
+      var durationCards = document.querySelectorAll('.duration-card');
+      durationCards.forEach(function(card) {
+        card.onclick = function() {
+          durationCards.forEach(function(c) { c.classList.remove('sel'); });
+          card.classList.add('sel');
+          selectedDuration = parseInt(card.getAttribute('data-minutes'), 10);
+          var gpBtn = document.getElementById('generatePlanBtn');
+          if (gpBtn) gpBtn.style.display = 'block';
+        };
+      });
+
+      // generatePlanBtn — 调用 /api/plan/generate 生成学习计划
+      var generatePlanBtn = document.getElementById('generatePlanBtn');
+      if (generatePlanBtn) {
+        generatePlanBtn.onclick = function () {
+          if (!selectedDuration) return;
           var lvl = document.getElementById('resLevel').textContent || 'A1';
-          location.href = '/xuewaiyu/vocabulary.html?level=' + encodeURIComponent(lvl) + '&lang=' + encodeURIComponent(lang);
+          // 同步学习语言到全局
+          try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
+          generatePlan(lang, lvl, selectedDuration);
         };
       }
 
-      // customizeBtn
-      var customizeBtn = document.getElementById('customizeBtn');
-      if (customizeBtn) {
-        customizeBtn.onclick = function () {
-          var lvl = document.getElementById('resLevel').textContent || 'A1';
-          try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
-          location.href = '/xuewaiyu/companion.html?level=' + encodeURIComponent(lvl) + '&lang=' + encodeURIComponent(lang) + '&source=placement';
-        };
+      function generatePlan(targetLanguage, level, duration) {
+        var btn = document.getElementById('generatePlanBtn');
+        if (!btn) return;
+        var origText = btn.textContent;
+        btn.textContent = '⏳ 正在生成学习计划...';
+        btn.disabled = true;
+
+        var token = getToken();
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+
+        fetch('/api/plan/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ targetLanguage: targetLanguage, level: level, duration: duration }),
+          signal: controller.signal
+        })
+        .then(function(r) {
+          clearTimeout(timeoutId);
+          if (r.status === 401) { showTokenExpired(); throw new Error('token'); }
+          return r.json();
+        })
+        .then(function(data) {
+          if (data && (data.success || data.plan)) {
+            // 生成成功，跳转到学习页
+            location.href = '/xuewaiyu/learn.html';
+          } else {
+            throw new Error((data && data.error) || '生成失败');
+          }
+        })
+        .catch(function(err) {
+          clearTimeout(timeoutId);
+          if (err && err.message === 'token') return;
+          btn.textContent = origText;
+          btn.disabled = false;
+          var errMsg = '学习计划生成失败，请重试';
+          if (err && err.name === 'AbortError') errMsg = '请求超时，请检查网络后重试';
+          else if (err && err.message) errMsg = '生成失败: ' + err.message;
+          showError(errMsg, function() { generatePlan(targetLanguage, level, duration); });
+        });
       }
 
       // shareBtn
@@ -644,6 +710,7 @@
         document.getElementById('resRank').textContent = rankTexts[level] || rankTexts['A1'];
 
         try { localStorage.setItem('yandao_level_assessment', JSON.stringify({ lang: lang, level: level, score: score, at: Date.now() })); } catch (e) {}
+        try { if (window.AILOS) window.AILOS.setStudyLang(lang); } catch (e) {}
         saveProgress(level, lang);
       }
 

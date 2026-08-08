@@ -1,5 +1,41 @@
 const authService = require('../../services/authService');
+const prisma = require('../../config/database');
 const authController = {
+  // Check if phone or email already exists (for registration duplicate check)
+  async checkExists(req, res, next) {
+    try {
+      const { phone, email } = req.query;
+
+      if (!phone && !email) {
+        return res.status(400).json({ success: false, error: 'Phone or email parameter is required' });
+      }
+
+      const conditions = [];
+      if (phone) conditions.push({ phone });
+      if (email) conditions.push({ email });
+
+      const existingUser = await prisma.user.findFirst({
+        where: { OR: conditions },
+        select: { id: true, phone: true, email: true },
+      });
+
+      if (existingUser) {
+        let message = '';
+        if (phone && existingUser.phone === phone) {
+          message = '该手机号已注册';
+        } else if (email && existingUser.email === email) {
+          message = '该邮箱已注册';
+        } else {
+          message = '该账号已注册';
+        }
+        return res.json({ success: true, exists: true, message });
+      }
+
+      return res.json({ success: true, exists: false });
+    } catch (error) {
+      next(error);
+    }
+  },
   // Send SMS code
   async sendSmsCode(req, res, next) {
     try {
@@ -105,7 +141,7 @@ const authController = {
   // Register with password (with SMS/email verification)
   async register(req, res, next) {
     try {
-      const { phone, email, password, code, nickname, username, uiLanguage, browserLanguage } = req.body;
+      const { phone, email, password, code, nickname, username, uiLanguage, browserLanguage, inviteCode } = req.body;
 
       // 必填字段校验
       if (!phone && !email) {
@@ -120,7 +156,7 @@ const authController = {
 
       const result = await authService.registerWithPassword(
         phone, email, password, code, nickname || username,
-        { uiLanguage, browserLanguage, ipAddress: req.ip, userAgent: req.headers['user-agent'] }
+        { uiLanguage, browserLanguage, inviteCode, ipAddress: req.ip, userAgent: req.headers['user-agent'] }
       );
       res.json({ success: true, ...result });
     } catch (error) {

@@ -7,9 +7,69 @@ const smsService = require('./smsService');
 const logger = require('../utils/logger');
 const config = require('../config');
 const { getSystemConfigService } = require('./systemConfigService');
+const referralService = require('./referralService');
 
 // Default avatar URL — cute parrot image for the language learning app
 const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
+
+// 邀请码字符集（大写字母 + 数字，去除易混淆字符 I/O/0/1）
+const INVITE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const INVITE_CODE_LENGTH = 6;
+
+/**
+ * 生成6位邀请码（大写字母+数字，去除易混淆字符）
+ * @returns {string} 6位邀请码
+ */
+function generateInviteCode() {
+  let code = '';
+  for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
+    code += INVITE_CODE_CHARS[Math.floor(Math.random() * INVITE_CODE_CHARS.length)];
+  }
+  return code;
+}
+
+/**
+ * 生成唯一的邀请码（确保数据库中不重复）
+ * @returns {Promise<string>} 唯一邀请码
+ */
+async function generateUniqueInviteCode() {
+  let code = generateInviteCode();
+  let attempts = 0;
+  const maxAttempts = 10;
+  while (attempts < maxAttempts) {
+    const existing = await prisma.user.findUnique({
+      where: { inviteCode: code },
+      select: { id: true },
+    });
+    if (!existing) return code;
+    code = generateInviteCode();
+    attempts++;
+  }
+  // 极端情况下追加随机后缀
+  return code + Math.floor(Math.random() * 9);
+}
+
+/**
+ * 通过邀请码查找推荐人（先查 inviteCode 字段，再回退 uniqueId 兼容旧数据）
+ * @param {string} code - 邀请码
+ * @returns {Promise<object|null>} 推荐人用户信息
+ */
+async function findReferrerByCode(code) {
+  if (!code) return null;
+  // 先按 inviteCode 字段查找
+  let referrer = await prisma.user.findUnique({
+    where: { inviteCode: code },
+    select: { id: true, uniqueId: true, nickname: true },
+  });
+  if (!referrer) {
+    // 回退：按 uniqueId 查找（兼容旧版邀请码即 uniqueId 的逻辑）
+    referrer = await prisma.user.findUnique({
+      where: { uniqueId: code },
+      select: { id: true, uniqueId: true, nickname: true },
+    });
+  }
+  return referrer;
+}
 
 // 判断是否为管理员（用于登录审计等场景）
 async function isAdminUser(userId) {
@@ -390,6 +450,46 @@ class AuthService {
         context,
       });
 
+      // 注册时绑定推荐人（两级分销）
+      const { inviteCode } = context;
+      if (inviteCode) {
+        try {
+          const referrer = await findReferrerByCode(inviteCode);
+          if (referrer && referrer.id !== user.id) {
+            // 防止自邀
+            // 调用 referralService 绑定推荐关系
+            const bindResult = await referralService.bindReferral(
+              referrer.id,
+              user.id,
+              inviteCode,
+              'register'
+            );
+
+            if (bindResult.success) {
+              // 设置用户推荐人字段与归属
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  referrer: referrer.id,           // 佣金链推荐人ID
+                  directReferrer: referrer.id,     // 直推人ID
+                  ownerType: 'USER',               // 资产归属类型
+                  ownerId: referrer.id,            // 归属用户ID
+                  originChannel: 'referral',       // 来源渠道
+                },
+              });
+              logger.info(`Referral bound: user=${user.id} referrer=${referrer.id} inviteCode=${inviteCode}`);
+            } else {
+              logger.warn(`Referral bind skipped: ${bindResult.message} (user=${user.id} inviteCode=${inviteCode})`);
+            }
+          } else if (!referrer) {
+            logger.warn(`Referrer not found for inviteCode=${inviteCode} (user=${user.id})`);
+          }
+        } catch (refErr) {
+          // 推荐人绑定失败不阻塞注册流程
+          logger.error(`Referral binding failed (non-fatal): ${refErr.message}`);
+        }
+      }
+
       const tokens = generateTokens({ userId: user.id, uniqueId: user.uniqueId });
       const deviceInfo = {
         ipAddress: context.ipAddress,
@@ -466,10 +566,12 @@ class AuthService {
   async _createUserWithIdentity({ phone, email, password, wechatOpenId, wechatUnionId, nickname, avatar, context = {} }) {
     const passwordHash = password ? await hashPassword(password) : null;
     const uniqueId = generateRandomString(16);
+    const inviteCode = await generateUniqueInviteCode();
 
     const user = await prisma.user.create({
       data: {
         uniqueId,
+        inviteCode,
         phone: phone || null,
         email: email || null,
         passwordHash,

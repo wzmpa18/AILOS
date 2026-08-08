@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#4F46E5">
+<title>邀请好友 - 言道学外语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: #EEF2FF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 24px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
+    --nav-height: 64px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 16px 100px;
+    line-height: 1.6;
+  }
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; position: sticky; top: 0; z-index: 100;
+    background: var(--bg); gap: 8px;
+  }
+  .nav-back {
+    font-size: 14px; color: var(--text-secondary); text-decoration: none;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .nav-back:hover { color: var(--primary); }
+  .nav-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+  .container { width: 100%; max-width: 680px; margin: 0 auto; }
+
+  /* 用户信息卡片 */
+  .user-card {
+    background: linear-gradient(135deg, var(--primary) 0%, #6366F1 50%, #818CF8 100%);
+    border-radius: var(--radius); padding: 24px; color: #fff;
+    box-shadow: 0 8px 24px rgba(79,70,229,.25); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .user-avatar {
+    width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.2);
+    border: 3px solid rgba(255,255,255,.4); overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .user-avatar .placeholder { font-size: 28px; font-weight: 700; color: #fff; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-nickname { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .user-invite-code {
+    font-size: 13px; opacity: .9; display: flex; align-items: center; gap: 6px;
+  }
+  .user-invite-code .code {
+    font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 2px;
+    background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 6px;
+  }
+  .copy-code-btn {
+    background: rgba(255,255,255,.2); border: none; color: #fff;
+    padding: 2px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    transition: background .2s;
+  }
+  .copy-code-btn:hover { background: rgba(255,255,255,.35); }
+
+  /* 卡片通用 */
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .card-header {
+    font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-header .icon { font-size: 18px; }
+
+  /* 海报区域 */
+  .poster-area {
+    text-align: center; position: relative;
+  }
+  #posterCanvas {
+    width: 100%; max-width: 360px; border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md); display: block; margin: 0 auto;
+  }
+  .poster-loading {
+    width: 100%; max-width: 360px; height: 520px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary-light); border-radius: var(--radius-sm);
+    color: var(--text-secondary); font-size: 14px;
+  }
+  .poster-actions { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* 按钮 */
+  .btn {
+    padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; display: inline-flex;
+    align-items: center; gap: 6px; font-family: inherit;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-outline { background: var(--card-bg); color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #059669; }
+  .btn-lg { padding: 14px 32px; font-size: 15px; width: 100%; justify-content: center; }
+
+  /* 快捷入口 */
+  .quick-entries { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .quick-entry {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 16px 12px; border-radius: var(--radius-sm); text-decoration: none;
+    background: var(--bg); border: 1px solid var(--border); transition: all .2s;
+  }
+  .quick-entry:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .quick-entry .qe-icon { font-size: 28px; }
+  .quick-entry .qe-text { font-size: 13px; font-weight: 600; color: var(--text); }
+  .quick-entry .qe-sub { font-size: 11px; color: var(--text-muted); }
+
+  /* 佣金规则 */
+  .rule-list { }
+  .rule-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rule-item:last-child { border-bottom: none; }
+  .rule-icon {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .rule-icon.direct { background: #ECFDF5; }
+  .rule-icon.indirect { background: #FFFBEB; }
+  .rule-icon.settle { background: var(--primary-light); }
+  .rule-icon.withdraw { background: #FEF2F2; }
+  .rule-content { flex: 1; }
+  .rule-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .rule-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .rule-rate {
+    font-size: 22px; font-weight: 800; color: var(--success);
+  }
+  .rule-rate.amber { color: var(--warning); }
+
+  /* 合规提示 */
+  .compliance-tip {
+    background: var(--primary-light); border-radius: var(--radius-sm);
+    padding: 12px 16px; font-size: 12px; color: var(--text-secondary);
+    line-height: 1.6; border-left: 3px solid var(--primary);
+    margin-top: 12px;
+  }
+  .compliance-tip strong { color: var(--primary); }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300;
+    padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    display: none; white-space: nowrap; max-width: 90vw;
+  }
+  .toast.show { display: block; animation: toastIn .3s ease; }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error { background: var(--error); color: #fff; }
+  .toast.info { background: var(--primary); color: #fff; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* Loading */
+  .loading-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+
+  @media (max-width: 420px) {
+    .quick-entries { grid-template-columns: 1fr; }
+    .user-card { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="container">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <a class="nav-back" href="/xuewaiyu/profile.html">← 返回个人中心</a>
+      <span class="nav-title">邀请好友</span>
+    </nav>
+
+    <!-- Loading -->
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+
+      <!-- 用户信息卡片 -->
+      <div class="user-card">
+        <div class="user-avatar" id="userAvatar">
+          <span class="placeholder">U</span>
+        </div>
+        <div class="user-info">
+          <div class="user-nickname" id="userNickname">学习者</div>
+          <div class="user-invite-code">
+            专属邀请码：<span class="code" id="inviteCodeText">------</span>
+            <button class="copy-code-btn" onclick="copyInviteCode()">复制</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 邀请海报 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🎨</span>
+          <span>专属邀请海报</span>
+        </div>
+        <div class="poster-area">
+          <div class="poster-loading" id="posterLoading">海报生成中...</div>
+          <canvas id="posterCanvas" width="360" height="540" class="hidden"></canvas>
+          <div class="poster-actions" id="posterActions" style="display:none;">
+            <button class="btn btn-outline" onclick="savePoster()">💾 保存海报</button>
+            <button class="btn btn-primary" onclick="shareInvite()">📤 一键分享</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷入口 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">⚡</span>
+          <span>快捷入口</span>
+        </div>
+        <div class="quick-entries">
+          <a class="quick-entry" href="/xuewaiyu/profile.html#team">
+            <span class="qe-icon">👥</span>
+            <span class="qe-text">我的团队</span>
+            <span class="qe-sub">查看好友与收益</span>
+          </a>
+          <a class="quick-entry" href="/xuewaiyu/profile.html#withdraw">
+            <span class="qe-icon">💰</span>
+            <span class="qe-text">去提现</span>
+            <span class="qe-sub">提现佣金收益</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 佣金规则说明 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📋</span>
+          <span>佣金规则说明</span>
+        </div>
+        <div class="rule-list">
+          <div class="rule-item">
+            <div class="rule-icon direct">🤝</div>
+            <div class="rule-content">
+              <div class="rule-title">直推佣金 <span class="rule-rate">15%</span></div>
+              <div class="rule-desc">好友通过你的邀请码注册并付费，你获得其订单金额 15% 的佣金</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon indirect">👥</div>
+            <div class="rule-content">
+              <div class="rule-title">间推佣金 <span class="rule-rate amber">5%</span></div>
+              <div class="rule-desc">你好友邀请的人付费，你获得其订单金额 5% 的佣金</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon settle">📅</div>
+            <div class="rule-content">
+              <div class="rule-title">结算规则</div>
+              <div class="rule-desc">订单完成 7 天后，佣金自动转为可提现余额。多邀多得，上不封顶</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon withdraw">💳</div>
+            <div class="rule-content">
+              <div class="rule-title">提现规则</div>
+              <div class="rule-desc">最低 1 元即可提现，支持微信、支付宝，审核通过后到账</div>
+            </div>
+          </div>
+        </div>
+        <div class="compliance-tip">
+          <strong>温馨提示：</strong>收益因人而异，取决于邀请人数与用户付费情况。多邀多得、上不封顶，但平台不对收益做任何保本或固定收益承诺。
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+<script>
+// ==================== State ====================
+var inviteData = {
+  inviteCode: '',
+  inviteUrl: '',
+  nickname: '学习者',
+  avatar: ''
+};
+var posterGenerated = false;
+
+// ==================== Token Helpers ====================
+function getToken() {
+  try {
+    var t = localStorage.getItem('yandao_token_v1');
+    if (t && t !== 'null' && t !== 'undefined') return t;
+  } catch(e) {}
+  try {
+    var legacyKeys = ['auth_tokens', 'ailos_token', 'token', 'accessToken'];
+    for (var i = 0; i < legacyKeys.length; i++) {
+      var raw = localStorage.getItem(legacyKeys[i]);
+      if (!raw || raw === 'null' || raw === 'undefined') continue;
+      var val = raw;
+      if (raw.charAt(0) === '{') {
+        try { var p = JSON.parse(raw); val = p.accessToken || p.token || null; } catch(e) { val = raw; }
+      }
+      if (val) return val;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ==================== API ====================
+var API_BASE = '/api';
+
+async function apiGet(path) {
+  var token = getToken();
+  var headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  var resp = await fetch(API_BASE + path, { method: 'GET', headers: headers });
+  if (resp.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  var data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || data.message || 'Request failed');
+  return data;
+}
+
+// ==================== Toast ====================
+var toastTimer = null;
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (type || '') + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.className = 'toast'; }, 2500);
+}
+
+function redirectToLogin() {
+  var redirect = encodeURIComponent(location.pathname + location.search);
+  location.href = '/xuewaiyu/login.html?redirect=' + redirect;
+}
+
+// ==================== URL 参数读取邀请码 ====================
+function readInviteCodeFromUrl() {
+  try {
+    var params = new URLSearchParams(location.search);
+    var code = params.get('code');
+    if (code && code.length > 0) {
+      localStorage.setItem('yandao_invite_code', code);
+      return code;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ==================== 初始化 ====================
+async function init() {
+  // 登录态校验
+  var token = getToken();
+  if (!token) {
+    redirectToLogin();
+    return;
+  }
+
+  // 从URL读取邀请码并存储
+  readInviteCodeFromUrl();
+
+  try {
+    // 获取海报数据
+    var data = await apiGet('/distribution/poster');
+    if (data && data.success && data.data) {
+      inviteData.inviteCode = data.data.inviteCode || '';
+      inviteData.inviteUrl = data.data.inviteUrl || '';
+      inviteData.nickname = data.data.nickname || '学习者';
+      inviteData.avatar = data.data.avatar || '';
+    }
+  } catch(e) {
+    // 接口不可用时兜底：尝试从 /user/me 获取邀请码
+    try {
+      var userData = await apiGet('/user/me');
+      var user = userData.data || userData.user || userData;
+      inviteData.inviteCode = user.inviteCode || generateFallbackCode();
+      inviteData.nickname = user.nickname || '学习者';
+      inviteData.avatar = user.avatar || '';
+    } catch(e2) {
+      // 最终兜底
+      inviteData.inviteCode = generateFallbackCode();
+    }
+  }
+
+  // 确保邀请链接有值
+  if (!inviteData.inviteUrl && inviteData.inviteCode) {
+    inviteData.inviteUrl = 'https://yandao.vip/xuewaiyu/register.html?invite=' + encodeURIComponent(inviteData.inviteCode);
+  }
+
+  // 渲染用户信息
+  renderUserInfo();
+
+  // 隐藏 loading，显示内容
+  document.getElementById('loadingSpinner').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+
+  // 生成海报
+  generatePoster();
+}
+
+function generateFallbackCode() {
+  // 基于时间戳生成兜底邀请码
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var code = '';
+  var seed = Date.now();
+  for (var i = 0; i < 6; i++) {
+    code += chars.charAt(Math.abs(seed + i * 7) % chars.length);
+  }
+  return code;
+}
+
+function renderUserInfo() {
+  // 昵称
+  document.getElementById('userNickname').textContent = inviteData.nickname;
+  // 邀请码
+  document.getElementById('inviteCodeText').textContent = inviteData.inviteCode || '------';
+  // 头像
+  var avatarEl = document.getElementById('userAvatar');
+  if (inviteData.avatar) {
+    avatarEl.innerHTML = '<img src="' + inviteData.avatar + '" alt="avatar">';
+  } else {
+    var initial = (inviteData.nickname || 'U').charAt(0).toUpperCase();
+    avatarEl.innerHTML = '<span class="placeholder">' + escapeHtml(initial) + '</span>';
+  }
+}
+
+// ==================== Canvas 海报生成 ====================
+function generatePoster() {
+  var canvas = document.getElementById('posterCanvas');
+  var loadingEl = document.getElementById('posterLoading');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width;
+  var H = canvas.height;
+
+  // 二维码 URL
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(inviteData.inviteUrl || 'https://yandao.vip');
+
+  // 先加载二维码图片
+  var qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = function() {
+    drawPoster(ctx, W, H, qrImg);
+  };
+  qrImg.onerror = function() {
+    // 二维码加载失败，用纯文字兜底
+    drawPoster(ctx, W, H, null);
+  };
+  qrImg.src = qrUrl;
+
+  // 同时加载头像（如果有）
+  if (inviteData.avatar) {
+    var avatarImg = new Image();
+    avatarImg.crossOrigin = 'anonymous';
+    avatarImg.onload = function() {
+      inviteData._avatarImg = avatarImg;
+      // 如果二维码已加载完成会重新绘制，这里触发重绘
+      drawPoster(ctx, W, H, qrImg.complete && qrImg.naturalWidth > 0 ? qrImg : null);
+    };
+    avatarImg.onerror = function() {
+      inviteData._avatarImg = null;
+    };
+    avatarImg.src = inviteData.avatar;
+  }
+}
+
+function drawPoster(ctx, W, H, qrImg) {
+  // 清空画布
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景渐变
+  var bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#4F46E5');
+  bgGrad.addColorStop(0.5, '#6366F1');
+  bgGrad.addColorStop(1, '#818CF8');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 顶部白色圆角区域
+  ctx.fillStyle = '#FFFFFF';
+  roundRect(ctx, 20, 80, W - 40, H - 100, 16);
+  ctx.fill();
+
+  // LOGO/品牌名
+  ctx.fillStyle = '#4F46E5';
+  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('AILOS 言道学外语', W / 2, 50);
+
+  // 副标题
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '13px -apple-system, sans-serif';
+  ctx.fillText('和我一起免费学外语，还能赚佣金', W / 2, 70);
+
+  // 用户头像（圆形裁剪）
+  var avatarSize = 60;
+  var avatarX = W / 2 - avatarSize / 2;
+  var avatarY = 105;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(W / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  if (inviteData._avatarImg && inviteData._avatarImg.naturalWidth > 0) {
+    ctx.drawImage(inviteData._avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+  } else {
+    // 默认占位
+    ctx.fillStyle = '#EEF2FF';
+    ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+    ctx.fillStyle = '#4F46E5';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var initial = (inviteData.nickname || 'U').charAt(0).toUpperCase();
+    ctx.fillText(initial, W / 2, avatarY + avatarSize / 2);
+  }
+  ctx.restore();
+  // 头像边框
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(W / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 昵称
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(inviteData.nickname || '学习者', W / 2, 190);
+
+  // 邀请你文案
+  ctx.fillStyle = '#64748B';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('邀请你一起学外语', W / 2, 212);
+
+  // 佣金信息
+  ctx.fillStyle = '#10B981';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText('直推 15%  间推 5% 佣金', W / 2, 250);
+
+  ctx.fillStyle = '#64748B';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('多邀多得，上不封顶', W / 2, 270);
+
+  // 二维码
+  var qrSize = 140;
+  var qrX = W / 2 - qrSize / 2;
+  var qrY = 290;
+  if (qrImg && qrImg.naturalWidth > 0) {
+    ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+  } else {
+    // 二维码加载失败的占位框
+    ctx.fillStyle = '#F1F5F9';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('扫码加入', W / 2, qrY + qrSize / 2);
+  }
+
+  // 邀请码
+  ctx.fillStyle = '#4F46E5';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('我的邀请码', W / 2, 460);
+
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 24px Courier New, monospace';
+  ctx.fillText(inviteData.inviteCode || '------', W / 2, 490);
+
+  // 底部合规提示
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('收益因人而异，取决于邀请人数与用户付费', W / 2, 520);
+
+  // 显示 canvas，隐藏 loading
+  document.getElementById('posterLoading').classList.add('hidden');
+  document.getElementById('posterCanvas').classList.remove('hidden');
+  document.getElementById('posterActions').style.display = 'flex';
+  posterGenerated = true;
+}
+
+// 圆角矩形辅助函数
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ==================== 分享与复制 ====================
+function copyInviteCode() {
+  var text = inviteData.inviteCode || '';
+  if (!text) { showToast('邀请码获取失败', 'error'); return; }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('邀请码已复制', 'success');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function shareInvite() {
+  var shareUrl = inviteData.inviteUrl || ('https://yandao.vip/xuewaiyu/register.html?invite=' + encodeURIComponent(inviteData.inviteCode));
+  var shareText = '和我一起免费学外语，还能赚佣金！使用我的邀请码 ' + inviteData.inviteCode + ' 注册：' + shareUrl;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'AILOS 言道学外语 - 邀请好友',
+      text: shareText,
+      url: shareUrl
+    }).then(function() {
+      showToast('分享成功', 'success');
+    }).catch(function() {
+      // 用户取消分享，静默处理
+    });
+  } else {
+    // 不支持 navigator.share，复制链接
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareText).then(function() {
+        showToast('邀请链接已复制，去分享给好友吧', 'success');
+      }).catch(function() {
+        fallbackCopy(shareText);
+      });
+    } else {
+      fallbackCopy(shareText);
+    }
+  }
+}
+
+function savePoster() {
+  if (!posterGenerated) { showToast('海报还在生成中', 'error'); return; }
+  var canvas = document.getElementById('posterCanvas');
+  try {
+    // 尝试导出为图片
+    var dataUrl = canvas.toDataURL('image/png');
+    var link = document.createElement('a');
+    link.download = 'AILOS邀请海报_' + (inviteData.inviteCode || 'invite') + '.png';
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('海报已保存', 'success');
+  } catch(e) {
+    // CORS 导致 toDataURL 失败时，提示用户长按保存
+    showToast('请长按海报图片保存', 'info');
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  showToast('已复制', 'success');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ==================== 启动 ====================
+init();
+</script>
+</body>
+</html>

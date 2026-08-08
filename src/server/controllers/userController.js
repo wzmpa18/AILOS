@@ -5,6 +5,7 @@
 // ============================================================
 const prisma = require('../../config/database');
 const contentFilter = require('../../utils/contentFilter');
+const distributionService = require('../../services/distributionService');
 
 // Default avatar URL — parrot image for the language learning app
 const DEFAULT_AVATAR = '/assets/images/default_avatar.png';
@@ -143,6 +144,8 @@ const userController = {
           membershipLevel: true,
           createdAt: true,
           lastLoginAt: true,
+          inviteCode: true,
+          referrer: true,
         },
       });
 
@@ -177,11 +180,26 @@ const userController = {
 
       const LANG_NAMES = { ja: '日语', en: '英语', ko: '韩语', fr: '法语', es: '西班牙语', de: '德语', zh: '中文' };
 
+      // 获取分销统计概要（总收益、可提现金额）
+      let distributionSummary = { totalEarnings: 0, settledAmount: 0 };
+      try {
+        const distStats = await distributionService.getDistributionStats(userId);
+        distributionSummary = {
+          totalEarnings: distStats.totalEarnings,
+          settledAmount: distStats.settledAmount,
+        };
+      } catch (distErr) {
+        // 分销统计查询失败不影响 profile 正常返回
+      }
+
       return res.json({
         success: true,
         data: {
           ...user,
           avatar: user.avatar || DEFAULT_AVATAR,
+          inviteCode: user.inviteCode || null,
+          hasReferrer: !!user.referrer,
+          distribution: distributionSummary,
           nativeLanguage: toFrontendCode(langPref?.nativeLanguage) || 'zh',
           targetLanguage: targetLanguage,
           targetLanguageName: LANG_NAMES[targetLanguage] || targetLanguage,

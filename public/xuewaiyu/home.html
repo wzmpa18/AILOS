@@ -257,10 +257,203 @@
     @media (max-width: 480px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
+
+    /* ===== 收益展示卡片 ===== */
+    .earnings-card {
+      background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #818CF8 100%);
+      border-radius: var(--radius); padding: 20px; color: #fff;
+      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(79,70,229,.25);
+      position: relative; overflow: hidden;
+    }
+    .earnings-card::before {
+      content: ''; position: absolute; top: -20px; right: -20px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(255,255,255,.08);
+    }
+    .earnings-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; position: relative; z-index: 1;
+    }
+    .earnings-title { font-size: 14px; font-weight: 600; opacity: .9; }
+    .earnings-icon { font-size: 20px; }
+    .earnings-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 14px; position: relative; z-index: 1;
+    }
+    .earnings-stat { text-align: center; }
+    .earnings-stat-value { font-size: 20px; font-weight: 700; }
+    .earnings-stat-label { font-size: 11px; opacity: .8; margin-top: 2px; }
+    .earnings-hook {
+      font-size: 13px; opacity: .9; margin-bottom: 12px;
+      position: relative; z-index: 1;
+    }
+    .earnings-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
+      color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+      text-decoration: none; transition: all .2s; position: relative; z-index: 1;
+    }
+    .earnings-btn:hover { background: rgba(255,255,255,.3); }
+    .earnings-compliance {
+      font-size: 10px; opacity: .7; margin-top: 10px;
+      position: relative; z-index: 1;
+    }
+    @media (max-width: 480px) {
+      .earnings-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+
+    /* ===== 悬浮裂变按钮 ===== */
+    .float-invite-btn {
+      position: fixed; right: 16px; bottom: calc(var(--nav-height) + 16px);
+      z-index: 900; background: var(--primary); color: #fff;
+      padding: 12px 18px; border-radius: 30px; font-size: 13px; font-weight: 700;
+      box-shadow: 0 4px 16px rgba(79,70,229,.35); cursor: pointer;
+      display: flex; align-items: center; gap: 6px; text-decoration: none;
+      border: none; transition: all .2s; animation: floatPulse 2s ease-in-out infinite;
+    }
+    .float-invite-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,70,229,.4); }
+    @keyframes floatPulse {
+      0%, 100% { box-shadow: 0 4px 16px rgba(79,70,229,.35); }
+      50% { box-shadow: 0 4px 24px rgba(79,70,229,.5); }
+    }
+
+    /* ===== 访客版 ===== */
+    .guest-hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: var(--radius); padding: 32px 24px; color: #fff;
+      text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(102,126,234,.3);
+    }
+    .guest-hero h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+    .guest-hero p { font-size: 14px; opacity: .9; margin-bottom: 16px; }
+    .guest-value-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+    }
+    .guest-value-card {
+      background: rgba(255,255,255,.15); border-radius: var(--radius-sm);
+      padding: 16px 12px; text-align: center;
+    }
+    .guest-value-card .gv-icon { font-size: 32px; margin-bottom: 6px; }
+    .guest-value-card .gv-title { font-size: 14px; font-weight: 700; }
+    .guest-value-card .gv-desc { font-size: 11px; opacity: .8; margin-top: 4px; }
+    .guest-case-section { margin-bottom: 20px; }
+    .guest-case-card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 16px;
+      box-shadow: var(--shadow); margin-bottom: 10px;
+    }
+    .guest-case-card .gc-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .guest-case-card .gc-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .guest-case-card .gc-name { font-size: 13px; font-weight: 600; }
+    .guest-case-card .gc-content { font-size: 13px; color: var(--text-secondary); }
+    .guest-case-card .gc-highlight { color: var(--primary); font-weight: 600; }
+    .guest-cta-btn {
+      display: block; width: 100%; padding: 14px; background: #fff;
+      color: var(--primary); border: none; border-radius: var(--radius-sm);
+      font-size: 16px; font-weight: 700; cursor: pointer; text-decoration: none;
+      text-align: center; transition: all .2s;
+    }
+    .guest-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+    .guest-compliance {
+      font-size: 11px; opacity: .7; margin-top: 12px; text-align: center;
+    }
   </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
+
+  <!-- ===== 访客版（未登录时显示）===== -->
+  <div class="container" id="guestSection" style="display:none;">
+    <div class="guest-hero">
+      <h2>免费学外语 + 邀好友赚钱</h2>
+      <p>AI 智能语言学习平台，学外语的同时还能通过邀好友赚取佣金</p>
+      <div class="guest-value-grid">
+        <div class="guest-value-card">
+          <div class="gv-icon">📚</div>
+          <div class="gv-title">免费学外语</div>
+          <div class="gv-desc">8种语言，AI对话，口语速成</div>
+        </div>
+        <div class="guest-value-card">
+          <div class="gv-icon">💰</div>
+          <div class="gv-title">邀好友赚钱</div>
+          <div class="gv-desc">直推15%，间推5%，多邀多得</div>
+        </div>
+      </div>
+      <a class="guest-cta-btn" href="/xuewaiyu/login.html">立即注册，开启学习赚钱之旅</a>
+      <div class="guest-compliance">收益因人而异，取决于邀请人数与用户付费</div>
+    </div>
+
+    <div class="guest-case-section">
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-title"><span class="dot"></span>学员学习成果</div>
+      </div>
+      <div class="guest-case-card">
+        <div class="gc-header">
+          <div class="gc-avatar">🌸</div>
+          <div class="gc-name">小樱花（日语学习者）</div>
+        </div>
+        <div class="gc-content">坚持学习3个月，从零基础到 <span class="gc-highlight">N4水平</span>，每天30分钟AI对话练习，现在能流畅进行日常日语交流。</div>
+      </div>
+      <div class="guest-case-card">
+        <div class="gc-header">
+          <div class="gc-avatar">🌍</div>
+          <div class="gc-name">Global Learner（英语学习者）</div>
+        </div>
+        <div class="gc-content">利用碎片时间学习，2个月累计学习 <span class="gc-highlight">120小时</span>，口语自信心大幅提升，已能应对海外出差场景。</div>
+      </div>
+    </div>
+
+    <div class="guest-case-section">
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-title"><span class="dot"></span>分销收益案例</div>
+      </div>
+      <div class="guest-case-card">
+        <div class="gc-header">
+          <div class="gc-avatar">👋</div>
+          <div class="gc-name">热心分享者</div>
+        </div>
+        <div class="gc-content">邀请好友一起学习，累计邀请 <span class="gc-highlight">30位好友</span>，获得佣金收益。多邀多得、上不封顶，收益因人而异。</div>
+      </div>
+    </div>
+
+    <a class="guest-cta-btn" href="/xuewaiyu/login.html" style="margin-top:16px;">立即注册</a>
+    <div class="guest-compliance">收益因人而异，取决于邀请人数与用户付费。平台不对收益做保本承诺。</div>
+  </div>
+
+  <!-- ===== 已登录：收益展示卡片 ===== -->
+  <div class="container" id="earningsSection" style="display:none;">
+    <div class="earnings-card">
+      <div class="earnings-header">
+        <span class="earnings-title">我的分销收益</span>
+        <span class="earnings-icon">💰</span>
+      </div>
+      <div class="earnings-grid">
+        <div class="earnings-stat">
+          <div class="earnings-stat-value" id="homeTodayEarnings">¥0</div>
+          <div class="earnings-stat-label">今日预估收益</div>
+        </div>
+        <div class="earnings-stat">
+          <div class="earnings-stat-value" id="homeTotalEarnings">¥0</div>
+          <div class="earnings-stat-label">累计总收益</div>
+        </div>
+        <div class="earnings-stat">
+          <div class="earnings-stat-value" id="homeInviteCount">0</div>
+          <div class="earnings-stat-label">邀请好友数</div>
+        </div>
+        <div class="earnings-stat">
+          <div class="earnings-stat-value" id="homeTeamCount">0</div>
+          <div class="earnings-stat-label">团队总人数</div>
+        </div>
+      </div>
+      <div class="earnings-hook" id="earningsHook">学外语还能赚钱，已帮好友提升外语水平</div>
+      <a class="earnings-btn" href="/xuewaiyu/invite.html">🎁 邀请好友赚15%佣金</a>
+      <div class="earnings-compliance">收益因人而异，取决于邀请人数与用户付费</div>
+    </div>
+  </div>
 
   <div class="ai-quota-card" id="aiQuotaCard">
     <div class="ai-quota-header"><span class="ai-quota-title">今日AI额度</span><span class="ai-quota-icon">🤖</span></div>
@@ -1065,7 +1258,85 @@
       return div.innerHTML;
     }
 
+    // ============ 分销收益展示 ============
+    async function loadHomeEarnings() {
+      var token = getToken();
+      if (!token) return;
+      try {
+        var resp = await fetch('/api/distribution/stats', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resp.ok) return;
+        var data = await resp.json();
+        if (data && data.success && data.data) {
+          var d = data.data;
+          var totalEarnings = Number(d.totalEarnings) || 0;
+          var directCount = Number(d.directCount) || 0;
+          var indirectCount = Number(d.indirectCount) || 0;
+          var teamCount = directCount + indirectCount;
+          // 今日预估收益：暂无专门接口，用待结算近似展示
+          var todayEarnings = Number(d.pendingEarnings) || 0;
+
+          var el1 = document.getElementById('homeTodayEarnings');
+          var el2 = document.getElementById('homeTotalEarnings');
+          var el3 = document.getElementById('homeInviteCount');
+          var el4 = document.getElementById('homeTeamCount');
+          if (el1) el1.textContent = '¥' + todayEarnings.toFixed(2);
+          if (el2) el2.textContent = '¥' + totalEarnings.toFixed(2);
+          if (el3) el3.textContent = directCount;
+          if (el4) el4.textContent = teamCount;
+
+          // 情绪钩子文案
+          var hookEl = document.getElementById('earningsHook');
+          if (hookEl && teamCount > 0) {
+            hookEl.textContent = '学外语还能赚钱，已帮 ' + teamCount + ' 位好友提升外语水平';
+          }
+        }
+      } catch(e) {
+        console.warn('[Home] loadHomeEarnings error:', e);
+      }
+    }
+
+    // ============ 访客/登录态判断 ============
+    function checkGuestMode() {
+      var token = getToken();
+      if (!token) {
+        // 未登录：显示访客版，隐藏已登录内容
+        var guestSection = document.getElementById('guestSection');
+        var earningsSection = document.getElementById('earningsSection');
+        var aiQuotaCard = document.getElementById('aiQuotaCard');
+        var app = document.getElementById('app');
+        if (guestSection) guestSection.style.display = 'block';
+        if (earningsSection) earningsSection.style.display = 'none';
+        if (aiQuotaCard) aiQuotaCard.style.display = 'none';
+        if (app) app.innerHTML = '';
+        return true;
+      }
+      return false;
+    }
+
+    // ============ 悬浮裂变按钮 ============
+    function injectFloatInviteBtn() {
+      if (document.getElementById('floatInviteBtn')) return;
+      var btn = document.createElement('a');
+      btn.id = 'floatInviteBtn';
+      btn.className = 'float-invite-btn';
+      btn.href = '/xuewaiyu/invite.html';
+      btn.innerHTML = '🎁 邀好友赚15%佣金';
+      document.body.appendChild(btn);
+    }
+
     // ============ Boot ============
+    // 检查是否为访客模式
+    var isGuest = checkGuestMode();
+    if (!isGuest) {
+      // 已登录：显示收益卡片，加载分销数据
+      var earningsSection = document.getElementById('earningsSection');
+      if (earningsSection) earningsSection.style.display = 'block';
+      loadHomeEarnings();
+      // 注入悬浮按钮
+      injectFloatInviteBtn();
+    }
     init();
   </script>
 </body>

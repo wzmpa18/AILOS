@@ -110,34 +110,33 @@
     </div>
   </div>
 
-  <!-- Spell Area -->
-  <div id="spellArea" class="game-area">
+  <!-- Speak Area (口语跟读) -->
+  <div id="speakArea" class="game-area">
     <div class="game-header">
       <button class="back-btn" onclick="stopGame()">← 返回</button>
-      <span class="game-score" id="spellScore">⭐ 0</span>
-      <span class="game-progress" id="spellProgress">1/10</span>
+      <span class="game-score" id="speakScore">⭐ 0</span>
+      <span class="game-progress" id="speakProgress">1/10</span>
     </div>
-    <div id="spellQuestion">
+    <div id="speakQuestion">
       <div class="question-card">
-        <div class="question-word" id="sChinese">---</div>
-        <div class="question-phonetic" id="sPhonetic"></div>
-        <div class="question-hint">请输入对应的英文单词</div>
-        <button class="play-sound-btn" id="sPlayBtn" onclick="playCurrentWord()">🔊 听发音</button>
+        <div class="question-word" id="speakWord">---</div>
+        <div class="question-phonetic" id="speakPhonetic"></div>
+        <div class="question-hint" id="speakHint">听发音后跟读，AI 评分</div>
+        <button class="play-sound-btn" id="speakPlayBtn" onclick="playSpeakWord()">🔊 播放发音</button>
       </div>
-      <input class="spell-input" id="sInput" type="text" placeholder="输入英文拼写..." autocomplete="off" autocorrect="off" autocapitalize="off">
-      <button class="spell-submit" id="sSubmitBtn" onclick="checkSpell()">✓ 提交</button>
-      <div id="sFeedback" style="text-align:center;margin-top:10px;font-size:16px;font-weight:600;"></div>
-      <button class="next-btn" id="sNextBtn" onclick="nextSpell()">→ 下一题</button>
+      <button class="spell-submit" id="speakRecordBtn" onclick="startSpeakRecord()">🎤 开始跟读</button>
+      <div id="speakFeedback" style="text-align:center;margin-top:10px;font-size:16px;font-weight:600;"></div>
+      <button class="next-btn" id="speakNextBtn" onclick="nextSpeak()">→ 下一题</button>
     </div>
-    <div class="result-panel" id="spellResult">
-      <div class="final-score" id="spellFinalScore">0</div>
+    <div class="result-panel" id="speakResult">
+      <div class="final-score" id="speakFinalScore">0</div>
       <div class="final-label">分</div>
-      <div class="stars" id="spellFinalStars">⭐⭐⭐</div>
-      <div class="wrong-list" id="spellWrongList"></div>
+      <div class="stars" id="speakFinalStars">⭐⭐⭐</div>
+      <div class="wrong-list" id="speakWrongList"></div>
       <div class="wrong-section-title">查看历史错题</div>
-      <div class="wrong-list" id="spellHistoryWrong"></div>
+      <div class="wrong-list" id="speakHistoryWrong"></div>
       <button class="retry-btn" onclick="stopGame()">🔄 返回列表</button>
-      <button class="retry-btn" onclick="startGame('spell')" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-left:8px;">🔁 再玩一次</button>
+      <button class="retry-btn" onclick="startGame('speak')" style="background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-left:8px;">🔁 再玩一次</button>
     </div>
   </div>
 
@@ -174,7 +173,7 @@
 <!-- 底部导航由 /assets/common.js 统一注入 7 项（宪法 六-1） --><nav class="bottom-nav">
 </nav>
 
-<script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p8"></script>
 <script>
 // ============================================================
 // 多语言词库（宪法 五-1「题目匹配用户当前学习语言」、一-3 双语言规范）
@@ -231,6 +230,66 @@ var WORD_BANKS = {
   { en:'cloud', zh:'云', ph:'/klaʊd/' }, { en:'door', zh:'门', ph:'/dɔːr/' },
   { en:'fire', zh:'火', ph:'/faɪər/' }, { en:'garden', zh:'花园', ph:'/ˈɡɑːr.dən/' },
   { en:'happy', zh:'快乐的', ph:'/ˈhæp.i/' }, { en:'music', zh:'音乐', ph:'/ˈmjuː.zɪk/' }
+  ],
+  fr: [
+    { en:'bonjour', zh:'你好', ph:'/bɔ̃.ʒuʁ/' }, { en:'merci', zh:'谢谢', ph:'/mɛʁ.si/' },
+    { en:'oui', zh:'是的', ph:'/wi/' }, { en:'non', zh:'不', ph:'/nɔ̃/' },
+    { en:'pain', zh:'面包', ph:'/pɛ̃/' }, { en:'eau', zh:'水', ph:'/o/' },
+    { en:'chat', zh:'猫', ph:'/ʃa/' }, { en:'chien', zh:'狗', ph:'/ʃjɛ̃/' },
+    { en:'livre', zh:'书', ph:'/livʁ/' }, { en:'maison', zh:'房子', ph:'/mɛ.zɔ̃/' },
+    { en:'soleil', zh:'太阳', ph:'/sɔ.lɛj/' }, { en:'lune', zh:'月亮', ph:'/lyn/' },
+    { en:'arbre', zh:'树', ph:'/aʁbʁ/' }, { en:'fleur', zh:'花', ph:'/flœʁ/' },
+    { en:'rouge', zh:'红色', ph:'/ʁuʒ/' }, { en:'bleu', zh:'蓝色', ph:'/blø/' },
+    { en:'école', zh:'学校', ph:'/e.kɔl/' }, { en:'ami', zh:'朋友', ph:'/a.mi/' },
+    { en:'temps', zh:'时间', ph:'/tɑ̃/' }, { en:'jour', zh:'白天', ph:'/ʒuʁ/' },
+    { en:'nuit', zh:'夜晚', ph:'/nɥi/' }, { en:'mer', zh:'海洋', ph:'/mɛʁ/' },
+    { en:'étoile', zh:'星星', ph:'/e.twal/' }, { en:'feu', zh:'火', ph:'/fø/' },
+    { en:'porte', zh:'门', ph:'/pɔʁt/' }
+  ],
+  es: [
+    { en:'hola', zh:'你好', ph:'/ˈo.la/' }, { en:'gracias', zh:'谢谢', ph:'/ˈɡɾa.sjas/' },
+    { en:'sí', zh:'是的', ph:'/si/' }, { en:'no', zh:'不', ph:'/no/' },
+    { en:'pan', zh:'面包', ph:'/pan/' }, { en:'agua', zh:'水', ph:'/ˈa.ɣwa/' },
+    { en:'gato', zh:'猫', ph:'/ˈɡa.to/' }, { en:'perro', zh:'狗', ph:'/ˈpe.ro/' },
+    { en:'libro', zh:'书', ph:'/ˈli.βɾo/' }, { en:'casa', zh:'房子', ph:'/ˈka.sa/' },
+    { en:'sol', zh:'太阳', ph:'/sol/' }, { en:'luna', zh:'月亮', ph:'/ˈlu.na/' },
+    { en:'árbol', zh:'树', ph:'/ˈar.βol/' }, { en:'flor', zh:'花', ph:'/floɾ/' },
+    { en:'rojo', zh:'红色', ph:'/ˈro.xo/' }, { en:'azul', zh:'蓝色', ph:'/aˈsul/' },
+    { en:'escuela', zh:'学校', ph:'/esˈkwe.la/' }, { en:'amigo', zh:'朋友', ph:'/aˈmi.ɣo/' },
+    { en:'tiempo', zh:'时间', ph:'/ˈtjem.po/' }, { en:'día', zh:'白天', ph:'/ˈdi.a/' },
+    { en:'noche', zh:'夜晚', ph:'/ˈno.t͡ʃe/' }, { en:'mar', zh:'海洋', ph:'/maɾ/' },
+    { en:'estrella', zh:'星星', ph:'/esˈtɾe.ʝa/' }, { en:'fuego', zh:'火', ph:'/ˈfwe.ɣo/' },
+    { en:'puerta', zh:'门', ph:'/ˈpweɾ.ta/' }
+  ],
+  de: [
+    { en:'hallo', zh:'你好', ph:'/ˈha.lo/' }, { en:'danke', zh:'谢谢', ph:'/ˈdaŋ.kə/' },
+    { en:'ja', zh:'是的', ph:'/jaː/' }, { en:'nein', zh:'不', ph:'/naɪ̯n/' },
+    { en:'brot', zh:'面包', ph:'/bʁoːt/' }, { en:'wasser', zh:'水', ph:'/ˈvasɐ/' },
+    { en:'katze', zh:'猫', ph:'/ˈkat͡sə/' }, { en:'hund', zh:'狗', ph:'/hʊnt/' },
+    { en:'buch', zh:'书', ph:'/buːx/' }, { en:'haus', zh:'房子', ph:'/haʊ̯s/' },
+    { en:'sonne', zh:'太阳', ph:'/ˈzɔnə/' }, { en:'mond', zh:'月亮', ph:'/moːnt/' },
+    { en:'baum', zh:'树', ph:'/baʊ̯m/' }, { en:'blume', zh:'花', ph:'/ˈbluːmə/' },
+    { en:'rot', zh:'红色', ph:'/ʁoːt/' }, { en:'blau', zh:'蓝色', ph:'/blaʊ̯/' },
+    { en:'schule', zh:'学校', ph:'/ˈʃuːlə/' }, { en:'freund', zh:'朋友', ph:'/fʁɔʏ̯nt/' },
+    { en:'zeit', zh:'时间', ph:'/t͡saɪ̯t/' }, { en:'tag', zh:'白天', ph:'/taːk/' },
+    { en:'nacht', zh:'夜晚', ph:'/naxt/' }, { en:'meer', zh:'海洋', ph:'/meːɐ̯/' },
+    { en:'stern', zh:'星星', ph:'/ʃtɛʁn/' }, { en:'feuer', zh:'火', ph:'/ˈfɔɪ̯ɐ/' },
+    { en:'tür', zh:'门', ph:'/tyːɐ̯/' }
+  ],
+  zh: [
+    { en:'你好', zh:'nǐ hǎo', ph:'你好' }, { en:'谢谢', zh:'xiè xie', ph:'谢谢' },
+    { en:'是的', zh:'shì de', ph:'是的' }, { en:'不是', zh:'bù shì', ph:'不是' },
+    { en:'面包', zh:'miàn bāo', ph:'面包' }, { en:'水', zh:'shuǐ', ph:'水' },
+    { en:'猫', zh:'māo', ph:'猫' }, { en:'狗', zh:'gǒu', ph:'狗' },
+    { en:'书', zh:'shū', ph:'书' }, { en:'房子', zh:'fáng zi', ph:'房子' },
+    { en:'太阳', zh:'tài yáng', ph:'太阳' }, { en:'月亮', zh:'yuè liang', ph:'月亮' },
+    { en:'树', zh:'shù', ph:'树' }, { en:'花', zh:'huā', ph:'花' },
+    { en:'红色', zh:'hóng sè', ph:'红色' }, { en:'蓝色', zh:'lán sè', ph:'蓝色' },
+    { en:'学校', zh:'xué xiào', ph:'学校' }, { en:'朋友', zh:'péng you', ph:'朋友' },
+    { en:'时间', zh:'shí jiān', ph:'时间' }, { en:'白天', zh:'bái tiān', ph:'白天' },
+    { en:'夜晚', zh:'yè wǎn', ph:'夜晚' }, { en:'海洋', zh:'hǎi yáng', ph:'海洋' },
+    { en:'星星', zh:'xīng xing', ph:'星星' }, { en:'火', zh:'huǒ', ph:'火' },
+    { en:'门', zh:'mén', ph:'门' }
   ]
 };
 
@@ -238,27 +297,45 @@ var WORD_BANKS = {
 var GAME_UI = {
   zh: {
     title: '🎮 游戏中心', sub: '边玩边学，轻松掌握单词',
-    quiz: ['单词闯关', '看英文选中文意思，10题一轮，限时作答', '🔥 热门'],
-    spell: ['拼写测试', '看中文意思拼写英文单词，锻炼拼写能力', '✏️ 拼写'],
+    quiz: ['单词闯关', '看单词选正确释义，10题一轮，限时作答', '🔥 热门'],
     listen: ['听力挑战', '听发音选择正确单词，提升听力反应', '🎧 听力'],
+    speak: ['口语跟读', '听发音后跟读，AI 评分你的发音', '🎤 口语'],
   },
   ja: {
     title: '🎮 ゲームセンター', sub: '遊びながら学んで、単語をマスター',
-    quiz: ['単語クイズ', '英単語の意味を選ぼう。10問1セット、制限時間付き', '🔥 人気'],
-    spell: ['スペルテスト', '中国語の意味から英単語を綴ろう', '✏️ スペル'],
+    quiz: ['単語クイズ', '単語の意味を選ぼう。10問1セット、制限時間付き', '🔥 人気'],
     listen: ['リスニング', '発音を聞いて正しい単語を選ぼう', '🎧 リスニング'],
+    speak: ['スピーキング', '発音を聞いて発音しよう、AI採点', '🎤 スピーキング'],
   },
   en: {
     title: '🎮 Game Center', sub: 'Learn while playing, master words easily',
     quiz: ['Word Quiz', 'Pick the right meaning. 10 rounds, timed', '🔥 Hot'],
-    spell: ['Spell Test', 'Spell the English word from its meaning', '✏️ Spell'],
     listen: ['Listening', 'Pick the word you hear', '🎧 Listen'],
+    speak: ['Speaking', 'Listen and repeat, AI scores your pronunciation', '🎤 Speak'],
   },
   ko: {
     title: '🎮 게임 센터', sub: '놀면서 배우고 단어를 익혀요',
     quiz: ['단어 퀴즈', '뜻을 고르세요. 10문제 1세트, 제한시간', '🔥 인기'],
-    spell: ['스펠링', '뜻에서 영단어를 철자로', '✏️ 스펠링'],
     listen: ['리스닝', '들은 단어를 고르세요', '🎧 듣기'],
+    speak: ['스피킹', '듣고 따라 말하세요, AI 채점', '🎤 말하기'],
+  },
+  fr: {
+    title: '🎮 Centre de jeux', sub: 'Apprenez en jouant',
+    quiz: ['Quiz de mots', 'Choisissez la bonne signification', '🔥 Populaire'],
+    listen: ['Écoute', 'Choisissez le mot que vous entendez', '🎧 Écoute'],
+    speak: ['Prononciation', 'Écoutez et répétez, notation IA', '🎤 Parler'],
+  },
+  es: {
+    title: '🎮 Centro de juegos', sub: 'Aprende jugando',
+    quiz: ['Quiz de palabras', 'Elige el significado correcto', '🔥 Popular'],
+    listen: ['Escucha', 'Elige la palabra que escuchas', '🎧 Escucha'],
+    speak: ['Pronunciación', 'Escucha y repite, calificación IA', '🎤 Hablar'],
+  },
+  de: {
+    title: '🎮 Spielzentrum', sub: 'Lernen beim Spielen',
+    quiz: ['Wortquiz', 'Wähle die richtige Bedeutung', '🔥 Beliebt'],
+    listen: ['Hören', 'Wähle das gehörte Wort', '🎧 Hören'],
+    speak: ['Aussprache', 'Hören und nachsprechen, KI-Bewertung', '🎤 Sprechen'],
   },
 };
 function uiLang() {
@@ -272,19 +349,29 @@ function renderGameList() {
     header.querySelector('h1').textContent = ui.title;
     header.querySelector('p').textContent = ui.sub;
   }
-  var defs = ['quiz', 'spell', 'listen'];
-  var badges = ['#fef3c7;color:#d97706;', '#dbeafe;color:#2563eb;', ''];
+  var defs = ['quiz', 'listen', 'speak'];
+  var badges = ['#fef3c7;color:#d97706;', '', '#dbeafe;color:#2563eb;'];
   var html = defs.map(function (k, i) {
     var d = ui[k];
     return '<div class="game-card" onclick="startGame(\'' + k + '\')">' +
-      '<div class="game-icon">' + ['📝','✏️','🎧'][i] + '</div>' +
+      '<div class="game-icon">' + ['📝','🎧','🎤'][i] + '</div>' +
       '<div class="game-name">' + d[0] + '</div>' +
       '<div class="game-desc">' + d[1] + '</div>' +
       '<div class="game-badge"' + (badges[i] ? ' style="background:' + badges[i] + '"' : '') + '>' + d[2] + '</div>' +
       '</div>';
   }).join('');
   var box = document.getElementById('gameList');
-  if (box) box.innerHTML = html;
+  if (box) {
+    var warnHtml = '';
+    // Web Speech API 兼容性检测
+    if (!window.speechSynthesis) {
+      warnHtml += '<div style="background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;">⚠️ 当前浏览器不支持语音合成，听力挑战和口语跟读功能将受限</div>';
+    }
+    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      warnHtml += '<div style="background:#dbeafe;color:#1e40af;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;">ℹ️ 当前浏览器不支持语音识别，口语跟读功能将受限（建议使用 Chrome）</div>';
+    }
+    box.innerHTML = warnHtml + html;
+  }
 }
 
 // 当前目标语言（来自个人中心设置，单一真值源）
@@ -293,26 +380,28 @@ function currentLang() {
     if (window.AILOS && AILOS.getStudyLang) {
       var l = AILOS.getStudyLang();
       if (l && WORD_BANKS[l]) return l;
-      if (l) return 'en'; // 该语种暂无本地词库时，用英语词库兜底，不空屏
     }
+    // 直接从 localStorage 读取 yandao_study_lang
+    var sl = localStorage.getItem('yandao_study_lang');
+    if (sl && WORD_BANKS[sl]) return sl;
   } catch (e) {}
-  return 'ja';
+  return 'en';
 }
 
 // TTS 语言标签映射（宪法 五-3 发音正常）
-var TTS_LANG = { ja: 'ja-JP', ko: 'ko-KR', en: 'en-US', zh: 'zh-CN' };
+var TTS_LANG = { ja: 'ja-JP', ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', fr: 'fr-FR', es: 'es-ES', de: 'de-DE' };
 
 // 按当前语言取词库
-var WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
+var WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.en;
 
 // 语言变更时热更新词库 + 重渲染当前题目与列表（宪法 1.1：切换语言后立即重渲染）
 window.addEventListener('languageChanged', function () {
-  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.ja;
+  WORDS = WORD_BANKS[currentLang()] || WORD_BANKS.en;
   renderGameList(); // 列表标题/名称随界面语言更新
   // 重渲染当前进行中的题型，确保题干/选项跟随界面语言
-  if (typeof renderQuiz === 'function' && document.getElementById('quizArea') && !document.getElementById('quizArea').classList.contains('hidden')) renderQuiz();
-  else if (typeof renderSpell === 'function' && document.getElementById('spellArea') && !document.getElementById('spellArea').classList.contains('hidden')) renderSpell();
-  else if (typeof renderListen === 'function' && document.getElementById('listenArea') && !document.getElementById('listenArea').classList.contains('hidden')) renderListen();
+  if (typeof renderQuiz === 'function' && document.getElementById('quizArea') && document.getElementById('quizArea').classList.contains('active')) renderQuiz();
+  else if (typeof renderListen === 'function' && document.getElementById('listenArea') && document.getElementById('listenArea').classList.contains('active')) renderListen();
+  else if (typeof renderSpeak === 'function' && document.getElementById('speakArea') && document.getElementById('speakArea').classList.contains('active')) renderSpeak();
 });
 
 // 首屏渲染（语言就绪后立即填充列表，消除默认中文闪烁）
@@ -549,11 +638,11 @@ function renderHistoryWrong(containerId) {
 }
 
 function hideAll() {
-  ['gameList','quizArea','spellArea','listenArea'].forEach(function(id) {
+  ['gameList','quizArea','speakArea','listenArea'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) { el.classList.remove('active'); el.style.display = 'none'; }
   });
-  ['quizResult','spellResult','listenResult'].forEach(function(id) {
+  ['quizResult','speakResult','listenResult'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.classList.remove('active');
   });
 }
@@ -573,11 +662,11 @@ function startGame(type) {
     document.getElementById('quizArea').style.display = 'block';
     document.getElementById('quizQuestion').style.display = 'block';
     renderQuiz();
-  } else if (type === 'spell') {
-    document.getElementById('spellArea').classList.add('active');
-    document.getElementById('spellArea').style.display = 'block';
-    document.getElementById('spellQuestion').style.display = 'block';
-    renderSpell();
+  } else if (type === 'speak') {
+    document.getElementById('speakArea').classList.add('active');
+    document.getElementById('speakArea').style.display = 'block';
+    document.getElementById('speakQuestion').style.display = 'block';
+    renderSpeak();
   } else if (type === 'listen') {
     document.getElementById('listenArea').classList.add('active');
     document.getElementById('listenArea').style.display = 'block';
@@ -661,67 +750,151 @@ function quizTimeUp() {
 
 function nextQuiz() { gameIdx++; renderQuiz(); }
 
-// === SPELL GAME ===
-function renderSpell() {
-  if (gameIdx >= gameWords.length) { showResult('spell'); return; }
+// === SPEAK GAME (口语跟读) ===
+// Web Speech API 兼容性检测
+var SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+var speechRecSupported = !!SpeechRecognitionAPI;
+var recInstance = null;
+
+function renderSpeak() {
+  if (gameIdx >= gameWords.length) { showResult('speak'); return; }
   var word = gameWords[gameIdx];
   gameAnswered = false;
-  document.getElementById('spellScore').textContent = '⭐ ' + gameScore;
-  document.getElementById('spellProgress').textContent = (gameIdx + 1) + '/10';
-  document.getElementById('sChinese').textContent = word.zh;
-  document.getElementById('sPhonetic').textContent = word.ph || '';
-  document.getElementById('sInput').value = '';
-  document.getElementById('sFeedback').textContent = '';
-  document.getElementById('sNextBtn').classList.remove('show');
-  document.getElementById('sSubmitBtn').style.display = 'block';
-  document.getElementById('sInput').disabled = false;
-  document.getElementById('sInput').focus();
-  window._spellWord = word.en;
-  window._spellReading = word.ph || '';
+  document.getElementById('speakScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('speakProgress').textContent = (gameIdx + 1) + '/10';
+  document.getElementById('speakWord').textContent = word.en;
+  document.getElementById('speakPhonetic').textContent = word.ph || '';
+  document.getElementById('speakFeedback').textContent = '';
+  document.getElementById('speakFeedback').innerHTML = '';
+  document.getElementById('speakNextBtn').classList.remove('show');
+  var recBtn = document.getElementById('speakRecordBtn');
+  recBtn.disabled = false;
+  recBtn.textContent = '🎤 开始跟读';
+  window._speakWord = word.en;
 
-  // 日/韩等非拉丁语种：键盘直接输入汉字/假名/谚文不现实，
-  // 允许输入罗马音（读音）作为正确答案，并在输入框给出提示。
-  var inp = document.getElementById('sInput');
-  var lang = currentLang();
-  if (lang === 'ja' || lang === 'ko') {
-    inp.placeholder = '输入罗马音，如 ' + (word.ph || 'romaji');
+  // 兼容性提示
+  var hintEl = document.getElementById('speakHint');
+  if (!speechRecSupported) {
+    hintEl.textContent = '⚠️ 当前浏览器不支持语音识别，建议使用 Chrome 浏览器';
+    recBtn.disabled = true;
   } else {
-    inp.placeholder = '输入单词拼写';
+    hintEl.textContent = '听发音后跟读，AI 评分';
+  }
+
+  // 自动播放发音
+  setTimeout(function() { speak(word.en); }, 400);
+}
+
+function playSpeakWord() { if (window._speakWord) speak(window._speakWord); }
+
+function startSpeakRecord() {
+  if (gameAnswered) return;
+  if (!speechRecSupported) {
+    document.getElementById('speakFeedback').innerHTML = '<span style="color:#ef4444">⚠️ 当前浏览器不支持语音识别，请使用 Chrome 浏览器</span>';
+    return;
+  }
+
+  var btn = document.getElementById('speakRecordBtn');
+  btn.disabled = true;
+  btn.textContent = '🎤 识别中...';
+  document.getElementById('speakFeedback').innerHTML = '<span style="color:var(--text-secondary)">🗣️ 请大声跟读...</span>';
+
+  // 停止之前的识别
+  try { if (recInstance) recInstance.stop(); } catch (e) {}
+
+  recInstance = new SpeechRecognitionAPI();
+  recInstance.lang = TTS_LANG[currentLang()] || 'en-US';
+  recInstance.interimResults = false;
+  recInstance.maxAlternatives = 3;
+
+  var gotResult = false;
+
+  recInstance.onresult = function(event) {
+    gotResult = true;
+    // 取多个候选中最佳匹配
+    var bestMatch = '';
+    var bestScore = -1;
+    for (var i = 0; i < event.results[0].length; i++) {
+      var transcript = event.results[0][i].transcript.trim();
+      var score = scoreSpeakMatch(transcript, window._speakWord);
+      if (score > bestScore) { bestScore = score; bestMatch = transcript; }
+    }
+    checkSpeak(bestMatch, bestScore);
+  };
+
+  recInstance.onerror = function(event) {
+    if (gotResult) return;
+    var errMsg = event.error || '未知错误';
+    var msg = '⚠️ 识别失败';
+    if (errMsg === 'not-allowed') msg = '⚠️ 请允许麦克风权限后重试';
+    else if (errMsg === 'no-speech') msg = '⚠️ 未检测到语音，请重试';
+    else if (errMsg === 'network') msg = '⚠️ 网络错误，请检查连接';
+    else msg = '⚠️ 识别失败: ' + errMsg;
+    document.getElementById('speakFeedback').innerHTML = '<span style="color:#ef4444">' + msg + '</span>';
+    btn.disabled = false;
+    btn.textContent = '🎤 重新跟读';
+  };
+
+  recInstance.onend = function() {
+    if (!gotResult && !gameAnswered) {
+      document.getElementById('speakFeedback').innerHTML = '<span style="color:#ef4444">⚠️ 未检测到语音，请重试</span>';
+      btn.disabled = false;
+      btn.textContent = '🎤 重新跟读';
+    }
+  };
+
+  try {
+    recInstance.start();
+  } catch (e) {
+    document.getElementById('speakFeedback').innerHTML = '<span style="color:#ef4444">⚠️ 无法启动录音: ' + e.message + '</span>';
+    btn.disabled = false;
+    btn.textContent = '🎤 重新跟读';
   }
 }
 
-function playCurrentWord() { if (window._spellWord) speak(window._spellWord); }
+function scoreSpeakMatch(recognized, target) {
+  if (!recognized || !target) return 0;
+  var norm = function(s) {
+    return (s || '').toLowerCase().trim()
+      .normalize ? (s || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s,.!?，。！？、~]/g, '')
+      : (s || '').toLowerCase().trim().replace(/[\s,.!?，。！？、~]/g, '');
+  };
+  var r = norm(recognized);
+  var t = norm(target);
+  if (r === t) return 1.0;
+  if (r.indexOf(t) >= 0 || t.indexOf(r) >= 0) return 0.8;
+  // 计算字符级相似度
+  var longer = r.length > t.length ? r : t;
+  var shorter = r.length > t.length ? t : r;
+  if (longer.length === 0) return 0;
+  var matchCount = 0;
+  for (var i = 0; i < shorter.length; i++) {
+    if (longer.indexOf(shorter[i]) >= 0) matchCount++;
+  }
+  return matchCount / longer.length;
+}
 
-function checkSpell() {
+function checkSpeak(recognized, matchScore) {
   if (gameAnswered) return;
   gameAnswered = true;
-  var input = document.getElementById('sInput').value.trim().toLowerCase();
-  var correct = (window._spellWord || '').toLowerCase();
-  // 罗马音去掉长音符后比对（kōri -> kori），避免用户打不出特殊字符被判错
-  var reading = (window._spellReading || '').toLowerCase();
-  var norm = function (s) {
-    return s.normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s;
-  };
-  var isCorrect = input !== '' &&
-    (input === correct || (reading !== '' && norm(input) === norm(reading)));
+
+  var isCorrect = matchScore >= 0.6;
+  var feedbackEl = document.getElementById('speakFeedback');
 
   if (isCorrect) {
     gameScore += 10;
-    document.getElementById('sFeedback').innerHTML = '<span style="color:#10b981">✓ 正确!</span>';
+    var scorePct = Math.round(matchScore * 100);
+    feedbackEl.innerHTML = '<span style="color:#10b981">✓ 发音正确！（相似度 ' + scorePct + '%）</span>';
   } else {
-    // 错误时显示正确答案（宪法 五-2）
-    var answer = window._spellWord + (reading ? '（' + window._spellReading + '）' : '');
-    document.getElementById('sFeedback').innerHTML =
-      '<span style="color:#ef4444">✗ 正确答案: ' + answer + '</span>';
-    recordWrong(gameWords[gameIdx], document.getElementById('sInput').value.trim());
+    feedbackEl.innerHTML = '<span style="color:#ef4444">✗ 你说了: ' + recognized + '，正确: ' + window._speakWord + '</span>';
+    recordWrong(gameWords[gameIdx], recognized);
   }
-  document.getElementById('spellScore').textContent = '⭐ ' + gameScore;
-  document.getElementById('sSubmitBtn').style.display = 'none';
-  document.getElementById('sInput').disabled = true;
-  document.getElementById('sNextBtn').classList.add('show');
+  document.getElementById('speakScore').textContent = '⭐ ' + gameScore;
+  document.getElementById('speakRecordBtn').disabled = true;
+  document.getElementById('speakNextBtn').classList.add('show');
 }
 
-function nextSpell() { gameIdx++; renderSpell(); }
+function nextSpeak() { gameIdx++; renderSpeak(); }
 
 // === LISTEN GAME ===
 function renderListen() {
@@ -733,6 +906,11 @@ function renderListen() {
   document.getElementById('lFeedback').textContent = '';
   document.getElementById('lNextBtn').classList.remove('show');
   window._listenWord = word;
+
+  // 兼容性提示
+  if (!window.speechSynthesis) {
+    document.getElementById('lFeedback').innerHTML = '<span style="color:#ef4444">⚠️ 当前浏览器不支持语音合成，无法播放发音</span>';
+  }
 
   var options = [word.en];
   var wrongs = WORDS.filter(function(w) { return w.en !== word.en; });
@@ -778,8 +956,8 @@ function nextListen() { gameIdx++; renderListen(); }
 // === RESULT ===
 function showResult(type) {
   clearInterval(gameTimer);
-  var prefix = type === 'quiz' ? '' : (type === 'spell' ? 'spell' : 'listen');
-  var questionId = type === 'quiz' ? 'quizQuestion' : (type === 'spell' ? 'spellQuestion' : 'listenQuestion');
+  var prefix = type === 'quiz' ? '' : (type === 'speak' ? 'speak' : 'listen');
+  var questionId = type === 'quiz' ? 'quizQuestion' : (type === 'speak' ? 'speakQuestion' : 'listenQuestion');
   document.getElementById(questionId).style.display = 'none';
   document.getElementById((prefix||type) + 'Result').classList.add('active');
   document.getElementById((prefix||'') + 'FinalScore').textContent = gameScore;
@@ -790,6 +968,30 @@ function showResult(type) {
   // 持久化本轮错题 + 渲染历史错题（v1.1.0 刚性执行令 P0-6）
   saveWrongHistory(type);
   renderHistoryWrong(type + 'HistoryWrong');
+  // 记录学习进度到后端
+  recordGameProgress(type);
+}
+
+// 游戏完成后调用 /api/checkin 记录学习时长
+function recordGameProgress(type) {
+  try {
+    var token = (window.AILOS && AILOS.getToken) ? AILOS.getToken() : (localStorage.getItem('yandao_token_v1') || '');
+    if (!token) return;
+    // 估算学习时长：每题约1分钟
+    var minutes = gameWords.length || 10;
+    var lang = currentLang();
+    fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        type: 'game',
+        gameType: type,
+        score: gameScore,
+        duration: minutes,
+        language: lang
+      })
+    }).catch(function(e) { console.warn('[Game] checkin failed:', e); });
+  } catch (e) {}
 }
 </script>
 </body>

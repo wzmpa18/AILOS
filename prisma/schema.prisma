@@ -110,6 +110,11 @@ model User {
   newsReports         NewsReport[]        @relation("NewsReporter")
   newsAuditLogs       NewsAuditLog[]      @relation("NewsAuditOperator")
 
+  // 分销系统关系
+  commissions         Commission[]        @relation("CommissionUser")
+  commissionsFrom     Commission[]        @relation("CommissionFrom")
+  withdrawals         Withdrawal[]        @relation("WithdrawalUser")
+
   @@index([phone])
   @@index([email])
   @@index([wechatOpenId])
@@ -1838,5 +1843,55 @@ model NewsAuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("news_audit_logs")
+}
+
+// ============================================================
+// 两级分销系统模型（纯增量，不修改已有模型）
+// 严格两级分销：直推15%、间推5%，禁止三级以上
+// 佣金规则永久固化在代码中，不通过配置文件修改
+// ============================================================
+
+// 佣金记录
+model Commission {
+  id            String   @id @default(uuid())
+  userId        String   // 获得佣金的用户ID（上级）
+  orderId       String?  // 来源订单ID
+  fromUserId    String   // 贡献佣金的用户ID（下级）
+  level         Int      // 1=直推 2=间推
+  rate          Float    // 佣金比例 0.15 或 0.05
+  orderAmount   Float    // 订单金额
+  amount        Float    // 佣金金额
+  status        String   @default("pending") // pending=待结算, settled=可提现, withdrawn=已提现, frozen=冻结
+  settledAt     DateTime? // 结算时间（订单完成7天后）
+  createdAt     DateTime @default(now())
+  user          User?    @relation("CommissionUser", fields: [userId], references: [id])
+  fromUser      User?    @relation("CommissionFrom", fields: [fromUserId], references: [id])
+
+  @@index([userId])
+  @@index([fromUserId])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("commissions")
+}
+
+// 提现记录
+model Withdrawal {
+  id            String   @id @default(uuid())
+  userId        String   // 用户ID
+  amount        Float    // 提现金额
+  method        String   // wechat / alipay
+  account       String   // 收款账号
+  status        String   @default("pending") // pending=待审核, approved=已通过, rejected=已拒绝, paid=已到账
+  remark        String?  // 审核备注
+  reviewedAt    DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  user          User?    @relation("WithdrawalUser", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("withdrawals")
 }
 
