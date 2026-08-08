@@ -92,10 +92,12 @@ workflows:
 
           echo ""
           echo "=== Step 6: Generate keystore.properties ==="
+          # PKCS12 keystore uses a SINGLE password for both store and key.
+          # Using $STORE_PASS for keyPassword to match the -passout value in Step 3.
           printf 'storeFile=/tmp/yandao-release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\nstoreType=pkcs12\n' \
-            "$STORE_PASS" "$KEY_ALIAS_VAL" "$KEY_PASS" \
+            "$STORE_PASS" "$KEY_ALIAS_VAL" "$STORE_PASS" \
             > /tmp/keystore.properties
-          echo "keystore.properties created"
+          echo "keystore.properties created (keyPassword = storePassword for PKCS12)"
           sed 's/Password=.*/Password=***/' /tmp/keystore.properties
 
       - name: Config SDK Path and Install Build Tools
@@ -146,6 +148,8 @@ workflows:
           echo "=== Keystore Check ==="
           echo "keystore.properties: $(test -f /tmp/keystore.properties && echo EXISTS || echo NOT_FOUND)"
           echo "keystore file: $(ls -la /tmp/yandao-release.keystore 2>/dev/null | awk '{print $5}' || echo 'NOT FOUND')"
+          echo "keystore.properties content (masked):"
+          sed 's/Password=.*/Password=***/' /tmp/keystore.properties 2>/dev/null || echo "  (file not found)"
           echo ""
 
           echo "=== local.properties ==="
@@ -171,30 +175,37 @@ workflows:
             echo "========================================"
             echo "=== BUILD FAILED (exit code: $BUILD_EXIT_CODE) ==="
             echo "========================================"
+
             echo ""
-            echo "=== 'What went wrong' section ==="
-            grep -A 50 "What went wrong" /tmp/gradle-build.log || true
-            echo ""
-            echo "=== 'FAILURE:' section ==="
-            grep -A 20 "^FAILURE:" /tmp/gradle-build.log || true
-            echo ""
-            echo "=== Error/Exception/Caused by lines ==="
-            grep -i "error\|FAILED\|exception\|cannot find\|Could not\|Caused by" /tmp/gradle-build.log | tail -50
-            echo ""
-            echo "========================================"
-            echo "=== LAST 100 lines of build log ==="
-            echo "========================================"
-            tail -100 /tmp/gradle-build.log
-            echo ""
-            echo "========================================"
             echo "=== Build Reports (if any) ==="
-            echo "========================================"
             find app/build/reports -type f -name "*.html" -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || echo "No reports found"
+
+            echo ""
+            echo "=== Build Outputs (if any) ==="
+            find app/build/outputs -type f 2>/dev/null || echo "No outputs found"
+
+            echo ""
+            echo "=== FAILED Tasks ==="
+            grep "FAILED" /tmp/gradle-build.log || echo "(no FAILED tasks found)"
+
+            echo ""
+            echo "=== LAST 30 lines of build log ==="
+            tail -30 /tmp/gradle-build.log
+
             echo ""
             echo "========================================"
-            echo "=== Build Outputs (if any) ==="
+            echo "=== >>> ROOT CAUSE: What went wrong <<< ==="
             echo "========================================"
-            find app/build/outputs -type f 2>/dev/null || echo "No outputs found"
+            grep -A 50 "What went wrong" /tmp/gradle-build.log || echo "(not found in log)"
+
+            echo ""
+            echo "=== >>> ROOT CAUSE: FAILURE section <<< ==="
+            grep -A 20 "^FAILURE:" /tmp/gradle-build.log || echo "(not found in log)"
+
+            echo ""
+            echo "=== >>> ROOT CAUSE: Error/Exception lines <<< ==="
+            grep -i "error\|exception\|cannot find\|Could not\|Caused by" /tmp/gradle-build.log | tail -30
+
             exit $BUILD_EXIT_CODE
           fi
 
