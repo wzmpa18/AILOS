@@ -1221,6 +1221,72 @@
     }, 30000);
   }
 
+  // ============================================================
+  // P6 任务三：全局鉴权中间件 requireAuth()
+  // 所有需要登录的页面调用 AILOS.requireAuth() 即可自动校验登录状态
+  // 未登录则跳转登录页，token过期则尝试刷新，刷新失败也跳转登录页
+  // ============================================================
+  function requireAuth(options) {
+    var opt = options || {};
+    var token = getToken();
+    if (!token) {
+      var redirect = encodeURIComponent(location.pathname + location.search);
+      location.href = '/xuewaiyu/login.html?redirect=' + redirect;
+      return false;
+    }
+    // 校验token是否过期
+    var expMs = getTokenExpiry(token);
+    if (expMs && expMs < Date.now()) {
+      // token已过期，尝试刷新
+      var refreshToken = null;
+      try { refreshToken = localStorage.getItem(REFRESH_KEY); } catch (e) {}
+      if (refreshToken) {
+        fetch('/api/auth/refresh-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: refreshToken })
+        }).then(function(r) {
+          if (r.ok) {
+            return r.json().then(function(data) {
+              if (data && data.tokens) {
+                setToken(data.tokens.accessToken, data.tokens.refreshToken);
+                // 刷新成功，页面继续加载
+                return true;
+              }
+              // 刷新失败，跳转登录
+              _redirectToLogin();
+            });
+          } else {
+            _redirectToLogin();
+          }
+        }).catch(function() { _redirectToLogin(); });
+      } else {
+        _redirectToLogin();
+      }
+    }
+    return true;
+  }
+
+  function _redirectToLogin() {
+    try { clearToken(); } catch (e) {}
+    var redirect = encodeURIComponent(location.pathname + location.search);
+    location.href = '/xuewaiyu/login.html?redirect=' + redirect;
+  }
+
+  // P6 任务三：检查登录状态（不跳转，仅返回布尔值）
+  function isLoggedIn() {
+    var token = getToken();
+    if (!token) return false;
+    var expMs = getTokenExpiry(token);
+    if (expMs && expMs < Date.now()) {
+      // 已过期，检查是否有refreshToken
+      var refreshToken = null;
+      try { refreshToken = localStorage.getItem(REFRESH_KEY); } catch (e) {}
+      return !!refreshToken;
+    }
+    return true;
+  }
+
   window.AILOS = {
     STUDY_KEY: STUDY_KEY,
     LEGACY_KEY: LEGACY_KEY,
@@ -1263,7 +1329,10 @@
     tryRefreshToken: tryRefreshToken,
     // P3 任务一：异步就绪 Promise
     ready: ready,
-    isReady: function() { return _readyResolved; }
+    isReady: function() { return _readyResolved; },
+    // P6 任务三：全局鉴权中间件
+    requireAuth: requireAuth,
+    isLoggedIn: isLoggedIn
   };
 
   // 全局函数暴露（供未引用 window.AILOS 的页面直接调用）

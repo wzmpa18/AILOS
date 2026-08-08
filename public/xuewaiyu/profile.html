@@ -367,7 +367,7 @@
 </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p5"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p6"></script>
 
 
 <!-- Toast -->
@@ -1436,6 +1436,39 @@ function showToast(msg, type) {
 // ==================== API ====================
 const API_BASE = '/api';
 
+// P6 FIX: Token刷新锁，避免并发刷新
+var _isRefreshing = false;
+
+async function tryTokenRefresh() {
+  if (_isRefreshing) return false;
+  var refreshToken = null;
+  try { refreshToken = localStorage.getItem('yandao_refresh_token_v1'); } catch(e) {}
+  if (!refreshToken) return false;
+  
+  _isRefreshing = true;
+  try {
+    const resp = await fetch(API_BASE + '/auth/refresh-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: refreshToken })
+    });
+    const data = await resp.json();
+    if (data && data.tokens) {
+      try {
+        localStorage.setItem('yandao_token_v1', data.tokens.accessToken);
+        localStorage.setItem('yandao_refresh_token_v1', data.tokens.refreshToken);
+        localStorage.setItem('auth_tokens', JSON.stringify({accessToken: data.tokens.accessToken}));
+      } catch(e) {}
+      return true;
+    }
+    return false;
+  } catch(e) {
+    return false;
+  } finally {
+    _isRefreshing = false;
+  }
+}
+
 async function apiCall(method, path, body) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json' };
@@ -1447,7 +1480,29 @@ async function apiCall(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
 
+  // P6 FIX: 401时先尝试刷新token，刷新成功则重试请求
   if (resp.status === 401) {
+    var refreshed = await tryTokenRefresh();
+    if (refreshed) {
+      // 重试请求
+      const newToken = getToken();
+      const retryHeaders = { 'Content-Type': 'application/json' };
+      if (newToken) retryHeaders['Authorization'] = 'Bearer ' + newToken;
+      const retryResp = await fetch(API_BASE + path, {
+        method,
+        headers: retryHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (retryResp.status === 401) {
+        // 刷新后仍然401，才清除登录态
+        clearAuthAndReload();
+        throw new Error('Unauthorized');
+      }
+      const retryData = await retryResp.json();
+      if (!retryResp.ok) throw new Error(retryData.error || retryData.message || 'Request failed');
+      return retryData;
+    }
+    // 无refreshToken或刷新失败，清除登录态
     clearAuthAndReload();
     throw new Error('Unauthorized');
   }
@@ -1458,10 +1513,14 @@ async function apiCall(method, path, body) {
 }
 
 function clearAuthAndReload() {
-  try { localStorage.removeItem('yandao_token_v1'); } catch(e) {}
-  try { localStorage.removeItem('yandao_refresh_token_v1'); } catch(e) {}
+  // P6 FIX: 清除所有登录态相关key（含历史兼容key）
+  var authKeys = ['yandao_token_v1', 'yandao_refresh_token_v1', 'ailos_token', 'yandao_token', 'auth_tokens', 'accessToken'];
+  for (var i = 0; i < authKeys.length; i++) {
+    try { localStorage.removeItem(authKeys[i]); } catch(e) {}
+  }
+  // 显示游客状态而非直接刷新
+  showGuestBanner();
   showToast(t('toast_operation_failed'), 'error');
-  setTimeout(() => { window.location.reload(); }, 1500);
 }
 
 // ==================== Profile ====================
@@ -2078,23 +2137,25 @@ function closeLogoutModal() {
 function performLogout() {
   var btn = document.getElementById('btnConfirmLogout');
   if (btn) { btn.disabled = true; btn.textContent = t('logout_loading'); }
-  // 清除登录态相关 localStorage（保留页面缓存/资源缓存以便快速重登）
-  // 仅清除登录态相关 token，保留语言偏好/onboarding等配置缓存以便二次登录秒开
-  var logoutKeys = ['yandao_token_v1', 'yandao_refresh_token_v1', 'ailos_token', 'yandao_token', 'auth_tokens'];
+  // P6 FIX: 清除所有登录态相关key（含历史兼容key和accessToken）
+  var logoutKeys = ['yandao_token_v1', 'yandao_refresh_token_v1', 'ailos_token', 'yandao_token', 'auth_tokens', 'accessToken', 'yandao_login_time', 'yandao_token_expiry'];
   for (var i = 0; i < logoutKeys.length; i++) {
     try { localStorage.removeItem(logoutKeys[i]); } catch(e) {}
   }
-  // 清除 sessionStorage
-  try { sessionStorage.clear(); } catch(e) {}
+  // 清除 sessionStorage 中的登录态相关数据（保留语言偏好等配置）
+  var sessionKeys = ['yandao_onboarding_ok_v1'];
+  for (var j = 0; j < sessionKeys.length; j++) {
+    try { sessionStorage.removeItem(sessionKeys[j]); } catch(e) {}
+  }
   // 原生登录态清理
   try {
     if (window.AilosNative && typeof window.AilosNative.clearLoginState === 'function') {
       window.AilosNative.clearLoginState();
     }
   } catch(e) {}
-  // 跳转到登录页
+  // P6 FIX: 退出登录后跳转到登录页（非首页）
   setTimeout(function() {
-    window.location.href = '/xuewaiyu/landing.html';
+    window.location.href = '/xuewaiyu/login.html';
   }, 300);
 }
 

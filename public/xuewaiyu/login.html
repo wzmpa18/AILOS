@@ -143,9 +143,15 @@
   .bottom-nav { display: none !important; }
   .ailos-back-btn { display: none !important; }
   body { padding-bottom: 20px !important; }
+  
+  /* === 确保所有交互元素可点击，无遮挡 === */
+  .container { position: relative; z-index: 10; }
+  .tab { cursor: pointer; position: relative; z-index: 10; }
+  .btn-submit { position: relative; z-index: 10; }
+  .form-group input { position: relative; z-index: 10; }
 </style>
 <script src="/xuewaiyu/assets/devicefp.js"></script>
-<script src="/xuewaiyu/assets/common.js?v=20260808p5"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p6"></script>
 </head>
 <body>
 <div class="container">
@@ -711,6 +717,21 @@ async function handleSubmit() {
     const refreshTok = result.refreshToken || (result.tokens && result.tokens.refreshToken);
     if (accessToken) {
       try { localStorage.setItem('yandao_token_v1', accessToken); localStorage.setItem('auth_tokens', JSON.stringify({accessToken:accessToken})); } catch(e) {}
+      // P6 FIX: 记录登录时间和过期时间到localStorage，用于持久化校验
+      try {
+        var loginTime = Date.now();
+        var expiryTime = 0;
+        try { var payload = JSON.parse(atob(accessToken.split('.')[1])); expiryTime = (payload.exp || 0) * 1000; } catch(e) {}
+        localStorage.setItem('yandao_login_time', String(loginTime));
+        if (expiryTime) localStorage.setItem('yandao_token_expiry', String(expiryTime));
+      } catch(e) {}
+      // 同步到原生存储（APP WebView场景）
+      try {
+        if (window.AilosNative && typeof window.AilosNative.saveLoginState === 'function') {
+          var nativeState = JSON.stringify({ token: accessToken, refreshToken: refreshTok || '', savedAt: loginTime });
+          window.AilosNative.saveLoginState(accessToken, nativeState);
+        }
+      } catch(e) {}
     }
     if (refreshTok) {
       try { localStorage.setItem('yandao_refresh_token_v1', refreshTok); } catch(e) {}
@@ -720,7 +741,7 @@ async function handleSubmit() {
     showMsg(successMsg, 'success');
 
     setTimeout(() => {
-      let dest = isReset ? '/login' : '/xuewaiyu/home';
+      let dest = isReset ? '/xuewaiyu/login.html' : '/xuewaiyu/home';
       try {
         // 蓝图 Stage 2 引导闸：未完成首次引导则进入完整引导流程（身份→语言→定级→目标→伴读→计划）
         if (!isReset && !localStorage.getItem('yandao_onboarding_done') && !localStorage.getItem('yandao_level_assessment')) {
@@ -755,6 +776,17 @@ function showPrivacy() {
 }
 
 // ==================== Init ====================
+
+// P6 FIX: 绑定主Tab点击事件（登录/注册/找回密码）
+document.querySelectorAll('#tabs .tab').forEach(function(tabEl) {
+  tabEl.addEventListener('click', function() {
+    var mode = this.getAttribute('data-mode');
+    if (mode && mode !== currentMode) {
+      switchMode(mode);
+    }
+  });
+});
+
 document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
 
 // Auto-detect guest mode from URL parameter (?mode=guest)
