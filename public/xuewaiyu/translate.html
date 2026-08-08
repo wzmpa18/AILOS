@@ -91,6 +91,18 @@
     color: #fff; padding: 11px 20px; border-radius: 22px; font-size: 14px; z-index: 200; opacity: 0;
     transition: opacity .25s; pointer-events: none; max-width: 86%; text-align: center; }
   .toast.show { opacity: 1; }
+
+  /* ===== Camera Capture Overlay ===== */
+  .cam-overlay { position: fixed; inset: 0; z-index: 9999; background: #000; display: none; flex-direction: column; }
+  .cam-overlay.open { display: flex; }
+  .cam-overlay video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+  .cam-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 16px; background: linear-gradient(180deg, rgba(0,0,0,0.5), transparent); }
+  .cam-topbar .cam-close { color: #fff; font-size: 24px; cursor: pointer; background: rgba(255,255,255,0.15); border: none; border-radius: 50%; width: 40px; height: 40px; }
+  .cam-topbar .cam-switch { background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  .cam-bottombar { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 40px; padding: 30px 16px; padding-bottom: max(30px, env(safe-area-inset-bottom)); background: linear-gradient(0deg, rgba(0,0,0,0.5), transparent); }
+  .cam-shutter { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.3); cursor: pointer; transition: all .15s; }
+  .cam-shutter:active { transform: scale(0.9); background: #fff; }
+  .cam-hint { position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 3; color: rgba(255,255,255,0.8); font-size: 13px; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -184,6 +196,19 @@
 <nav class="bottom-nav"></nav>
 <div class="toast" id="toast"></div>
 
+<!-- Camera Capture Overlay -->
+<div class="cam-overlay" id="camOverlay">
+  <video id="camVideo" autoplay playsinline></video>
+  <div class="cam-topbar">
+    <button class="cam-close" onclick="closeCam()">&#10005;</button>
+    <button class="cam-switch" id="camSwitchBtn" onclick="switchCam()">🔄 切换</button>
+  </div>
+  <div class="cam-hint">对准文字后点击下方按钮拍照</div>
+  <div class="cam-bottombar">
+    <div class="cam-shutter" id="camShutter" onclick="capturePhoto()"></div>
+  </div>
+</div>
+
 <script src="/xuewaiyu/assets/common.js?v=20260804p2"></script>
 <script>
 var selectedFile = null;
@@ -259,7 +284,90 @@ function switchTab(name){
 }
 
 function pick(src){
-  document.getElementById(src==='camera'?'cameraInput':'albumInput').click();
+  if(src==='camera'){
+    // 优先使用getUserMedia调用相机（桌面和移动端浏览器均支持）
+    openCam();
+  } else {
+    document.getElementById('albumInput').click();
+  }
+}
+
+// ===== Camera Capture (getUserMedia) =====
+var camStream = null;
+var camFacing = 'environment';
+
+function openCam(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    // 不支持getUserMedia，回退到带capture的file input
+    document.getElementById('cameraInput').click();
+    return;
+  }
+  var overlay = document.getElementById('camOverlay');
+  var video = document.getElementById('camVideo');
+  overlay.classList.add('open');
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: camFacing, width: { ideal: 1280 }, height: { ideal: 720 } }
+  }).then(function(stream){
+    camStream = stream;
+    video.srcObject = stream;
+    video.setAttribute('playsinline', true);
+    video.play().catch(function(){});
+  }).catch(function(e){
+    closeCam();
+    if(e.name === 'NotAllowedError'){
+      showToast('相机权限被拒绝，请从相册选择图片');
+    } else {
+      // 回退到file input with capture
+      document.getElementById('cameraInput').click();
+    }
+  });
+}
+
+function closeCam(){
+  var overlay = document.getElementById('camOverlay');
+  overlay.classList.remove('open');
+  if(camStream){
+    camStream.getTracks().forEach(function(t){ t.stop(); });
+    camStream = null;
+  }
+  var video = document.getElementById('camVideo');
+  if(video) video.srcObject = null;
+}
+
+function switchCam(){
+  camFacing = camFacing === 'environment' ? 'user' : 'environment';
+  closeCam();
+  setTimeout(openCam, 200);
+}
+
+function capturePhoto(){
+  var video = document.getElementById('camVideo');
+  if(!video || !video.videoWidth){ showToast('相机未就绪，请稍候'); return; }
+
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(function(blob){
+    if(!blob){ showToast('拍照失败，请重试'); return; }
+    // 转换为File对象，复用handleFile逻辑
+    var file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
+    // 模拟input file的onchange事件
+    selectedFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById('previewImage').src = e.target.result;
+      document.getElementById('previewContainer').classList.add('show');
+      document.getElementById('uploadArea').style.display = 'none';
+      document.getElementById('resultCard').classList.remove('show');
+    };
+    reader.readAsDataURL(file);
+    closeCam();
+    showToast('拍照成功，点击「开始翻译」');
+  }, 'image/jpeg', 0.85);
 }
 
 function handleFile(input){
