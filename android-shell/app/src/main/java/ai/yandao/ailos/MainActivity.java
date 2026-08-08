@@ -6,17 +6,13 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.http.SslError;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -26,7 +22,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -258,10 +253,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 fileUploadCallback = filePathCallback;
 
-                // 检查相机权限（拍照翻译需要）
+                // 检查是否接受图片类型（拍照翻译需要）
                 boolean needCamera = false;
-                if (fileChooserParams.isAcceptTypeAvailable("image/*")) {
-                    needCamera = true;
+                for (String type : fileChooserParams.getAcceptTypes()) {
+                    if (type.contains("image") || type.equals("*/*")) {
+                        needCamera = true;
+                        break;
+                    }
                 }
 
                 Intent contentIntent = new Intent(Intent.ACTION_GET_CONTENT);
