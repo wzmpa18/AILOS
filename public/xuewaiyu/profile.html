@@ -367,7 +367,7 @@
 </style>
 </head>
 <body>
-  <script src="/xuewaiyu/assets/common.js?v=20260808p6"></script>
+  <script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
 
 
 <!-- Toast -->
@@ -1532,12 +1532,15 @@ async function loadUserProfile() {
   }
 
   isLoggedIn = true;
-  document.getElementById('loadingSpinner').classList.remove('hidden');
-  document.getElementById('guestBanner').classList.add('hidden');
+  try { document.getElementById('loadingSpinner').classList.remove('hidden'); } catch(e) {}
+  try { document.getElementById('guestBanner').classList.add('hidden'); } catch(e) {}
   // Show cached nickname immediately while API loads
   try {
     var cachedNick = localStorage.getItem('yandao_cached_nickname');
-    if (cachedNick) document.getElementById('nicknameDisplay').textContent = cachedNick;
+    if (cachedNick) {
+      var nickEl = document.getElementById('nicknameDisplay');
+      if (nickEl) nickEl.textContent = cachedNick;
+    }
   } catch(e) {}
 
   try {
@@ -1547,20 +1550,27 @@ async function loadUserProfile() {
     populateProfile(userData);
     document.getElementById('loadingSpinner').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
-    renderLanguageSelects();
-    renderBadges();
+    try { renderLanguageSelects(); } catch(e) { console.error('[Profile] renderLanguageSelects error:', e); }
+    try { renderBadges(); } catch(e) { console.error('[Profile] renderBadges error:', e); }
   } catch (e) {
-    document.getElementById('loadingSpinner').classList.add('hidden');
+    console.error('[Profile] loadUserProfile error:', e);
+    try { document.getElementById('loadingSpinner').classList.add('hidden'); } catch(e2) {}
     if (e.message === 'Unauthorized') {
       showGuestBanner();
     } else {
-      showToast(e.message || t('toast_operation_failed'), 'error');
+      try { showToast(e.message || t('toast_operation_failed'), 'error'); } catch(e2) {}
       // Fallback: show with default data
       userData = getDefaultUserData();
-      populateProfile(userData);
-      document.getElementById('mainContent').classList.remove('hidden');
-      renderLanguageSelects();
-      renderBadges();
+      try {
+        populateProfile(userData);
+        document.getElementById('mainContent').classList.remove('hidden');
+        try { renderLanguageSelects(); } catch(e2) {}
+        try { renderBadges(); } catch(e2) {}
+      } catch(e2) {
+        console.error('[Profile] fallback render error:', e2);
+        // 最终兜底：显示游客面板，确保页面不会白板
+        showGuestBanner();
+      }
     }
   }
 }
@@ -1615,8 +1625,8 @@ function populateProfile(data) {
     var cachedAvatar = localStorage.getItem('yandao_cached_avatar');
     if (cachedAvatar && (!data.avatar || data.avatar.indexOf('default_avatar') > -1)) {
       data.avatar = cachedAvatar;
-      var avatarEl = document.getElementById('avatarDisplay');
-      if (avatarEl) avatarEl.innerHTML = '<img src="' + cachedAvatar + '" alt="avatar">';
+      var cachedAvatarEl = document.getElementById('avatarDisplay');
+      if (cachedAvatarEl) cachedAvatarEl.innerHTML = '<img src="' + cachedAvatar + '" alt="avatar">';
     }
   } catch(e) {}
 
@@ -2012,10 +2022,32 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
 
 // ==================== Init ====================
 function init() {
-  renderLangSwitch();
-  updateI18n();
+  try {
+    renderLangSwitch();
+  } catch(e) {
+    console.error('[Profile] renderLangSwitch error:', e);
+  }
+  try {
+    updateI18n();
+  } catch(e) {
+    console.error('[Profile] updateI18n error:', e);
+  }
+  // 无论上面是否出错，都必须调用 loadUserProfile，否则页面会白板
   loadUserProfile();
 }
+
+// 全局错误捕获：防止任何未捕获异常导致页面白板
+window.addEventListener('error', function(e) {
+  console.error('[Profile] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
+  // 如果 mainContent 和 guestBanner 都还隐藏着，强制显示 guestBanner
+  var mc = document.getElementById('mainContent');
+  var gb = document.getElementById('guestBanner');
+  var ls = document.getElementById('loadingSpinner');
+  if (mc && mc.classList.contains('hidden') && gb && gb.classList.contains('hidden')) {
+    if (ls) ls.classList.add('hidden');
+    if (gb) gb.classList.remove('hidden');
+  }
+});
 
 // ==================== Phase4: QR Code & Share ====================
 function showQRCode() {

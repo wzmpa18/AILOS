@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -96,6 +96,16 @@
   .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
   .form-group input.error { border-color: var(--error); }
 
+  .pwd-wrap { position: relative; }
+  .pwd-wrap input { padding-right: 42px; }
+  .pwd-toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 18px;
+    color: var(--text-muted); padding: 4px; line-height: 1; z-index: 10;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .pwd-toggle:active { color: var(--primary); }
+
   .sms-row { display: flex; gap: 10px; }
   .sms-row input { flex: 1; }
 
@@ -151,7 +161,7 @@
   .form-group input { position: relative; z-index: 10; }
 </style>
 <script src="/xuewaiyu/assets/devicefp.js"></script>
-<script src="/xuewaiyu/assets/common.js?v=20260808p6"></script>
+<script src="/xuewaiyu/assets/common.js?v=20260808p7"></script>
 </head>
 <body>
 <div class="container">
@@ -477,6 +487,20 @@ async function apiCall(path, body) {
   return data;
 }
 
+// ==================== Password Visibility Toggle ====================
+function togglePasswordVisibility(fieldId) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
+  const btn = field.nextElementSibling;
+  if (field.type === 'password') {
+    field.type = 'text';
+    if (btn) btn.textContent = '🙈';
+  } else {
+    field.type = 'password';
+    if (btn) btn.textContent = '👁';
+  }
+}
+
 // ==================== Form Rendering ====================
 function renderForm() {
   const container = document.getElementById('formContent');
@@ -531,25 +555,25 @@ function renderForm() {
     html += '</div></div>';
   }
 
-  // Password
+  // Password (with visibility toggle)
   if (isRegister) {
     html += '<div class="form-group"><label data-i18n="label_password">密码</label>';
-    html += '<input type="password" id="password" placeholder="' + t('label_password') + '">';
-    html += '</div>';
+    html += '<div class="pwd-wrap"><input type="password" id="password" placeholder="' + t('label_password') + '">';
+    html += '<button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(\'password\')">👁</button></div></div>';
     html += '<div class="form-group"><label data-i18n="label_confirm_pwd">确认密码</label>';
-    html += '<input type="password" id="confirmPassword" placeholder="' + t('label_confirm_pwd') + '">';
-    html += '</div>';
+    html += '<div class="pwd-wrap"><input type="password" id="confirmPassword" placeholder="' + t('label_confirm_pwd') + '">';
+    html += '<button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(\'confirmPassword\')">👁</button></div></div>';
   } else if (isReset) {
     html += '<div class="form-group"><label data-i18n="label_new_password">新密码</label>';
-    html += '<input type="password" id="password" placeholder="' + t('label_new_password') + '">';
-    html += '</div>';
+    html += '<div class="pwd-wrap"><input type="password" id="password" placeholder="' + t('label_new_password') + '">';
+    html += '<button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(\'password\')">👁</button></div></div>';
     html += '<div class="form-group"><label data-i18n="label_confirm_pwd">确认密码</label>';
-    html += '<input type="password" id="confirmPassword" placeholder="' + t('label_confirm_pwd') + '">';
-    html += '</div>';
+    html += '<div class="pwd-wrap"><input type="password" id="confirmPassword" placeholder="' + t('label_confirm_pwd') + '">';
+    html += '<button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(\'confirmPassword\')">👁</button></div></div>';
   } else {
     html += '<div class="form-group"><label data-i18n="label_password">密码</label>';
-    html += '<input type="password" id="password" placeholder="' + t('label_password') + '">';
-    html += '</div>';
+    html += '<div class="pwd-wrap"><input type="password" id="password" placeholder="' + t('label_password') + '">';
+    html += '<button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(\'password\')">👁</button></div></div>';
   }
 
   container.innerHTML = html;
